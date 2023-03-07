@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Index{% endblock %}
+{% block content %}
+    <div class="row">
+      <form action="/pacient" method="get">
+          <div class="col s8">
+              <input id="id" name="id" type="text" class="validate">
+              <label for="id">Id do paciente</label>
+          </div>
+          <div class="col s4">
+              <button class="btn waves-effect waves-light" type="submit">Pesquisar
+                  <i class="material-icons right">search</i>
+              </button>
+          </div>
+      </form>
+    </div>
+{% endblock %}
