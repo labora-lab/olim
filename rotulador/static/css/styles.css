@@ -1,0 +1,28 @@
+.small-title {
+    font-size: 15px !important;
+}
+
+.card-top {
+    padding-bottom: 0px !important;
+}
+
+.card-bottom {
+    padding-top: 0px !important;
+}
+
+.btn-wide {
+    width: 100% !important;
+}
+
+.btn-narrow {
+    width: 30px;
+    padding-right: 5px;
+}
+
+.top-right {
+    margin: -15px -15px 0px 0px;
+}
+
+.brand-logo {
+    margin-left: 20px;
+}

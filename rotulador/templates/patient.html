@@ -1,0 +1,61 @@
+{% extends "index.html" %}
+{% block title %}Paciente {{patient_id}}{% endblock %}
+{% block patient %}
+{%for date in data.keys()%}
+{%set first=True%}
+<div class="card">
+    <div class="card-content card-top">
+        <span class="right top-right">
+            <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
+                data-tooltip="Esconder este dia">
+                <i class="material-icons grey-text text-darken-4">remove</i>
+            </a>
+            <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
+                data-tooltip="Esconder todos acima">
+                <i class="material-icons grey-text text-darken-4">expand_less</i>
+            </a>
+            <a class='btn-floating btn btn-flat waves-light tooltipped' data-position="bottom"
+                data-tooltip="Esconder todos abaixo">
+                <i class="material-icons grey-text text-darken-4">expand_more</i>
+            </a>
+        </span>
+        <div class="card-title">
+            {{date}}
+        </div>
+    </div>
+    <!-- <div class="card-tabs">
+        <ul class="tabs tabs-fixed-width">
+            {%for row in data[date]%}
+            {%if first%}
+            <li class="tab" class="active"><a href="#text_{{row['id_texto']}}">{{row['tipo_texto']}}</a></li>
+            {%else%}
+            <li class="tab"><a href="#text_{{row['id_texto']}}">{{row['tipo_texto']}}</a></li>
+            {%endif%}
+            {%endfor%}
+        </ul>
+    </div> -->
+    {%for row in data[date]%}
+    {%if first%}
+    {%set first=False%}
+    <div class="card-content grey lighten-3" id="text_{{row['id_texto']}}">
+        {%else%}
+        <div class="card-content grey lighten-3 card-bottom" id="text_{{row['id_texto']}}">
+            {%endif%}
+            <span class="right top-right">
+                <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
+                    data-tooltip="Esconder este">
+                    <i class="material-icons grey-text text-darken-4">remove</i>
+                </a>
+                <a class='btn-floating btn btn-flat waves-light tooltipped' data-position="bottom"
+                    data-tooltip="Esconder todos como este">
+                    <i class="material-icons grey-text text-darken-4">remove_circle</i>
+                </a>
+            </span>
+            <span class="card-title small-title">{{row['tipo_texto']}}</span>
+            {{row['texto']}}
+            <!-- <div id=" text_{{row['id_texto']}}">{{row['texto']}}</div> -->
+        </div>
+        {%endfor%}
+    </div>
+    {%endfor%}
+    {% endblock %}

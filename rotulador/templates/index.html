@@ -1,17 +1,83 @@
 {% extends "base.html" %}
 {% block title %}Index{% endblock %}
 {% block content %}
-    <div class="row">
-      <form action="/pacient" method="get">
-          <div class="col s8">
-              <input id="id" name="id" type="text" class="validate">
-              <label for="id">Id do paciente</label>
-          </div>
-          <div class="col s4">
-              <button class="btn waves-effect waves-light" type="submit">Pesquisar
-                  <i class="material-icons right">search</i>
-              </button>
-          </div>
-      </form>
+<div class="row">
+    <div class="col s8">
+        <div class="row">
+            <form action="/patient" method="get">
+                <div class="input-field col s12">
+                    <input id="id" name="id" type="text" class="validate" value="{{patient_id}}">
+                    <label for="id">Id do paciente</label>
+                </div>
+                <div class="input-field col s6">
+                    <input type="text" name="start" class="datepicker">
+                    <label for="start">Data inicio</label>
+                </div>
+                <div class="input-field col s6">
+                    <input type="text" name="end" class="datepicker">
+                    <label for="end">Data fim</label>
+                </div>
+                <div class="input-field col s12">
+                    <button class="btn waves-effect waves-light btn-wide" type="submit">Pesquisar
+                        <i class="material-icons right">search</i>
+                    </button>
+                </div>
+            </form>
+        </div>
+        <div class="row">
+            <div class="col s12">
+                {% block patient %}{% endblock %}
+            </div>
+        </div>
     </div>
+    <div class="col s2">
+        <div class="toc-wrapper pinned">
+            <h5>Rotulação</h5>
+            <form>
+                <div class="row">
+                    <div class="input-field col s12">
+                        <label>
+                            <input type="checkbox" />
+                            <span>Nada relevante</span>
+                        </label>
+                    </div>
+                    <div class="input-field col s12">
+                        <label>
+                            <input type="checkbox" />
+                            <span>Cardiopatia</span>
+                        </label>
+                    </div>
+                    <div class="input-field col s12">
+                        <label>
+                            <input type="checkbox" />
+                            <span>Reinfecção</span>
+                        </label>
+                    </div>
+                    <div class="input-field col s12">
+                        <label>
+                            <input type="checkbox" />
+                            <span>Outros</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-field col s9 l10">
+                        <input id="first_name" type="text">
+                        <label for="first_name">Novo Rótulo</label>
+                    </div>
+                    <div class="input-field col s3 l2 center">
+                        <button class="btn waves-effect waves-light btn-narrow" type="submit" name="action">
+                            <i class="material-icons right">add</i>
+                        </button>
+                    </div>
+                    <div class="input-field col s12">
+                        <button class="btn waves-effect waves-light btn-wide" type="submit" name="action">Salvar
+                            <i class="material-icons right">save</i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}

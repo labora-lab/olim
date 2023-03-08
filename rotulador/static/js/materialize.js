@@ -18,25 +18,25 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   window.cash = factory();
 })(function () {
   var doc = document,
-      win = window,
-      ArrayProto = Array.prototype,
-      slice = ArrayProto.slice,
-      filter = ArrayProto.filter,
-      push = ArrayProto.push;
+    win = window,
+    ArrayProto = Array.prototype,
+    slice = ArrayProto.slice,
+    filter = ArrayProto.filter,
+    push = ArrayProto.push;
 
-  var noop = function () {},
-      isFunction = function (item) {
-    // @see https://crbug.com/568448
-    return typeof item === typeof noop && item.call;
-  },
-      isString = function (item) {
-    return typeof item === typeof "";
-  };
+  var noop = function () { },
+    isFunction = function (item) {
+      // @see https://crbug.com/568448
+      return typeof item === typeof noop && item.call;
+    },
+    isString = function (item) {
+      return typeof item === typeof "";
+    };
 
   var idMatch = /^#[\w-]*$/,
-      classMatch = /^\.[\w-]*$/,
-      htmlMatch = /<.+>/,
-      singlet = /^\w+$/;
+    classMatch = /^\.[\w-]*$/,
+    htmlMatch = /<.+>/,
+    singlet = /^\w+$/;
 
   function find(selector, context) {
     context = context || doc;
@@ -77,21 +77,21 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     }
 
     var elems = selector,
-        i = 0,
-        length;
+      i = 0,
+      length;
 
     if (isString(selector)) {
       elems = idMatch.test(selector) ?
-      // If an ID use the faster getElementById check
-      doc.getElementById(selector.slice(1)) : htmlMatch.test(selector) ?
-      // If HTML, parse it into real elements
-      parseHTML(selector) :
-      // else use `find`
-      find(selector, context);
+        // If an ID use the faster getElementById check
+        doc.getElementById(selector.slice(1)) : htmlMatch.test(selector) ?
+          // If HTML, parse it into real elements
+          parseHTML(selector) :
+          // else use `find`
+          find(selector, context);
 
       // If function, use as shortcut for DOM ready
     } else if (isFunction(selector)) {
-      onReady(selector);return this;
+      onReady(selector); return this;
     }
 
     if (!elems) {
@@ -137,8 +137,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     target = target || {};
 
     var args = slice.call(arguments),
-        length = args.length,
-        i = 1;
+      length = args.length,
+      i = 1;
 
     if (args.length === 1) {
       target = this;
@@ -161,7 +161,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
   function each(collection, callback) {
     var l = collection.length,
-        i = 0;
+      i = 0;
 
     for (; i < l; i++) {
       if (callback.call(collection[i], collection[i], i, collection) === false) {
@@ -179,14 +179,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
     return (
       /* Use browser's `matches` function if string */
       isString(selector) ? matches :
-      /* Match a cash element */
-      selector.cash ? function (el) {
-        return selector.is(el);
-      } :
-      /* Direct comparison */
-      function (el, selector) {
-        return el === selector;
-      }
+        /* Match a cash element */
+        selector.cash ? function (el) {
+          return selector.is(el);
+        } :
+          /* Direct comparison */
+          function (el, selector) {
+            return el === selector;
+          }
     );
   }
 
@@ -199,8 +199,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   cash.extend({
     merge: function (first, second) {
       var len = +second.length,
-          i = first.length,
-          j = 0;
+        i = first.length,
+        j = 0;
 
       for (; j < len; i++, j++) {
         first[i] = second[j];
@@ -338,7 +338,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
     hasClass: function (c) {
       var check = false,
-          classes = getClasses(c);
+        classes = getClasses(c);
       if (classes && classes.length) {
         this.each(function (v) {
           check = hasClass(v, classes[0]);
@@ -405,7 +405,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
           }
         });
       }) : this;
-    } });
+    }
+  });
 
   fn.extend({
     add: function (selector, context) {
@@ -446,7 +447,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
     index: function (elem) {
       var child = elem ? cash(elem)[0] : this[0],
-          collection = elem ? this : cash(child).parent().children();
+        collection = elem ? this : cash(child).parent().children();
       return slice.call(collection).indexOf(child);
     },
 
@@ -458,7 +459,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
   var camelCase = function () {
     var camelRegex = /(?:^\w|[A-Z]|\b\w)/g,
-        whiteSpace = /[\s-_]+/g;
+      whiteSpace = /[\s-_]+/g;
     return function (str) {
       return str.replace(camelRegex, function (letter, index) {
         return letter[index === 0 ? "toLowerCase" : "toUpperCase"]();
@@ -468,9 +469,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
   var getPrefixedProp = function () {
     var cache = {},
-        doc = document,
-        div = doc.createElement("div"),
-        style = div.style;
+      doc = document,
+      div = doc.createElement("div"),
+      style = div.style;
 
     return function (prop) {
       prop = camelCase(prop);
@@ -479,8 +480,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       }
 
       var ucProp = prop.charAt(0).toUpperCase() + prop.slice(1),
-          prefixes = ["webkit", "moz", "ms", "o"],
-          props = (prop + " " + prefixes.join(ucProp + " ") + ucProp).split(" ");
+        prefixes = ["webkit", "moz", "ms", "o"],
+        props = (prop + " " + prefixes.join(ucProp + " ") + ucProp).split(" ");
 
       each(props, function (p) {
         if (p in style) {
@@ -543,8 +544,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
   function removeEvent(node, eventName, callback) {
     var events = getData(node, "_cashEvents"),
-        eventCache = events && events[eventName],
-        index;
+      eventCache = events && events[eventName],
+      index;
 
     if (!eventCache) {
       return;
@@ -803,7 +804,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
       cash(selector).each(function (el, i) {
         var parent = el.parentNode,
-            sibling = el.nextSibling;
+          sibling = el.nextSibling;
         _this.each(function (v) {
           parent.insertBefore(i === 0 ? v : v.cloneNode(true), sibling);
         });
@@ -906,7 +907,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
       }
 
       var match = false,
-          comparator = getCompareFunction(selector);
+        comparator = getCompareFunction(selector);
 
       this.each(function (el) {
         match = comparator(el, selector);
@@ -969,7 +970,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
     parents: function (selector) {
       var last,
-          result = [];
+        result = [];
 
       this.each(function (item) {
         last = item;
@@ -992,7 +993,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
     siblings: function (selector) {
       var collection = this.parent().children(selector),
-          el = this[0];
+        el = this[0];
 
       return collection.filter(function (i) {
         return i !== el;
@@ -1437,8 +1438,8 @@ var getTime = Date.now || function () {
  */
 M.throttle = function (func, wait, options) {
   var context = void 0,
-      args = void 0,
-      result = void 0;
+    args = void 0,
+    result = void 0;
   var timeout = null;
   var previous = 0;
   options || (options = {});
@@ -1471,419 +1472,437 @@ M.throttle = function (func, wait, options) {
   2017 Julian Garnier
   Released under the MIT license
   */
-var $jscomp = { scope: {} };$jscomp.defineProperty = "function" == typeof Object.defineProperties ? Object.defineProperty : function (e, r, p) {
-  if (p.get || p.set) throw new TypeError("ES3 does not support getters and setters.");e != Array.prototype && e != Object.prototype && (e[r] = p.value);
-};$jscomp.getGlobal = function (e) {
+var $jscomp = { scope: {} }; $jscomp.defineProperty = "function" == typeof Object.defineProperties ? Object.defineProperty : function (e, r, p) {
+  if (p.get || p.set) throw new TypeError("ES3 does not support getters and setters."); e != Array.prototype && e != Object.prototype && (e[r] = p.value);
+}; $jscomp.getGlobal = function (e) {
   return "undefined" != typeof window && window === e ? e : "undefined" != typeof global && null != global ? global : e;
-};$jscomp.global = $jscomp.getGlobal(this);$jscomp.SYMBOL_PREFIX = "jscomp_symbol_";
+}; $jscomp.global = $jscomp.getGlobal(this); $jscomp.SYMBOL_PREFIX = "jscomp_symbol_";
 $jscomp.initSymbol = function () {
-  $jscomp.initSymbol = function () {};$jscomp.global.Symbol || ($jscomp.global.Symbol = $jscomp.Symbol);
-};$jscomp.symbolCounter_ = 0;$jscomp.Symbol = function (e) {
+  $jscomp.initSymbol = function () { }; $jscomp.global.Symbol || ($jscomp.global.Symbol = $jscomp.Symbol);
+}; $jscomp.symbolCounter_ = 0; $jscomp.Symbol = function (e) {
   return $jscomp.SYMBOL_PREFIX + (e || "") + $jscomp.symbolCounter_++;
 };
 $jscomp.initSymbolIterator = function () {
-  $jscomp.initSymbol();var e = $jscomp.global.Symbol.iterator;e || (e = $jscomp.global.Symbol.iterator = $jscomp.global.Symbol("iterator"));"function" != typeof Array.prototype[e] && $jscomp.defineProperty(Array.prototype, e, { configurable: !0, writable: !0, value: function () {
+  $jscomp.initSymbol(); var e = $jscomp.global.Symbol.iterator; e || (e = $jscomp.global.Symbol.iterator = $jscomp.global.Symbol("iterator")); "function" != typeof Array.prototype[e] && $jscomp.defineProperty(Array.prototype, e, {
+    configurable: !0, writable: !0, value: function () {
       return $jscomp.arrayIterator(this);
-    } });$jscomp.initSymbolIterator = function () {};
-};$jscomp.arrayIterator = function (e) {
-  var r = 0;return $jscomp.iteratorPrototype(function () {
+    }
+  }); $jscomp.initSymbolIterator = function () { };
+}; $jscomp.arrayIterator = function (e) {
+  var r = 0; return $jscomp.iteratorPrototype(function () {
     return r < e.length ? { done: !1, value: e[r++] } : { done: !0 };
   });
 };
 $jscomp.iteratorPrototype = function (e) {
-  $jscomp.initSymbolIterator();e = { next: e };e[$jscomp.global.Symbol.iterator] = function () {
+  $jscomp.initSymbolIterator(); e = { next: e }; e[$jscomp.global.Symbol.iterator] = function () {
     return this;
-  };return e;
-};$jscomp.array = $jscomp.array || {};$jscomp.iteratorFromArray = function (e, r) {
-  $jscomp.initSymbolIterator();e instanceof String && (e += "");var p = 0,
-      m = { next: function () {
-      if (p < e.length) {
-        var u = p++;return { value: r(u, e[u]), done: !1 };
-      }m.next = function () {
-        return { done: !0, value: void 0 };
-      };return m.next();
-    } };m[Symbol.iterator] = function () {
-    return m;
-  };return m;
+  }; return e;
+}; $jscomp.array = $jscomp.array || {}; $jscomp.iteratorFromArray = function (e, r) {
+  $jscomp.initSymbolIterator(); e instanceof String && (e += ""); var p = 0,
+    m = {
+      next: function () {
+        if (p < e.length) {
+          var u = p++; return { value: r(u, e[u]), done: !1 };
+        } m.next = function () {
+          return { done: !0, value: void 0 };
+        }; return m.next();
+      }
+    }; m[Symbol.iterator] = function () {
+      return m;
+    }; return m;
 };
 $jscomp.polyfill = function (e, r, p, m) {
   if (r) {
-    p = $jscomp.global;e = e.split(".");for (m = 0; m < e.length - 1; m++) {
-      var u = e[m];u in p || (p[u] = {});p = p[u];
-    }e = e[e.length - 1];m = p[e];r = r(m);r != m && null != r && $jscomp.defineProperty(p, e, { configurable: !0, writable: !0, value: r });
+    p = $jscomp.global; e = e.split("."); for (m = 0; m < e.length - 1; m++) {
+      var u = e[m]; u in p || (p[u] = {}); p = p[u];
+    } e = e[e.length - 1]; m = p[e]; r = r(m); r != m && null != r && $jscomp.defineProperty(p, e, { configurable: !0, writable: !0, value: r });
   }
-};$jscomp.polyfill("Array.prototype.keys", function (e) {
+}; $jscomp.polyfill("Array.prototype.keys", function (e) {
   return e ? e : function () {
     return $jscomp.iteratorFromArray(this, function (e) {
       return e;
     });
   };
-}, "es6-impl", "es3");var $jscomp$this = this;
+}, "es6-impl", "es3"); var $jscomp$this = this;
 (function (r) {
   M.anime = r();
 })(function () {
   function e(a) {
     if (!h.col(a)) try {
       return document.querySelectorAll(a);
-    } catch (c) {}
-  }function r(a, c) {
+    } catch (c) { }
+  } function r(a, c) {
     for (var d = a.length, b = 2 <= arguments.length ? arguments[1] : void 0, f = [], n = 0; n < d; n++) {
       if (n in a) {
-        var k = a[n];c.call(b, k, n, a) && f.push(k);
+        var k = a[n]; c.call(b, k, n, a) && f.push(k);
       }
-    }return f;
-  }function p(a) {
+    } return f;
+  } function p(a) {
     return a.reduce(function (a, d) {
       return a.concat(h.arr(d) ? p(d) : d);
     }, []);
-  }function m(a) {
+  } function m(a) {
     if (h.arr(a)) return a;
-    h.str(a) && (a = e(a) || a);return a instanceof NodeList || a instanceof HTMLCollection ? [].slice.call(a) : [a];
-  }function u(a, c) {
+    h.str(a) && (a = e(a) || a); return a instanceof NodeList || a instanceof HTMLCollection ? [].slice.call(a) : [a];
+  } function u(a, c) {
     return a.some(function (a) {
       return a === c;
     });
-  }function C(a) {
+  } function C(a) {
     var c = {},
-        d;for (d in a) {
-      c[d] = a[d];
-    }return c;
-  }function D(a, c) {
+      d; for (d in a) {
+        c[d] = a[d];
+      } return c;
+  } function D(a, c) {
     var d = C(a),
-        b;for (b in a) {
-      d[b] = c.hasOwnProperty(b) ? c[b] : a[b];
-    }return d;
-  }function z(a, c) {
+      b; for (b in a) {
+        d[b] = c.hasOwnProperty(b) ? c[b] : a[b];
+      } return d;
+  } function z(a, c) {
     var d = C(a),
-        b;for (b in c) {
-      d[b] = h.und(a[b]) ? c[b] : a[b];
-    }return d;
-  }function T(a) {
+      b; for (b in c) {
+        d[b] = h.und(a[b]) ? c[b] : a[b];
+      } return d;
+  } function T(a) {
     a = a.replace(/^#?([a-f\d])([a-f\d])([a-f\d])$/i, function (a, c, d, k) {
       return c + c + d + d + k + k;
-    });var c = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(a);
-    a = parseInt(c[1], 16);var d = parseInt(c[2], 16),
-        c = parseInt(c[3], 16);return "rgba(" + a + "," + d + "," + c + ",1)";
-  }function U(a) {
+    }); var c = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(a);
+    a = parseInt(c[1], 16); var d = parseInt(c[2], 16),
+      c = parseInt(c[3], 16); return "rgba(" + a + "," + d + "," + c + ",1)";
+  } function U(a) {
     function c(a, c, b) {
-      0 > b && (b += 1);1 < b && --b;return b < 1 / 6 ? a + 6 * (c - a) * b : .5 > b ? c : b < 2 / 3 ? a + (c - a) * (2 / 3 - b) * 6 : a;
-    }var d = /hsl\((\d+),\s*([\d.]+)%,\s*([\d.]+)%\)/g.exec(a) || /hsla\((\d+),\s*([\d.]+)%,\s*([\d.]+)%,\s*([\d.]+)\)/g.exec(a);a = parseInt(d[1]) / 360;var b = parseInt(d[2]) / 100,
-        f = parseInt(d[3]) / 100,
-        d = d[4] || 1;if (0 == b) f = b = a = f;else {
-      var n = .5 > f ? f * (1 + b) : f + b - f * b,
+      0 > b && (b += 1); 1 < b && --b; return b < 1 / 6 ? a + 6 * (c - a) * b : .5 > b ? c : b < 2 / 3 ? a + (c - a) * (2 / 3 - b) * 6 : a;
+    } var d = /hsl\((\d+),\s*([\d.]+)%,\s*([\d.]+)%\)/g.exec(a) || /hsla\((\d+),\s*([\d.]+)%,\s*([\d.]+)%,\s*([\d.]+)\)/g.exec(a); a = parseInt(d[1]) / 360; var b = parseInt(d[2]) / 100,
+      f = parseInt(d[3]) / 100,
+      d = d[4] || 1; if (0 == b) f = b = a = f; else {
+        var n = .5 > f ? f * (1 + b) : f + b - f * b,
           k = 2 * f - n,
           f = c(k, n, a + 1 / 3),
-          b = c(k, n, a);a = c(k, n, a - 1 / 3);
-    }return "rgba(" + 255 * f + "," + 255 * b + "," + 255 * a + "," + d + ")";
-  }function y(a) {
+          b = c(k, n, a); a = c(k, n, a - 1 / 3);
+      } return "rgba(" + 255 * f + "," + 255 * b + "," + 255 * a + "," + d + ")";
+  } function y(a) {
     if (a = /([\+\-]?[0-9#\.]+)(%|px|pt|em|rem|in|cm|mm|ex|ch|pc|vw|vh|vmin|vmax|deg|rad|turn)?$/.exec(a)) return a[2];
-  }function V(a) {
-    if (-1 < a.indexOf("translate") || "perspective" === a) return "px";if (-1 < a.indexOf("rotate") || -1 < a.indexOf("skew")) return "deg";
-  }function I(a, c) {
+  } function V(a) {
+    if (-1 < a.indexOf("translate") || "perspective" === a) return "px"; if (-1 < a.indexOf("rotate") || -1 < a.indexOf("skew")) return "deg";
+  } function I(a, c) {
     return h.fnc(a) ? a(c.target, c.id, c.total) : a;
-  }function E(a, c) {
+  } function E(a, c) {
     if (c in a.style) return getComputedStyle(a).getPropertyValue(c.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase()) || "0";
-  }function J(a, c) {
-    if (h.dom(a) && u(W, c)) return "transform";if (h.dom(a) && (a.getAttribute(c) || h.svg(a) && a[c])) return "attribute";if (h.dom(a) && "transform" !== c && E(a, c)) return "css";if (null != a[c]) return "object";
-  }function X(a, c) {
+  } function J(a, c) {
+    if (h.dom(a) && u(W, c)) return "transform"; if (h.dom(a) && (a.getAttribute(c) || h.svg(a) && a[c])) return "attribute"; if (h.dom(a) && "transform" !== c && E(a, c)) return "css"; if (null != a[c]) return "object";
+  } function X(a, c) {
     var d = V(c),
-        d = -1 < c.indexOf("scale") ? 1 : 0 + d;a = a.style.transform;if (!a) return d;for (var b = [], f = [], n = [], k = /(\w+)\((.+?)\)/g; b = k.exec(a);) {
-      f.push(b[1]), n.push(b[2]);
-    }a = r(n, function (a, b) {
-      return f[b] === c;
-    });return a.length ? a[0] : d;
-  }function K(a, c) {
-    switch (J(a, c)) {case "transform":
-        return X(a, c);case "css":
-        return E(a, c);case "attribute":
-        return a.getAttribute(c);}return a[c] || 0;
-  }function L(a, c) {
-    var d = /^(\*=|\+=|-=)/.exec(a);if (!d) return a;var b = y(a) || 0;c = parseFloat(c);a = parseFloat(a.replace(d[0], ""));switch (d[0][0]) {case "+":
-        return c + a + b;case "-":
-        return c - a + b;case "*":
-        return c * a + b;}
-  }function F(a, c) {
+      d = -1 < c.indexOf("scale") ? 1 : 0 + d; a = a.style.transform; if (!a) return d; for (var b = [], f = [], n = [], k = /(\w+)\((.+?)\)/g; b = k.exec(a);) {
+        f.push(b[1]), n.push(b[2]);
+      } a = r(n, function (a, b) {
+        return f[b] === c;
+      }); return a.length ? a[0] : d;
+  } function K(a, c) {
+    switch (J(a, c)) {
+      case "transform":
+        return X(a, c); case "css":
+        return E(a, c); case "attribute":
+        return a.getAttribute(c);
+    }return a[c] || 0;
+  } function L(a, c) {
+    var d = /^(\*=|\+=|-=)/.exec(a); if (!d) return a; var b = y(a) || 0; c = parseFloat(c); a = parseFloat(a.replace(d[0], "")); switch (d[0][0]) {
+      case "+":
+        return c + a + b; case "-":
+        return c - a + b; case "*":
+        return c * a + b;
+    }
+  } function F(a, c) {
     return Math.sqrt(Math.pow(c.x - a.x, 2) + Math.pow(c.y - a.y, 2));
-  }function M(a) {
-    a = a.points;for (var c = 0, d, b = 0; b < a.numberOfItems; b++) {
-      var f = a.getItem(b);0 < b && (c += F(d, f));d = f;
-    }return c;
-  }function N(a) {
-    if (a.getTotalLength) return a.getTotalLength();switch (a.tagName.toLowerCase()) {case "circle":
-        return 2 * Math.PI * a.getAttribute("r");case "rect":
-        return 2 * a.getAttribute("width") + 2 * a.getAttribute("height");case "line":
-        return F({ x: a.getAttribute("x1"), y: a.getAttribute("y1") }, { x: a.getAttribute("x2"), y: a.getAttribute("y2") });case "polyline":
-        return M(a);case "polygon":
-        var c = a.points;return M(a) + F(c.getItem(c.numberOfItems - 1), c.getItem(0));}
-  }function Y(a, c) {
+  } function M(a) {
+    a = a.points; for (var c = 0, d, b = 0; b < a.numberOfItems; b++) {
+      var f = a.getItem(b); 0 < b && (c += F(d, f)); d = f;
+    } return c;
+  } function N(a) {
+    if (a.getTotalLength) return a.getTotalLength(); switch (a.tagName.toLowerCase()) {
+      case "circle":
+        return 2 * Math.PI * a.getAttribute("r"); case "rect":
+        return 2 * a.getAttribute("width") + 2 * a.getAttribute("height"); case "line":
+        return F({ x: a.getAttribute("x1"), y: a.getAttribute("y1") }, { x: a.getAttribute("x2"), y: a.getAttribute("y2") }); case "polyline":
+        return M(a); case "polygon":
+        var c = a.points; return M(a) + F(c.getItem(c.numberOfItems - 1), c.getItem(0));
+    }
+  } function Y(a, c) {
     function d(b) {
-      b = void 0 === b ? 0 : b;return a.el.getPointAtLength(1 <= c + b ? c + b : 0);
-    }var b = d(),
-        f = d(-1),
-        n = d(1);switch (a.property) {case "x":
-        return b.x;case "y":
-        return b.y;
-      case "angle":
-        return 180 * Math.atan2(n.y - f.y, n.x - f.x) / Math.PI;}
-  }function O(a, c) {
+      b = void 0 === b ? 0 : b; return a.el.getPointAtLength(1 <= c + b ? c + b : 0);
+    } var b = d(),
+      f = d(-1),
+      n = d(1); switch (a.property) {
+        case "x":
+          return b.x; case "y":
+          return b.y;
+        case "angle":
+          return 180 * Math.atan2(n.y - f.y, n.x - f.x) / Math.PI;
+      }
+  } function O(a, c) {
     var d = /-?\d*\.?\d+/g,
-        b;b = h.pth(a) ? a.totalLength : a;if (h.col(b)) {
-      if (h.rgb(b)) {
-        var f = /rgb\((\d+,\s*[\d]+,\s*[\d]+)\)/g.exec(b);b = f ? "rgba(" + f[1] + ",1)" : b;
-      } else b = h.hex(b) ? T(b) : h.hsl(b) ? U(b) : void 0;
-    } else f = (f = y(b)) ? b.substr(0, b.length - f.length) : b, b = c && !/\s/g.test(b) ? f + c : f;b += "";return { original: b, numbers: b.match(d) ? b.match(d).map(Number) : [0], strings: h.str(a) || c ? b.split(d) : [] };
-  }function P(a) {
-    a = a ? p(h.arr(a) ? a.map(m) : m(a)) : [];return r(a, function (a, d, b) {
+      b; b = h.pth(a) ? a.totalLength : a; if (h.col(b)) {
+        if (h.rgb(b)) {
+          var f = /rgb\((\d+,\s*[\d]+,\s*[\d]+)\)/g.exec(b); b = f ? "rgba(" + f[1] + ",1)" : b;
+        } else b = h.hex(b) ? T(b) : h.hsl(b) ? U(b) : void 0;
+      } else f = (f = y(b)) ? b.substr(0, b.length - f.length) : b, b = c && !/\s/g.test(b) ? f + c : f; b += ""; return { original: b, numbers: b.match(d) ? b.match(d).map(Number) : [0], strings: h.str(a) || c ? b.split(d) : [] };
+  } function P(a) {
+    a = a ? p(h.arr(a) ? a.map(m) : m(a)) : []; return r(a, function (a, d, b) {
       return b.indexOf(a) === d;
     });
-  }function Z(a) {
-    var c = P(a);return c.map(function (a, b) {
+  } function Z(a) {
+    var c = P(a); return c.map(function (a, b) {
       return { target: a, id: b, total: c.length };
     });
-  }function aa(a, c) {
-    var d = C(c);if (h.arr(a)) {
-      var b = a.length;2 !== b || h.obj(a[0]) ? h.fnc(c.duration) || (d.duration = c.duration / b) : a = { value: a };
-    }return m(a).map(function (a, b) {
-      b = b ? 0 : c.delay;a = h.obj(a) && !h.pth(a) ? a : { value: a };h.und(a.delay) && (a.delay = b);return a;
+  } function aa(a, c) {
+    var d = C(c); if (h.arr(a)) {
+      var b = a.length; 2 !== b || h.obj(a[0]) ? h.fnc(c.duration) || (d.duration = c.duration / b) : a = { value: a };
+    } return m(a).map(function (a, b) {
+      b = b ? 0 : c.delay; a = h.obj(a) && !h.pth(a) ? a : { value: a }; h.und(a.delay) && (a.delay = b); return a;
     }).map(function (a) {
       return z(a, d);
     });
-  }function ba(a, c) {
+  } function ba(a, c) {
     var d = {},
-        b;for (b in a) {
-      var f = I(a[b], c);h.arr(f) && (f = f.map(function (a) {
-        return I(a, c);
-      }), 1 === f.length && (f = f[0]));d[b] = f;
-    }d.duration = parseFloat(d.duration);d.delay = parseFloat(d.delay);return d;
-  }function ca(a) {
+      b; for (b in a) {
+        var f = I(a[b], c); h.arr(f) && (f = f.map(function (a) {
+          return I(a, c);
+        }), 1 === f.length && (f = f[0])); d[b] = f;
+      } d.duration = parseFloat(d.duration); d.delay = parseFloat(d.delay); return d;
+  } function ca(a) {
     return h.arr(a) ? A.apply(this, a) : Q[a];
-  }function da(a, c) {
-    var d;return a.tweens.map(function (b) {
-      b = ba(b, c);var f = b.value,
-          e = K(c.target, a.name),
-          k = d ? d.to.original : e,
-          k = h.arr(f) ? f[0] : k,
-          w = L(h.arr(f) ? f[1] : f, k),
-          e = y(w) || y(k) || y(e);b.from = O(k, e);b.to = O(w, e);b.start = d ? d.end : a.offset;b.end = b.start + b.delay + b.duration;b.easing = ca(b.easing);b.elasticity = (1E3 - Math.min(Math.max(b.elasticity, 1), 999)) / 1E3;b.isPath = h.pth(f);b.isColor = h.col(b.from.original);b.isColor && (b.round = 1);return d = b;
+  } function da(a, c) {
+    var d; return a.tweens.map(function (b) {
+      b = ba(b, c); var f = b.value,
+        e = K(c.target, a.name),
+        k = d ? d.to.original : e,
+        k = h.arr(f) ? f[0] : k,
+        w = L(h.arr(f) ? f[1] : f, k),
+        e = y(w) || y(k) || y(e); b.from = O(k, e); b.to = O(w, e); b.start = d ? d.end : a.offset; b.end = b.start + b.delay + b.duration; b.easing = ca(b.easing); b.elasticity = (1E3 - Math.min(Math.max(b.elasticity, 1), 999)) / 1E3; b.isPath = h.pth(f); b.isColor = h.col(b.from.original); b.isColor && (b.round = 1); return d = b;
     });
-  }function ea(a, c) {
+  } function ea(a, c) {
     return r(p(a.map(function (a) {
       return c.map(function (b) {
-        var c = J(a.target, b.name);if (c) {
-          var d = da(b, a);b = { type: c, property: b.name, animatable: a, tweens: d, duration: d[d.length - 1].end, delay: d[0].delay };
-        } else b = void 0;return b;
+        var c = J(a.target, b.name); if (c) {
+          var d = da(b, a); b = { type: c, property: b.name, animatable: a, tweens: d, duration: d[d.length - 1].end, delay: d[0].delay };
+        } else b = void 0; return b;
       });
     })), function (a) {
       return !h.und(a);
     });
-  }function R(a, c, d, b) {
-    var f = "delay" === a;return c.length ? (f ? Math.min : Math.max).apply(Math, c.map(function (b) {
+  } function R(a, c, d, b) {
+    var f = "delay" === a; return c.length ? (f ? Math.min : Math.max).apply(Math, c.map(function (b) {
       return b[a];
     })) : f ? b.delay : d.offset + b.delay + b.duration;
-  }function fa(a) {
+  } function fa(a) {
     var c = D(ga, a),
-        d = D(S, a),
-        b = Z(a.targets),
-        f = [],
-        e = z(c, d),
-        k;for (k in a) {
-      e.hasOwnProperty(k) || "targets" === k || f.push({ name: k, offset: e.offset, tweens: aa(a[k], d) });
-    }a = ea(b, f);return z(c, { children: [], animatables: b, animations: a, duration: R("duration", a, c, d), delay: R("delay", a, c, d) });
-  }function q(a) {
+      d = D(S, a),
+      b = Z(a.targets),
+      f = [],
+      e = z(c, d),
+      k; for (k in a) {
+        e.hasOwnProperty(k) || "targets" === k || f.push({ name: k, offset: e.offset, tweens: aa(a[k], d) });
+      } a = ea(b, f); return z(c, { children: [], animatables: b, animations: a, duration: R("duration", a, c, d), delay: R("delay", a, c, d) });
+  } function q(a) {
     function c() {
       return window.Promise && new Promise(function (a) {
         return p = a;
       });
-    }function d(a) {
+    } function d(a) {
       return g.reversed ? g.duration - a : a;
-    }function b(a) {
+    } function b(a) {
       for (var b = 0, c = {}, d = g.animations, f = d.length; b < f;) {
         var e = d[b],
-            k = e.animatable,
-            h = e.tweens,
-            n = h.length - 1,
-            l = h[n];n && (l = r(h, function (b) {
-          return a < b.end;
-        })[0] || l);for (var h = Math.min(Math.max(a - l.start - l.delay, 0), l.duration) / l.duration, w = isNaN(h) ? 1 : l.easing(h, l.elasticity), h = l.to.strings, p = l.round, n = [], m = void 0, m = l.to.numbers.length, t = 0; t < m; t++) {
-          var x = void 0,
+          k = e.animatable,
+          h = e.tweens,
+          n = h.length - 1,
+          l = h[n]; n && (l = r(h, function (b) {
+            return a < b.end;
+          })[0] || l); for (var h = Math.min(Math.max(a - l.start - l.delay, 0), l.duration) / l.duration, w = isNaN(h) ? 1 : l.easing(h, l.elasticity), h = l.to.strings, p = l.round, n = [], m = void 0, m = l.to.numbers.length, t = 0; t < m; t++) {
+            var x = void 0,
               x = l.to.numbers[t],
               q = l.from.numbers[t],
-              x = l.isPath ? Y(l.value, w * x) : q + w * (x - q);p && (l.isColor && 2 < t || (x = Math.round(x * p) / p));n.push(x);
-        }if (l = h.length) for (m = h[0], w = 0; w < l; w++) {
-          p = h[w + 1], t = n[w], isNaN(t) || (m = p ? m + (t + p) : m + (t + " "));
-        } else m = n[0];ha[e.type](k.target, e.property, m, c, k.id);e.currentValue = m;b++;
-      }if (b = Object.keys(c).length) for (d = 0; d < b; d++) {
+              x = l.isPath ? Y(l.value, w * x) : q + w * (x - q); p && (l.isColor && 2 < t || (x = Math.round(x * p) / p)); n.push(x);
+          } if (l = h.length) for (m = h[0], w = 0; w < l; w++) {
+            p = h[w + 1], t = n[w], isNaN(t) || (m = p ? m + (t + p) : m + (t + " "));
+          } else m = n[0]; ha[e.type](k.target, e.property, m, c, k.id); e.currentValue = m; b++;
+      } if (b = Object.keys(c).length) for (d = 0; d < b; d++) {
         H || (H = E(document.body, "transform") ? "transform" : "-webkit-transform"), g.animatables[d].target.style[H] = c[d].join(" ");
-      }g.currentTime = a;g.progress = a / g.duration * 100;
-    }function f(a) {
+      } g.currentTime = a; g.progress = a / g.duration * 100;
+    } function f(a) {
       if (g[a]) g[a](g);
-    }function e() {
+    } function e() {
       g.remaining && !0 !== g.remaining && g.remaining--;
-    }function k(a) {
+    } function k(a) {
       var k = g.duration,
-          n = g.offset,
-          w = n + g.delay,
-          r = g.currentTime,
-          x = g.reversed,
-          q = d(a);if (g.children.length) {
-        var u = g.children,
+        n = g.offset,
+        w = n + g.delay,
+        r = g.currentTime,
+        x = g.reversed,
+        q = d(a); if (g.children.length) {
+          var u = g.children,
             v = u.length;
-        if (q >= g.currentTime) for (var G = 0; G < v; G++) {
-          u[G].seek(q);
-        } else for (; v--;) {
-          u[v].seek(q);
-        }
-      }if (q >= w || !k) g.began || (g.began = !0, f("begin")), f("run");if (q > n && q < k) b(q);else if (q <= n && 0 !== r && (b(0), x && e()), q >= k && r !== k || !k) b(k), x || e();f("update");a >= k && (g.remaining ? (t = h, "alternate" === g.direction && (g.reversed = !g.reversed)) : (g.pause(), g.completed || (g.completed = !0, f("complete"), "Promise" in window && (p(), m = c()))), l = 0);
-    }a = void 0 === a ? {} : a;var h,
-        t,
-        l = 0,
-        p = null,
-        m = c(),
-        g = fa(a);g.reset = function () {
-      var a = g.direction,
-          c = g.loop;g.currentTime = 0;g.progress = 0;g.paused = !0;g.began = !1;g.completed = !1;g.reversed = "reverse" === a;g.remaining = "alternate" === a && 1 === c ? 2 : c;b(0);for (a = g.children.length; a--;) {
-        g.children[a].reset();
+          if (q >= g.currentTime) for (var G = 0; G < v; G++) {
+            u[G].seek(q);
+          } else for (; v--;) {
+            u[v].seek(q);
+          }
+        } if (q >= w || !k) g.began || (g.began = !0, f("begin")), f("run"); if (q > n && q < k) b(q); else if (q <= n && 0 !== r && (b(0), x && e()), q >= k && r !== k || !k) b(k), x || e(); f("update"); a >= k && (g.remaining ? (t = h, "alternate" === g.direction && (g.reversed = !g.reversed)) : (g.pause(), g.completed || (g.completed = !0, f("complete"), "Promise" in window && (p(), m = c()))), l = 0);
+    } a = void 0 === a ? {} : a; var h,
+      t,
+      l = 0,
+      p = null,
+      m = c(),
+      g = fa(a); g.reset = function () {
+        var a = g.direction,
+          c = g.loop; g.currentTime = 0; g.progress = 0; g.paused = !0; g.began = !1; g.completed = !1; g.reversed = "reverse" === a; g.remaining = "alternate" === a && 1 === c ? 2 : c; b(0); for (a = g.children.length; a--;) {
+            g.children[a].reset();
+          }
+      }; g.tick = function (a) {
+        h = a; t || (t = h); k((l + h - t) * q.speed);
+      }; g.seek = function (a) {
+        k(d(a));
+      }; g.pause = function () {
+        var a = v.indexOf(g); -1 < a && v.splice(a, 1); g.paused = !0;
+      }; g.play = function () {
+        g.paused && (g.paused = !1, t = 0, l = d(g.currentTime), v.push(g), B || ia());
+      }; g.reverse = function () {
+        g.reversed = !g.reversed; t = 0; l = d(g.currentTime);
+      }; g.restart = function () {
+        g.pause();
+        g.reset(); g.play();
+      }; g.finished = m; g.reset(); g.autoplay && g.play(); return g;
+  } var ga = { update: void 0, begin: void 0, run: void 0, complete: void 0, loop: 1, direction: "normal", autoplay: !0, offset: 0 },
+    S = { duration: 1E3, delay: 0, easing: "easeOutElastic", elasticity: 500, round: 0 },
+    W = "translateX translateY translateZ rotate rotateX rotateY rotateZ scale scaleX scaleY scaleZ skewX skewY perspective".split(" "),
+    H,
+    h = {
+      arr: function (a) {
+        return Array.isArray(a);
+      }, obj: function (a) {
+        return -1 < Object.prototype.toString.call(a).indexOf("Object");
+      },
+      pth: function (a) {
+        return h.obj(a) && a.hasOwnProperty("totalLength");
+      }, svg: function (a) {
+        return a instanceof SVGElement;
+      }, dom: function (a) {
+        return a.nodeType || h.svg(a);
+      }, str: function (a) {
+        return "string" === typeof a;
+      }, fnc: function (a) {
+        return "function" === typeof a;
+      }, und: function (a) {
+        return "undefined" === typeof a;
+      }, hex: function (a) {
+        return (/(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(a)
+        );
+      }, rgb: function (a) {
+        return (/^rgb/.test(a)
+        );
+      }, hsl: function (a) {
+        return (/^hsl/.test(a)
+        );
+      }, col: function (a) {
+        return h.hex(a) || h.rgb(a) || h.hsl(a);
       }
-    };g.tick = function (a) {
-      h = a;t || (t = h);k((l + h - t) * q.speed);
-    };g.seek = function (a) {
-      k(d(a));
-    };g.pause = function () {
-      var a = v.indexOf(g);-1 < a && v.splice(a, 1);g.paused = !0;
-    };g.play = function () {
-      g.paused && (g.paused = !1, t = 0, l = d(g.currentTime), v.push(g), B || ia());
-    };g.reverse = function () {
-      g.reversed = !g.reversed;t = 0;l = d(g.currentTime);
-    };g.restart = function () {
-      g.pause();
-      g.reset();g.play();
-    };g.finished = m;g.reset();g.autoplay && g.play();return g;
-  }var ga = { update: void 0, begin: void 0, run: void 0, complete: void 0, loop: 1, direction: "normal", autoplay: !0, offset: 0 },
-      S = { duration: 1E3, delay: 0, easing: "easeOutElastic", elasticity: 500, round: 0 },
-      W = "translateX translateY translateZ rotate rotateX rotateY rotateZ scale scaleX scaleY scaleZ skewX skewY perspective".split(" "),
-      H,
-      h = { arr: function (a) {
-      return Array.isArray(a);
-    }, obj: function (a) {
-      return -1 < Object.prototype.toString.call(a).indexOf("Object");
     },
-    pth: function (a) {
-      return h.obj(a) && a.hasOwnProperty("totalLength");
-    }, svg: function (a) {
-      return a instanceof SVGElement;
-    }, dom: function (a) {
-      return a.nodeType || h.svg(a);
-    }, str: function (a) {
-      return "string" === typeof a;
-    }, fnc: function (a) {
-      return "function" === typeof a;
-    }, und: function (a) {
-      return "undefined" === typeof a;
-    }, hex: function (a) {
-      return (/(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test(a)
-      );
-    }, rgb: function (a) {
-      return (/^rgb/.test(a)
-      );
-    }, hsl: function (a) {
-      return (/^hsl/.test(a)
-      );
-    }, col: function (a) {
-      return h.hex(a) || h.rgb(a) || h.hsl(a);
-    } },
-      A = function () {
-    function a(a, d, b) {
-      return (((1 - 3 * b + 3 * d) * a + (3 * b - 6 * d)) * a + 3 * d) * a;
-    }return function (c, d, b, f) {
-      if (0 <= c && 1 >= c && 0 <= b && 1 >= b) {
-        var e = new Float32Array(11);if (c !== d || b !== f) for (var k = 0; 11 > k; ++k) {
-          e[k] = a(.1 * k, c, b);
-        }return function (k) {
-          if (c === d && b === f) return k;if (0 === k) return 0;if (1 === k) return 1;for (var h = 0, l = 1; 10 !== l && e[l] <= k; ++l) {
-            h += .1;
-          }--l;var l = h + (k - e[l]) / (e[l + 1] - e[l]) * .1,
-              n = 3 * (1 - 3 * b + 3 * c) * l * l + 2 * (3 * b - 6 * c) * l + 3 * c;if (.001 <= n) {
-            for (h = 0; 4 > h; ++h) {
-              n = 3 * (1 - 3 * b + 3 * c) * l * l + 2 * (3 * b - 6 * c) * l + 3 * c;if (0 === n) break;var m = a(l, c, b) - k,
-                  l = l - m / n;
-            }k = l;
-          } else if (0 === n) k = l;else {
-            var l = h,
-                h = h + .1,
-                g = 0;do {
-              m = l + (h - l) / 2, n = a(m, c, b) - k, 0 < n ? h = m : l = m;
-            } while (1e-7 < Math.abs(n) && 10 > ++g);k = m;
-          }return a(k, d, f);
-        };
-      }
-    };
-  }(),
-      Q = function () {
-    function a(a, b) {
-      return 0 === a || 1 === a ? a : -Math.pow(2, 10 * (a - 1)) * Math.sin(2 * (a - 1 - b / (2 * Math.PI) * Math.asin(1)) * Math.PI / b);
-    }var c = "Quad Cubic Quart Quint Sine Expo Circ Back Elastic".split(" "),
-        d = { In: [[.55, .085, .68, .53], [.55, .055, .675, .19], [.895, .03, .685, .22], [.755, .05, .855, .06], [.47, 0, .745, .715], [.95, .05, .795, .035], [.6, .04, .98, .335], [.6, -.28, .735, .045], a], Out: [[.25, .46, .45, .94], [.215, .61, .355, 1], [.165, .84, .44, 1], [.23, 1, .32, 1], [.39, .575, .565, 1], [.19, 1, .22, 1], [.075, .82, .165, 1], [.175, .885, .32, 1.275], function (b, c) {
-        return 1 - a(1 - b, c);
-      }], InOut: [[.455, .03, .515, .955], [.645, .045, .355, 1], [.77, 0, .175, 1], [.86, 0, .07, 1], [.445, .05, .55, .95], [1, 0, 0, 1], [.785, .135, .15, .86], [.68, -.55, .265, 1.55], function (b, c) {
-        return .5 > b ? a(2 * b, c) / 2 : 1 - a(-2 * b + 2, c) / 2;
-      }] },
+    A = function () {
+      function a(a, d, b) {
+        return (((1 - 3 * b + 3 * d) * a + (3 * b - 6 * d)) * a + 3 * d) * a;
+      } return function (c, d, b, f) {
+        if (0 <= c && 1 >= c && 0 <= b && 1 >= b) {
+          var e = new Float32Array(11); if (c !== d || b !== f) for (var k = 0; 11 > k; ++k) {
+            e[k] = a(.1 * k, c, b);
+          } return function (k) {
+            if (c === d && b === f) return k; if (0 === k) return 0; if (1 === k) return 1; for (var h = 0, l = 1; 10 !== l && e[l] <= k; ++l) {
+              h += .1;
+            } --l; var l = h + (k - e[l]) / (e[l + 1] - e[l]) * .1,
+              n = 3 * (1 - 3 * b + 3 * c) * l * l + 2 * (3 * b - 6 * c) * l + 3 * c; if (.001 <= n) {
+                for (h = 0; 4 > h; ++h) {
+                  n = 3 * (1 - 3 * b + 3 * c) * l * l + 2 * (3 * b - 6 * c) * l + 3 * c; if (0 === n) break; var m = a(l, c, b) - k,
+                    l = l - m / n;
+                } k = l;
+              } else if (0 === n) k = l; else {
+                var l = h,
+                  h = h + .1,
+                  g = 0; do {
+                    m = l + (h - l) / 2, n = a(m, c, b) - k, 0 < n ? h = m : l = m;
+                  } while (1e-7 < Math.abs(n) && 10 > ++g); k = m;
+              } return a(k, d, f);
+          };
+        }
+      };
+    }(),
+    Q = function () {
+      function a(a, b) {
+        return 0 === a || 1 === a ? a : -Math.pow(2, 10 * (a - 1)) * Math.sin(2 * (a - 1 - b / (2 * Math.PI) * Math.asin(1)) * Math.PI / b);
+      } var c = "Quad Cubic Quart Quint Sine Expo Circ Back Elastic".split(" "),
+        d = {
+          In: [[.55, .085, .68, .53], [.55, .055, .675, .19], [.895, .03, .685, .22], [.755, .05, .855, .06], [.47, 0, .745, .715], [.95, .05, .795, .035], [.6, .04, .98, .335], [.6, -.28, .735, .045], a], Out: [[.25, .46, .45, .94], [.215, .61, .355, 1], [.165, .84, .44, 1], [.23, 1, .32, 1], [.39, .575, .565, 1], [.19, 1, .22, 1], [.075, .82, .165, 1], [.175, .885, .32, 1.275], function (b, c) {
+            return 1 - a(1 - b, c);
+          }], InOut: [[.455, .03, .515, .955], [.645, .045, .355, 1], [.77, 0, .175, 1], [.86, 0, .07, 1], [.445, .05, .55, .95], [1, 0, 0, 1], [.785, .135, .15, .86], [.68, -.55, .265, 1.55], function (b, c) {
+            return .5 > b ? a(2 * b, c) / 2 : 1 - a(-2 * b + 2, c) / 2;
+          }]
+        },
         b = { linear: A(.25, .25, .75, .75) },
         f = {},
-        e;for (e in d) {
-      f.type = e, d[f.type].forEach(function (a) {
-        return function (d, f) {
-          b["ease" + a.type + c[f]] = h.fnc(d) ? d : A.apply($jscomp$this, d);
-        };
-      }(f)), f = { type: f.type };
-    }return b;
-  }(),
-      ha = { css: function (a, c, d) {
-      return a.style[c] = d;
-    }, attribute: function (a, c, d) {
-      return a.setAttribute(c, d);
-    }, object: function (a, c, d) {
-      return a[c] = d;
-    }, transform: function (a, c, d, b, f) {
-      b[f] || (b[f] = []);b[f].push(c + "(" + d + ")");
-    } },
-      v = [],
-      B = 0,
-      ia = function () {
-    function a() {
-      B = requestAnimationFrame(c);
-    }function c(c) {
-      var b = v.length;if (b) {
-        for (var d = 0; d < b;) {
-          v[d] && v[d].tick(c), d++;
-        }a();
-      } else cancelAnimationFrame(B), B = 0;
-    }return a;
-  }();q.version = "2.2.0";q.speed = 1;q.running = v;q.remove = function (a) {
-    a = P(a);for (var c = v.length; c--;) {
-      for (var d = v[c], b = d.animations, f = b.length; f--;) {
-        u(a, b[f].animatable.target) && (b.splice(f, 1), b.length || d.pause());
+        e; for (e in d) {
+          f.type = e, d[f.type].forEach(function (a) {
+            return function (d, f) {
+              b["ease" + a.type + c[f]] = h.fnc(d) ? d : A.apply($jscomp$this, d);
+            };
+          }(f)), f = { type: f.type };
+        } return b;
+    }(),
+    ha = {
+      css: function (a, c, d) {
+        return a.style[c] = d;
+      }, attribute: function (a, c, d) {
+        return a.setAttribute(c, d);
+      }, object: function (a, c, d) {
+        return a[c] = d;
+      }, transform: function (a, c, d, b, f) {
+        b[f] || (b[f] = []); b[f].push(c + "(" + d + ")");
       }
-    }
-  };q.getValue = K;q.path = function (a, c) {
-    var d = h.str(a) ? e(a)[0] : a,
-        b = c || 100;return function (a) {
-      return { el: d, property: a, totalLength: N(d) * (b / 100) };
-    };
-  };q.setDashoffset = function (a) {
-    var c = N(a);a.setAttribute("stroke-dasharray", c);return c;
-  };q.bezier = A;q.easings = Q;q.timeline = function (a) {
-    var c = q(a);c.pause();c.duration = 0;c.add = function (d) {
-      c.children.forEach(function (a) {
-        a.began = !0;a.completed = !0;
-      });m(d).forEach(function (b) {
-        var d = z(b, D(S, a || {}));d.targets = d.targets || a.targets;b = c.duration;var e = d.offset;d.autoplay = !1;d.direction = c.direction;d.offset = h.und(e) ? b : L(e, b);c.began = !0;c.completed = !0;c.seek(d.offset);d = q(d);d.began = !0;d.completed = !0;d.duration > b && (c.duration = d.duration);c.children.push(d);
-      });c.seek(0);c.reset();c.autoplay && c.restart();return c;
-    };return c;
-  };q.random = function (a, c) {
-    return Math.floor(Math.random() * (c - a + 1)) + a;
-  };return q;
+    },
+    v = [],
+    B = 0,
+    ia = function () {
+      function a() {
+        B = requestAnimationFrame(c);
+      } function c(c) {
+        var b = v.length; if (b) {
+          for (var d = 0; d < b;) {
+            v[d] && v[d].tick(c), d++;
+          } a();
+        } else cancelAnimationFrame(B), B = 0;
+      } return a;
+    }(); q.version = "2.2.0"; q.speed = 1; q.running = v; q.remove = function (a) {
+      a = P(a); for (var c = v.length; c--;) {
+        for (var d = v[c], b = d.animations, f = b.length; f--;) {
+          u(a, b[f].animatable.target) && (b.splice(f, 1), b.length || d.pause());
+        }
+      }
+    }; q.getValue = K; q.path = function (a, c) {
+      var d = h.str(a) ? e(a)[0] : a,
+        b = c || 100; return function (a) {
+          return { el: d, property: a, totalLength: N(d) * (b / 100) };
+        };
+    }; q.setDashoffset = function (a) {
+      var c = N(a); a.setAttribute("stroke-dasharray", c); return c;
+    }; q.bezier = A; q.easings = Q; q.timeline = function (a) {
+      var c = q(a); c.pause(); c.duration = 0; c.add = function (d) {
+        c.children.forEach(function (a) {
+          a.began = !0; a.completed = !0;
+        }); m(d).forEach(function (b) {
+          var d = z(b, D(S, a || {})); d.targets = d.targets || a.targets; b = c.duration; var e = d.offset; d.autoplay = !1; d.direction = c.direction; d.offset = h.und(e) ? b : L(e, b); c.began = !0; c.completed = !0; c.seek(d.offset); d = q(d); d.began = !0; d.completed = !0; d.duration > b && (c.duration = d.duration); c.children.push(d);
+        }); c.seek(0); c.reset(); c.autoplay && c.restart(); return c;
+      }; return c;
+    }; q.random = function (a, c) {
+      return Math.floor(Math.random() * (c - a + 1)) + a;
+    }; return q;
 });
-;(function ($, anim) {
+; (function ($, anim) {
   'use strict';
 
   var _defaults = {
@@ -2210,7 +2229,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(Collapsible, 'collapsible', 'M_Collapsible');
   }
 })(cash, M.anime);
-;(function ($, anim) {
+; (function ($, anim) {
   'use strict';
 
   var _defaults = {
@@ -2523,14 +2542,14 @@ $jscomp.polyfill = function (e, r, p, m) {
 
         // CASE WHEN USER TYPE LETTERS
         var letter = String.fromCharCode(e.which).toLowerCase(),
-            nonLetters = [9, 13, 27, 38, 40];
+          nonLetters = [9, 13, 27, 38, 40];
         if (letter && nonLetters.indexOf(e.which) === -1) {
           this.filterQuery.push(letter);
 
           var string = this.filterQuery.join(''),
-              newOptionEl = $(this.dropdownEl).find('li').filter(function (el) {
-            return $(el).text().toLowerCase().indexOf(string) === 0;
-          })[0];
+            newOptionEl = $(this.dropdownEl).find('li').filter(function (el) {
+              return $(el).text().toLowerCase().indexOf(string) === 0;
+            })[0];
 
           if (newOptionEl) {
             this.focusedIndex = $(newOptionEl).index();
@@ -2859,7 +2878,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(Dropdown, 'dropdown', 'M_Dropdown');
   }
 })(cash, M.anime);
-;(function ($, anim) {
+; (function ($, anim) {
   'use strict';
 
   var _defaults = {
@@ -3298,7 +3317,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(Modal, 'modal', 'M_Modal');
   }
 })(cash, M.anime);
-;(function ($, anim) {
+; (function ($, anim) {
   'use strict';
 
   var _defaults = {
@@ -3801,7 +3820,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(Materialbox, 'materialbox', 'M_Materialbox');
   }
 })(cash, M.anime);
-;(function ($) {
+; (function ($) {
   'use strict';
 
   var _defaults = {
@@ -3964,7 +3983,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(Parallax, 'parallax', 'M_Parallax');
   }
 })(cash);
-;(function ($, anim) {
+; (function ($, anim) {
   'use strict';
 
   var _defaults = {
@@ -4359,7 +4378,7 @@ $jscomp.polyfill = function (e, r, p, m) {
       key: "_animateIndicator",
       value: function _animateIndicator(prevIndex) {
         var leftDelay = 0,
-            rightDelay = 0;
+          rightDelay = 0;
 
         if (this.index - prevIndex >= 0) {
           leftDelay = 90;
@@ -4430,7 +4449,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(Tabs, 'tabs', 'M_Tabs');
   }
 })(cash, M.anime);
-;(function ($, anim) {
+; (function ($, anim) {
   'use strict';
 
   var _defaults = {
@@ -4593,15 +4612,15 @@ $jscomp.polyfill = function (e, r, p, m) {
       key: "_positionTooltip",
       value: function _positionTooltip() {
         var origin = this.el,
-            tooltip = this.tooltipEl,
-            originHeight = origin.offsetHeight,
-            originWidth = origin.offsetWidth,
-            tooltipHeight = tooltip.offsetHeight,
-            tooltipWidth = tooltip.offsetWidth,
-            newCoordinates = void 0,
-            margin = this.options.margin,
-            targetTop = void 0,
-            targetLeft = void 0;
+          tooltip = this.tooltipEl,
+          originHeight = origin.offsetHeight,
+          originWidth = origin.offsetWidth,
+          tooltipHeight = tooltip.offsetHeight,
+          tooltipWidth = tooltip.offsetWidth,
+          newCoordinates = void 0,
+          margin = this.options.margin,
+          targetTop = void 0,
+          targetLeft = void 0;
 
         this.xMovement = 0, this.yMovement = 0;
 
@@ -4780,7 +4799,7 @@ $jscomp.polyfill = function (e, r, p, m) {
   * https://github.com/fians/Waves/blob/master/LICENSE
   */
 
-;(function (window) {
+; (function (window) {
   'use strict';
 
   var Waves = Waves || {};
@@ -4797,9 +4816,9 @@ $jscomp.polyfill = function (e, r, p, m) {
 
   function offset(elem) {
     var docElem,
-        win,
-        box = { top: 0, left: 0 },
-        doc = elem && elem.ownerDocument;
+      win,
+      box = { top: 0, left: 0 },
+      doc = elem && elem.ownerDocument;
 
     docElem = doc.documentElement;
 
@@ -5104,7 +5123,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     Waves.displayEffect();
   }, false);
 })(window);
-;(function ($, anim) {
+; (function ($, anim) {
   'use strict';
 
   var _defaults = {
@@ -5455,7 +5474,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     return new Toast(options);
   };
 })(cash, M.anime);
-;(function ($, anim) {
+; (function ($, anim) {
   'use strict';
 
   var _defaults = {
@@ -6100,7 +6119,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(Sidenav, 'sidenav', 'M_Sidenav');
   }
 })(cash, M.anime);
-;(function ($, anim) {
+; (function ($, anim) {
   'use strict';
 
   var _defaults = {
@@ -6240,9 +6259,9 @@ $jscomp.polyfill = function (e, r, p, m) {
 
         // viewport rectangle
         var top = M.getDocumentScrollTop(),
-            left = M.getDocumentScrollLeft(),
-            right = left + window.innerWidth,
-            bottom = top + window.innerHeight;
+          left = M.getDocumentScrollLeft(),
+          right = left + window.innerWidth,
+          bottom = top + window.innerHeight;
 
         // determine which elements are in view
         var intersections = ScrollSpy._findElements(top, right, bottom, left);
@@ -6348,9 +6367,9 @@ $jscomp.polyfill = function (e, r, p, m) {
 
           if (scrollspy.$el.height() > 0) {
             var elTop = scrollspy.$el.offset().top,
-                elLeft = scrollspy.$el.offset().left,
-                elRight = elLeft + scrollspy.$el.width(),
-                elBottom = elTop + scrollspy.$el.height();
+              elLeft = scrollspy.$el.offset().left,
+              elRight = elLeft + scrollspy.$el.width(),
+              elBottom = elTop + scrollspy.$el.height();
 
             var isIntersect = !(elLeft > right || elRight < left || elTop > bottom || elBottom < currTop);
 
@@ -6418,7 +6437,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(ScrollSpy, 'scrollSpy', 'M_ScrollSpy');
   }
 })(cash, M.anime);
-;(function ($) {
+; (function ($) {
   'use strict';
 
   var _defaults = {
@@ -6636,8 +6655,8 @@ $jscomp.polyfill = function (e, r, p, m) {
 
         // Arrow keys and enter key usage
         var keyCode = e.keyCode,
-            liElement = void 0,
-            numItems = $(this.container).children('li').length;
+          liElement = void 0,
+          numItems = $(this.container).children('li').length;
 
         // select element on Enter
         if (keyCode === M.keys.ENTER && this.activeIndex >= 0) {
@@ -6711,10 +6730,10 @@ $jscomp.polyfill = function (e, r, p, m) {
       value: function _highlight(string, $el) {
         var img = $el.find('img');
         var matchStart = $el.text().toLowerCase().indexOf('' + string.toLowerCase() + ''),
-            matchEnd = matchStart + string.length - 1,
-            beforeMatch = $el.text().slice(0, matchStart),
-            matchText = $el.text().slice(matchStart, matchEnd + 1),
-            afterMatch = $el.text().slice(matchEnd + 1);
+          matchEnd = matchStart + string.length - 1,
+          beforeMatch = $el.text().slice(0, matchStart),
+          matchText = $el.text().slice(matchStart, matchEnd + 1),
+          afterMatch = $el.text().slice(matchEnd + 1);
         $el.html("<span>" + beforeMatch + "<span class='highlight'>" + matchText + "</span>" + afterMatch + "</span>");
         if (img.length) {
           $el.prepend(img);
@@ -6912,7 +6931,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(Autocomplete, 'autocomplete', 'M_Autocomplete');
   }
 })(cash);
-;(function ($) {
+; (function ($) {
   // Function to update labels of text fields
   M.updateTextFields = function () {
     var input_selector = 'input[type=text], input[type=password], input[type=email], input[type=url], input[type=tel], input[type=number], input[type=search], input[type=date], input[type=time], textarea';
@@ -7156,7 +7175,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     });
   }); // End of $(document).ready
 })(cash);
-;(function ($, anim) {
+; (function ($, anim) {
   'use strict';
 
   var _defaults = {
@@ -7428,7 +7447,7 @@ $jscomp.polyfill = function (e, r, p, m) {
         var _this44 = this;
 
         // Wrap around indices.
-        if (index >= this.$slides.length) index = 0;else if (index < 0) index = this.$slides.length - 1;
+        if (index >= this.$slides.length) index = 0; else if (index < 0) index = this.$slides.length - 1;
 
         // Only do if index changes
         if (this.activeIndex != index) {
@@ -7519,7 +7538,7 @@ $jscomp.polyfill = function (e, r, p, m) {
         var newIndex = this.activeIndex + 1;
 
         // Wrap around indices.
-        if (newIndex >= this.$slides.length) newIndex = 0;else if (newIndex < 0) newIndex = this.$slides.length - 1;
+        if (newIndex >= this.$slides.length) newIndex = 0; else if (newIndex < 0) newIndex = this.$slides.length - 1;
 
         this.set(newIndex);
       }
@@ -7534,7 +7553,7 @@ $jscomp.polyfill = function (e, r, p, m) {
         var newIndex = this.activeIndex - 1;
 
         // Wrap around indices.
-        if (newIndex >= this.$slides.length) newIndex = 0;else if (newIndex < 0) newIndex = this.$slides.length - 1;
+        if (newIndex >= this.$slides.length) newIndex = 0; else if (newIndex < 0) newIndex = this.$slides.length - 1;
 
         this.set(newIndex);
       }
@@ -7570,7 +7589,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(Slider, 'slider', 'M_Slider');
   }
 })(cash, M.anime);
-;(function ($, anim) {
+; (function ($, anim) {
   $(document).on('click', '.card', function (e) {
     if ($(this).children('.card-reveal').length) {
       var $card = $(e.target).closest('.card');
@@ -7604,7 +7623,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     }
   });
 })(cash, M.anime);
-;(function ($) {
+; (function ($) {
   'use strict';
 
   var _defaults = {
@@ -8158,7 +8177,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     });
   });
 })(cash);
-;(function ($) {
+; (function ($) {
   'use strict';
 
   var _defaults = {
@@ -8324,7 +8343,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(Pushpin, 'pushpin', 'M_Pushpin');
   }
 })(cash);
-;(function ($, anim) {
+; (function ($, anim) {
   'use strict';
 
   var _defaults = {
@@ -8723,7 +8742,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(FloatingActionButton, 'floatingActionButton', 'M_FloatingActionButton');
   }
 })(cash, M.anime);
-;(function ($) {
+; (function ($) {
   'use strict';
 
   var _defaults = {
@@ -8959,7 +8978,7 @@ $jscomp.polyfill = function (e, r, p, m) {
         }
 
         var min = this.options.minDate,
-            max = this.options.maxDate;
+          max = this.options.maxDate;
 
         if (Datepicker._isDate(min) && date < min) {
           date = min;
@@ -9011,8 +9030,8 @@ $jscomp.polyfill = function (e, r, p, m) {
 
         if (this.calendars) {
           var firstVisibleDate = new Date(this.calendars[0].year, this.calendars[0].month, 1),
-              lastVisibleDate = new Date(this.calendars[this.calendars.length - 1].year, this.calendars[this.calendars.length - 1].month, 1),
-              visibleDate = date.getTime();
+            lastVisibleDate = new Date(this.calendars[this.calendars.length - 1].year, this.calendars[this.calendars.length - 1].month, 1),
+            visibleDate = date.getTime();
           // get the end of the month
           lastVisibleDate.setMonth(lastVisibleDate.getMonth() + 1);
           lastVisibleDate.setDate(lastVisibleDate.getDate() - 1);
@@ -9063,11 +9082,11 @@ $jscomp.polyfill = function (e, r, p, m) {
       key: "render",
       value: function render(year, month, randId) {
         var opts = this.options,
-            now = new Date(),
-            days = Datepicker._getDaysInMonth(year, month),
-            before = new Date(year, month, 1).getDay(),
-            data = [],
-            row = [];
+          now = new Date(),
+          days = Datepicker._getDaysInMonth(year, month),
+          before = new Date(year, month, 1).getDay(),
+          data = [],
+          row = [];
         Datepicker._setToStartOfDay(now);
         if (opts.firstDay > 0) {
           before -= opts.firstDay;
@@ -9076,12 +9095,12 @@ $jscomp.polyfill = function (e, r, p, m) {
           }
         }
         var previousMonth = month === 0 ? 11 : month - 1,
-            nextMonth = month === 11 ? 0 : month + 1,
-            yearOfPreviousMonth = month === 0 ? year - 1 : year,
-            yearOfNextMonth = month === 11 ? year + 1 : year,
-            daysInPreviousMonth = Datepicker._getDaysInMonth(yearOfPreviousMonth, previousMonth);
+          nextMonth = month === 11 ? 0 : month + 1,
+          yearOfPreviousMonth = month === 0 ? year - 1 : year,
+          yearOfNextMonth = month === 11 ? year + 1 : year,
+          daysInPreviousMonth = Datepicker._getDaysInMonth(yearOfPreviousMonth, previousMonth);
         var cells = days + before,
-            after = cells;
+          after = cells;
         while (after > 7) {
           after -= 7;
         }
@@ -9089,17 +9108,17 @@ $jscomp.polyfill = function (e, r, p, m) {
         var isWeekSelected = false;
         for (var i = 0, r = 0; i < cells; i++) {
           var day = new Date(year, month, 1 + (i - before)),
-              isSelected = Datepicker._isDate(this.date) ? Datepicker._compareDates(day, this.date) : false,
-              isToday = Datepicker._compareDates(day, now),
-              hasEvent = opts.events.indexOf(day.toDateString()) !== -1 ? true : false,
-              isEmpty = i < before || i >= days + before,
-              dayNumber = 1 + (i - before),
-              monthNumber = month,
-              yearNumber = year,
-              isStartRange = opts.startRange && Datepicker._compareDates(opts.startRange, day),
-              isEndRange = opts.endRange && Datepicker._compareDates(opts.endRange, day),
-              isInRange = opts.startRange && opts.endRange && opts.startRange < day && day < opts.endRange,
-              isDisabled = opts.minDate && day < opts.minDate || opts.maxDate && day > opts.maxDate || opts.disableWeekends && Datepicker._isWeekend(day) || opts.disableDayFn && opts.disableDayFn(day);
+            isSelected = Datepicker._isDate(this.date) ? Datepicker._compareDates(day, this.date) : false,
+            isToday = Datepicker._compareDates(day, now),
+            hasEvent = opts.events.indexOf(day.toDateString()) !== -1 ? true : false,
+            isEmpty = i < before || i >= days + before,
+            dayNumber = 1 + (i - before),
+            monthNumber = month,
+            yearNumber = year,
+            isStartRange = opts.startRange && Datepicker._compareDates(opts.startRange, day),
+            isEndRange = opts.endRange && Datepicker._compareDates(opts.endRange, day),
+            isInRange = opts.startRange && opts.endRange && opts.startRange < day && day < opts.endRange,
+            isDisabled = opts.minDate && day < opts.minDate || opts.maxDate && day > opts.maxDate || opts.disableWeekends && Datepicker._isWeekend(day) || opts.disableDayFn && opts.disableDayFn(day);
 
           if (isEmpty) {
             if (i < before) {
@@ -9191,7 +9210,7 @@ $jscomp.polyfill = function (e, r, p, m) {
       key: "renderHead",
       value: function renderHead(opts) {
         var i = void 0,
-            arr = [];
+          arr = [];
         for (i = 0; i < 7; i++) {
           arr.push("<th scope=\"col\"><abbr title=\"" + this.renderDayName(opts, i) + "\">" + this.renderDayName(opts, i, true) + "</abbr></th>");
         }
@@ -9206,16 +9225,16 @@ $jscomp.polyfill = function (e, r, p, m) {
       key: "renderTitle",
       value: function renderTitle(instance, c, year, month, refYear, randId) {
         var i = void 0,
-            j = void 0,
-            arr = void 0,
-            opts = this.options,
-            isMinYear = year === opts.minYear,
-            isMaxYear = year === opts.maxYear,
-            html = '<div id="' + randId + '" class="datepicker-controls" role="heading" aria-live="assertive">',
-            monthHtml = void 0,
-            yearHtml = void 0,
-            prev = true,
-            next = true;
+          j = void 0,
+          arr = void 0,
+          opts = this.options,
+          isMinYear = year === opts.minYear,
+          isMaxYear = year === opts.maxYear,
+          html = '<div id="' + randId + '" class="datepicker-controls" role="heading" aria-live="assertive">',
+          monthHtml = void 0,
+          yearHtml = void 0,
+          prev = true,
+          next = true;
 
         for (arr = [], i = 0; i < 12; i++) {
           arr.push('<option value="' + (year === refYear ? i - c : 12 + i - c) + '"' + (i === month ? ' selected="selected"' : '') + (isMinYear && i < opts.minMonth || isMaxYear && i > opts.maxMonth ? 'disabled="disabled"' : '') + '>' + opts.i18n.months[i] + '</option>');
@@ -9275,12 +9294,12 @@ $jscomp.polyfill = function (e, r, p, m) {
           return;
         }
         var opts = this.options,
-            minYear = opts.minYear,
-            maxYear = opts.maxYear,
-            minMonth = opts.minMonth,
-            maxMonth = opts.maxMonth,
-            html = '',
-            randId = void 0;
+          minYear = opts.minYear,
+          maxYear = opts.maxYear,
+          minMonth = opts.minMonth,
+          maxMonth = opts.maxMonth,
+          html = '',
+          randId = void 0;
 
         if (this._y <= minYear) {
           this._y = minYear;
@@ -9648,7 +9667,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(Datepicker, 'datepicker', 'M_Datepicker');
   }
 })(cash);
-;(function ($) {
+; (function ($) {
   'use strict';
 
   var _defaults = {
@@ -10041,8 +10060,8 @@ $jscomp.polyfill = function (e, r, p, m) {
           // raiseCallback(this.options.beforeHourSelect);
         }
         var isHours = view === 'hours',
-            nextView = isHours ? this.hoursView : this.minutesView,
-            hideView = isHours ? this.minutesView : this.hoursView;
+          nextView = isHours ? this.hoursView : this.minutesView,
+          hideView = isHours ? this.minutesView : this.hoursView;
         this.currentView = view;
 
         $(this.spanHours).toggleClass('text-primary', isHours);
@@ -10065,14 +10084,14 @@ $jscomp.polyfill = function (e, r, p, m) {
       key: "resetClock",
       value: function resetClock(delay) {
         var view = this.currentView,
-            value = this[view],
-            isHours = view === 'hours',
-            unit = Math.PI / (isHours ? 6 : 30),
-            radian = value * unit,
-            radius = isHours && value > 0 && value < 13 ? this.options.innerRadius : this.options.outerRadius,
-            x = Math.sin(radian) * radius,
-            y = -Math.cos(radian) * radius,
-            self = this;
+          value = this[view],
+          isHours = view === 'hours',
+          unit = Math.PI / (isHours ? 6 : 30),
+          radian = value * unit,
+          radius = isHours && value > 0 && value < 13 ? this.options.innerRadius : this.options.outerRadius,
+          x = Math.sin(radian) * radius,
+          y = -Math.cos(radian) * radius,
+          self = this;
 
         if (delay) {
           $(this.canvas).addClass('timepicker-canvas-out');
@@ -10090,11 +10109,11 @@ $jscomp.polyfill = function (e, r, p, m) {
         var _this60 = this;
 
         var radian = Math.atan2(x, -y),
-            isHours = this.currentView === 'hours',
-            unit = Math.PI / (isHours || roundBy5 ? 6 : 30),
-            z = Math.sqrt(x * x + y * y),
-            inner = isHours && z < (this.options.outerRadius + this.options.innerRadius) / 2,
-            radius = inner ? this.options.innerRadius : this.options.outerRadius;
+          isHours = this.currentView === 'hours',
+          unit = Math.PI / (isHours || roundBy5 ? 6 : 30),
+          z = Math.sqrt(x * x + y * y),
+          inner = isHours && z < (this.options.outerRadius + this.options.innerRadius) / 2,
+          radius = inner ? this.options.innerRadius : this.options.outerRadius;
 
         if (this.options.twelveHour) {
           radius = this.options.outerRadius;
@@ -10157,9 +10176,9 @@ $jscomp.polyfill = function (e, r, p, m) {
 
         // Set clock hand and others' position
         var cx1 = Math.sin(radian) * (radius - this.options.tickRadius),
-            cy1 = -Math.cos(radian) * (radius - this.options.tickRadius),
-            cx2 = Math.sin(radian) * radius,
-            cy2 = -Math.cos(radian) * radius;
+          cy1 = -Math.cos(radian) * (radius - this.options.tickRadius),
+          cx2 = Math.sin(radian) * radius,
+          cy2 = -Math.cos(radian) * radius;
         this.hand.setAttribute('x2', cx1);
         this.hand.setAttribute('y2', cy1);
         this.bg.setAttribute('cx', cx2);
@@ -10285,7 +10304,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(Timepicker, 'timepicker', 'M_Timepicker');
   }
 })(cash);
-;(function ($) {
+; (function ($) {
   'use strict';
 
   var _defaults = {};
@@ -10395,7 +10414,7 @@ $jscomp.polyfill = function (e, r, p, m) {
       key: "updateCounter",
       value: function updateCounter() {
         var maxLength = +this.$el.attr('data-length'),
-            actualLength = this.el.value.length;
+          actualLength = this.el.value.length;
         this.isValidLength = actualLength <= maxLength;
         var counterString = actualLength;
 
@@ -10455,7 +10474,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(CharacterCounter, 'characterCounter', 'M_CharacterCounter');
   }
 })(cash);
-;(function ($) {
+; (function ($) {
   'use strict';
 
   var _defaults = {
@@ -10685,9 +10704,9 @@ $jscomp.polyfill = function (e, r, p, m) {
       key: "_handleCarouselDrag",
       value: function _handleCarouselDrag(e) {
         var x = void 0,
-            y = void 0,
-            delta = void 0,
-            deltaY = void 0;
+          y = void 0,
+          delta = void 0,
+          deltaY = void 0;
         if (this.pressed) {
           x = this._xpos(e);
           y = this._ypos(e);
@@ -10912,9 +10931,9 @@ $jscomp.polyfill = function (e, r, p, m) {
       key: "_track",
       value: function _track() {
         var now = void 0,
-            elapsed = void 0,
-            delta = void 0,
-            v = void 0;
+          elapsed = void 0,
+          delta = void 0,
+          v = void 0;
 
         now = Date.now();
         elapsed = now - this.timestamp;
@@ -10934,7 +10953,7 @@ $jscomp.polyfill = function (e, r, p, m) {
       key: "_autoScroll",
       value: function _autoScroll() {
         var elapsed = void 0,
-            delta = void 0;
+          delta = void 0;
 
         if (this.amplitude) {
           elapsed = Date.now() - this.timestamp;
@@ -10971,15 +10990,15 @@ $jscomp.polyfill = function (e, r, p, m) {
 
         // Start actual scroll
         var i = void 0,
-            half = void 0,
-            delta = void 0,
-            dir = void 0,
-            tween = void 0,
-            el = void 0,
-            alignment = void 0,
-            zTranslation = void 0,
-            tweenedOpacity = void 0,
-            centerTweenedOpacity = void 0;
+          half = void 0,
+          delta = void 0,
+          dir = void 0,
+          tween = void 0,
+          el = void 0,
+          alignment = void 0,
+          zTranslation = void 0,
+          tweenedOpacity = void 0,
+          centerTweenedOpacity = void 0;
         var lastCenter = this.center;
         var numVisibleOffset = 1 / this.options.numVisible;
 
@@ -11242,7 +11261,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(Carousel, 'carousel', 'M_Carousel');
   }
 })(cash);
-;(function ($) {
+; (function ($) {
   'use strict';
 
   var _defaults = {
@@ -11596,7 +11615,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(TapTarget, 'tapTarget', 'M_TapTarget');
   }
 })(cash);
-;(function ($) {
+; (function ($) {
   'use strict';
 
   var _defaults = {
@@ -12072,7 +12091,7 @@ $jscomp.polyfill = function (e, r, p, m) {
     M.initializeJqueryWrapper(FormSelect, 'formSelect', 'M_FormSelect');
   }
 })(cash);
-;(function ($, anim) {
+; (function ($, anim) {
   'use strict';
 
   var _defaults = {};
