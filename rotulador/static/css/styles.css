@@ -2,12 +2,21 @@
     font-size: 15px !important;
 }
 
-.card-top {
+.no-bottom-pad {
     padding-bottom: 0px !important;
 }
 
-.card-bottom {
+.no-top-pad {
     padding-top: 0px !important;
+}
+
+.reduced-pad {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+
+.reduced-pad>.card-title {
+    margin-bottom: 0px !important;
 }
 
 .btn-wide {
@@ -20,9 +29,17 @@
 }
 
 .top-right {
-    margin: -15px -15px 0px 0px;
+    margin: -5px -5px 0px 0px;
 }
 
 .brand-logo {
     margin-left: 20px;
+}
+
+.hidden {
+    display: none;
+}
+
+.card .card-content {
+    padding: 18px !important;
 }
