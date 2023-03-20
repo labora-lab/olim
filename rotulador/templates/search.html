@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Search Data{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col s12">
+        <form action="/search" method="post">
+            <div class="input-field col s12">
+                <input type="text" id="must_terms" name="must_terms" class="validate tooltipped" data-position="bottom" data-tooltip="Exemplo: vacina, medicamento, dorflex" {% if must_terms %}
+                    value="{{ must_terms }}"
+                {% endif %}>
+                <label for="must_terms">Inclusão de termos <i class="material-icons left green-text">check</i></label>
+            </div>
+            <div class="input-field col s12">
+                <input type="text" id="not_must_terms" name="not_must_terms" class="validate tooltipped" data-position="bottom" data-tooltip="Exemplo: vacina, medicamento, dorflex" {% if not_must_terms %}
+                value="{{ not_must_terms }}"
+                {% endif %}>
+                <label for="not_must_terms">Exclusão de termos <i class="material-icons left red-text">close</i></label>
+            </div>
+            <div class="input-field col s12">
+                <input type="text" id="must_phrases" name="must_phrases" class="validate tooltipped" data-position="bottom" data-tooltip="Exemplo: vacina para dor no ombro; vacina para vida" {% if must_terms %}
+                    value="{{ must_phrases }}"
+                {% endif %}>
+                <label for="must_phrases">Inclusão de Frases <i class="material-icons left green-text">check</i></label>
+            </div>
+            <div class="input-field col s12">
+                <input type="text" id="not_must_phrases" name="not_must_phrases" class="validate tooltipped" data-position="bottom" data-tooltip="Exemplo: vacina para dor no ombro; vacina para vida" {% if must_terms %}
+                    value="{{ not_must_phrases }}"
+                {% endif %}>
+                <label for="not_must_phrases">Exclusão de Frases <i class="material-icons left red-text">close</i></label>
+            </div>
+            </div>
+            <div class="input-field col s12 center">
+                <button class="btn waves-effect waves-light btn-wide">Pesquisar
+                    <i class="material-icons right">search</i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+{% if results %}
+<h4 class="center">Resultados</h4>
+<div class="row">
+    {% for result in results %}
+        {% set loopmain = loop %}
+        <div class="col s12 m6">
+            <div class="card blue-grey darken-1">
+                <div class="card-content white-text">
+                    <span class="card-title">Código do Usuário: {{ result["_source"]["cd_usu_cadsus"] }}</span>
+                    <p>{{ result["_source"]["descricao"] }}</p>
+                </div>
+                <!-- A ideia aqui era colocar mas informações e não só a descrição -->
+                <!-- <div class="card-tabs">
+                    <ul class="tabs tabs-fixed-width">
+                        {% for key in result["_source"].keys() %}
+                            {% if loop.first %}
+                            <li class="tab"><a href="#{{ key }}{{ loopmain.index }}" class="active">{{ key }}</a></li>
+                            {% else %}
+                            <li class="tab"><a href="#{{ key }}{{ loopmain.index }}">{{ key }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="card-content grey lighten-4">
+                    {% for key, value in result["_source"].items() %}
+                    <div id="#{{ key }}{{ loopmain.index }}">{{ value }}</div>
+                    {% endfor %}
+                </div> -->
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+{% else %}
+<h4 class="center">Sem resultados para a pesquisa.</h4>
+{% endif %}
+
+{% endblock %}

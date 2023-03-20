@@ -13,7 +13,7 @@ def patient():
     pid = request.args["id"]
     con = sqlite3.connect("textos_limpos.sqlite")
     df = pd.read_sql_query(
-        f"SELECT * from textos_limpos WHERE id_paciente == {pid};", con
+        f"SELECT * from textos_limpos WHERE id_paciente = {pid};", con
     )
     df["datetime"] = pd.to_datetime(df["data"])
     df["data"] = df["datetime"].dt.strftime("%d/%m/%Y")
@@ -30,4 +30,5 @@ def patient():
             date = curr_date
             data["data"][curr_date] = []
         data["data"][curr_date].append(dict(row))
+    con.close()
     return render_template("patient.html", **data)
