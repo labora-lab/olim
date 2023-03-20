@@ -12,11 +12,23 @@
                             <label for="id">Id do paciente</label>
                         </div>
                         <div class="input-field col s6">
-                            <input type="text" name="start" class="datepicker">
+                            <span class="right clear">
+                                <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
+                                data-tooltip="Limpar data" onclick="clear_date('start-date');">
+                                    <i class="material-icons grey-text text-darken-4">clear</i>
+                                </a>
+                            </span>
+                            <input type="text" name="start-date" id="start-date" class="datepicker" value="{{start_date}}">
                             <label for="start">Data inicio</label>
                         </div>
                         <div class="input-field col s6">
-                            <input type="text" name="end" class="datepicker">
+                            <span class="right clear">
+                                <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
+                                data-tooltip="Limpar data" onclick="clear_date('end-date');">
+                                    <i class="material-icons grey-text text-darken-4">clear</i>
+                                </a>
+                            </span>
+                            <input type="text" name="end-date" id="end-date" class="datepicker" value="{{end_date}}">
                             <label for="end">Data fim</label>
                         </div>
                         <div class="input-field col s12">
@@ -98,4 +110,42 @@
         </div>
     </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        let language = {
+                months: ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
+                monthsShort: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
+                weekdays: ["Domingo","Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sabado"],
+                weekdaysShort: ["Dom","Seg", "Ter", "Qua", "Qui", "Sex", "Sab"],
+                weekdaysAbbrev: ["D", "S", "T", "Q", "Q", "S", "S"],
+                cancel: "Cancelar",
+                clear: "Limpar"
+            };
+
+        $('#start-date').datepicker({
+            firstDay: true,
+            format: 'dd/mm/yyyy',
+            yearRange: [2020, 2023],
+            defaultDate: datestr("{{start_date}}"),
+            setDefaultDate: true,
+            autoClose: true,
+            showClearBtn: true,
+            i18n: language
+        });
+
+        $('#end-date').datepicker({
+            firstDay: true,
+            format: 'dd/mm/yyyy',
+            yearRange: [2020, 2023],
+            defaultDate: datestr("{{end_date}}"),
+            setDefaultDate: true,
+            autoClose: true,
+            showClearBtn: true,
+            i18n: language
+        });
+
+    });
+</script>
 {% endblock %}

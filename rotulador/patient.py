@@ -60,7 +60,9 @@ def load_patient(
                 'count': XX,
             },
             'DD/MM/YYYY': (......)
-        }
+        },
+        'start_date': start_date,
+        'end_date': end_date,
     }
 
     Args:
@@ -76,6 +78,8 @@ def load_patient(
     data = {
         "patient_id": pid,
         "dates": {},
+        "start_date": start_date,
+        "end_date": end_date,
     }
     df = get_data_sqlite(pid)
 
@@ -126,8 +130,8 @@ def load_patient(
 @app.route("/patient", methods=["GET"])
 def patient():
     pid = request.args["id"]
-    start_date = request.args["start"]
-    end_date = request.args["end"]
+    start_date = request.args["start-date"]
+    end_date = request.args["end-date"]
 
     data = load_patient(
         pid=pid,

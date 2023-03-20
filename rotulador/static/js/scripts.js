@@ -1,3 +1,7 @@
+$(document).ready(function () {
+    M.AutoInit();
+});
+
 function toggle_pannel(id) {
     $("#short_" + id).toggle();
     $("#text_" + id).toggle();
@@ -17,4 +21,14 @@ function toggle_inline() {
 
 function toggle_hidden() {
     $(".hidden-entry").toggle()
+}
+
+function clear_date(id){
+    $("#" + id).val([]);
+    M.Datepicker.getInstance($("#" + id)).setDate();
+}
+
+function datestr(datestr){
+    var splitDate = datestr.split("/");
+    return new Date(splitDate[2], splitDate[1] - 1, splitDate[0]);
 }

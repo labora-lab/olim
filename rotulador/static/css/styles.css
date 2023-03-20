@@ -43,3 +43,8 @@
 .card .card-content {
     padding: 18px !important;
 }
+
+.clear {
+    margin-left: -100px;
+    margin-top: 2px;
+}
