@@ -2,7 +2,6 @@
 {% block title %}Paciente {{patient_id}}{% endblock %}
 {% block patient %}
 {%for date in dates.keys()%}
-{%set first=True%}
 {%set date_id='day_'+date.replace('/', '_')%}
 <div class="card" id="{{date_id}}">
     <div class="card-content reduced-pad">
@@ -35,49 +34,40 @@
     </div>
     <div class="toggle_{{date_id}}">
         {%for row in dates[date]['texts']%}
-        {%if first%}
-        <div class="card-content grey lighten-4 hidden" id="text_{{row['text_id']}}">
-            {%else%}
-            <div class="card-content grey lighten-4 hidden no-top-pad" id="text_{{row['text_id']}}">
-                {%endif%}
-                <span class="right top-right">
-                    <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
-                        data-tooltip="Esconder este">
-                        <i class="material-icons grey-text text-darken-4">remove_circle_outline</i>
-                    </a>
-                    <a class='btn-floating btn btn-flat waves-light tooltipped' data-position="bottom"
-                        data-tooltip="Esconder todos como este">
-                        <i class="material-icons grey-text text-darken-4">remove_circle</i>
-                    </a>
-                    <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
-                        data-tooltip="Recolher" onclick="toggle_pannel('{{row['text_id']}}')">
-                        <i class="material-icons grey-text text-darken-4">remove</i>
-                    </a>
-                </span>
-                <span class="card-title small-title">{{row['text_type']}}</span>
-                {{row['text']}}
-            </div>
-            {%if first%}
-            {%set first=False%}
-            <div class="card-content grey lighten-3{%if row['hidden']%} hidden hidden-entry{%endif%}"
-                id="short_{{row['text_id']}}">
-                {%else%}
-                <div class="card-content grey lighten-3 no-top-pad{%if row['hidden']%} hidden hidden-entry{%endif%}"
-                    id="short_{{row['text_id']}}">
-                    {%endif%}
-                    <span class="right top-right">
-                        <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
-                            data-tooltip="Expandir" onclick="toggle_pannel('{{row['text_id']}}')">
-                            <i class="material-icons grey-text text-darken-4">add</i>
-                        </a>
-                    </span>
-                    <span class="card-title small-title">
-                        {{row['text_type']}}:
-                        <span class="black-text">{{row['short_text']}}</span>
-                    </span>
-                </div>
-                {%endfor%}
-            </div>
+        <div class="card-content grey lighten-4 hidden{%if loop.first %} no-top-pad{%endif%}" id="text_{{row['text_id']}}">
+            <span class="right top-right">
+                <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
+                    data-tooltip="Esconder este">
+                    <i class="material-icons grey-text text-darken-4">remove_circle_outline</i>
+                </a>
+                <a class='btn-floating btn btn-flat waves-light tooltipped' data-position="bottom"
+                    data-tooltip="Esconder todos como este">
+                    <i class="material-icons grey-text text-darken-4">remove_circle</i>
+                </a>
+                <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
+                    data-tooltip="Recolher" onclick="toggle_pannel('{{row['text_id']}}')">
+                    <i class="material-icons grey-text text-darken-4">remove</i>
+                </a>
+            </span>
+            <span class="card-title small-title">{{row['text_type']}}</span>
+            {{row['text']}}
         </div>
-        {%endfor%}
-        {% endblock %}
+        <div class="card-content grey lighten-3{%if loop.first %} no-top-pad{%endif%}{%if row['hidden']%} hidden hidden-entry{%endif%}"
+            id="short_{{row['text_id']}}">
+
+            <span class="right top-right">
+                <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
+                    data-tooltip="Expandir" onclick="toggle_pannel('{{row['text_id']}}')">
+                    <i class="material-icons grey-text text-darken-4">add</i>
+                </a>
+            </span>
+            <span class="card-title small-title">
+                {{row['text_type']}}:
+                <span class="black-text">{{row['short_text']}}</span>
+            </span>
+        </div>
+    {%endfor%}
+    </div>
+</div>
+{%endfor%}
+{% endblock %}
