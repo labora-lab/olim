@@ -14,17 +14,18 @@
                         <div class="input-field col s6">
                             <span class="right clear">
                                 <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
-                                data-tooltip="Limpar data" onclick="clear_date('start-date');">
+                                    data-tooltip="Limpar data" onclick="clear_date('start-date');">
                                     <i class="material-icons grey-text text-darken-4">clear</i>
                                 </a>
                             </span>
-                            <input type="text" name="start-date" id="start-date" class="datepicker" value="{{start_date}}">
+                            <input type="text" name="start-date" id="start-date" class="datepicker"
+                                value="{{start_date}}">
                             <label for="start">Data inicio</label>
                         </div>
                         <div class="input-field col s6">
                             <span class="right clear">
                                 <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
-                                data-tooltip="Limpar data" onclick="clear_date('end-date');">
+                                    data-tooltip="Limpar data" onclick="clear_date('end-date');">
                                     <i class="material-icons grey-text text-darken-4">clear</i>
                                 </a>
                             </span>
@@ -32,6 +33,7 @@
                             <label for="end">Data fim</label>
                         </div>
                         <div class="input-field col s12">
+                            <input type="hidden" name="show-hidden" id="show-hidden" value="{{show_hidden}}">
                             <button class="btn waves-effect waves-light btn-wide" type="submit">Pesquisar
                                 <i class="material-icons right">search</i>
                             </button>
@@ -95,13 +97,15 @@
             </form>
             <div class="row">
                 <div class="input-field col s12">
-                    <button class="btn waves-effect waves-light btn-wide hidden-entry"
-                        onclick='$(".hidden-entry").toggle()'>
+                    <button
+                        class="btn waves-effect waves-light btn-wide hidden-entry{% if show_hidden %} hidden{% endif %}"
+                        onclick='toggle_hidden(true)'>
                         Exibir ocultos
                         <i class="material-icons right">remove_red_eye</i>
                     </button>
-                    <button class="btn waves-effect waves-light btn-wide hidden-entry hidden"
-                        onclick='$(".hidden-entry").toggle()'>
+                    <button
+                        class="btn waves-effect waves-light btn-wide red darken-4 hidden-entry{% if not show_hidden %} hidden{% endif %}"
+                        onclick='toggle_hidden(false)'>
                         Esconder ocultos
                         <i class="material-icons right">remove_red_eye</i>
                     </button>
@@ -115,14 +119,14 @@
 <script>
     $(document).ready(function () {
         let language = {
-                months: ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
-                monthsShort: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
-                weekdays: ["Domingo","Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sabado"],
-                weekdaysShort: ["Dom","Seg", "Ter", "Qua", "Qui", "Sex", "Sab"],
-                weekdaysAbbrev: ["D", "S", "T", "Q", "Q", "S", "S"],
-                cancel: "Cancelar",
-                clear: "Limpar"
-            };
+            months: ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
+            monthsShort: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
+            weekdays: ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sabado"],
+            weekdaysShort: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"],
+            weekdaysAbbrev: ["D", "S", "T", "Q", "Q", "S", "S"],
+            cancel: "Cancelar",
+            clear: "Limpar"
+        };
 
         $('#start-date').datepicker({
             firstDay: true,

@@ -23,12 +23,21 @@ function toggle_hidden() {
     $(".hidden-entry").toggle()
 }
 
-function clear_date(id){
+function clear_date(id) {
     $("#" + id).val([]);
     M.Datepicker.getInstance($("#" + id)).setDate();
 }
 
-function datestr(datestr){
+function datestr(datestr) {
     var splitDate = datestr.split("/");
     return new Date(splitDate[2], splitDate[1] - 1, splitDate[0]);
+}
+
+function toggle_hidden(show) {
+    $(".hidden-entry").toggle()
+    if (show) {
+        $('#show-hidden').val("True")
+    } else {
+        $('#show-hidden').val("False")
+    }
 }

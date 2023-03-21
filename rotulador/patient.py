@@ -40,7 +40,6 @@ def load_patient(
     start_date: str = None,
     end_date: str = None,
     ascending: bool = False,
-    show_hidden: bool = False,
 ) -> dict:
     """Loads all texts for a given pacient, data will be  stored in the format:
 
@@ -61,8 +60,6 @@ def load_patient(
             },
             'DD/MM/YYYY': (......)
         },
-        'start_date': start_date,
-        'end_date': end_date,
     }
 
     Args:
@@ -70,7 +67,6 @@ def load_patient(
         start_date (str, optional): Date to filter entrys. Defaults to None.
         end_date (str, optional): Date to filter entrys. Defaults to None.
         ascending (bool, optional): Sort dates in acending order. Defaults to False.
-        show_hidden (bool, optional): Shows hidden entrys. Defaults to False.
 
     Returns:
         dict: Data dictionary.
@@ -78,8 +74,6 @@ def load_patient(
     data = {
         "patient_id": pid,
         "dates": {},
-        "start_date": start_date,
-        "end_date": end_date,
     }
     df = get_data_sqlite(pid)
 
@@ -103,10 +97,6 @@ def load_patient(
     # Generates shortned texts
     df["short_text"] = df["text"].apply(shorten)
 
-    # Remove hidden
-    if not show_hidden:
-        df = df[~df["hidden"]]
-
     # Reverse data if ascending
     if ascending:
         df = df.iloc[::-1]
@@ -129,16 +119,24 @@ def load_patient(
 
 @app.route("/patient", methods=["GET"])
 def patient():
-    pid = request.args["id"]
-    start_date = request.args["start-date"]
-    end_date = request.args["end-date"]
+    pid = request.args.get("id", "")
+    start_date = request.args.get("start-date", "")
+    end_date = request.args.get("end-date", "")
+    show_hidden = bool(request.args.get("show-hidden", False))
 
     data = load_patient(
         pid=pid,
         start_date=start_date,
         end_date=end_date,
         ascending=False,
-        show_hidden=True,
+    )
+
+    data.update(
+        {
+            "start_date": start_date,
+            "end_date": end_date,
+            "show_hidden": show_hidden,
+        }
     )
 
     return render_template("patient.html", **data)
