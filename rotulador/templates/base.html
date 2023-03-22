@@ -19,23 +19,19 @@
         <div class="nav-wrapper cyan darken-4">
             <a href="#" class="brand-logo left">Projeto OPAS</a>
             <ul id="nav-mobile" class="right">
-                <li><a href="./">Home</a></li>
+                <li><a href="./">Rotulação</a></li>
+                <li><a href="./search">Pesquisa de paciente</a></li>
             </ul>
         </div>
     </nav>
     <div class="container" style="margin-top: 20px;">
         {% block content %}{% endblock %}
     </div>
-    <div class="divider"></div>
     <!--JavaScript at end of body for optimized loading-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/materialize.min.js')}}"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/scripts.js')}}"></script>
-    <script>
-        $(document).ready(function () {
-            M.AutoInit();
-        });
-    </script>
+    {% block scripts %}{% endblock %}
 </body>
 
 </html>

@@ -12,14 +12,28 @@
                             <label for="id">Id do paciente</label>
                         </div>
                         <div class="input-field col s6">
-                            <input type="text" name="start" class="datepicker">
+                            <span class="right clear">
+                                <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
+                                    data-tooltip="Limpar data" onclick="clear_date('start-date');">
+                                    <i class="material-icons grey-text text-darken-4">clear</i>
+                                </a>
+                            </span>
+                            <input type="text" name="start-date" id="start-date" class="datepicker"
+                                value="{{start_date}}">
                             <label for="start">Data inicio</label>
                         </div>
                         <div class="input-field col s6">
-                            <input type="text" name="end" class="datepicker">
+                            <span class="right clear">
+                                <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
+                                    data-tooltip="Limpar data" onclick="clear_date('end-date');">
+                                    <i class="material-icons grey-text text-darken-4">clear</i>
+                                </a>
+                            </span>
+                            <input type="text" name="end-date" id="end-date" class="datepicker" value="{{end_date}}">
                             <label for="end">Data fim</label>
                         </div>
                         <div class="input-field col s12">
+                            <input type="hidden" name="show-hidden" id="show-hidden" value="{{show_hidden}}">
                             <button class="btn waves-effect waves-light btn-wide" type="submit">Pesquisar
                                 <i class="material-icons right">search</i>
                             </button>
@@ -35,11 +49,11 @@
         </div>
     </div>
     <div class="col s2">
-        <div class="toc-wrapper pinned">
+        <div class="toc-wrapper pinned" style="width: 250px;">
             <h5>Rotulação</h5>
-            <form>
-                <div class="row">
-                    <div class="input-field col s12">
+            <div class="row">
+                <form>
+                    <div class="input-field col s12 tight-top">
                         <label>
                             <input type="checkbox" />
                             <span>Nada relevante</span>
@@ -63,8 +77,7 @@
                             <span>Outros</span>
                         </label>
                     </div>
-                </div>
-                <div class="row">
+                    <div class="col s12">&nbsp;</div>
                     <div class="input-field col s9 l10">
                         <input id="first_name" type="text">
                         <label for="first_name">Novo Rótulo</label>
@@ -74,28 +87,78 @@
                             <i class="material-icons right">add</i>
                         </button>
                     </div>
-                    <div class="input-field col s12">
+                    <div class="input-field col s12 tight-top">
                         <button class="btn waves-effect waves-light btn-wide" type="submit" name="action">Salvar
                             <i class="material-icons right">save</i>
                         </button>
                     </div>
-                </div>
-            </form>
-            <div class="row">
-                <div class="input-field col s12">
-                    <button class="btn waves-effect waves-light btn-wide hidden-entry"
-                        onclick='$(".hidden-entry").toggle()'>
+                </form>
+                <div class="input-field col s12 tight-top">
+                    <button
+                        class="btn waves-effect waves-light btn-wide hidden-entry{% if show_hidden %} hidden{% endif %}"
+                        onclick='toggle_hidden(true)'>
                         Exibir ocultos
                         <i class="material-icons right">remove_red_eye</i>
                     </button>
-                    <button class="btn waves-effect waves-light btn-wide hidden-entry hidden"
-                        onclick='$(".hidden-entry").toggle()'>
+                    <button
+                        class="btn btn-hide waves-effect waves-light btn-wide red darken-4 hidden-entry{% if not show_hidden %} hidden{% endif %}"
+                        onclick='toggle_hidden(false)'>
                         Esconder ocultos
                         <i class="material-icons right">remove_red_eye</i>
+                    </button>
+                </div>
+                <div class="input-field col s12 tight-top">
+                    <button class="btn waves-effect waves-light btn-wide" onclick='expand_all(true)'>
+                        Expandir todos
+                        <i class="material-icons right">add</i>
+                    </button>
+                </div>
+                <div class="input-field col s12 tight-top">
+                    <button class="btn waves-effect waves-light btn-wide" onclick='retract_all(false)'>
+                        Recolher todos
+                        <i class="material-icons right">remove</i>
                     </button>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        let language = {
+            months: ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
+            monthsShort: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
+            weekdays: ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sabado"],
+            weekdaysShort: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"],
+            weekdaysAbbrev: ["D", "S", "T", "Q", "Q", "S", "S"],
+            cancel: "Cancelar",
+            clear: "Limpar"
+        };
+
+        $('#start-date').datepicker({
+            firstDay: true,
+            format: 'dd/mm/yyyy',
+            yearRange: [2020, 2023],
+            defaultDate: datestr("{{start_date}}"),
+            setDefaultDate: true,
+            autoClose: true,
+            showClearBtn: true,
+            i18n: language
+        });
+
+        $('#end-date').datepicker({
+            firstDay: true,
+            format: 'dd/mm/yyyy',
+            yearRange: [2020, 2023],
+            defaultDate: datestr("{{end_date}}"),
+            setDefaultDate: true,
+            autoClose: true,
+            showClearBtn: true,
+            i18n: language
+        });
+
+    });
+</script>
 {% endblock %}

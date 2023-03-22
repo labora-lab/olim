@@ -9,8 +9,8 @@ import json
 
 def get_data_elastic(
         pid: int,
-        start_date: str,
-        end_date: str,
+        start_date: datetime,
+        end_date: datetime,
         show_hidden: bool) -> pd.DataFrame:
     """Loads data from elastic search.
 
@@ -32,7 +32,7 @@ def get_data_elastic(
     # Load data from query
     query = {'query' : {
         "bool": {"must": [
-                {"match": {"id_paciente": 1256519}},
+                {"match": {"id_paciente": pid}},
 
                 {"range": #filters by date
                     {"data": {
@@ -49,8 +49,10 @@ def get_data_elastic(
     }}
 
     res = ES.search(index = "prontuarios_texto", body = query)
-
+    if res['hits']['hits'] == []:
+        return pd.DataFrame()
     df = pd.DataFrame([x['_source'] for x in res['hits']['hits']])
+
     df = df.drop_duplicates(ignore_index=True)
 
     # Parse dates to sort
@@ -97,7 +99,7 @@ def load_patient(
                 'count': XX,
             },
             'DD/MM/YYYY': (......)
-        }
+        },
     }
 
     Args:
@@ -105,7 +107,6 @@ def load_patient(
         start_date (str, optional): Date to filter entrys. Defaults to None.
         end_date (str, optional): Date to filter entrys. Defaults to None.
         ascending (bool, optional): Sort dates in acending order. Defaults to False.
-        show_hidden (bool, optional): Shows hidden entrys. Defaults to False.
 
     Returns:
         dict: Data dictionary.
@@ -120,21 +121,22 @@ def load_patient(
     start_date = start_date.strip()
     end_date = end_date.strip()
     if start_date == "":
-        start_date = "Jan 01, 1900"
+        start_date = "01/01/1900"
     if end_date == "":
-        end_date = "Dec 31, 3000"
+        end_date = "01/01/3000"
     try:
-        start_date = datetime.strptime(start_date, "%b %d, %Y")
+        start_date = datetime.strptime(start_date, "%d/%m/%Y")
     except ValueError:
         data["error"] = 'Data inválida "{}".'.format(start_date)
     except TypeError:
         pass
     try:
-        end_date = datetime.strptime(end_date, "%b %d, %Y")
+        end_date = datetime.strptime(end_date, "%d/%m/%Y")
     except ValueError:
         data["error"] = 'Data inválida "{}".'.format(end_date)
     except TypeError:
         pass
+
 
     # Loads data from elastic search
     df = get_data_elastic(
@@ -169,16 +171,24 @@ def load_patient(
 
 @app.route("/patient", methods=["GET"])
 def patient():
-    pid = request.args["id"]
-    start_date = request.args["start"]
-    end_date = request.args["end"]
+    pid = request.args.get("id", "")
+    start_date = request.args.get("start-date", "")
+    end_date = request.args.get("end-date", "")
+    show_hidden = request.args.get("show-hidden", False) == "True"
 
     data = load_patient(
         pid=pid,
         start_date=start_date,
         end_date=end_date,
         ascending=False,
-        show_hidden=True,
+    )
+
+    data.update(
+        {
+            "start_date": start_date,
+            "end_date": end_date,
+            "show_hidden": show_hidden,
+        }
     )
 
     return render_template("patient.html", **data)
