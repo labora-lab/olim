@@ -1,21 +1,57 @@
 from . import app
 from flask import request, render_template
-import sqlite3
 import pandas as pd
 from datetime import datetime
 from .functions import shorten
 import numpy as np
+from elasticsearch import Elasticsearch
+import json
 
-# 1256519
-# id_paciente,data,texto,tipo_texto,id_atendimento,id_texto
+def get_data_elastic(
+        pid: int,
+        start_date: datetime,
+        end_date: datetime) -> pd.DataFrame:
+    """Loads data from elastic search.
 
+    Args:
+        pid (int): Id of the patient.
+        start_date (str): Date to filter entrys.
+        end_date (str): Date to filter entrys.
+        show_hidden (bool): Get hidden entrys if True.
 
-def get_data_sqlite(pid: int) -> pd.DataFrame:
-    # Load data from the sqlite database
-    con = sqlite3.connect("textos_limpos.sqlite")
-    df = pd.read_sql_query(
-        f"SELECT * from textos_limpos WHERE id_paciente = {pid};", con
-    )
+    Returns:
+        pd.DataFrame: Dataframe with the data.
+    """
+    # Connect to elastic search
+    server_file = "server_credentials.json"
+    with open(server_file, 'r') as f:
+        pars = json.load(f)
+    ES = Elasticsearch(**pars)
+
+    # Load data from query
+    query = {'query' : {
+        "bool": {"must": [
+                {"match": {"id_paciente": pid}},
+
+                {"range": #filters by date
+                    {"data": {
+                        "gte": start_date,
+                        "lte": end_date
+                    }}
+                },
+
+                # {"bool": {"should": [ #gets hidden if show_hidden == True
+                #     {"match": {"hidden": False}},
+                #     {"match": {"hidden": show_hidden}}
+                # ]}}
+            ]}
+    }}
+
+    res = ES.search(index = "prontuarios_texto", body = query)
+    if res['hits']['hits'] == []:
+        return pd.DataFrame()
+    df = pd.DataFrame([x['_source'] for x in res['hits']['hits']])
+
     df = df.drop_duplicates(ignore_index=True)
 
     # Parse dates to sort
@@ -24,16 +60,18 @@ def get_data_sqlite(pid: int) -> pd.DataFrame:
 
     # Convert and collet the relevant data
     new_df = pd.DataFrame()
-    new_df["text_id"] = df["id_texto"].astype(int)
+    new_df["text_id"] = df["id_texto"]
     new_df["date"] = df["datetime"].dt.strftime("%d/%m/%Y")
     new_df["text"] = df["texto"]
     new_df["text_type"] = df["tipo_texto"]
     new_df["visitation_id"] = df["id_atendimento"].astype(int)
-    new_df["datetime"] = df["datetime"]
-    new_df["hidden"] = np.random.uniform(size=len(df)) >= 0.5
+    new_df["hidden"] = df["hidden"]
+
 
     return new_df
 
+
+    return new_df
 
 def load_patient(
     pid: int,
@@ -75,24 +113,35 @@ def load_patient(
         "patient_id": pid,
         "dates": {},
     }
-    df = get_data_sqlite(pid)
 
-    # Filters by date
+    # Checks integrity of dates
+    #remove space before and after from start_date and end_date (empty date data is coming as "  " string)
+    start_date = start_date.strip()
+    end_date = end_date.strip()
+    if start_date == "":
+        start_date = "01/01/1900"
+    if end_date == "":
+        end_date = "01/01/3000"
     try:
         start_date = datetime.strptime(start_date, "%d/%m/%Y")
-        df = df[df["datetime"] >= start_date]
     except ValueError:
         data["error"] = 'Data inválida "{}".'.format(start_date)
     except TypeError:
         pass
     try:
         end_date = datetime.strptime(end_date, "%d/%m/%Y")
-        df = df[df["datetime"] <= end_date]
     except ValueError:
         data["error"] = 'Data inválida "{}".'.format(end_date)
     except TypeError:
         pass
-    df = df.drop(columns=["datetime"])
+
+
+    # Loads data from elastic search
+    df = get_data_elastic(
+        pid=pid,
+        start_date=start_date,
+        end_date=end_date,
+    )
 
     # Generates shortned texts
     df["short_text"] = df["text"].apply(shorten)

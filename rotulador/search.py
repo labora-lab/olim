@@ -19,14 +19,14 @@ def search():
         return render_template("search.html", 
                                es_columns=index_columns,
                                default_es_column=TEXT_CONTENT)
-    
+
     must_terms = [x.strip() for x in request.form["must_terms"].split(",") if x.strip()]
     must_phrases = [x.strip() for x in request.form["must_phrases"].split(";") if x.strip()]
     not_must_terms = [x.strip() for x in request.form["not_must_terms"].split(",") if x.strip()]
     not_must_phrases = [x.strip() for x in request.form["not_must_phrases"].split(";") if x.strip()]
     col_search = request.form["column_for_search"]
     aggregate = request.form.get("aggregate", False, type=bool)
-    
+
     es_query = {
         "bool": {
             "must": [],
