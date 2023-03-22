@@ -48,3 +48,8 @@
     margin-left: -100px;
     margin-top: 2px;
 }
+
+.tight-top {
+    margin-top: 0px;
+    padding-top: 0px;
+}

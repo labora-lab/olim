@@ -3,7 +3,7 @@
 {% block patient %}
 {%for date in dates.keys()%}
 {%set date_id='day_'+date.replace('/', '_')%}
-<div class="card" id="{{date_id}}">
+<div class="card day" id="{{date_id}}">
     <div class="card-content reduced-pad">
         <span class="right top-right">
             <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
@@ -18,39 +18,38 @@
                 data-tooltip="Recolher este dia" onclick="toggle_day('{{date_id}}')">
                 <i class="material-icons grey-text text-darken-4">remove</i>
             </a>
-            <a class='btn-floating btn btn-flat waves-ligh tooltipped hidden toggle_inline_{{date_id}}'
+            <a class='btn-expand btn-floating btn btn-flat waves-ligh tooltipped hidden toggle_inline_{{date_id}}'
                 data-position="bottom" data-tooltip="Expandir este dia" onclick="toggle_day('{{date_id}}')">
                 <i class="material-icons grey-text text-darken-4">add</i>
             </a>
         </span>
         <div class="card-title">
             {{date}}
-            {% if dates[date]['hidden_count'] == 1 %}
-            <span
-                class="hidden-entry small-title{% if show_hidden %} hidden{% endif %}">({{dates[date]['hidden_count']}}
-                oculto)</span>
-            {% elif dates[date]['hidden_count'] > 1 %}
-            <span
-                class="hidden-entry small-title{% if show_hidden %} hidden{% endif %}">({{dates[date]['hidden_count']}}
-                ocultos)</span>
-            {%endif%}
+            <span class="hidden-entry hidden-count small-title{% if show_hidden %} hidden{% endif %}"></span>
+            <span class="small-title"></span>
         </div>
     </div>
     <div class="toggle_{{date_id}}">
         {%for row in dates[date]['texts']%}
-        <div{%if row['hidden'] %} class="hidden-entry{% if not show_hidden %} hidden{% endif %}" {% endif %}>
-            <div class="card-content grey lighten-4 hidden{%if loop.first %} no-top-pad{%endif%}"
-                id="text_{{row['text_id']}}">
+        <div class="entry{%if row['hidden'] %} hidden-entry{% if not show_hidden %} hidden{% endif %}{% endif %}"
+            id="text_{{row['text_id']}}">
+            <div class="card-content hidden{%if loop.first %} no-top-pad{%endif%}{%if row['hidden'] %} red lighten-5{%else%} grey lighten-4{%endif%}"
+                id="full_{{row['text_id']}}">
                 <span class="right top-right">
-                    <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
-                        data-tooltip="Esconder este">
+                    <a class='btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped{%if row["hidden"] %} hidden{%endif%}'
+                        data-position="bottom" data-tooltip="Ocultar este" onclick="hide_one('{{row['text_id']}}')">
                         <i class="material-icons grey-text text-darken-4">remove_circle_outline</i>
                     </a>
-                    <a class='btn-floating btn btn-flat waves-light tooltipped' data-position="bottom"
-                        data-tooltip="Esconder todos como este">
-                        <i class="material-icons grey-text text-darken-4">remove_circle</i>
+                    <a class='btn-floating btn btn-to-hide btn-flat waves-light tooltipped{%if row["hidden"] %} hidden{%endif%}'
+                        data-position="bottom" data-tooltip="Ocultar todos como este"
+                        onclick="hide_all('{{row['text_id']}}')">
+                        <i class=" material-icons grey-text text-darken-4">remove_circle</i>
                     </a>
-                    <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
+                    <a class='btn-floating btn btn-to-show btn-flat waves-light tooltipped{%if not row["hidden"] %} hidden{%endif%}'
+                        data-position="bottom" data-tooltip="Desocultar" onclick="unhide('{{row['text_id']}}')">
+                        <i class=" material-icons grey-text text-darken-4">add_circle_outline</i>
+                    </a>
+                    <a class='btn-retract btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
                         data-tooltip="Recolher" onclick="toggle_pannel('{{row['text_id']}}')">
                         <i class="material-icons grey-text text-darken-4">remove</i>
                     </a>
@@ -58,10 +57,10 @@
                 <span class="card-title small-title">{{row['text_type']}}</span>
                 {{row['text']}}
             </div>
-            <div class="card-content grey lighten-3{%if loop.first %} no-top-pad{%endif%}"
+            <div class="card-content{%if loop.first %} no-top-pad{%endif%}{%if row['hidden'] %} red lighten-4{%else%} grey lighten-3{%endif%}"
                 id="short_{{row['text_id']}}">
                 <span class="right top-right">
-                    <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
+                    <a class='btn-expand btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
                         data-tooltip="Expandir" onclick="toggle_pannel('{{row['text_id']}}')">
                         <i class="material-icons grey-text text-darken-4">add</i>
                     </a>
@@ -71,9 +70,9 @@
                     <span class="black-text">{{row['short_text']}}</span>
                 </span>
             </div>
+        </div>
+        {%endfor%}
     </div>
-    {%endfor%}
-</div>
 </div>
 {%endfor%}
 {% endblock %}
