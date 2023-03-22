@@ -35,6 +35,9 @@ parser.add_argument(
     default=5000,
     help="port for the server to listen.",
 )
+parser.add_argument(
+    "-D", "--debug", action="store_true", help="Start server in debug mode"
+)
 args = parser.parse_args()
 
-rotulador.app.run(host=args.host, port=args.port)
+rotulador.app.run(host=args.host, port=args.port, debug=args.debug)
