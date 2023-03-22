@@ -80,14 +80,14 @@ def load_patient(
     # Filters by date
     try:
         start_date = datetime.strptime(start_date, "%d/%m/%Y")
-        df = df[df["datetime"].dt >= start_date]
+        df = df[df["datetime"] >= start_date]
     except ValueError:
         data["error"] = 'Data inválida "{}".'.format(start_date)
     except TypeError:
         pass
     try:
         end_date = datetime.strptime(end_date, "%d/%m/%Y")
-        df = df[df["datetime"].dt <= end_date]
+        df = df[df["datetime"] <= end_date]
     except ValueError:
         data["error"] = 'Data inválida "{}".'.format(end_date)
     except TypeError:
@@ -122,7 +122,7 @@ def patient():
     pid = request.args.get("id", "")
     start_date = request.args.get("start-date", "")
     end_date = request.args.get("end-date", "")
-    show_hidden = bool(request.args.get("show-hidden", False))
+    show_hidden = request.args.get("show-hidden", False) == "True"
 
     data = load_patient(
         pid=pid,
