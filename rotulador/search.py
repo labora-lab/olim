@@ -1,24 +1,19 @@
 from . import app
-from flask import request, render_template, redirect, url_for, g
-from elasticsearch import Elasticsearch
-from elasticsearch_dsl import Search
+from .functions import es_list_fields, es_search
+from flask import request, render_template
 import secrets
 import json
-from .settings import TEXT_CONTENT, ES_INDEX, ID_PATIENT
+from .settings import ES_MAPPINGS
 
 app.secret_key = secrets.token_hex(16)
 
-server_file = json.load(open("server_credentials.json"))
-
-
 @app.route("/search", methods=["GET", "POST"])
 def search():
-    client = Elasticsearch(**server_file)
-    index_columns = list(client.indices.get_mapping(index=ES_INDEX)[ES_INDEX]["mappings"]["properties"].keys())
+    index_columns = es_list_fields()
     if request.method == "GET":
-        return render_template("search.html", 
+        return render_template("search.html",
                                es_columns=index_columns,
-                               default_es_column=TEXT_CONTENT)
+                               default_es_column=ES_MAPPINGS['TEXT_CONTENT'])
 
     must_terms = [x.strip() for x in request.form["must_terms"].split(",") if x.strip()]
     must_phrases = [x.strip() for x in request.form["must_phrases"].split(";") if x.strip()]
@@ -46,8 +41,7 @@ def search():
     print(json.dumps(es_query, indent=2))
 
     # pacient_id = cd_usu_cadsus
-    resp = client.search(
-        index=ES_INDEX,
+    resp = es_search(
         query=es_query,
         size=10000
     )
@@ -57,15 +51,15 @@ def search():
     else:
         results = {}
         for result in resp["hits"]["hits"]:
-            value = results.get(result["_source"][ID_PATIENT], [])
+            value = results.get(result["_source"][ES_MAPPINGS['ID_PATIENT']], [])
             value.append(result)
-            results[result["_source"][ID_PATIENT]] = value
+            results[result["_source"][ES_MAPPINGS['ID_PATIENT']]] = value
 
-    return render_template("search.html", 
+    return render_template("search.html",
                            results=results,
-                           must_terms=request.form["must_terms"], 
-                           must_phrases=request.form["must_phrases"], 
-                           not_must_phrases=request.form["not_must_phrases"], 
+                           must_terms=request.form["must_terms"],
+                           must_phrases=request.form["must_phrases"],
+                           not_must_phrases=request.form["not_must_phrases"],
                            not_must_terms=request.form["not_must_terms"],
                            es_columns=index_columns,
                            default_es_column=col_search,

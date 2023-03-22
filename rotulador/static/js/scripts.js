@@ -107,17 +107,17 @@ function run_command(cmd, args) {
 
 // Calls then backend to hide an entry
 function hide_one(text_id) {
-    run_command('hide-one', ['txt_id=' + text_id, 'callback=hide_text(' + text_id + ');'])
+    run_command('hide-one', ['txt_id=' + text_id, 'callback=hide_text("' + text_id + '");'])
 }
 
 // Calls then backend to hide all equal an entry
 function hide_all(text_id) {
-    run_command('hide-all', ['txt_id=' + text_id, 'callback=hide_text(' + text_id + ');'])
+    run_command('hide-all', ['txt_id=' + text_id, 'callback=hide_text("' + text_id + '");'])
 }
 
 // Calls then backend to unhide an entry
 function unhide(text_id) {
-    run_command('show', ['txt_id=' + text_id, 'callback=unhide_text(' + text_id + ');'])
+    run_command('show', ['txt_id=' + text_id, 'callback=unhide_text("' + text_id + '");'])
 }
 
 //// Callback functions to hide unhide entries

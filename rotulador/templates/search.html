@@ -94,39 +94,22 @@
         {% for pacient_id, results_list in results.items() %}
             <div class="col center s12">
                 <ul class="collapsible">
-                    {% if loop.first %}
-                        <li class="active">
-                            <div class="collapsible-header blue-grey white-text">
-                                <i class="material-icons tooltipped waves-effect waves-light" data-position="top" data-tooltip="Expandir Resultados">expand_more</i>
-                                <a href="patient?id={{ pacient_id }}" class="btn" target="_blank">Códido do Paciente: {{ pacient_id }}</a>
-                            </div>
-                            <div class="collapsible-body">
-                                {% for result in results_list %}
-                                    <div class="card">
-                                        <div class="card-content">
-                                            <p>{{ result["_source"][default_es_column] }}</p>
-                                        </div>
+                    <li{% if loop.first %} class="active"{% endif %}>
+                        <div class="collapsible-header blue-grey white-text">
+                            <i class="material-icons tooltipped waves-effect waves-light" data-position="top" data-tooltip="Expandir Resultados">expand_more</i>
+                            <a href="patient?id={{ pacient_id }}" class="btn" target="_blank">Códido do Paciente: {{ pacient_id }}</a>
+                        </div>
+                        <div class="collapsible-body patient-search">
+                            {% for result in results_list %}
+                                <div class="row">
+                                    <div class="col s12">
+                                        <p>{{ result["_source"][default_es_column] }}</p>
+                                        <p>{{ result["_source"] }}</p>
                                     </div>
-                                {% endfor %}
-                            </div>
-                        </li>
-                    {% else %}
-                        <li>
-                            <div class="collapsible-header blue-grey white-text">
-                                <i class="material-icons tooltipped waves-effect waves-light " data-position="top" data-tooltip="Expandir Resultados">expand_more</i>
-                                <a href="patient?id={{ pacient_id }}" class="btn" target="_blank">Códido do Paciente: {{ pacient_id }}</a>
-                            </div>
-                            <div class="collapsible-body">
-                                {% for result in results_list %}
-                                    <div class="card">
-                                        <div class="card-content">
-                                            <p>{{ result["_source"][default_es_column] }}</p>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        </li>
-                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </li>
                 </ul>
             </div>
         {% endfor %}

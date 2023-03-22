@@ -53,3 +53,10 @@
     margin-top: 0px;
     padding-top: 0px;
 }
+
+.patient-search {
+    padding-top: 0px;
+    padding-bottom: 0px;
+    height: 400px;
+    overflow-x: scroll;
+}

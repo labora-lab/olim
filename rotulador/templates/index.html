@@ -127,20 +127,12 @@
 {% block scripts %}
 <script>
     $(document).ready(function () {
-        let language = {
-            months: ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"],
-            monthsShort: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
-            weekdays: ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sabado"],
-            weekdaysShort: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"],
-            weekdaysAbbrev: ["D", "S", "T", "Q", "Q", "S", "S"],
-            cancel: "Cancelar",
-            clear: "Limpar"
-        };
+        let language = {{language|tojson}};
 
         $('#start-date').datepicker({
             firstDay: true,
             format: 'dd/mm/yyyy',
-            yearRange: [2020, 2023],
+            yearRange: {{year_range}},
             defaultDate: datestr("{{start_date}}"),
             setDefaultDate: true,
             autoClose: true,
@@ -151,7 +143,7 @@
         $('#end-date').datepicker({
             firstDay: true,
             format: 'dd/mm/yyyy',
-            yearRange: [2020, 2023],
+            yearRange: {{year_range}},
             defaultDate: datestr("{{end_date}}"),
             setDefaultDate: true,
             autoClose: true,

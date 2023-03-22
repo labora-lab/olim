@@ -1,11 +1,11 @@
 from . import app
+from .functions import shorten, es_search
+from .settings import ES_MAPPINGS, CALENDAR_LANGUAGE
 from flask import request, render_template
 import pandas as pd
 from datetime import datetime
-from .functions import shorten
-import numpy as np
-from elasticsearch import Elasticsearch
 import json
+import numpy as np
 
 def get_data_elastic(
         pid: int,
@@ -22,32 +22,26 @@ def get_data_elastic(
     Returns:
         pd.DataFrame: Dataframe with the data.
     """
-    # Connect to elastic search
-    server_file = "server_credentials.json"
-    with open(server_file, 'r') as f:
-        pars = json.load(f)
-    ES = Elasticsearch(**pars)
-
     # Load data from query
     query = {'query' : {
         "bool": {"must": [
-                {"match": {"id_paciente": pid}},
+                {"match": {ES_MAPPINGS['ID_PATIENT']: pid}},
 
                 {"range": #filters by date
-                    {"data": {
+                    {ES_MAPPINGS['DATE']: {
                         "gte": start_date,
                         "lte": end_date
                     }}
                 },
 
                 # {"bool": {"should": [ #gets hidden if show_hidden == True
-                #     {"match": {"hidden": False}},
-                #     {"match": {"hidden": show_hidden}}
+                #     {"match": {ES_MAPPINGS['HIDDEN_ENTRY']: False}},
+                #     {"match": {ES_MAPPINGS['HIDDEN_ENTRY']: show_hidden}}
                 # ]}}
             ]}
     }}
 
-    res = ES.search(index = "prontuarios_texto", body = query)
+    res = es_search(body = query)
     if res['hits']['hits'] == []:
         return pd.DataFrame()
     df = pd.DataFrame([x['_source'] for x in res['hits']['hits']])
@@ -55,21 +49,18 @@ def get_data_elastic(
     df = df.drop_duplicates(ignore_index=True)
 
     # Parse dates to sort
-    df["datetime"] = pd.to_datetime(df["data"])
+    df["datetime"] = pd.to_datetime(df[ES_MAPPINGS['DATE']])
     df = df.sort_values(by="datetime", ascending=False, ignore_index=True)
 
     # Convert and collet the relevant data
     new_df = pd.DataFrame()
-    new_df["text_id"] = df["id_texto"]
+    new_df["text_id"] = df[ES_MAPPINGS['TEXT_ID']]
     new_df["date"] = df["datetime"].dt.strftime("%d/%m/%Y")
-    new_df["text"] = df["texto"]
-    new_df["text_type"] = df["tipo_texto"]
-    new_df["visitation_id"] = df["id_atendimento"].astype(int)
-    new_df["hidden"] = df["hidden"]
-
-
-    return new_df
-
+    new_df["text"] = df[ES_MAPPINGS['TEXT_CONTENT']]
+    new_df["text_type"] = df[ES_MAPPINGS['TEXT_TYPE']]
+    print(df[ES_MAPPINGS['TEXT_TYPE']].unique())
+    new_df["visitation_id"] = df[ES_MAPPINGS['VISITATION_ID']].astype(int)
+    new_df["hidden"] = df[ES_MAPPINGS['HIDDEN_ENTRY']]
 
     return new_df
 
@@ -180,12 +171,12 @@ def patient():
         ascending=False,
     )
 
-    data.update(
-        {
+    data.update({
             "start_date": start_date,
             "end_date": end_date,
             "show_hidden": show_hidden,
-        }
-    )
+            "language": CALENDAR_LANGUAGE,
+            "year_range": "[2019, 2023]",
+    })
 
     return render_template("patient.html", **data)
