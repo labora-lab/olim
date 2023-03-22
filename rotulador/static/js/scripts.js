@@ -54,7 +54,7 @@ function retract_all() {
 // Updates the hidden counts for each date
 function update_hidden_counts() {
     $('.day').each(function () {
-        var n = $(this).find('.hidden-entry').length - 1
+        var n = $(this).find('.hidden-entry').length
         if (n == 1)
             $(this).find('.hidden-count').text("(1 oculto)");
         else if (n > 1)
