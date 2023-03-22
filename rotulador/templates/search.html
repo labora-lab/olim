@@ -3,8 +3,9 @@
 
 {% block content %}
 <div class="row">
-    <div class="col s12">
-        <form action="/search" method="post">
+    <form action="/search" method="post">
+        <div class="col s6">
+            <h5 class="center">Termos</h5>
             <div class="input-field col s12">
                 <input type="text" id="must_terms" name="must_terms" class="validate tooltipped" data-position="bottom" data-tooltip="Exemplo: vacina, medicamento, dorflex" {% if must_terms %}
                     value="{{ must_terms }}"
@@ -17,64 +18,121 @@
                 {% endif %}>
                 <label for="not_must_terms">Exclusão de termos <i class="material-icons left red-text">close</i></label>
             </div>
+        </div>
+
+        <div class="col s6">
+            <h5 class="center">Frases</h5>
             <div class="input-field col s12">
                 <input type="text" id="must_phrases" name="must_phrases" class="validate tooltipped" data-position="bottom" data-tooltip="Exemplo: vacina para dor no ombro; vacina para vida" {% if must_terms %}
                     value="{{ must_phrases }}"
                 {% endif %}>
-                <label for="must_phrases">Inclusão de Frases <i class="material-icons left green-text">check</i></label>
+                <label for="must_phrases">Inclusão de frases <i class="material-icons left green-text">check</i></label>
             </div>
             <div class="input-field col s12">
                 <input type="text" id="not_must_phrases" name="not_must_phrases" class="validate tooltipped" data-position="bottom" data-tooltip="Exemplo: vacina para dor no ombro; vacina para vida" {% if must_terms %}
                     value="{{ not_must_phrases }}"
                 {% endif %}>
-                <label for="not_must_phrases">Exclusão de Frases <i class="material-icons left red-text">close</i></label>
+                <label for="not_must_phrases">Exclusão de frases <i class="material-icons left red-text">close</i></label>
             </div>
+        </div>
+
+
+        <div class="col s6">
+            <p class="center">
+                <label>
+                    <input type="checkbox" name="aggregate" class="filled-in" 
+                    {% if aggregated %}
+                        checked="checked"
+                    {% endif %}>
+                    <span>Agregar Valores</span>
+                </label>
+            </p>
+        </div>
+
+        <div class="col s6">
+            <div class="input-field col s6 center btn-wide">
+                <select name="column_for_search">
+                    {% for column_name in es_columns %}
+                        {% if column_name == default_es_column %}
+                            <option value="{{ column_name }}" selected>{{ column_name }}</option>
+                        {% else %}
+                            <option value="{{ column_name }}">{{ column_name }}</option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+                <label for="column_for_search">Coluna para pesquisa</label>
             </div>
-            <div class="input-field col s12 center">
-                <button class="btn waves-effect waves-light btn-wide">Pesquisar
-                    <i class="material-icons right">search</i>
-                </button>
-            </div>
-        </form>
-    </div>
+        </div>
+
+        <div class="input-field col s12 center">
+            <button class="btn waves-effect waves-light btn-wide">Pesquisar
+                <i class="material-icons right">search</i>
+            </button>
+        </div>
+        </div>
+    </form>
 </div>
 
 
 {% if results %}
-<h4 class="center">Resultados</h4>
-<div class="row">
-    {% for result in results %}
-        {% set loopmain = loop %}
-        <div class="col s12 m6">
-            <div class="card blue-grey darken-1">
-                <div class="card-content white-text">
-                    <span class="card-title">Código do Usuário: {{ result["_source"]["cd_usu_cadsus"] }}</span>
-                    <p>{{ result["_source"]["descricao"] }}</p>
+    <h4 class="center">{{ len_f(results) }} Resultados Encontrados</h4>
+    {% if not aggregated %}
+        <div class="row">
+            {% for result in results %}
+                <div class="col s12 m6">
+                    <div class="card blue-grey darken-1">
+                        <div class="card-content white-text">
+                            <div class="card-title">Código do Paciente: {{ result["_source"]["cd_usu_cadsus"] }}</div>
+                            <p>{{ result["_source"][default_es_column] }}</p>
+                        </div>
+                    </div>
                 </div>
-                <!-- A ideia aqui era colocar mas informações e não só a descrição -->
-                <!-- <div class="card-tabs">
-                    <ul class="tabs tabs-fixed-width">
-                        {% for key in result["_source"].keys() %}
-                            {% if loop.first %}
-                            <li class="tab"><a href="#{{ key }}{{ loopmain.index }}" class="active">{{ key }}</a></li>
-                            {% else %}
-                            <li class="tab"><a href="#{{ key }}{{ loopmain.index }}">{{ key }}</a></li>
-                            {% endif %}
-                        {% endfor %}
-                    </ul>
-                </div>
-                <div class="card-content grey lighten-4">
-                    {% for key, value in result["_source"].items() %}
-                    <div id="#{{ key }}{{ loopmain.index }}">{{ value }}</div>
-                    {% endfor %}
-                </div> -->
-            </div>
+            {% endfor %}
         </div>
-    {% endfor %}
-</div>
-
+    {% else %}
+    <div class="row">
+        {% for pacient_id, results_list in results.items() %}
+            <div class="col center s12">
+                <ul class="collapsible">
+                    {% if loop.first %}
+                        <li class="active">
+                            <div class="collapsible-header blue-grey white-text">
+                                <i class="material-icons tooltipped waves-effect waves-light" data-position="top" data-tooltip="Expandir Resultados">expand_more</i>
+                                <a href="patient?id={{ pacient_id }}" class="btn" target="_blank">Códido do Paciente: {{ pacient_id }}</a>
+                            </div>
+                            <div class="collapsible-body">
+                                {% for result in results_list %}
+                                    <div class="card">
+                                        <div class="card-content">
+                                            <p>{{ result["_source"][default_es_column] }}</p>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </li>
+                    {% else %}
+                        <li>
+                            <div class="collapsible-header blue-grey white-text">
+                                <i class="material-icons tooltipped waves-effect waves-light " data-position="top" data-tooltip="Expandir Resultados">expand_more</i>
+                                <a href="patient?id={{ pacient_id }}" class="btn" target="_blank">Códido do Paciente: {{ pacient_id }}</a>
+                            </div>
+                            <div class="collapsible-body">
+                                {% for result in results_list %}
+                                    <div class="card">
+                                        <div class="card-content">
+                                            <p>{{ result["_source"][default_es_column] }}</p>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        {% endfor %}
+    {% endif %}
 {% else %}
-<h4 class="center">Sem resultados para a pesquisa.</h4>
+    <h4 class="center">Sem resultados para a pesquisa.</h4>
 {% endif %}
 
 {% endblock %}
