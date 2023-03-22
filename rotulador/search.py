@@ -4,24 +4,29 @@ from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 import secrets
 import json
-from .settings import TEXT_CONTENT
+from .settings import TEXT_CONTENT, ES_INDEX, ID_PATIENT
 
 app.secret_key = secrets.token_hex(16)
 
 server_file = json.load(open("server_credentials.json"))
-es_index = "cpf_prontuarios"
+
 
 @app.route("/search", methods=["GET", "POST"])
 def search():
+    client = Elasticsearch(**server_file)
+    index_columns = list(client.indices.get_mapping(index=ES_INDEX)[ES_INDEX]["mappings"]["properties"].keys())
     if request.method == "GET":
-        return render_template("search.html", context={})
-    ## return early here
+        return render_template("search.html", 
+                               es_columns=index_columns,
+                               default_es_column=TEXT_CONTENT)
+    
     must_terms = [x.strip() for x in request.form["must_terms"].split(",") if x.strip()]
     must_phrases = [x.strip() for x in request.form["must_phrases"].split(";") if x.strip()]
     not_must_terms = [x.strip() for x in request.form["not_must_terms"].split(",") if x.strip()]
     not_must_phrases = [x.strip() for x in request.form["not_must_phrases"].split(";") if x.strip()]
-
-    client = Elasticsearch(**server_file)
+    col_search = request.form["column_for_search"]
+    aggregate = request.form.get("aggregate", False, type=bool)
+    
     es_query = {
         "bool": {
             "must": [],
@@ -30,21 +35,40 @@ def search():
         }
     }
 
-    es_query["bool"]["must"].extend([{"query_string": {"query": term, "fields": [TEXT_CONTENT]}} for term in must_terms])
+    es_query["bool"]["must"].extend([{"query_string": {"query": term, "fields": [col_search]}} for term in must_terms])
 
-    es_query["bool"]["must"].extend([{"match_phrase": {TEXT_CONTENT: {"query": phrase}}} for phrase in must_phrases])
+    es_query["bool"]["must"].extend([{"match_phrase": {col_search: {"query": phrase}}} for phrase in must_phrases])
 
-    es_query["bool"]["must_not"].extend([{"query_string": {"query": term, "fields": [TEXT_CONTENT]}} for term in not_must_terms])
+    es_query["bool"]["must_not"].extend([{"query_string": {"query": term, "fields": [col_search]}} for term in not_must_terms])
 
-    es_query["bool"]["must_not"].extend([{"match_phrase": {TEXT_CONTENT: {"query": phrase}}} for phrase in not_must_phrases])
+    es_query["bool"]["must_not"].extend([{"match_phrase": {col_search: {"query": phrase}}} for phrase in not_must_phrases])
 
     print(json.dumps(es_query, indent=2))
 
-    print(es_query)
     # pacient_id = cd_usu_cadsus
     resp = client.search(
-        index=es_index,
-        query=es_query
+        index=ES_INDEX,
+        query=es_query,
+        size=10000
     )
 
-    return render_template("search.html", results=resp["hits"]["hits"], must_terms=request.form["must_terms"], must_phrases=request.form["must_phrases"], not_must_phrases=request.form["not_must_phrases"], not_must_terms=request.form["not_must_terms"])
+    if not aggregate:
+        results = resp["hits"]["hits"]
+    else:
+        results = {}
+        for result in resp["hits"]["hits"]:
+            value = results.get(result["_source"][ID_PATIENT], [])
+            value.append(result)
+            results[result["_source"][ID_PATIENT]] = value
+
+    return render_template("search.html", 
+                           results=results,
+                           must_terms=request.form["must_terms"], 
+                           must_phrases=request.form["must_phrases"], 
+                           not_must_phrases=request.form["not_must_phrases"], 
+                           not_must_terms=request.form["not_must_terms"],
+                           es_columns=index_columns,
+                           default_es_column=col_search,
+                           aggregated=aggregate,
+                           len_f=len
+        )
