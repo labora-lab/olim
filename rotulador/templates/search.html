@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="row">
-    <form action="/search" method="post">
+    <form action="/search" method="GET">
         <div class="col s6">
             <h5 class="center">Termos</h5>
             <div class="input-field col s12">
@@ -19,7 +19,6 @@
                 <label for="not_must_terms">Exclusão de termos <i class="material-icons left red-text">close</i></label>
             </div>
         </div>
-
         <div class="col s6">
             <h5 class="center">Frases</h5>
             <div class="input-field col s12">
@@ -35,40 +34,10 @@
                 <label for="not_must_phrases">Exclusão de frases <i class="material-icons left red-text">close</i></label>
             </div>
         </div>
-
-
-        <div class="col s6">
-            <p class="center">
-                <label>
-                    <input type="checkbox" name="aggregate" class="filled-in" 
-                    {% if aggregated %}
-                        checked="checked"
-                    {% endif %}>
-                    <span>Agregar Valores</span>
-                </label>
-            </p>
-        </div>
-
-        <div class="col s6">
-            <div class="input-field col s6 center btn-wide">
-                <select name="column_for_search">
-                    {% for column_name in es_columns %}
-                        {% if column_name == default_es_column %}
-                            <option value="{{ column_name }}" selected>{{ column_name }}</option>
-                        {% else %}
-                            <option value="{{ column_name }}">{{ column_name }}</option>
-                        {% endif %}
-                    {% endfor %}
-                </select>
-                <label for="column_for_search">Coluna para pesquisa</label>
-            </div>
-        </div>
-
         <div class="input-field col s12 center">
             <button class="btn waves-effect waves-light btn-wide">Pesquisar
                 <i class="material-icons right">search</i>
             </button>
-        </div>
         </div>
     </form>
 </div>
@@ -76,44 +45,36 @@
 
 {% if results %}
     <h4 class="center">{{ len_f(results) }} Resultados Encontrados</h4>
-    {% if not aggregated %}
-        <div class="row">
-            {% for result in results %}
-                <div class="col s12 m6">
-                    <div class="card blue-grey darken-1">
-                        <div class="card-content white-text">
-                            <div class="card-title">Código do Paciente: {{ result["_source"]["cd_usu_cadsus"] }}</div>
-                            <p>{{ result["_source"][default_es_column] }}</p>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    {% else %}
     <div class="row">
         {% for pacient_id, results_list in results.items() %}
             <div class="col center s12">
                 <ul class="collapsible">
                     <li{% if loop.first %} class="active"{% endif %}>
-                        <div class="collapsible-header blue-grey white-text">
-                            <i class="material-icons tooltipped waves-effect waves-light" data-position="top" data-tooltip="Expandir Resultados">expand_more</i>
-                            <a href="patient?id={{ pacient_id }}" class="btn" target="_blank">Códido do Paciente: {{ pacient_id }}</a>
+                        <div class="blue-grey white-text collapsible-header patient-header" style="display:block;">
+                            Paciente ID: {{ pacient_id }}
+                            <a href="patient?id={{ pacient_id }}" class="btn btn-float right" target="_blank">Abrir ficha</a>
                         </div>
-                        <div class="collapsible-body patient-search">
-                            {% for result in results_list %}
-                                <div class="row">
-                                    <div class="col s12">
-                                        <p>{{ result["_source"][default_es_column] }}</p>
-                                        <p>{{ result["_source"] }}</p>
+                        <div class="patient-body collapsible-body">
+                            <ul class="collapsible">
+                                {% for result in results_list %}
+                                <li>
+                                    <div class="collapsible-header left-align">
+                                        {{ result["_source"][default_es_column]|safe }}
                                     </div>
-                                </div>
-                            {% endfor %}
+                                    <div class="collapsible-body left-align tight-top tight-bottom">
+                                        {% for key, value in result["_source"].items() %}
+                                            <p><strong>{{key}}:</strong> {{value|safe}}</p>
+                                        {% endfor %}
+                                    </div>
+                                </li>
+                                {% endfor %}
+                            </ul>
                         </div>
                     </li>
                 </ul>
             </div>
         {% endfor %}
-    {% endif %}
+    </div>
 {% else %}
     <h4 class="center">Sem resultados para a pesquisa.</h4>
 {% endif %}

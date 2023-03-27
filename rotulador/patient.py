@@ -1,16 +1,16 @@
 from . import app
 from .functions import shorten, es_search
-from .settings import ES_MAPPINGS, CALENDAR_LANGUAGE
+from .settings import ES_MAPPINGS, CALENDAR_LANGUAGE, YEAR_RANGE
 from flask import request, render_template
 import pandas as pd
 from datetime import datetime
 import json
 import numpy as np
 
+
 def get_data_elastic(
-        pid: int,
-        start_date: datetime,
-        end_date: datetime) -> pd.DataFrame:
+    pid: int, start_date: datetime, end_date: datetime
+) -> pd.DataFrame:
     """Loads data from elastic search.
 
     Args:
@@ -23,46 +23,48 @@ def get_data_elastic(
         pd.DataFrame: Dataframe with the data.
     """
     # Load data from query
-    query = {'query' : {
-        "bool": {"must": [
-                {"match": {ES_MAPPINGS['ID_PATIENT']: pid}},
+    query = {
+        "query": {
+            "bool": {
+                "must": [
+                    {"match": {ES_MAPPINGS["ID_PATIENT"]: pid}},
+                    {
+                        "range": {  # filters by date
+                            ES_MAPPINGS["DATE"]: {"gte": start_date, "lte": end_date}
+                        }
+                    },
+                    # {"bool": {"should": [ #gets hidden if show_hidden == True
+                    #     {"match": {ES_MAPPINGS['HIDDEN_ENTRY']: False}},
+                    #     {"match": {ES_MAPPINGS['HIDDEN_ENTRY']: show_hidden}}
+                    # ]}}
+                ]
+            }
+        }
+    }
 
-                {"range": #filters by date
-                    {ES_MAPPINGS['DATE']: {
-                        "gte": start_date,
-                        "lte": end_date
-                    }}
-                },
-
-                # {"bool": {"should": [ #gets hidden if show_hidden == True
-                #     {"match": {ES_MAPPINGS['HIDDEN_ENTRY']: False}},
-                #     {"match": {ES_MAPPINGS['HIDDEN_ENTRY']: show_hidden}}
-                # ]}}
-            ]}
-    }}
-
-    res = es_search(body = query)
-    if res['hits']['hits'] == []:
+    res = es_search(body=query)
+    if res["hits"]["hits"] == []:
         return pd.DataFrame()
-    df = pd.DataFrame([x['_source'] for x in res['hits']['hits']])
+    df = pd.DataFrame([x["_source"] for x in res["hits"]["hits"]])
 
     df = df.drop_duplicates(ignore_index=True)
 
     # Parse dates to sort
-    df["datetime"] = pd.to_datetime(df[ES_MAPPINGS['DATE']])
+    df["datetime"] = pd.to_datetime(df[ES_MAPPINGS["DATE"]])
     df = df.sort_values(by="datetime", ascending=False, ignore_index=True)
 
     # Convert and collet the relevant data
     new_df = pd.DataFrame()
-    new_df["text_id"] = df[ES_MAPPINGS['TEXT_ID']]
+    new_df["text_id"] = df[ES_MAPPINGS["TEXT_ID"]]
     new_df["date"] = df["datetime"].dt.strftime("%d/%m/%Y")
-    new_df["text"] = df[ES_MAPPINGS['TEXT_CONTENT']]
-    new_df["text_type"] = df[ES_MAPPINGS['TEXT_TYPE']]
-    print(df[ES_MAPPINGS['TEXT_TYPE']].unique())
-    new_df["visitation_id"] = df[ES_MAPPINGS['VISITATION_ID']].astype(int)
-    new_df["hidden"] = df[ES_MAPPINGS['HIDDEN_ENTRY']]
+    new_df["text"] = df[ES_MAPPINGS["TEXT_CONTENT"]]
+    new_df["text_type"] = df[ES_MAPPINGS["TEXT_TYPE"]]
+    print(df[ES_MAPPINGS["TEXT_TYPE"]].unique())
+    new_df["visitation_id"] = df[ES_MAPPINGS["VISITATION_ID"]].astype(int)
+    new_df["hidden"] = df[ES_MAPPINGS["HIDDEN_ENTRY"]]
 
     return new_df
+
 
 def load_patient(
     pid: int,
@@ -106,7 +108,7 @@ def load_patient(
     }
 
     # Checks integrity of dates
-    #remove space before and after from start_date and end_date (empty date data is coming as "  " string)
+    # remove space before and after from start_date and end_date (empty date data is coming as "  " string)
     start_date = start_date.strip()
     end_date = end_date.strip()
     if start_date == "":
@@ -125,7 +127,6 @@ def load_patient(
         data["error"] = 'Data inválida "{}".'.format(end_date)
     except TypeError:
         pass
-
 
     # Loads data from elastic search
     df = get_data_elastic(
@@ -171,12 +172,14 @@ def patient():
         ascending=False,
     )
 
-    data.update({
+    data.update(
+        {
             "start_date": start_date,
             "end_date": end_date,
             "show_hidden": show_hidden,
             "language": CALENDAR_LANGUAGE,
-            "year_range": "[2019, 2023]",
-    })
+            "year_range": YEAR_RANGE,
+        }
+    )
 
     return render_template("patient.html", **data)

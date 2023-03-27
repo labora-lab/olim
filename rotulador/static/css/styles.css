@@ -54,9 +54,26 @@
     padding-top: 0px;
 }
 
-.patient-search {
-    padding-top: 0px;
+.tight-bottom {
+    margin-bottom: 0px;
     padding-bottom: 0px;
+}
+
+.patient-body {
+    padding: 0px;
     height: 400px;
     overflow-x: scroll;
+}
+
+.patient-header {
+    font-size: 23px;
+}
+
+.highlight {
+    display: inline;
+    background-color: rgb(255, 172, 47);
+}
+
+.collapsible-header {
+    display: block !important;
 }
