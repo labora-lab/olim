@@ -1,4 +1,5 @@
 from . import app
+from .functions import es_update
 from flask import request
 import json
 import time
@@ -6,7 +7,15 @@ import time
 
 def hide_one(**args):
     txt_id = args.get("txt_id", None)
-    time.sleep(3)
+
+    body = {
+        "doc": {
+            "hidden": True
+            }
+    }
+
+    es_update(id=txt_id, body=body, refresh= True)
+
     if txt_id == None:
         return {
             "type": "error",
@@ -18,10 +27,16 @@ def hide_one(**args):
             "text": f"Ocultado texto {txt_id}",
         }
 
-
 def show(**args):
     txt_id = args.get("txt_id", None)
-    time.sleep(3)
+
+    body = {
+        "doc": {
+            "hidden": False
+            }
+    }
+    es_update(id=txt_id, body=body, refresh= True)
+
     if txt_id == None:
         return {
             "type": "error",

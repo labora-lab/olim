@@ -44,3 +44,8 @@ def es_search(**kwargs):
     _, kwargs = get_index(kwargs)
     client = get_es_conn()
     return client.search(**kwargs)
+
+def es_update(**kwargs):
+    _, kwargs = get_index(kwargs)
+    client = get_es_conn()
+    return client.update(**kwargs)
