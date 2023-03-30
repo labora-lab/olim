@@ -1,0 +1,13 @@
+<div class="input-field col s12">
+    <span>{{label['_source']['label']}}</span>
+    {% if patient_id is defined %}
+    <a class='tooltipped right grey-text' data-position="bottom" data-tooltip="Marcar não"
+        onclick="add_label_no({{patient_id}},'{{label['_id']}}', '{{label['_source']['label']}}');">
+        <i class=" material-icons grey-text" id="no_{{label['_id']}}">clear</i>
+    </a>
+    <a class='tooltipped right grey-text' data-position="bottom" data-tooltip="Marcar sim"
+        onclick="add_label_yes({{patient_id}},'{{label['_id']}}', '{{label['_source']['label']}}');">
+        <i class="material-icons grey-text" id="yes_{{label['_id']}}">check</i>
+    </a>
+    {% endif %}
+</div>

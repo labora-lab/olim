@@ -14,27 +14,21 @@
                 data-tooltip="Esconder todos abaixo">
                 <i class="material-icons grey-text text-darken-4">expand_more</i>
             </a>
-            <a class='btn-floating btn btn-flat waves-ligh tooltipped toggle_inline_{{date_id}}' data-position="bottom"
-                data-tooltip="Recolher este dia" onclick="toggle_day('{{date_id}}')">
-                <i class="material-icons grey-text text-darken-4">remove</i>
-            </a>
-            <a class='btn-expand btn-floating btn btn-flat waves-ligh tooltipped hidden toggle_inline_{{date_id}}'
-                data-position="bottom" data-tooltip="Expandir este dia" onclick="toggle_day('{{date_id}}')">
-                <i class="material-icons grey-text text-darken-4">add</i>
-            </a>
         </span>
-        <div class="card-title">
+        <div class="card-title" onclick="toggle_day('{{date_id}}')">
             {{date}}
             <span class="hidden-count small-title"></span>
+            <a class="btn-expand hidden toggle_inline_{{date_id}}"></a>
         </div>
     </div>
     <div class="toggle_{{date_id}}">
         {%for row in dates[date]['texts']%}
+        {% if not loop.first %}<div class="divider"></div>{% endif %}
         <div class="entry{%if row['hidden'] %} hidden-entry{% if not show_hidden %} hidden{% endif %}{% endif %}"
             id="text_{{row['text_id']}}">
-            <div class="card-content hidden{%if loop.first %} no-top-pad{%endif%}{%if row['hidden'] %} red lighten-5{%else%} grey lighten-4{%endif%}"
+            <div class="hidden{%if loop.first %} no-top-pad{%endif%}{%if row['hidden'] %} red lighten-5{%else%} grey lighten-4{%endif%}"
                 id="full_{{row['text_id']}}">
-                <span class="right top-right">
+                <span class="right" style="margin: 12px;">
                     <a class='btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped{%if row["hidden"] %} hidden{%endif%}'
                         data-position="bottom" data-tooltip="Ocultar este" onclick="hide_one('{{row['text_id']}}')">
                         <i class="material-icons grey-text text-darken-4">remove_circle_outline</i>
@@ -48,25 +42,18 @@
                         data-position="bottom" data-tooltip="Desocultar" onclick="unhide('{{row['text_id']}}')">
                         <i class=" material-icons grey-text text-darken-4">add_circle_outline</i>
                     </a>
-                    <a class='btn-retract btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
-                        data-tooltip="Recolher" onclick="toggle_pannel('{{row['text_id']}}')">
-                        <i class="material-icons grey-text text-darken-4">remove</i>
-                    </a>
                 </span>
-                <span class="card-title small-title">{{row['text_type']}}</span>
-                {{row['text']}}
+                <div class="card-content btn-retract" onclick="toggle_pannel('{{row['text_id']}}')">
+                    <span class="card-title small-title">{{row['text_type']}}</span>
+                    <span class="text-entry">{{row['text']}}</span>
+                </div>
             </div>
-            <div class="card-content{%if loop.first %} no-top-pad{%endif%}{%if row['hidden'] %} red lighten-4{%else%} grey lighten-3{%endif%}"
-                id="short_{{row['text_id']}}">
-                <span class="right top-right">
-                    <a class='btn-expand btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
-                        data-tooltip="Expandir" onclick="toggle_pannel('{{row['text_id']}}')">
-                        <i class="material-icons grey-text text-darken-4">add</i>
-                    </a>
-                </span>
+
+            <div class="card-content btn-expand{%if loop.first %} no-top-pad{%endif%}{%if row['hidden'] %} red lighten-4{%else%} grey lighten-3{%endif%}"
+                id="short_{{row['text_id']}}" onclick="toggle_pannel('{{row['text_id']}}')">
                 <span class="card-title small-title">
                     {{row['text_type']}}:
-                    <span class="black-text">{{row['short_text']}}</span>
+                    <span class="black-text text-entry">{{row['short_text']}}</span>
                 </span>
             </div>
         </div>
@@ -74,4 +61,11 @@
     </div>
 </div>
 {%endfor%}
+{% endblock %}
+{% block more_scripts %}
+<script>
+    $(document).ready(function () {
+        $(".text-entry").highlight({{ highlight| safe}})
+    });
+</script>
 {% endblock %}

@@ -52,47 +52,30 @@
         <div class="toc-wrapper pinned" style="width: 250px;">
             <h5>Rotulação</h5>
             <div class="row">
-                <form>
-                    <div class="input-field col s12 tight-top">
-                        <label>
-                            <input type="checkbox" />
-                            <span>Nada relevante</span>
-                        </label>
-                    </div>
-                    <div class="input-field col s12">
-                        <label>
-                            <input type="checkbox" />
-                            <span>Cardiopatia</span>
-                        </label>
-                    </div>
-                    <div class="input-field col s12">
-                        <label>
-                            <input type="checkbox" />
-                            <span>Reinfecção</span>
-                        </label>
-                    </div>
-                    <div class="input-field col s12">
-                        <label>
-                            <input type="checkbox" />
-                            <span>Outros</span>
-                        </label>
-                    </div>
-                    <div class="col s12">&nbsp;</div>
-                    <div class="input-field col s9 l10">
-                        <input id="first_name" type="text">
-                        <label for="first_name">Novo Rótulo</label>
-                    </div>
-                    <div class="input-field col s3 l2 center">
-                        <button class="btn waves-effect waves-light btn-narrow" type="submit" name="action">
-                            <i class="material-icons right">add</i>
-                        </button>
-                    </div>
-                    <div class="input-field col s12 tight-top">
-                        <button class="btn waves-effect waves-light btn-wide" type="submit" name="action">Salvar
-                            <i class="material-icons right">save</i>
-                        </button>
-                    </div>
-                </form>
+                {% for label in labels['hits']['hits']%}
+                <div class="input-field col s12">
+                    <span>{{label['_source']['label']}}</span>
+                    {% if patient_id is defined %}
+                    <a class='tooltipped right grey-text' data-position="bottom" data-tooltip="Marcar não"
+                        onclick="add_label_no({{patient_id}},'{{label['_id']}}', '{{label['_source']['label']}}');">
+                        <i class=" material-icons grey-text" id="no_{{label['_id']}}">clear</i>
+                    </a>
+                    <a class='tooltipped right grey-text' data-position="bottom" data-tooltip="Marcar sim"
+                        onclick="add_label_yes({{patient_id}},'{{label['_id']}}', '{{label['_source']['label']}}');">
+                        <i class="material-icons grey-text" id="yes_{{label['_id']}}">check</i>
+                    </a>
+                    {% endif %}
+                </div>
+                {%endfor%}
+                <div class="input-field col s9 l10">
+                    <input id="new_label" type="text">
+                    <label for="new_label">Novo Rótulo</label>
+                </div>
+                <div class="input-field col s3 l2 center">
+                    <a class="btn waves-effect waves-light btn-narrow" onclick="create_label($('#new_label').val())">
+                        <i class="material-icons right">add</i>
+                    </a>
+                </div>
                 <div class="input-field col s12 tight-top">
                     <button
                         class="btn waves-effect waves-light btn-wide hidden-entry{% if show_hidden %} hidden{% endif %}"
@@ -127,30 +110,32 @@
 {% block scripts %}
 <script>
     $(document).ready(function () {
-        let language = {{language|tojson}};
+        let language = {{ language| tojson
+    }};
 
-        $('#start-date').datepicker({
-            firstDay: true,
-            format: 'dd/mm/yyyy',
-            yearRange: {{year_range}},
-            defaultDate: datestr("{{start_date}}"),
-            setDefaultDate: true,
-            autoClose: true,
-            showClearBtn: true,
-            i18n: language
+    $('#start-date').datepicker({
+        firstDay: true,
+        format: 'dd/mm/yyyy',
+        yearRange: {{ year_range }},
+        defaultDate: datestr("{{start_date}}"),
+        setDefaultDate: true,
+        autoClose: true,
+        showClearBtn: true,
+        i18n: language
         });
 
-        $('#end-date').datepicker({
-            firstDay: true,
-            format: 'dd/mm/yyyy',
-            yearRange: {{year_range}},
-            defaultDate: datestr("{{end_date}}"),
-            setDefaultDate: true,
-            autoClose: true,
-            showClearBtn: true,
-            i18n: language
+    $('#end-date').datepicker({
+        firstDay: true,
+        format: 'dd/mm/yyyy',
+        yearRange: {{ year_range }},
+        defaultDate: datestr("{{end_date}}"),
+        setDefaultDate: true,
+        autoClose: true,
+        showClearBtn: true,
+        i18n: language
         });
 
     });
 </script>
+{% block more_scripts %}{% endblock %}
 {% endblock %}

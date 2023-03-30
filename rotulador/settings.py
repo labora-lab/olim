@@ -9,7 +9,7 @@ ES_MAPPINGS = {
 }
 """Mapping of the elastic serach fields names"""
 
-ES_INDEX = "prontuarios_texto"
+ES_INDEX = "patients-texts"
 """Elasticserach index to load patient data"""
 
 ES_SERVER_FILE = "server_credentials.json"

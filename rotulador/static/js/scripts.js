@@ -91,15 +91,15 @@ function run_command(cmd, args) {
         .then((data) => {
             console.log(data);
             if (data.type == 'OK') {
-                M.toast({ html: data.text, displayLength: 10000, classes: 'teal darken-3' });
+                M.toast({ html: data.text, displayLength: 4000, classes: 'teal darken-3' });
                 if (data.request.callback) {
-                    eval(data.request.callback);
+                    eval(data.callback);
                 }
             }
             else {
                 M.toast({ html: "ERROR: " + data.text, displayLength: 20000, classes: 'red darken-4' });
                 if (data.request.fail_callback) {
-                    eval(data.request.fail_callback);
+                    eval(data.fail_callback);
                 }
             }
         })
@@ -112,12 +112,24 @@ function hide_one(text_id) {
 
 // Calls then backend to hide all equal an entry
 function hide_all(text_id) {
-    run_command('hide-all', ['txt_id=' + text_id, 'callback=hide_text("' + text_id + '");'])
+    run_command('hide-all', ['txt_id=' + text_id, 'callback=hide_text("' + text_id + '");']);
 }
 
 // Calls then backend to unhide an entry
 function unhide(text_id) {
-    run_command('show', ['txt_id=' + text_id, 'callback=unhide_text("' + text_id + '");'])
+    run_command('show', ['txt_id=' + text_id, 'callback=unhide_text("' + text_id + '");']);
+}
+
+function add_label_yes(patient_id, label_id, label) {
+    run_command('add-label', ['patient_id=' + patient_id, 'label=' + label, 'value=True', 'callback=mark_yes("' + label_id + '");']);
+}
+
+function add_label_no(patient_id, label_id, label) {
+    run_command('add-label', ['patient_id=' + patient_id, 'label=' + label, 'value=False', 'callback=mark_no("' + label_id + '");']);
+}
+
+function create_label(label) {
+    run_command('new-label', ['label=' + label])
 }
 
 //// Callback functions to hide unhide entries
@@ -153,4 +165,18 @@ function unhide_text(id) {
     $("#full_" + id + " .btn-to-hide").css('display', 'inline-block');
     $("#full_" + id + " .btn-to-show").css('display', 'none');
     update_hidden_counts();
+}
+
+function mark_yes(label_id) {
+    $("#yes_" + label_id).removeClass("grey-text");
+    $("#yes_" + label_id).addClass("green-text");
+    $("#no_" + label_id).addClass("grey-text");
+    $("#no_" + label_id).removeClass("red-text");
+}
+
+function mark_no(label_id) {
+    $("#no_" + label_id).removeClass("grey-text");
+    $("#no_" + label_id).addClass("red-text");
+    $("#yes_" + label_id).addClass("grey-text");
+    $("#yes_" + label_id).removeClass("green-text");
 }

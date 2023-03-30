@@ -62,7 +62,8 @@
 .patient-body {
     padding: 0px;
     height: 400px;
-    overflow-x: scroll;
+    overflow-y: scroll;
+    overflow-x: clip;
 }
 
 .patient-header {
