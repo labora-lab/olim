@@ -32,7 +32,7 @@ parser.add_argument(
     "--port",
     type=port,
     required=False,
-    default=5005,
+    default=5000,
     help="port for the server to listen.",
 )
 parser.add_argument(

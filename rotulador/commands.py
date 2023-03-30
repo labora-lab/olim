@@ -1,12 +1,26 @@
 from . import app
-from flask import request
+from .functions import (
+    update_hidden,
+    add_patient_label,
+    create_new_label,
+    add_text_to_hide,
+)
+from flask import request, render_template
 import json
-import time
 
 
 def hide_one(**args):
     txt_id = args.get("txt_id", None)
-    time.sleep(3)
+    patient_id = int(args.get("patient_id", None))
+
+    try:
+        update_hidden(txt_id, patient_id, True)
+    except:
+        return {
+            "type": "error",
+            "text": "Failed writing to database",
+        }
+
     if txt_id == None:
         return {
             "type": "error",
@@ -21,7 +35,16 @@ def hide_one(**args):
 
 def show(**args):
     txt_id = args.get("txt_id", None)
-    time.sleep(3)
+    patient_id = int(args.get("patient_id", None))
+
+    try:
+        update_hidden(txt_id, patient_id, False)
+    except:
+        return {
+            "type": "error",
+            "text": "Failed writing to database",
+        }
+
     if txt_id == None:
         return {
             "type": "error",
@@ -40,14 +63,57 @@ def add_label(**args):
     value = args.get("value", False) in ["True", "true"]
     sim_nao = "sim" if value else "não"
 
-    return {
-        "type": "OK",
-        "text": f"{label}: {sim_nao} para o paciente {patient_id}",
-    }
+    try:
+        add_patient_label(label, patient_id, value)
+    except:
+        return {
+            "type": "error",
+            "text": "Failed writing to database",
+        }
+
+    if patient_id == None:
+        return {
+            "type": "error",
+            "text": "No patient ID passed",
+        }
+    elif label == None:
+        return {
+            "type": "error",
+            "text": "No label passed",
+        }
+    else:
+        return {
+            "type": "OK",
+            "text": f"{label}: {sim_nao} para o paciente {patient_id}",
+        }
 
 
 def new_label(**args):
+    patient_id = args.get("patient_id", "")
     label = args.get("label", None)
+
+    try:
+        resp = create_new_label(label)
+    except:
+        return {
+            "type": "error",
+            "text": "Failed writing to database",
+        }
+
+    if patient_id == "":
+        html = render_template(
+            "label.html",
+            label={"_source": {"label": label}, "_id": resp["_id"]},
+        )
+    else:
+        html = render_template(
+            "label.html",
+            label={"_source": {"label": label}, "_id": resp["_id"]},
+            patient_id=patient_id,
+        )
+
+    html = html.replace("'", "\\'").replace("\n", " ")
+
     if label == None:
         return {
             "type": "error",
@@ -56,13 +122,39 @@ def new_label(**args):
     else:
         return {
             "type": "OK",
-            "text": f"Criado {label}",
-            "callback": f"add_label('{label}', 'sadfbiub')",
+            "text": f"Criado rótulo {label}",
+            "callback": f"add_label('{html}')",
+        }
+
+
+def hide_all(**args):
+    patient_id = args.get("patient_id", None)
+    text = args.get("text", None)
+    text_id = args.get("text_id", None)
+
+    try:
+        add_text_to_hide(text, text_id, patient_id)
+    except:
+        return {
+            "type": "error",
+            "text": "Failed writing to database",
+        }
+
+    if patient_id == None or text == None or text_id == None:
+        return {
+            "type": "error",
+            "text": f"Missing data: {patient_id}, {text_id}, {text}",
+        }
+    else:
+        return {
+            "type": "OK",
+            "text": f"Sempre esconderá texto {text}",
         }
 
 
 COMMANDS = {
     "hide-one": hide_one,
+    "hide-all": hide_all,
     "show": show,
     "add-label": add_label,
     "new-label": new_label,

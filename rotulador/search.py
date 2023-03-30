@@ -1,9 +1,7 @@
 from . import app
-from .functions import es_list_fields, es_search
+from .functions import es_search
 from flask import request, render_template
 import secrets
-import json
-from .settings import ES_MAPPINGS
 
 app.secret_key = secrets.token_hex(16)
 

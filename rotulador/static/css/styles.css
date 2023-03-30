@@ -78,3 +78,10 @@
 .collapsible-header {
     display: block !important;
 }
+
+.labels-menu {
+    width: 250px;
+    height: 80%;
+    overflow-y: auto;
+    overflow-x: clip;
+}

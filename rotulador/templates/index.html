@@ -1,6 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Index{% endblock %}
 {% block content %}
+<div id="warning" class="modal">
+    <div class="modal-content">
+        <h4 id="warning-title"><i class="material-icons red-text text-darken-2">warning</i> Atenção</h4>
+        <p id="warning-text">A bunch of text</p>
+    </div>
+    <div class="modal-footer">
+        <a class="modal-close red darken-3 btn waves-effect waves-red" id="warning-close">Continuar</a>
+        <a class="modal-close btn waves-effect waves-green">Sair</a>
+    </div>
+</div>
 <div class="row">
     <div class="col s8">
         <div class="card">
@@ -34,7 +44,7 @@
                         </div>
                         <div class="input-field col s12">
                             <input type="hidden" name="show-hidden" id="show-hidden" value="{{show_hidden}}">
-                            <button class="btn waves-effect waves-light btn-wide" type="submit">Pesquisar
+                            <button class="btn waves-effect waves-light btn-wide" id="search" type="submit">Pesquisar
                                 <i class="material-icons right">search</i>
                             </button>
                         </div>
@@ -49,30 +59,36 @@
         </div>
     </div>
     <div class="col s2">
-        <div class="toc-wrapper pinned" style="width: 250px;">
+        <div class="toc-wrapper pinned labels-menu">
             <h5>Rotulação</h5>
             <div class="row">
-                {% for label in labels['hits']['hits']%}
-                <div class="input-field col s12">
-                    <span>{{label['_source']['label']}}</span>
-                    {% if patient_id is defined %}
-                    <a class='tooltipped right grey-text' data-position="bottom" data-tooltip="Marcar não"
-                        onclick="add_label_no({{patient_id}},'{{label['_id']}}', '{{label['_source']['label']}}');">
-                        <i class=" material-icons grey-text" id="no_{{label['_id']}}">clear</i>
-                    </a>
-                    <a class='tooltipped right grey-text' data-position="bottom" data-tooltip="Marcar sim"
-                        onclick="add_label_yes({{patient_id}},'{{label['_id']}}', '{{label['_source']['label']}}');">
-                        <i class="material-icons grey-text" id="yes_{{label['_id']}}">check</i>
-                    </a>
-                    {% endif %}
+                <div id="labels">
+                    {% for label in labels['hits']['hits']%}
+                    {% set label_str = label['_source']['label'] %}
+                    <div class="input-field col s12{% if not loop.first %} tight-top{% endif %}">
+                        <span>{{label_str}}</span>
+                        {% if patient_id is defined %}
+                        <a class='tooltipped right' data-position="bottom" data-tooltip="Marcar não"
+                            onclick="add_label_no({{patient_id}},'{{label['_id']}}', '{{label_str}}');">
+                            <i class=" material-icons{% if label_str in selected_labels %}{% if not selected_labels[label_str] %} red-text{% else %} grey-text{% endif %}{% else %} grey-text{% endif %}"
+                                id="no_{{label['_id']}}">clear</i>
+                        </a>
+                        <a class='tooltipped right' data-position="bottom" data-tooltip="Marcar sim"
+                            onclick="add_label_yes({{patient_id}},'{{label['_id']}}', '{{label_str}}');">
+                            <i class="material-icons{% if label_str in selected_labels %}{% if selected_labels[label_str] %} green-text{% else %} grey-text{% endif %}{% else %} grey-text{% endif %}"
+                                id="yes_{{label['_id']}}">check</i>
+                        </a>
+                        {% endif %}
+                    </div>
+                    {%endfor%}
                 </div>
-                {%endfor%}
-                <div class="input-field col s9 l10">
+                <div class="input-field col s7 l9">
                     <input id="new_label" type="text">
                     <label for="new_label">Novo Rótulo</label>
                 </div>
                 <div class="input-field col s3 l2 center">
-                    <a class="btn waves-effect waves-light btn-narrow" onclick="create_label($('#new_label').val())">
+                    <a class="btn waves-effect waves-light btn-narrow"
+                        onclick="create_label($('#new_label').val(),'{{patient_id}}')">
                         <i class="material-icons right">add</i>
                     </a>
                 </div>
@@ -110,31 +126,8 @@
 {% block scripts %}
 <script>
     $(document).ready(function () {
-        let language = {{ language| tojson
-    }};
-
-    $('#start-date').datepicker({
-        firstDay: true,
-        format: 'dd/mm/yyyy',
-        yearRange: {{ year_range }},
-        defaultDate: datestr("{{start_date}}"),
-        setDefaultDate: true,
-        autoClose: true,
-        showClearBtn: true,
-        i18n: language
-        });
-
-    $('#end-date').datepicker({
-        firstDay: true,
-        format: 'dd/mm/yyyy',
-        yearRange: {{ year_range }},
-        defaultDate: datestr("{{end_date}}"),
-        setDefaultDate: true,
-        autoClose: true,
-        showClearBtn: true,
-        i18n: language
-        });
-
+        init_picker('#start-date', "{{start_date}}");
+        init_picker('#end-date', "{{end_date}}");
     });
 </script>
 {% block more_scripts %}{% endblock %}

@@ -3,6 +3,78 @@ $(document).ready(function () {
     update_hidden_counts();
 });
 
+// Initialize datepickes with pt-br localization
+function init_picker(selector, date) {
+    let language = {
+        "months": [
+            "Janeiro",
+            "Fevereiro",
+            "Março",
+            "Abril",
+            "Maio",
+            "Junho",
+            "Julho",
+            "Agosto",
+            "Setembro",
+            "Outubro",
+            "Novembro",
+            "Dezembro"
+        ],
+        "monthsShort": [
+            "Jan",
+            "Fev",
+            "Mar",
+            "Abr",
+            "Mai",
+            "Jun",
+            "Jul",
+            "Ago",
+            "Set",
+            "Out",
+            "Nov",
+            "Dez"
+        ],
+        "weekdays": ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sabado"],
+        "weekdaysShort": ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"],
+        "weekdaysAbbrev": ["D", "S", "T", "Q", "Q", "S", "S"],
+        "cancel": "Cancelar",
+        "clear": "Limpar"
+    };
+    let year_range = [2019, 2023];
+    $(selector).datepicker({
+        firstDay: true,
+        format: 'dd/mm/yyyy',
+        yearRange: year_range,
+        defaultDate: datestr(date),
+        setDefaultDate: true,
+        autoClose: true,
+        showClearBtn: true,
+        i18n: language
+    });
+}
+
+function update_url(param, value) {
+    var base_url = window.location.href.split("?")[0];
+    var param_txt = [param, value].join('=');
+
+    if (window.location.href.split("?").length > 1) {
+        var params = window.location.href.split("?")[1].split("&");
+        var found = false;
+        for (i in params) {
+            if (params[i].split("=")[0] == param) {
+                params[i] = param_txt;
+                found = true;
+            }
+        }
+        if (!found)
+            params = params.concat([param_txt]);
+    } else {
+        var params = [param_txt];
+    }
+    var new_url = [base_url, params.join('&')].join('?');
+    history.pushState(null, "", new_url);
+}
+
 //// Visualization control
 // Toggle between short and full visualization for a text
 function toggle_pannel(id) {
@@ -26,11 +98,13 @@ function toggle_inline() {
 
 // Toggle the visibility of hidden items
 function toggle_hidden(show) {
-    $(".hidden-entry").toggle()
+    $(".hidden-entry").toggle();
     if (show) {
-        $('#show-hidden').val("True")
+        $('#show-hidden').val("True");
+        update_url('show-hidden', "True");
     } else {
-        $('#show-hidden').val("False")
+        $('#show-hidden').val("False");
+        update_url('show-hidden', "False");
     }
 }
 
@@ -48,6 +122,38 @@ function retract_all() {
         if ($(this).is(':visible'))
             $(this).click();
     })
+}
+
+// Hide all dates above current
+function hide_before(id, date) {
+    var day = $("#" + id).prev()
+    var prev = $("#" + id).prev()
+
+    while (day.hasClass('day')) {
+        console.log(day.attr('id'));
+        prev = day.prev()
+        day.remove()
+        day = prev
+    }
+    $('#end-date').val(date);
+    init_picker('#end-date', date);
+    update_url('end-date', date);
+}
+
+// Hide all dates below current
+function hide_after(id, date) {
+    var day = $("#" + id).next()
+    var next = $("#" + id).next()
+
+    while (day.hasClass('day')) {
+        console.log(day.attr('id'));
+        next = day.next()
+        day.remove()
+        day = next
+    }
+    $('#start-date').val(date);
+    init_picker('#start-date', date);
+    update_url('start-date', date);
 }
 
 //// Visualization update functions
@@ -68,6 +174,7 @@ function update_hidden_counts() {
 // Clear a date field
 function clear_date(id) {
     $("#" + id).val([]);
+    //init_picker("#" + id, "");
     M.Datepicker.getInstance($("#" + id)).setDate();
 }
 
@@ -92,47 +199,58 @@ function run_command(cmd, args) {
             console.log(data);
             if (data.type == 'OK') {
                 M.toast({ html: data.text, displayLength: 4000, classes: 'teal darken-3' });
-                if (data.request.callback) {
+                if (data.callback) {
+                    console.log(data.callback)
                     eval(data.callback);
                 }
             }
             else {
                 M.toast({ html: "ERROR: " + data.text, displayLength: 20000, classes: 'red darken-4' });
-                if (data.request.fail_callback) {
+                if (data.fail_callback) {
                     eval(data.fail_callback);
                 }
             }
         })
 }
 
-// Calls then backend to hide an entry
-function hide_one(text_id) {
-    run_command('hide-one', ['txt_id=' + text_id, 'callback=hide_text("' + text_id + '");'])
+// Calls the backend to hide an entry
+function hide_one(text_id, patient_id) {
+    run_command('hide-one', ['txt_id=' + text_id, 'patient_id=' + patient_id, 'callback=hide_text("' + text_id + '");'])
 }
 
-// Calls then backend to hide all equal an entry
-function hide_all(text_id) {
-    run_command('hide-all', ['txt_id=' + text_id, 'callback=hide_text("' + text_id + '");']);
+function show_warnning(message, action) {
+    $("#warning-text").text(message);
+    $('#warning-close').attr("onclick", action);
+    M.Modal.getInstance($("#warning")).open();
 }
 
-// Calls then backend to unhide an entry
-function unhide(text_id) {
-    run_command('show', ['txt_id=' + text_id, 'callback=unhide_text("' + text_id + '");']);
+// Calls the backend to hide all equal an entry
+function hide_all(text, text_id, patient_id) {
+    run_command('hide-all', ['text_id=' + text_id, 'patient_id=' + patient_id, 'text=' + text, 'callback=setTimeout(() => {window.location.reload();}, 1000);']);
 }
 
+// Calls the backend to unhide an entry
+function unhide(text_id, patient_id) {
+    run_command('show', ['txt_id=' + text_id, 'patient_id=' + patient_id, 'callback=unhide_text("' + text_id + '");']);
+}
+
+// Calls the backend to add a yes label to a patient
 function add_label_yes(patient_id, label_id, label) {
     run_command('add-label', ['patient_id=' + patient_id, 'label=' + label, 'value=True', 'callback=mark_yes("' + label_id + '");']);
 }
 
+// Calls the backend to add a no label to a patient
 function add_label_no(patient_id, label_id, label) {
     run_command('add-label', ['patient_id=' + patient_id, 'label=' + label, 'value=False', 'callback=mark_no("' + label_id + '");']);
 }
 
-function create_label(label) {
-    run_command('new-label', ['label=' + label])
+// Calls the backend to create a label
+function create_label(label, patient_id) {
+    run_command('new-label', ['label=' + label, 'patient_id=' + patient_id]);
+    $("#new_label").val("");
 }
 
-//// Callback functions to hide unhide entries
+//// Callback functions to hide, unhide entries, add elements, etc
 // Change the state of a text to hidden
 function hide_text(id) {
     if (!$('.btn-hide').is(':visible'))
@@ -167,6 +285,7 @@ function unhide_text(id) {
     update_hidden_counts();
 }
 
+// Change a label selection to yes
 function mark_yes(label_id) {
     $("#yes_" + label_id).removeClass("grey-text");
     $("#yes_" + label_id).addClass("green-text");
@@ -174,9 +293,15 @@ function mark_yes(label_id) {
     $("#no_" + label_id).removeClass("red-text");
 }
 
+// Change a label selection to no
 function mark_no(label_id) {
     $("#no_" + label_id).removeClass("grey-text");
     $("#no_" + label_id).addClass("red-text");
     $("#yes_" + label_id).addClass("grey-text");
     $("#yes_" + label_id).removeClass("green-text");
+}
+
+// Add a label to the screen
+function add_label(html) {
+    $("#labels").append(html)
 }

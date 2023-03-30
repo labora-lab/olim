@@ -1,8 +1,13 @@
 ## Auxiliary functions
 # All functions here must have type hints and docstrings
-from .settings import ES_SERVER_FILE, ES_INDEX
+from .settings import ES_SERVER_FILE, ES_INDEX, ES_LABEL_INDEX, ES_TO_HIDE_INDEX
 from elasticsearch import Elasticsearch
+from datetime import datetime
 import json
+
+
+def now_ISO():
+    return datetime.now().isoformat()
 
 
 def shorten(string: str, n: int = 80, add: str = " (...)") -> str:
@@ -53,6 +58,60 @@ def es_search(**kwargs):
     return client.search(**kwargs)
 
 
+def es_update(**kwargs):
+    _, kwargs = get_index(kwargs)
+    client = get_es_conn()
+    return client.update(**kwargs)
+
+
+def update_hidden(txt_id, patient_id, hide):
+    body = {
+        "script": {
+            "source": "def targets = ctx._source.texts.findAll(texts -> texts.text_id == params.text_id); for(text in targets) { text.is_hidden = params.is_hidden }",
+            "params": {"text_id": txt_id, "is_hidden": hide},
+        }
+    }
+
+    return es_update(id=patient_id, body=body, refresh=True)
+
+
+def add_patient_label(label, patient_id, value):
+    body = {
+        "script": {
+            "source": "def targets = ctx._source.labels.add(params.label)",
+            "params": {"label": {"label": label, "date": now_ISO(), "value": value}},
+        }
+    }
+
+    return es_update(id=patient_id, body=body, refresh=True)
+
+
+def create_new_label(label):
+    label_doc = {"label": label, "created": now_ISO()}
+
+    client = get_es_conn()
+    return client.index(index=ES_LABEL_INDEX, document=label_doc)
+
+
 def get_labels():
     client = get_es_conn()
-    return client.search(index="labels", query={"match_all": {}})
+    return client.search(index=ES_LABEL_INDEX, query={"match_all": {}}, size=10000)
+
+
+def add_text_to_hide(text, text_id, patient_id):
+    label_doc = {
+        "text": text,
+        "text_id": text_id,
+        "patient_id": patient_id,
+        "date": now_ISO(),
+    }
+
+    client = get_es_conn()
+    return client.index(index=ES_TO_HIDE_INDEX, document=label_doc)
+
+
+def get_all_hidden():
+    client = get_es_conn()
+    return client.search(index=ES_TO_HIDE_INDEX, query={"match_all": {}}, size=10000,)[
+        "hits"
+    ]["hits"]
