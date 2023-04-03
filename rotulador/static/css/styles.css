@@ -85,3 +85,9 @@
     overflow-y: auto;
     overflow-x: clip;
 }
+
+.labels-text-icon {
+    font-size: 20px;
+    margin-left: 5px;
+    margin-top: -3px;
+}

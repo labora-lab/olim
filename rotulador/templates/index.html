@@ -60,7 +60,7 @@
     </div>
     <div class="col s2">
         <div class="toc-wrapper pinned labels-menu">
-            <h5>Rotulação</h5>
+            <h5>Rótulos</h5>
             <div class="row">
                 <div id="labels">
                     {% for label in labels['hits']['hits']%}
@@ -68,6 +68,10 @@
                     <div class="input-field col s12{% if not loop.first %} tight-top{% endif %}">
                         <span>{{label_str}}</span>
                         {% if patient_id is defined %}
+                        <a class='tooltipped right grey-text labels-text-icon' data-position="bottom"
+                            data-tooltip="Marcar não sei">
+                            <strong>?</strong>
+                        </a>
                         <a class='tooltipped right' data-position="bottom" data-tooltip="Marcar não"
                             onclick="add_label_no({{patient_id}},'{{label['_id']}}', '{{label_str}}');">
                             <i class=" material-icons{% if label_str in selected_labels %}{% if not selected_labels[label_str] %} red-text{% else %} grey-text{% endif %}{% else %} grey-text{% endif %}"
