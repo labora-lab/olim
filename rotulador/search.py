@@ -63,7 +63,7 @@ def search():
         ]
     )
 
-    print(json.dumps(es_query, indent=2))
+    # print(json.dumps(es_query, indent=2))
 
     # pacient_id = cd_usu_cadsus
     results = es_search(query=es_query, sort=es_sort, size=number)["hits"]["hits"]
