@@ -60,8 +60,7 @@ def show(**args):
 def add_label(**args):
     patient_id = args.get("patient_id", None)
     label = args.get("label", None)
-    value = args.get("value", False) in ["True", "true"]
-    sim_nao = "sim" if value else "não"
+    value = args.get("value", "")
 
     try:
         add_patient_label(label, patient_id, value)
@@ -70,6 +69,11 @@ def add_label(**args):
             "type": "error",
             "text": "Failed writing to database",
         }
+
+    if value == "":
+        msg = f"Removido o rótulo {label} para o paciente {patient_id}"
+    else:
+        msg = f"{label}: {value} para o paciente {patient_id}"
 
     if patient_id == None:
         return {
@@ -84,7 +88,7 @@ def add_label(**args):
     else:
         return {
             "type": "OK",
-            "text": f"{label}: {sim_nao} para o paciente {patient_id}",
+            "text": msg,
         }
 
 

@@ -1,6 +1,6 @@
 from . import app
 from .functions import shorten, es_search, get_labels, get_all_hidden
-from flask import request, render_template
+from flask import request, render_template, redirect
 import pandas as pd
 from datetime import datetime, timedelta
 
@@ -30,10 +30,10 @@ def load_patient(
             },
             'DD/MM/YYYY': (......)
         },
-        'labels': {
-            "Label 1¨: False,
+        'patient_labels': {
+            "Label 1": 'value',
             (....)
-            "Label n": True,
+            "Label n": 'value',
         }
     }
 
@@ -81,7 +81,7 @@ def load_patient(
     for label in raw_labels:
         if label["label"] not in labels:
             labels[label["label"]] = label["value"]
-    data["selected_labels"] = labels
+    data["patient_labels"] = labels
 
     # Load texts
     df = pd.DataFrame(res["_source"]["texts"])
@@ -121,20 +121,42 @@ def load_patient(
     return data
 
 
-@app.route("/patient", methods=["GET"])
+def index(msg=""):
+    pid = request.args.get("id", "")
+    start_date = request.args.get("start-date", "")
+    end_date = request.args.get("end-date", "")
+    show_hidden = request.args.get("show-hidden", False) == "True"
+    return render_template(
+        "index.html",
+        labels=get_labels(),
+        msg=msg,
+        start_date=start_date,
+        end_date=end_date,
+        patient_id=pid,
+        show_hidden=show_hidden,
+        valid_patient=False,
+    )
+
+
+@app.route("/", methods=["GET"])
 def patient():
     pid = request.args.get("id", "")
+    if pid == "":
+        return index()
     start_date = request.args.get("start-date", "")
     end_date = request.args.get("end-date", "")
     show_hidden = request.args.get("show-hidden", False) == "True"
     highlight = request.args.get("highlight", [])
 
-    data = load_patient(
-        pid=pid,
-        start_date=start_date,
-        end_date=end_date,
-        ascending=False,
-    )
+    try:
+        data = load_patient(
+            pid=pid,
+            start_date=start_date,
+            end_date=end_date,
+            ascending=False,
+        )
+    except IndexError:
+        return index(msg=f"Paciente {pid} não encontrado!")
 
     data.update(
         {
@@ -144,6 +166,7 @@ def patient():
             "show_hidden": show_hidden,
             "labels": get_labels(),
             "highlight": highlight,
+            "valid_patient": True,
         }
     )
 

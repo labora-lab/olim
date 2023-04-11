@@ -15,7 +15,7 @@
                 <i class="material-icons grey-text text-darken-4" style="transform: rotate(90deg);">last_page</i>
             </a>
         </span>
-        <div class=" card-title" onclick="toggle_day('{{date_id}}')">
+        <div class="card-title cursor" onclick="toggle_day('{{date_id}}')">
             {{date}}
             <span class="hidden-count small-title"></span>
             <a class="btn-expand hidden toggle_inline_{{date_id}}"></a>
@@ -26,7 +26,7 @@
         <div class="entry{%if row['is_hidden'] or row['hidden_everywhere'] %} hidden-entry{% if not show_hidden %} hidden{% endif %}{% endif %}"
             id="text_{{row['text_id']}}">
             {% if not loop.first %}<div class="divider"></div>{% endif %}
-            <div class="hidden{%if loop.first %} no-top-pad{%endif%}{%if row['is_hidden'] %} red lighten-5{%elif row['hidden_everywhere'] %} orange lighten-4{% else %} grey lighten-4{%endif%}"
+            <div class="hidden cursor{%if loop.first %} no-top-pad{%endif%}{%if row['is_hidden'] %} red lighten-5{%elif row['hidden_everywhere'] %} orange lighten-4{% else %} grey lighten-4{%endif%}"
                 id="full_{{row['text_id']}}">
                 <span class="right" style="margin: 12px;">
                     <a class="btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped{%if row['is_hidden'] or row['hidden_everywhere'] %} hidden{%endif%}"
@@ -51,7 +51,7 @@
                 </div>
             </div>
 
-            <div class="card-content btn-expand{%if loop.first %} no-top-pad{%endif%}{%if row['is_hidden'] %} red lighten-4{%elif row['hidden_everywhere'] %} orange lighten-3{%else%} grey lighten-3{%endif%}"
+            <div class="card-content btn-expand cursor{%if loop.first %} no-top-pad{%endif%}{%if row['is_hidden'] %} red lighten-4{%elif row['hidden_everywhere'] %} orange lighten-3{%else%} grey lighten-3{%endif%}"
                 id="short_{{row['text_id']}}" onclick="toggle_pannel('{{row['text_id']}}')">
                 <span class="card-title small-title">
                     {{row['text_type']}}:

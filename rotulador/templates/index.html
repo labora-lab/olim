@@ -16,7 +16,7 @@
         <div class="card">
             <div class="card-content no-bottom-pad">
                 <div class="row">
-                    <form action="/patient" method="get">
+                    <form action="./" method="get">
                         <div class="input-field col s12">
                             <input id="id" name="id" type="text" class="validate" value="{{patient_id}}">
                             <label for="id">Id do paciente</label>
@@ -54,36 +54,17 @@
         </div>
         <div class="row">
             <div class="col s12">
-                {% block patient %}{% endblock %}
+                {% block patient %}<h5 class="center">{{msg}}</h5>{% endblock %}
             </div>
         </div>
     </div>
     <div class="col s2">
         <div class="toc-wrapper pinned labels-menu">
             <h5>Rótulos</h5>
-            <div class="row">
+            <div class="row" style="padding-top:15px;">
                 <div id="labels">
                     {% for label in labels['hits']['hits']%}
-                    {% set label_str = label['_source']['label'] %}
-                    <div class="input-field col s12{% if not loop.first %} tight-top{% endif %}">
-                        <span>{{label_str}}</span>
-                        {% if patient_id is defined %}
-                        <a class='tooltipped right grey-text labels-text-icon' data-position="bottom"
-                            data-tooltip="Marcar não sei">
-                            <strong>?</strong>
-                        </a>
-                        <a class='tooltipped right' data-position="bottom" data-tooltip="Marcar não"
-                            onclick="add_label_no({{patient_id}},'{{label['_id']}}', '{{label_str}}');">
-                            <i class=" material-icons{% if label_str in selected_labels %}{% if not selected_labels[label_str] %} red-text{% else %} grey-text{% endif %}{% else %} grey-text{% endif %}"
-                                id="no_{{label['_id']}}">clear</i>
-                        </a>
-                        <a class='tooltipped right' data-position="bottom" data-tooltip="Marcar sim"
-                            onclick="add_label_yes({{patient_id}},'{{label['_id']}}', '{{label_str}}');">
-                            <i class="material-icons{% if label_str in selected_labels %}{% if selected_labels[label_str] %} green-text{% else %} grey-text{% endif %}{% else %} grey-text{% endif %}"
-                                id="yes_{{label['_id']}}">check</i>
-                        </a>
-                        {% endif %}
-                    </div>
+                    {% include 'label.html' %}
                     {%endfor%}
                 </div>
                 <div class="input-field col s7 l9">

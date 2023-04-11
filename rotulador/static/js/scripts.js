@@ -235,13 +235,8 @@ function unhide(text_id, patient_id) {
 }
 
 // Calls the backend to add a yes label to a patient
-function add_label_yes(patient_id, label_id, label) {
-    run_command('add-label', ['patient_id=' + patient_id, 'label=' + label, 'value=True', 'callback=mark_yes("' + label_id + '");']);
-}
-
-// Calls the backend to add a no label to a patient
-function add_label_no(patient_id, label_id, label) {
-    run_command('add-label', ['patient_id=' + patient_id, 'label=' + label, 'value=False', 'callback=mark_no("' + label_id + '");']);
+function add_patient_label(patient_id, label_id, label, value) {
+    run_command('add-label', ['patient_id=' + patient_id, 'label=' + label, 'value=' + value, 'callback=mark_label("' + label_id + '", "' + value + '");']);
 }
 
 // Calls the backend to create a label
@@ -286,19 +281,26 @@ function unhide_text(id) {
 }
 
 // Change a label selection to yes
-function mark_yes(label_id) {
-    $("#yes_" + label_id).removeClass("grey-text");
-    $("#yes_" + label_id).addClass("green-text");
-    $("#no_" + label_id).addClass("grey-text");
-    $("#no_" + label_id).removeClass("red-text");
-}
+function mark_label(label_id, value) {
+    // Unselect all
+    $("#no_sel_" + label_id).addClass("hidden");
+    $("#no_" + label_id).removeClass("hidden");
+    $("#yes_sel_" + label_id).addClass("hidden");
+    $("#yes_" + label_id).removeClass("hidden");
+    $("#idk_sel_" + label_id).addClass("hidden");
+    $("#idk_" + label_id).removeClass("hidden");
 
-// Change a label selection to no
-function mark_no(label_id) {
-    $("#no_" + label_id).removeClass("grey-text");
-    $("#no_" + label_id).addClass("red-text");
-    $("#yes_" + label_id).addClass("grey-text");
-    $("#yes_" + label_id).removeClass("green-text");
+    // Select back according to value
+    if (value == "sim") {
+        $("#yes_sel_" + label_id).removeClass("hidden");
+        $("#yes_" + label_id).addClass("hidden");
+    } else if (value == "nao") {
+        $("#no_sel_" + label_id).removeClass("hidden");
+        $("#no_" + label_id).addClass("hidden");
+    } else if (value == "nao_sei") {
+        $("#idk_sel_" + label_id).removeClass("hidden");
+        $("#idk_" + label_id).addClass("hidden");
+    }
 }
 
 // Add a label to the screen

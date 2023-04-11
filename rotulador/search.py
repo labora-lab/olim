@@ -2,6 +2,7 @@ from . import app
 from .functions import es_search
 from flask import request, render_template
 import secrets
+import json
 
 app.secret_key = secrets.token_hex(16)
 
@@ -33,41 +34,36 @@ def search():
     all_must = must_terms + must_phrases
     col_search = "texts.text"
     es_query = {
-        "nested": {
-            "path": "texts",
-            "query": {
-                "bool": {"must": [], "must_not": [], "should": []},
-            },
-        }
+        "bool": {"must": [], "must_not": [], "should": []},
     }
     es_sort = [
         {"_score": {"order": "desc"}},
-        {"texts.date": {"order": "asc", "nested": {"path": "texts"}}},
+        {"texts.date": {"order": "asc"}},
     ]
 
-    es_query["nested"]["query"]["bool"]["must"].extend(
+    es_query["bool"]["must"].extend(
         [
             {"query_string": {"query": term, "fields": [col_search]}}
             for term in must_terms
         ]
     )
-    es_query["nested"]["query"]["bool"]["must"].extend(
+    es_query["bool"]["must"].extend(
         [{"match_phrase": {col_search: {"query": phrase}}} for phrase in must_phrases]
     )
-    es_query["nested"]["query"]["bool"]["must_not"].extend(
+    es_query["bool"]["must_not"].extend(
         [
             {"query_string": {"query": term, "fields": [col_search]}}
             for term in not_must_terms
         ]
     )
-    es_query["nested"]["query"]["bool"]["must_not"].extend(
+    es_query["bool"]["must_not"].extend(
         [
             {"match_phrase": {col_search: {"query": phrase}}}
             for phrase in not_must_phrases
         ]
     )
 
-    # print(json.dumps(es_query, indent=2))
+    print(json.dumps(es_query, indent=2))
 
     # pacient_id = cd_usu_cadsus
     results = es_search(query=es_query, sort=es_sort, size=number)["hits"]["hits"]
