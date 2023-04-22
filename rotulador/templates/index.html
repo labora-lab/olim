@@ -17,6 +17,11 @@
             <div class="card-content no-bottom-pad">
                 <div class="row">
                     <form action="./" method="get">
+                        {% if valid_patient %}
+                        <div class="con s12">
+                            <h5>Selecione um paciente:</h5>
+                        </div>
+                        {% endif %}
                         <div class="input-field col s12">
                             <input id="id" name="id" type="text" class="validate" value="{{patient_id}}">
                             <label for="id">Id do paciente</label>
@@ -44,8 +49,9 @@
                         </div>
                         <div class="input-field col s12">
                             <input type="hidden" name="show-hidden" id="show-hidden" value="{{show_hidden}}">
-                            <button class="btn waves-effect waves-light btn-wide" id="search" type="submit">Pesquisar
-                                <i class="material-icons right">search</i>
+                            <button class="btn waves-effect waves-light btn-wide" id="search" type="submit">
+                                Carregar ficha
+                                <i class="material-icons right">assignment_ind</i>
                             </button>
                         </div>
                     </form>
