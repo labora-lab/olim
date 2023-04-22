@@ -34,29 +34,34 @@ def search():
     all_must = must_terms + must_phrases
     col_search = "texts.text"
     es_query = {
-        "bool": {"must": [], "must_not": [], "should": []},
+        "nested": {
+            "path": "texts",
+            "query": {
+                "bool": {"must": [], "must_not": [], "should": []},
+            },
+        }
     }
     es_sort = [
         {"_score": {"order": "desc"}},
-        {"texts.date": {"order": "asc"}},
+        {"texts.date": {"order": "asc", "nested": {"path": "texts"}}},
     ]
 
-    es_query["bool"]["must"].extend(
+    es_query["nested"]["query"]["bool"]["must"].extend(
         [
             {"query_string": {"query": term, "fields": [col_search]}}
             for term in must_terms
         ]
     )
-    es_query["bool"]["must"].extend(
+    es_query["nested"]["query"]["bool"]["must"].extend(
         [{"match_phrase": {col_search: {"query": phrase}}} for phrase in must_phrases]
     )
-    es_query["bool"]["must_not"].extend(
+    es_query["nested"]["query"]["bool"]["must_not"].extend(
         [
             {"query_string": {"query": term, "fields": [col_search]}}
             for term in not_must_terms
         ]
     )
-    es_query["bool"]["must_not"].extend(
+    es_query["nested"]["query"]["bool"]["must_not"].extend(
         [
             {"match_phrase": {col_search: {"query": phrase}}}
             for phrase in not_must_phrases

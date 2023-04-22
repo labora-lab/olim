@@ -1,9 +1,8 @@
 ## Auxiliary functions
 # All functions here must have type hints and docstrings
-from .settings import ES_SERVER_FILE, ES_INDEX, ES_LABEL_INDEX, ES_TO_HIDE_INDEX
+from .settings import ES_INDEX, ES_LABEL_INDEX, ES_TO_HIDE_INDEX, ES_SERVER
 from elasticsearch import Elasticsearch
 from datetime import datetime
-import json
 
 
 def now_ISO():
@@ -29,8 +28,9 @@ def shorten(string: str, n: int = 80, add: str = " (...)") -> str:
 
 
 def get_es_conn(**kwargs):
-    with open(ES_SERVER_FILE, "r") as f:
-        pars = dict(json.load(f))
+    pars = dict(
+        hosts=ES_SERVER,
+    )
     pars.update(kwargs)
     return Elasticsearch(**pars)
 
