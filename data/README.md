@@ -8,6 +8,7 @@ Create a `data.csv` file with the following columns:
 - text_id
 - visitation_id
 - text
+- text_type
 - date (in ISO format)
 
 And after the containers start, run the following command to upload your data to the elasticsearch server:
