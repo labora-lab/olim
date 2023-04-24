@@ -114,6 +114,7 @@ def new_label(**args):
             "label.html",
             label={"_source": {"label": label}, "_id": resp["_id"]},
             patient_id=patient_id,
+            valid_patient=True,
         )
 
     html = html.replace("'", "\\'").replace("\n", " ")
