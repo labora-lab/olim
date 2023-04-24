@@ -1,4 +1,4 @@
-import rotulador
+import olim
 import re
 import argparse
 
@@ -40,4 +40,4 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-rotulador.app.run(host=args.host, port=args.port, debug=args.debug)
+olim.app.run(host=args.host, port=args.port, debug=args.debug)

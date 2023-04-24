@@ -1,4 +1,4 @@
-from rotulador.settings import ES_SERVER, ES_INDEX, ES_LABEL_INDEX, ES_TO_HIDE_INDEX
+from olim.settings import ES_SERVER, ES_INDEX, ES_LABEL_INDEX, ES_TO_HIDE_INDEX
 from elasticsearch import Elasticsearch
 from elasticsearch import helpers
 import json

@@ -1,4 +1,7 @@
-# rotulador-projeto-opas
+# OLIM
+### Open Labeller for Iterative Machine learning
+
+OLIM is a simple labelling interface aimed to be used by personal without data science specific knowledge. Currently OLIM supports the labelling of patients from medical texts relative to that patient. In future versions we expect to expand the possibilities of the data shape.
 
 ## Requirements
 
@@ -10,11 +13,11 @@ To run the standalone version see `requirements.txt` for the needed Python packa
 
 1. Clone the repository:
 
-    `git clone https://gitlab.com/nanogennari/rotulador-projeto-opas.git`
+    `git clone https://gitlab.com/nanogennari/olim.git`
 
 2. Enter the directory:
 
-    `cd rotulador-projeto-opas`
+    `cd olim`
 
 3. Copy your data to the `data/data.csv` (see the [`data`](./data) folder on details on how to format it)
 
@@ -26,10 +29,10 @@ To run the standalone version see `requirements.txt` for the needed Python packa
 
 6. Upload your data to the elasticsearch server:
 
-    `docker compose exec rotulador python /app/upload_data.py /app/data/data.csv`
+    `docker compose exec olim python /app/upload_data.py /app/data/data.csv`
 
     If you want to use the sample data run instead:
 
-    `docker compose exec rotulador python /app/upload_data.py /app/data/sample_data.csv`
+    `docker compose exec olim python /app/upload_data.py /app/data/sample_data.csv`
 
 7. Access the labeler on http://localhost:42000
