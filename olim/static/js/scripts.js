@@ -62,14 +62,21 @@ function update_url(param, value) {
         var found = false;
         for (i in params) {
             if (params[i].split("=")[0] == param) {
-                params[i] = param_txt;
+                if (value === undefined)
+                    params.splice(i, 1);
+                else
+                    params[i] = param_txt;
                 found = true;
             }
         }
         if (!found)
-            params = params.concat([param_txt]);
+            if (!(value === undefined))
+                params = params.concat([param_txt]);
     } else {
-        var params = [param_txt];
+        if ((value === undefined))
+            var params = [];
+        else
+            var params = [param_txt];
     }
     var new_url = [base_url, params.join('&')].join('?');
     history.pushState(null, "", new_url);
@@ -315,8 +322,12 @@ function update_highlight() {
         var text = $(this).text()
         return text.substring(0, text.length - 5);
     }).get();
-    $('.text-entry').highlight(data);
-    update_url('highlight', '["' + data.join('","') + '"]')
+    if (data.length > 0) {
+        $('.text-entry').highlight(data);
+        update_url('highlight', '["' + data.join('","') + '"]');
+    } else {
+        update_url('highlight');
+    }
 }
 
 // Initilize highlights and highlights chips
