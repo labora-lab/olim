@@ -307,3 +307,34 @@ function mark_label(label_id, value) {
 function add_label(html) {
     $("#labels").append(html)
 }
+
+// Update hightlighted texts
+function update_highlight() {
+    $('.text-entry').unhighlight();
+    var data = $('#highlights .chip').map(function () {
+        var text = $(this).text()
+        return text.substring(0, text.length - 5);
+    }).get();
+    $('.text-entry').highlight(data);
+    update_url('highlight', '["' + data.join('","') + '"]')
+}
+
+// Initilize highlights and highlights chips
+function init_highlight(data) {
+    var data_obj = [];
+    for (i in data) {
+        data_obj.push({
+            tag: data[i],
+        })
+    }
+    let elems = document.querySelector('#highlights');
+    let options = {
+        onChipAdd: () => update_highlight(),
+        onChipDelete: () => update_highlight(),
+        placeholder: '+ Destaque',
+        secondaryPlaceholder: '+ Destaque',
+        data: data_obj,
+    }
+    let instances = M.Chips.init(elems, options);
+    update_highlight();
+}
