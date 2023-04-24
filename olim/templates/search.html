@@ -3,46 +3,32 @@
 
 {% block content %}
 <div class="row">
-    <form action="/search" method="GET">
-        <div class="col s12 m6">
-            <h5 class="center">Termos</h5>
-            <div class="input-field col s12">
-                <input type="text" id="must_terms" name="must_terms" class="validate tooltipped" data-position="bottom"
-                    data-tooltip="Exemplo: vacina, medicamento, dorflex" {% if must_terms %} value="{{ must_terms }}" {%
-                    endif %}>
-                <label for="must_terms">Inclusão de termos <i class="material-icons left green-text">check</i></label>
-            </div>
-            <div class="input-field col s12">
-                <input type="text" id="not_must_terms" name="not_must_terms" class="validate tooltipped"
-                    data-position="bottom" data-tooltip="Exemplo: vacina, medicamento, dorflex" {% if not_must_terms %}
-                    value="{{ not_must_terms }}" {% endif %}>
-                <label for="not_must_terms">Exclusão de termos <i class="material-icons left red-text">close</i></label>
+    <form action="/search" method="GET" id="form">
+        <div class="input-field col s12">
+            <p class='tight-bottom' style="font-size: 24px;margin-top:0px;">
+                <i class="material-icons green-text">check</i> Inclusão de termos
+            </p>
+            <div class="input-field tight-bottom" id="include">
+                <input style="width: 100% !important;">
             </div>
         </div>
-        <div class="col s12 m6">
-            <h5 class="center">Frases</h5>
-            <div class="input-field col s12">
-                <input type="text" id="must_phrases" name="must_phrases" class="validate tooltipped"
-                    data-position="bottom" data-tooltip="Exemplo: vacina para dor no ombro; vacina para vida" {% if
-                    must_terms %} value="{{ must_phrases }}" {% endif %}>
-                <label for="must_phrases">Inclusão de frases <i class="material-icons left green-text">check</i></label>
+        <div class="input-field col s12">
+            <p class='tight-bottom' style="font-size: 24px;margin-top:0px;">
+                <i class="material-icons red-text">close</i> Exclusao de termos
+            </p>
+            <div class="input-field" id="exclude">
+                <input style="width: 100% !important;">
             </div>
-            <div class="input-field col s12">
-                <input type="text" id="not_must_phrases" name="not_must_phrases" class="validate tooltipped"
-                    data-position="bottom" data-tooltip="Exemplo: vacina para dor no ombro; vacina para vida" {% if
-                    must_terms %} value="{{ not_must_phrases }}" {% endif %}>
-                <label for="not_must_phrases">Exclusão de frases <i
-                        class="material-icons left red-text">close</i></label>
-            </div>
+
         </div>
-        <div class="input-field col s12 m6">
-            <div class="input-field col s12">
-                <input type="text" id="number" name="number" class="tooltipped" data-position="bottom"
-                    data-tooltip="Número de pacientes" value="{{ number }}">
-                <label for="number">Número de pacientes <i class="material-icons left">inbox</i></label>
-            </div>
+        <div class="input-field col s12">
+            <input type="text" id="number" name="number" class="tooltipped" data-position="bottom"
+                data-tooltip="Número de pacientes" value="{{ number }}">
+            <label for="number">Número de pacientes <i class="material-icons left">inbox</i></label>
         </div>
         <div class="input-field col s12 center">
+            <input type="hidden" name="include" id="include_field">
+            <input type="hidden" name="exclude" id="exclude_field">
             <button class="btn waves-effect waves-light btn-wide">Pesquisar
                 <i class="material-icons right">search</i>
             </button>
@@ -89,8 +75,41 @@
 {% endblock %}
 {% block scripts %}
 <script>
+    function update_search(id) {
+        var data = $('#' + id + ' .chip').map(function () {
+            var text = $(this).text()
+            return text.substring(0, text.length - 5);
+        }).get();
+        $('#' + id + '_field').val(JSON.stringify(data));
+    }
+
+    function init_field(id, data) {
+        let elems = document.querySelector('#' + id);
+        let options = {
+            onChipAdd: () => update_search(id),
+            onChipDelete: () => update_search(id),
+            placeholder: 'Adicionar termos (digite e precione ENTER)',
+            secondaryPlaceholder: 'Adicionar mais termos (digite e precione ENTER)',
+            data: data,
+        }
+        let instances = M.Chips.init(elems, options);
+        $('#' + id + ' input').on('focusout', function () { set_chip(id); });
+    }
+
+    function set_chip(id) {
+        M.Chips.getInstance($('#' + id)).addChip({ tag: $('#' + id + ' input').val() });
+        $('#' + id + ' input').val("");
+    }
+
     $(document).ready(function () {
-        $(".patient-body").highlight({{ highlight| safe}})
+        $('#form').on('submit', function () {
+            update_search("include");
+            update_search("exclude");
+            return true
+        });
+        init_field('include', JSON.parse('{{include | safe}}'));
+        init_field('exclude', JSON.parse('{{exclude | safe}}'));
+        $(".patient-body").highlight({{ highlight| safe}});
     });
 </script>
 {% endblock %}

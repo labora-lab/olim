@@ -7,31 +7,40 @@ import json
 app.secret_key = secrets.token_hex(16)
 
 
-def get_terms(field, sep=","):
-    try:
-        return [x.strip() for x in request.args.get(field).split(sep) if x.strip()]
-    except AttributeError:
-        return []
+def get_terms(field):
+    value = request.args.get(field, "")
+    if len(value) == 0:
+        return "[]", [], []
+    data = json.loads(value)
+    terms = [term.strip() for term in data if len(term.split()) == 1]
+    phrases = [term.strip() for term in data if len(term.split()) > 1]
+    value = json.dumps([{"tag": term} for term in data])
+    return value, terms, phrases
 
 
 @app.route("/search", methods=["GET"])
 def search():
-    must_terms = get_terms("must_terms")
-    must_phrases = get_terms("must_phrases", ";")
-    not_must_terms = get_terms("not_must_terms")
-    not_must_phrases = get_terms("not_must_phrases", ";")
+    include, must_terms, must_phrases = get_terms("include")
+    exclude, not_must_terms, not_must_phrases = get_terms("exclude")
     number = int(request.args.get("number", 20))
 
     # No search return empty page
     if (
         len(must_terms) == 0
-        and len(must_terms) == 0
-        and len(must_terms) == 0
-        and len(must_terms) == 0
+        and len(must_phrases) == 0
+        and len(not_must_terms) == 0
+        and len(not_must_phrases) == 0
     ):
-        return render_template("search.html", number=number)
+        return render_template(
+            "search.html",
+            number=number,
+            include="[]",
+            exclude="[]",
+            highlight="[]",
+        )
 
     all_must = must_terms + must_phrases
+    all_not = not_must_terms + not_must_phrases
     col_search = "texts.text"
     es_query = {
         "nested": {
@@ -47,26 +56,20 @@ def search():
     ]
 
     es_query["nested"]["query"]["bool"]["must"].extend(
-        [
-            {"query_string": {"query": term, "fields": [col_search]}}
-            for term in must_terms
-        ]
+        [{"query_string": {"query": term, "fields": [col_search]}} for term in all_must]
     )
-    es_query["nested"]["query"]["bool"]["must"].extend(
-        [{"match_phrase": {col_search: {"query": phrase}}} for phrase in must_phrases]
-    )
+    # es_query["nested"]["query"]["bool"]["must"].extend(
+    #     [{"match_phrase": {col_search: {"query": phrase}}} for phrase in must_phrases]
+    # )
     es_query["nested"]["query"]["bool"]["must_not"].extend(
-        [
-            {"query_string": {"query": term, "fields": [col_search]}}
-            for term in not_must_terms
-        ]
+        [{"query_string": {"query": term, "fields": [col_search]}} for term in all_not]
     )
-    es_query["nested"]["query"]["bool"]["must_not"].extend(
-        [
-            {"match_phrase": {col_search: {"query": phrase}}}
-            for phrase in not_must_phrases
-        ]
-    )
+    # es_query["nested"]["query"]["bool"]["must_not"].extend(
+    #     [
+    #         {"match_phrase": {col_search: {"query": phrase}}}
+    #         for phrase in not_must_phrases
+    #     ]
+    # )
 
     # print(json.dumps(es_query, indent=2))
 
@@ -90,10 +93,8 @@ def search():
     return render_template(
         "search.html",
         results=results,
-        must_terms=request.args.get("must_terms"),
-        must_phrases=request.args.get("must_phrases"),
-        not_must_phrases=request.args.get("not_must_phrases"),
-        not_must_terms=request.args.get("not_must_terms"),
+        include=include,
+        exclude=exclude,
         default_es_column=col_search,
         len_f=len,
         number=number,

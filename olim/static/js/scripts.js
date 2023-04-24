@@ -342,8 +342,7 @@ function init_highlight(data) {
     let options = {
         onChipAdd: () => update_highlight(),
         onChipDelete: () => update_highlight(),
-        placeholder: '+ Destaque',
-        secondaryPlaceholder: '+ Destaque',
+        placeholder: 'Adicionar Destaque',
         data: data_obj,
     }
     let instances = M.Chips.init(elems, options);
