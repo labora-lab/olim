@@ -2,27 +2,31 @@
 {% block title %}Entradas Ocultas{% endblock %}
 
 {% block content %}
-<h3 class="center">Entradas Ocultas</h3>
+<div class="col s12">
+    <h4 class="center">Entradas Ocultas</h4>
+    <p class="center">Textos nessa plágina foram marcados com "Esconder todos como este".</p>
+</div>
 {% if res %}
-    {% for r in res %}
-        {% set text_id = r['text_id'] %}
-        {% set text = r['text'] %}
-        <div class="col s12 m7">
-            <div class="card horizontal">
-                <div class="card-content">
-                <p>{{text}}</p>
-                </div>
-                <div class="card-action">
-                    <a class="btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped right-align
-                        data-position="bottom" data-tooltip="Remover  de entradas ocultas", onclick="remove_from_hidden('{{text_id}}')">
-                        <i class="material-icons red-text text-darken-4">remove_circle_outline</i>
-                    </a>
-                </div>
-            </div>
+{% for r in res %}
+{% set text_id = r['text_id'] %}
+{% set text = r['text'] %}
+<div class="col s12 m7" id="text_{{text_id}}">
+    <div class="card horizontal">
+        <div class="card-content">
+            <p>{{text}}</p>
         </div>
-    {% endfor %}
+        <div class="card-action">
+            <a class="btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped right-align
+                        data-position=" bottom" data-tooltip="Remover  de entradas ocultas" ,
+                onclick="remove_from_hidden('{{text_id}}')">
+                <i class="material-icons red-text text-darken-4">remove_circle_outline</i>
+            </a>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% else %}
-<h4 class="center">Sem resultados para a pesquisa.</h4>
+<h4 class="center">Não há nenhum texto marcado "Ocultar todos como este".</h4>
 {% endif %}
 
 {% endblock %}

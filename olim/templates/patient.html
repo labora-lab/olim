@@ -36,7 +36,7 @@
                     </a>
                     <a class="btn-floating btn btn-to-hide btn-flat waves-light tooltipped{%if row['is_hidden'] or row['hidden_everywhere'] %} hidden{%endif%}"
                         data-position="bottom" data-tooltip="Ocultar todos como este"
-                        onclick="show_warnning('Isto esconderá todos os textos iguais a \'{{row['short_text']}}\', esta ação não é reversível no momento!\n\nDeseja continuar?', 'hide_all(\'{{row['text']}}\', \'{{row['text_id']}}\', \'{{patient_id}}\');');">
+                        onclick="show_warnning('Isto esconderá todos os textos iguais a \'{{row['short_text']}}\'!\n\nDeseja continuar?', 'hide_all(\'{{row['text']}}\', \'{{row['text_id']}}\', \'{{patient_id}}\');');">
                         <i class=" material-icons grey-text text-darken-4">remove_circle</i>
                     </a>
                     <a class="btn-floating btn btn-to-show btn-flat waves-light tooltipped{%if not row['is_hidden'] %} hidden{%endif%}"

@@ -31,10 +31,10 @@ def shorten(string: str, n: int = 80, add: str = " (...)") -> str:
 def get_es_conn(**kwargs):
     pars = dict(
         hosts=ES_SERVER,
-
     )
     pars.update(kwargs)
     return Elasticsearch(**pars)
+
 
 def get_index(kwargs):
     if "index" in kwargs:
@@ -114,17 +114,22 @@ def add_text_to_hide(text, text_id, patient_id):
 
 def get_all_hidden():
     client = get_es_conn()
-    return client.search(index=ES_TO_HIDE_INDEX, query={"match_all": {}}, size=10000,)[
+    return client.search(
+        index=ES_TO_HIDE_INDEX,
+        query={"match_all": {}},
+        size=10000,
+    )[
         "hits"
     ]["hits"]
 
+
 def remove_from_hidden(text_id):
     client = get_es_conn()
-    query = {
-        "query": {
-            "match": {
-                "text_id": text_id
-            }
-        }
-    }
+    query = {"query": {"bool": {"must": [{"match": {"text_id": text_id}}]}}}
     return client.delete_by_query(index=ES_TO_HIDE_INDEX, body=query, refresh=True)
+
+
+def remove_from_labels(label_id):
+    client = get_es_conn()
+    query = {"query": {"bool": {"must": [{"match": {"_id": label_id}}]}}}
+    return client.delete_by_query(index=ES_LABEL_INDEX, body=query, refresh=True)

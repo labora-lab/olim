@@ -252,8 +252,18 @@ function create_label(label, patient_id) {
     $("#new_label").val("");
 }
 
+// Calls the backend to remove an entry from hidden index
+function remove_from_hidden(text_id) {
+    run_command('remove-hidden', ['text_id=' + text_id, 'callback=delete_id("text_' + text_id + '");'])
+}
+
+// Calls the backend to remove an entry from hidden index
+function remove_label(label, label_id) {
+    run_command('remove-label', ['label=' + label, 'label_id=' + label_id, 'callback=delete_by_class("label_' + label_id + '");'])
+}
+
 //// Callback functions to hide, unhide entries, add elements, etc
-// Change the state of a text to hidden
+// Callback: Change the state of a text to hidden
 function hide_text(id) {
     if (!$('.btn-hide').is(':visible'))
         $("#text_" + id).hide();
@@ -271,7 +281,7 @@ function hide_text(id) {
     update_hidden_counts();
 }
 
-// Change the state of a text from hidden
+// Callback: Change the state of a text from hidden
 function unhide_text(id) {
     $("#text_" + id).removeClass("hidden-entry");
     $("#full_" + id).removeClass("red");
@@ -287,7 +297,7 @@ function unhide_text(id) {
     update_hidden_counts();
 }
 
-// Change a label selection to yes
+// Callback: Change a label selection to yes
 function mark_label(label_id, value) {
     // Unselect all
     $("#no_sel_" + label_id).addClass("hidden");
@@ -310,9 +320,18 @@ function mark_label(label_id, value) {
     }
 }
 
-// Add a label to the screen
+// Callback: Add a label to the screen
 function add_label(html) {
     $("#labels").append(html)
+}
+
+//Callback: Delete a text from hidden page
+function delete_id(id) {
+    $('#' + id).remove();
+}
+//Callback: Delete a text from hidden page
+function delete_by_class(class_name) {
+    $('.' + class_name).remove();
 }
 
 // Update hightlighted texts
@@ -348,9 +367,4 @@ function init_highlight(data) {
     }
     let instances = M.Chips.init(elems, options);
     update_highlight();
-}
-
-// Calls the backend to remove an entry from hidden index
-function remove_from_hidden(text_id) {
-    run_command('remove-hidden', ['text_id=' + text_id])
 }

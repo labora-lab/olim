@@ -5,6 +5,7 @@ from .functions import (
     create_new_label,
     add_text_to_hide,
     remove_from_hidden,
+    remove_from_labels,
 )
 from flask import request, render_template
 import json
@@ -157,6 +158,7 @@ def hide_all(**args):
             "text": f"Sempre esconderá texto {text}",
         }
 
+
 def remove_hidden(**args):
     text_id = args.get("text_id", None)
 
@@ -171,13 +173,38 @@ def remove_hidden(**args):
     if text_id == None:
         return {
             "type": "error",
-            "text": f"Missing data: {text_id}",
+            "text": "Missing data: text_id",
         }
     else:
         return {
             "type": "OK",
             "text": f"Texto {text_id} removido da lista de escondidos",
         }
+
+
+def remove_label(**args):
+    label = args.get("label", None)
+    label_id = args.get("label_id", None)
+
+    try:
+        remove_from_labels(label_id)
+    except:
+        return {
+            "type": "error",
+            "text": "Failed writing to database",
+        }
+
+    if label == None or label_id == None:
+        return {
+            "type": "error",
+            "text": "Missing data: label or id",
+        }
+    else:
+        return {
+            "type": "OK",
+            "text": f"Rótulo {label} removido",
+        }
+
 
 COMMANDS = {
     "hide-one": hide_one,
@@ -186,6 +213,7 @@ COMMANDS = {
     "add-label": add_label,
     "new-label": new_label,
     "remove-hidden": remove_hidden,
+    "remove-label": remove_label,
 }
 
 ERROR_NO_CMD = {"type": "error", "text": "No command passed"}

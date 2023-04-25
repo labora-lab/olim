@@ -1,9 +1,6 @@
 from . import app
 from .functions import get_all_hidden
-from flask import request, render_template
-import secrets
-import json
-
+from flask import render_template
 
 
 @app.route("/hidden", methods=["GET"])

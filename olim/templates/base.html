@@ -15,6 +15,10 @@
 </head>
 
 <body>
+    <ul id="dropdown1" class="dropdown-content">
+        <li><a href="./labels">Rótulos</a></li>
+        <li><a href="./hidden">Textos ocultos</a></li>
+    </ul>
     <nav>
         <div class="nav-wrapper cyan darken-4">
             <span class="brand-logo left tooltipped" data-tooltip="Open Labeller for Iterative Machine learning">
@@ -23,9 +27,21 @@
             <ul id="nav-mobile" class="right">
                 <li><a href="./">Rotulação</a></li>
                 <li><a href="./search">Pesquisa de paciente</a></li>
+                <li><a class="dropdown-trigger" href="#!" data-target="dropdown1">Gerenciar<i
+                            class="material-icons right">arrow_drop_down</i></a></li>
             </ul>
         </div>
     </nav>
+    <div id="warning" class="modal">
+        <div class="modal-content">
+            <h4 id="warning-title"><i class="material-icons red-text text-darken-2">warning</i> Atenção</h4>
+            <p id="warning-text">A bunch of text</p>
+        </div>
+        <div class="modal-footer">
+            <a class="modal-close red darken-3 btn waves-effect waves-red" id="warning-close">Continuar</a>
+            <a class="modal-close btn waves-effect waves-green">Sair</a>
+        </div>
+    </div>
     <div class="container" style="margin-top: 20px;">
         {% block content %}{% endblock %}
     </div>

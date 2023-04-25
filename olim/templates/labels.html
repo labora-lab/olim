@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Rótulos{% endblock %}
+
+{% block content %}
+<div class="col s12">
+    <h4 class="center">Rótulos</h4>
+</div>
+{% if res %}
+<div class="row">
+    <div class="col card s12 tight-bottom">
+        {% for r in res %}
+        {% set label = r['label'] %}
+        {% set label_id = r['_id'] %}
+        {% if not loop.first %}<div class="divider label_{{label_id}}"></div>{% endif %}
+        <div class="card-content label_{{label_id}}">
+            <a class="btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped right
+                                                        data-position" bottom" data-tooltip="Remover rótulo" ,
+                onclick="show_warnning('Remover este rótulo não remove as rotulações efetuadas com ele, caso ele seja recriado as rotulações serão restauradas, para novas rotulações crie um novo rótulo com novo nome.','remove_label(\'{{label}}\', \'{{label_id}}\');');">
+                <i class="material-icons red-text text-darken-4">remove_circle_outline</i>
+            </a>
+            <h5>{{label}}</h5>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<h4 class="center">Não há nenhum rótulo.</h4>
+{% endif %}
+
+{% endblock %}
+
+{% block more_scripts %}
+<script>
+</script>
+{% endblock %}
