@@ -3,6 +3,7 @@
 from .settings import ES_INDEX, ES_LABEL_INDEX, ES_TO_HIDE_INDEX, ES_SERVER
 from elasticsearch import Elasticsearch
 from datetime import datetime
+import json
 
 
 def now_ISO():
@@ -30,10 +31,10 @@ def shorten(string: str, n: int = 80, add: str = " (...)") -> str:
 def get_es_conn(**kwargs):
     pars = dict(
         hosts=ES_SERVER,
+
     )
     pars.update(kwargs)
     return Elasticsearch(**pars)
-
 
 def get_index(kwargs):
     if "index" in kwargs:
@@ -95,6 +96,7 @@ def create_new_label(label):
 
 def get_labels():
     client = get_es_conn()
+    print(client)
     return client.search(index=ES_LABEL_INDEX, query={"match_all": {}}, size=10000)
 
 
@@ -115,3 +117,14 @@ def get_all_hidden():
     return client.search(index=ES_TO_HIDE_INDEX, query={"match_all": {}}, size=10000,)[
         "hits"
     ]["hits"]
+
+def remove_from_hidden(text_id):
+    client = get_es_conn()
+    query = {
+        "query": {
+            "match": {
+                "text_id": text_id
+            }
+        }
+    }
+    return client.delete_by_query(index=ES_TO_HIDE_INDEX, body=query, refresh=True)
