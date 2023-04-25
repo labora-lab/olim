@@ -68,6 +68,7 @@
                         <i class="material-icons right">add</i>
                     </a>
                 </div>
+                {% if valid_patient %}
                 <div class="input-field col s12 tight-top">
                     <button
                         class="btn waves-effect waves-light btn-wide hidden-entry{% if show_hidden %} hidden{% endif %}"
@@ -94,7 +95,6 @@
                         <i class="material-icons right">remove</i>
                     </button>
                 </div>
-                {% if valid_patient %}
                 <div class="input-field col s12 chips tight-top" id="highlights">
                     <input style="width: max-content !important;">
                 </div>

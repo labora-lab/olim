@@ -15,23 +15,25 @@
 </head>
 
 <body>
-    <ul id="dropdown1" class="dropdown-content">
-        <li><a href="./labels">Rótulos</a></li>
-        <li><a href="./hidden">Textos ocultos</a></li>
-    </ul>
-    <nav>
-        <div class="nav-wrapper cyan darken-4">
-            <span class="brand-logo left tooltipped" data-tooltip="Open Labeller for Iterative Machine learning">
-                OLIM
-            </span>
-            <ul id="nav-mobile" class="right">
-                <li><a href="./">Rotulação</a></li>
-                <li><a href="./search">Pesquisa de paciente</a></li>
-                <li><a class="dropdown-trigger" href="#!" data-target="dropdown1">Gerenciar<i
-                            class="material-icons right">arrow_drop_down</i></a></li>
-            </ul>
-        </div>
-    </nav>
+    <header>
+        <ul id="dropdown1" class="dropdown-content">
+            <li><a href="./labels">Rótulos</a></li>
+            <li><a href="./hidden">Textos ocultos</a></li>
+        </ul>
+        <nav>
+            <div class="nav-wrapper cyan darken-4">
+                <span class="brand-logo left tooltipped" data-tooltip="Open Labeller for Iterative Machine learning">
+                    Projeto OPAS<!-- OLIM -->
+                </span>
+                <ul id="nav-mobile" class="right">
+                    <li><a href="./">Rotulação</a></li>
+                    <li><a href="./search">Pesquisa de paciente</a></li>
+                    <li><a class="dropdown-trigger" href="#!" data-target="dropdown1">Gerenciar<i
+                                class="material-icons right">arrow_drop_down</i></a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
     <div id="warning" class="modal">
         <div class="modal-content">
             <h4 id="warning-title"><i class="material-icons red-text text-darken-2">warning</i> Atenção</h4>
@@ -42,9 +44,20 @@
             <a class="modal-close btn waves-effect waves-green">Sair</a>
         </div>
     </div>
-    <div class="container" style="margin-top: 20px;">
-        {% block content %}{% endblock %}
-    </div>
+    <main>
+        <div class="container" style="margin-top: 20px;">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    <footer class="page-footer cyan darken-3">
+        <div class="row">
+            <div class="col s12 center">
+                <a class="grey-text text-lighten-4" href="https://gitlab.com/nanogennari/olim">
+                    OLIM - Open Labeller for Iterative Machine learning
+                </a>
+            </div>
+        </div>
+    </footer>
     <!--JavaScript at end of body for optimized loading-->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/jquery.highlight.js')}}"></script>
