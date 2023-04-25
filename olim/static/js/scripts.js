@@ -338,3 +338,8 @@ function init_highlight(data) {
     let instances = M.Chips.init(elems, options);
     update_highlight();
 }
+
+// Calls the backend to remove an entry from hidden index
+function remove_from_hidden(text_id) {
+    run_command('remove-hidden', ['text_id=' + text_id])
+}

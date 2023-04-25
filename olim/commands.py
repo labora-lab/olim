@@ -4,6 +4,7 @@ from .functions import (
     add_patient_label,
     create_new_label,
     add_text_to_hide,
+    remove_from_hidden,
 )
 from flask import request, render_template
 import json
@@ -155,6 +156,27 @@ def hide_all(**args):
             "text": f"Sempre esconderá texto {text}",
         }
 
+def remove_hidden(**args):
+    text_id = args.get("text_id", None)
+
+    try:
+        remove_from_hidden(text_id)
+    except:
+        return {
+            "type": "error",
+            "text": "Failed writing to database",
+        }
+
+    if text_id == None:
+        return {
+            "type": "error",
+            "text": f"Missing data: {text_id}",
+        }
+    else:
+        return {
+            "type": "OK",
+            "text": f"Texto {text_id} removido da lista de escondidos",
+        }
 
 COMMANDS = {
     "hide-one": hide_one,
@@ -162,6 +184,7 @@ COMMANDS = {
     "show": show,
     "add-label": add_label,
     "new-label": new_label,
+    "remove-hidden": remove_hidden,
 }
 
 ERROR_NO_CMD = {"type": "error", "text": "No command passed"}
