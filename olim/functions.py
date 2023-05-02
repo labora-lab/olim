@@ -2,7 +2,9 @@
 # All functions here must have type hints and docstrings
 from .settings import ES_INDEX, ES_LABEL_INDEX, ES_TO_HIDE_INDEX, ES_SERVER
 from elasticsearch import Elasticsearch
+from elasticsearch.helpers import scan
 from datetime import datetime
+import pandas as pd
 import json
 
 
@@ -133,3 +135,56 @@ def remove_from_labels(label_id):
     client = get_es_conn()
     query = {"query": {"bool": {"must": [{"match": {"_id": label_id}}]}}}
     return client.delete_by_query(index=ES_LABEL_INDEX, body=query, refresh=True)
+
+
+def extract_label(label):
+    # Query to get all patients with the label
+    # Getting only the more recent label
+    # If the label value is empty, the patient doesn't have that label
+    query = {
+        "query": {
+            "nested": {
+                "path": "labels",
+                "query": {"bool": {"filter": [{"term": {"labels.label": label}}]}},
+                "inner_hits": {"size": 1, "sort": [{"labels.date": {"order": "desc"}}]},
+            }
+        },
+    }
+
+    # Query the search using scroll to get all the results
+    es = get_es_conn()
+    scroll = scan(
+        es, query=query, index=ES_INDEX, scroll="10m", size=10000, request_timeout=30
+    )
+
+    results = []
+
+    for res in scroll:
+        hits = res["inner_hits"]["labels"]["hits"]["hits"]
+        res["_source"]["patient_id"] = res["_id"]
+        for hit in hits:
+            results.append((res["_source"], hit["_source"]))
+
+    # Create a dataframe with the results
+    # Initialize the dataframe with text, text_id, date, patient_id, visitation_id, label, label_value, label_created
+    data = []
+    for patient, label in results:
+        if label["value"] == "":
+            continue
+        for texts in patient["texts"]:
+            data.append(
+                {
+                    "text": texts["text"],
+                    "text_id": texts["text_id"],
+                    "date": texts["date"],
+                    "patient_id": patient["patient_id"],
+                    "visitation_id": texts["visitation_id"],
+                    "label": label["label"],
+                    "label_value": label["value"],
+                    "label_created": label["date"],
+                }
+            )
+
+    # Df to csv
+    df = pd.DataFrame(data)
+    return df.to_csv(index=False)

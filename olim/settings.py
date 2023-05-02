@@ -12,3 +12,7 @@ ES_TO_HIDE_INDEX = "hidden-texts"
 ES_SERVER = os.getenv("ES_SERVER")
 if ES_SERVER == "":
     ES_SERVER = "http://rotulador_es:9200/"
+
+debug = os.getenv("DEBUG")
+debug = debug or "false"
+DEBUG = debug.lower() == "true"
