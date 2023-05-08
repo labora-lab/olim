@@ -24,6 +24,5 @@ def catch_all(path):
 def catch_queue():
     label = request.args.get("label").lower()
     queue = extract_label(label, only_ids=True)
-    print(queue)
     queue_hash = store_queue(queue)
     return redirect(f"../patient?queue={queue_hash}")

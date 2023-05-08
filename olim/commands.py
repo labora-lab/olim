@@ -108,18 +108,20 @@ def new_label(**args):
 
     if patient_id == "":
         html = render_template(
-            "label.html",
+            "labels-menu.html",
             label={"_source": {"label": label}, "_id": resp["_id"]},
         )
     else:
         html = render_template(
-            "label.html",
+            "labels-menu.html",
             label={"_source": {"label": label}, "_id": resp["_id"]},
             patient_id=patient_id,
             valid_patient=True,
         )
 
     html = html.replace("'", "\\'").replace("\n", " ")
+
+    callback = args.get("callback", f"add_label('{html}')")
 
     if label == None:
         return {
@@ -130,7 +132,7 @@ def new_label(**args):
         return {
             "type": "OK",
             "text": f"Criado rótulo {label}",
-            "callback": f"add_label('{html}')",
+            "callback": callback,
         }
 
 

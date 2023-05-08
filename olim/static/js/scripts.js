@@ -254,9 +254,15 @@ function add_patient_label(patient_id, label_id, label, value) {
 }
 
 // Calls the backend to create a label
-function create_label(label, patient_id) {
-    run_command('new-label', ['label=' + label, 'patient_id=' + patient_id]);
-    $("#new_label").val("");
+function create_label(label, patient_id, reload=false) {
+    if (reload) {
+        run_command('new-label', ['label=' + label, 'patient_id=' + patient_id, 'callback=setTimeout(() => {window.location.reload();}, 1000);']);
+        $("#new_label").val("");
+
+    } else {
+        run_command('new-label', ['label=' + label, 'patient_id=' + patient_id]);
+        $("#new_label").val("");
+    }
 }
 
 // Calls the backend to remove an entry from hidden index
