@@ -1,5 +1,5 @@
 from . import app
-from .functions import es_search
+from .functions import es_search, store_queue
 from flask import request, render_template
 import secrets
 import json
@@ -18,11 +18,15 @@ def get_terms(field):
     return value, terms, phrases
 
 
+@app.route("/", methods=["GET"])
 @app.route("/search", methods=["GET"])
 def search():
     include, must_terms, must_phrases = get_terms("include")
     exclude, not_must_terms, not_must_phrases = get_terms("exclude")
     number = int(request.args.get("number", 20))
+
+    only_queue = request.args.get("only-queue", "off")
+    only_queue = True if only_queue == 'on' else False    
 
     # No search return empty page
     if (
@@ -75,20 +79,23 @@ def search():
 
     # pacient_id = cd_usu_cadsus
     results = es_search(query=es_query, sort=es_sort, size=number)["hits"]["hits"]
+    patients = []
 
     for patient in results:
-        for text in patient["_source"]["texts"]:
-            count = 0
-            for term in all_must:
-                count += text["text"].count(term)
-                # text["text"] = text["text"].replace(
-                #     term, f'<span class="highlight">{term}</span>'
-                # )
-            text["match_count"] = count
-            text["data"] = text["date"].split("T")[0].split("-")
-            text["data"].reverse()
-            text["data"] = "/".join(text["data"])
-        patient["_source"]["texts"].sort(key=lambda t: t["match_count"], reverse=True)
+        patients.append(patient['_id'])
+        if not only_queue:
+            for text in patient["_source"]["texts"]:
+                count = 0
+                for term in all_must:
+                    count += text["text"].count(term)
+                text["match_count"] = count
+                text["data"] = text["date"].split("T")[0].split("-")
+                text["data"].reverse()
+                text["data"] = "/".join(text["data"])
+            patient["_source"]["texts"].sort(key=lambda t: t["match_count"], reverse=True)
+
+
+    queue_id = store_queue(patients)
 
     return render_template(
         "search.html",
@@ -99,4 +106,6 @@ def search():
         len_f=len,
         number=number,
         highlight=all_must,
+        only_queue=only_queue,
+        queue_id=queue_id,
     )

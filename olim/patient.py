@@ -1,5 +1,5 @@
 from . import app
-from .functions import shorten, es_search, get_labels, get_all_hidden
+from .functions import shorten, es_search, get_labels, get_all_hidden, get_queue
 from flask import request, render_template, redirect
 import pandas as pd
 from datetime import datetime, timedelta
@@ -138,15 +138,28 @@ def index(msg=""):
     )
 
 
-@app.route("/", methods=["GET"])
+@app.route("/patient", methods=["GET"])
 def patient():
     pid = request.args.get("id", "")
-    if pid == "":
+    queue_id = request.args.get("queue", "")
+    if pid == "" and queue_id == "":
         return index()
     start_date = request.args.get("start-date", "")
     end_date = request.args.get("end-date", "")
     show_hidden = request.args.get("show-hidden", False) == "True"
     highlight = request.args.get("highlight", [])
+
+    # Load queue
+    queue_pos = request.args.get("queue-pos", "")
+    if queue_id != "":
+        if queue_pos == "":
+            queue_pos = 0
+        try:
+            queue = get_queue(queue_id)
+            queue_pos = int(queue_pos)
+            pid = queue[queue_pos]
+        except:
+            return index(msg=f"Fila {queue_id} não encontrada")
 
     try:
         data = load_patient(
@@ -167,7 +180,15 @@ def patient():
             "labels": get_labels(),
             "highlight": highlight,
             "valid_patient": True,
+            "queue_id": queue_id,
         }
     )
+    if queue_id != "":
+        data.update(
+            {
+                "queue_len": len(queue),
+                "queue_pos": queue_pos,
+            }
+        )
 
     return render_template("patient.html", **data)

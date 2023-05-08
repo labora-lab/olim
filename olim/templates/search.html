@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Pesquisa de paciente{% endblock %}
+{% block title %}Pesquisa de pacientes{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -21,10 +21,16 @@
             </div>
 
         </div>
-        <div class="input-field col s12">
+        <div class="input-field col s12 m6">
             <input type="text" id="number" name="number" class="tooltipped" data-position="bottom"
                 data-tooltip="Número de pacientes" value="{{ number }}">
             <label for="number">Número de pacientes <i class="material-icons left">inbox</i></label>
+        </div>
+        <div class="input-field col s12 m6">
+            <label>
+                <input type="checkbox" name="only-queue"/>
+                <span>Somente gerar fila</span>
+            </label>
         </div>
         <div class="input-field col s12 center">
             <input type="hidden" name="include" id="include_field">
@@ -35,10 +41,14 @@
         </div>
     </form>
 </div>
-
-
 {% if results %}
 <div class="row">
+    <div class="col s12">
+        <a class="waves-effect waves-light btn btn-wide" href="./patient?queue={{queue_id}}&highlight={{highlight|safe}}">
+            <i class="material-icons right">send</i>Abrir fila
+        </a>
+    </div>
+    {%if not only_queue%}
     {% for patient in results %}
     {% set pacient_id = patient['_id']%}
     <div class="col s12">
@@ -46,7 +56,7 @@
             <div class="card-content blue-grey white-text patient-header" style="display:block;">
                 Paciente ID: {{ pacient_id }}
                 <span class="small-title">Score de busca: {{patient['_score']}}</span>
-                <a href="./?id={{ pacient_id }}&highlight={{highlight|safe}}" class="btn btn-float right"
+                <a href="./patient?id={{ pacient_id }}&highlight={{highlight|safe}}" class="btn btn-float right"
                     target="_blank">Abrir ficha</a>
             </div>
             <div class="patient-body">
@@ -67,6 +77,7 @@
         </div>
     </div>
     {% endfor %}
+    {%endif%}
 </div>
 {% else %}
 <h4 class="center">Sem resultados para a pesquisa.</h4>

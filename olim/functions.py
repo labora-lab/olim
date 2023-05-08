@@ -1,11 +1,15 @@
 ## Auxiliary functions
 # All functions here must have type hints and docstrings
 from .settings import ES_INDEX, ES_LABEL_INDEX, ES_TO_HIDE_INDEX, ES_SERVER
+from . import tmp_dir
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan
 from datetime import datetime
+from typing import List
 import pandas as pd
 import json
+import os
+import hashlib
 
 
 def now_ISO():
@@ -98,7 +102,6 @@ def create_new_label(label):
 
 def get_labels():
     client = get_es_conn()
-    print(client)
     return client.search(index=ES_LABEL_INDEX, query={"match_all": {}}, size=10000)
 
 
@@ -188,3 +191,46 @@ def extract_label(label):
     # Df to csv
     df = pd.DataFrame(data)
     return df.to_csv(index=False)
+
+
+def parse_queue(text: str) -> List[str]:
+    """Parse a queue input in to a queue list.
+
+    Args:
+        text (str): Queue input
+
+    Returns:
+        List[str]: Queue list
+    """
+    return text.replace(';', ' ').replace(',', ' ').replace('\n', ' ').replace('\r\n', ' ').split()
+
+
+def store_queue(queue: List[str]) -> str:
+    """Stores a queue in a temporay file.
+
+    Args:
+        queue (List[str]): Queue list
+
+    Returns:
+        str: Hash of the queue for access
+    """
+    queue = json.dumps(queue)
+    h = hashlib.md5(queue.encode('utf-8')).hexdigest()
+    tmp_file = os.path.join(tmp_dir, h)
+    with open(tmp_file, 'w') as f:
+        f.write(queue)
+    return h
+
+def get_queue(queue_hash: str) -> str:
+    """Load the id of a position in a queue
+
+    Args:
+        queue_hash (str): Hash of the queue for access
+
+    Returns:
+        str: Queue list
+    """
+    tmp_file = os.path.join(tmp_dir, queue_hash)
+    with open(tmp_file, 'r') as f:
+        queue = json.load(f)
+    return queue

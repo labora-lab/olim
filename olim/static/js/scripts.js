@@ -177,6 +177,13 @@ function update_hidden_counts() {
     })
 }
 
+//// Queue navigation functions
+// Loads a new position on the queue
+function goto_queue_pos(pos) {
+    update_url('queue-pos', pos);
+    window.location.reload();
+}
+
 //// Search form functions
 // Clear a date field
 function clear_date(id) {

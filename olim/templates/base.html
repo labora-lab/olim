@@ -16,22 +16,23 @@
 
 <body>
     <header>
-        <ul id="dropdown1" class="dropdown-content">
+        <ul id="slide-out" class="sidenav">
+            <li><a href="./">Pesquisa de pacientes</a></li>
+            <li><a href="./patient">Abrir ficha</a></li>
             <li><a href="./labels">Rótulos</a></li>
             <li><a href="./hidden">Textos ocultos</a></li>
+            <li><a href="./queue">Gerar fila</a></li>
         </ul>
         <nav>
             <div class="nav-wrapper cyan darken-4">
-                <span class="brand-logo left tooltipped" data-tooltip="Open Labeller for Iterative Machine learning">
+                <span class="brand-logo left tooltipped center" data-tooltip="Open Labeller for Iterative Machine learning">
                     OLIM
                 </span>
-                <ul id="nav-mobile" class="right">
-                    <li><a href="./">Rotulação</a></li>
-                    <li><a href="./search">Pesquisa de paciente</a></li>
-                    <li><a class="dropdown-trigger" href="#!" data-target="dropdown1">Gerenciar<i
-                                class="material-icons right">arrow_drop_down</i></a></li>
-                </ul>
+                <div class="nav-mobile left">
+                    <span data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></span>
+                </div>
             </div>
+            
         </nav>
     </header>
     <div id="warning" class="modal">
@@ -63,6 +64,11 @@
     <script type="text/javascript" src="{{url_for('static', filename='js/jquery.highlight.js')}}"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/materialize.min.js')}}"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/scripts.js')}}"></script>
+    <script type="text/javascript" >
+        $(document).ready(function(){
+          $('.sidenav').sidenav();
+        });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 
