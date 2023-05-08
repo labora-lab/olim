@@ -140,7 +140,7 @@ def remove_from_labels(label_id):
     return client.delete_by_query(index=ES_LABEL_INDEX, body=query, refresh=True)
 
 
-def extract_label(label):
+def extract_label(label, only_ids=False):
     # Query to get all patients with the label
     # Getting only the more recent label
     # If the label value is empty, the patient doesn't have that label
@@ -161,6 +161,9 @@ def extract_label(label):
     )
 
     results = []
+
+    if only_ids:
+        return [res["_id"] for res in scroll]
 
     for res in scroll:
         hits = res["inner_hits"]["labels"]["hits"]["hits"]

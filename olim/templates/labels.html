@@ -7,6 +7,16 @@
 </div>
 {% if res %}
 <div class="row">
+    <div class="input-field col s7 l9">
+        <input id="new_label" type="text">
+        <label for="new_label">Novo Rótulo</label>
+    </div>
+    <div class="input-field col s3 l2 center">
+        <a class="btn waves-effect waves-light btn-narrow"
+            onclick="create_label($('#new_label').val(),'{{patient_id}}')">
+            <i class="material-icons right">add</i>
+        </a>
+    </div>
     <div class="col card s12 tight-bottom">
         {% for r in res %}
         {% set label = r['label'] %}
@@ -22,6 +32,11 @@
                                                                 data-position bottom" href='./labels/{{label}}.csv'
                 data-tooltip="Baixar dados rotulados" download>
                 <i class="material-icons black-text text-darken-4">file_download</i>
+            </a>
+            <a class="btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped right
+                                                                data-position bottom" href='./label-queue/?label={{label}}'
+                data-tooltip="Abrir fila de pacientes rotulados">
+                <i class="material-icons black-text text-darken-4">send</i>
             </a>
             <h5>{{label}}</h5>
         </div>
