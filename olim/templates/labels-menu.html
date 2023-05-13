@@ -2,35 +2,62 @@
     {% set label_str = label['_source']['label']%}
     <span>{{label_str}}</span>
     {% if valid_patient %}
-    <a class="tooltipped right orange-text labels-text-icon cursor{% if label_str in patient_labels %}{% if patient_labels[label_str] != 'nao_sei' %} hidden{% endif %}{% else %} hidden{% endif %}"
+    
+    {% if label_str in patient_labels %}
+    {% if patient_labels[label_str] == 'sim' %}
+    {% set p_label = 'yes' %}
+    {% elif patient_labels[label_str] == 'nao' %}
+    {% set p_label = 'no' %}
+    {% elif patient_labels[label_str] == 'nao_sei' %}
+    {% set p_label = 'idk' %}
+    {% else %}
+    {% set p_label = 'none' %}
+    {% endif %}
+    {% else %}
+    {% set p_label = 'none' %}
+    {% endif %}
+    <a class="tooltipped right cursor {% if label_str in hidden_labels %} hidden{% endif %}"
+        data-position="bottom" data-tooltip="Esconder o valor desta label"
+        onclick="hide_label('{{label_str}}','{{label['_id']}}');"
+        id="hide_{{label['_id']}}">
+        <i class="material-icons grey-text">cancel</i>
+    </a>  
+    <a class="tooltipped right cursor {% if label_str not in hidden_labels %} hidden{% endif %}"
+        data-position="bottom" data-tooltip="Revelar valor desta label"
+        onclick="unhide_label('{{label_str}}','{{label['_id']}}', '{{p_label}}');"
+        id="hide_sel_{{label['_id']}}">
+        <i class="material-icons red-text">cancel</i>
+    </a>    
+
+    <a class="tooltipped right orange-text labels-text-icon cursor{% if label_str in patient_labels %}{% if (patient_labels[label_str] != 'nao_sei') or (label_str in hidden_labels) %} hidden{% endif %}{% else %} hidden{% endif %}"
         data-position="bottom" data-tooltip="Desmarcar não sei" id="idk_sel_{{label['_id']}}"
         onclick="add_patient_label({{patient_id}},'{{label['_id']}}', '{{label_str}}', '');">
         <strong>?</strong>
     </a>
-    <a class="tooltipped right grey-text labels-text-icon cursor{% if label_str in patient_labels %}{% if patient_labels[label_str] == 'nao_sei' %} hidden{% endif %}{% endif %}"
+    <a class="tooltipped right grey-text labels-text-icon cursor{% if label_str in patient_labels %}{% if ( patient_labels[label_str] == 'nao_sei') and (label_str not in hidden_labels) %} hidden{% endif %}{% endif %}"
         data-position="bottom" data-tooltip="Marcar não sei" id="idk_{{label['_id']}}"
         onclick="add_patient_label({{patient_id}},'{{label['_id']}}', '{{label_str}}', 'nao_sei');">
         <strong>?</strong>
     </a>
-    <a class="tooltipped right cursor{% if label_str in patient_labels %}{% if patient_labels[label_str] != 'nao' %} hidden{% endif %}{% else %} hidden{% endif %}"
+    <a class="tooltipped right cursor{% if label_str in patient_labels %}{% if (patient_labels[label_str] != 'nao') or (label_str in hidden_labels) %} hidden{% endif %}{% else %} hidden{% endif %}" 
         data-position="bottom" data-tooltip="Desmarcar não"
         onclick="add_patient_label({{patient_id}},'{{label['_id']}}', '{{label_str}}', '');"
         id="no_sel_{{label['_id']}}">
         <i class="material-icons red-text">clear</i>
     </a>
-    <a class="tooltipped right cursor{% if label_str in patient_labels %}{% if patient_labels[label_str] == 'nao' %} hidden{% endif %}{% endif %}"
+    <a class="tooltipped right cursor{% if label_str in patient_labels %}{% if (patient_labels[label_str] == 'nao') and (label_str not in hidden_labels) %} hidden{% endif %}{% endif %}"
         data-position="bottom" data-tooltip="Marcar não"
         onclick="add_patient_label({{patient_id}},'{{label['_id']}}', '{{label_str}}', 'nao');"
         id="no_{{label['_id']}}">
         <i class="material-icons grey-text">clear</i>
     </a>
-    <a class="tooltipped right cursor{% if label_str in patient_labels %}{% if patient_labels[label_str]  != 'sim' %} hidden{% endif %}{% else %} hidden{% endif %}"
+    <a class="tooltipped right cursor{% if label_str in patient_labels %}{% if (patient_labels[label_str]  != 'sim') or (label_str in hidden_labels) %} hidden{% endif %}{% else %} hidden{% endif %}"
         data-position="bottom" data-tooltip="Desmarcar sim"
         onclick="add_patient_label({{patient_id}},'{{label['_id']}}', '{{label_str}}', '');"
         id="yes_sel_{{label['_id']}}">
         <i class="material-icons green-text">check</i>
     </a>
-    <a class="tooltipped right cursor{% if label_str in patient_labels %}{% if patient_labels[label_str]  == 'sim' %} hidden{% endif %}{% endif %}"
+    <a class="tooltipped right cursor{% if label_str in patient_labels %}{% if (patient_labels[label_str]  == 'sim') and (label_str not in hidden_labels) %} hidden{% endif %}{% endif %}"
         data-position="bottom" data-tooltip="Marcar sim"
         onclick="add_patient_label({{patient_id}},'{{label['_id']}}', '{{label_str}}', 'sim');"
         id="yes_{{label['_id']}}">

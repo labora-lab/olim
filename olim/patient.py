@@ -1,6 +1,6 @@
 from . import app
 from .functions import shorten, es_search, get_labels, get_all_hidden, get_queue
-from flask import request, render_template, redirect
+from flask import request, render_template, redirect, session
 import pandas as pd
 from datetime import datetime, timedelta
 
@@ -140,6 +140,7 @@ def index(msg=""):
 
 @app.route("/patient", methods=["GET"])
 def patient():
+    hidden_labels = session.get("hidden_labels", [])
     pid = request.args.get("id", "")
     queue_id = request.args.get("queue", "")
     if pid == "" and queue_id == "":
@@ -191,4 +192,4 @@ def patient():
             }
         )
 
-    return render_template("patient.html", **data)
+    return render_template("patient.html", **data, hidden_labels=hidden_labels)

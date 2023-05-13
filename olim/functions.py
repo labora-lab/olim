@@ -237,3 +237,26 @@ def get_queue(queue_hash: str) -> str:
     with open(tmp_file, 'r') as f:
         queue = json.load(f)
     return queue
+
+def manage_label_in_session(label: str, session, mode: str = "add"):
+    """Hide a label in a session
+
+    Args:
+        label (str): Label to hide
+        session (flask.session): Flask session
+    """
+    labels_list = []
+    if "hidden_labels" in session:
+        for l in session["hidden_labels"]:
+            labels_list.append(l)
+
+    if mode == "add":
+        labels_list.append(label)
+    elif mode == "remove":
+        try:
+            labels_list.remove(label)
+        except ValueError:
+            pass
+
+    session["hidden_labels"] = labels_list
+

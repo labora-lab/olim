@@ -6,6 +6,8 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.7.0
     volumes:
       - data:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
     environment:
       - node.name=olim_es
       - bootstrap.memory_lock=true
@@ -22,8 +24,11 @@ services:
       dockerfile: ./Dockerfile
     ports:
       - 42000:42000
+    volumes:
+      - /home/gmelo/olim:/app
     environment:
       - ES_SERVER=http://olim_es:9200
+      - DEBUG=true
     restart: unless-stopped
 
 volumes:

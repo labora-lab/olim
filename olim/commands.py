@@ -6,8 +6,9 @@ from .functions import (
     add_text_to_hide,
     remove_from_hidden,
     remove_from_labels,
+    manage_label_in_session,
 )
-from flask import request, render_template
+from flask import request, render_template, session
 import json
 
 
@@ -207,6 +208,31 @@ def remove_label(**args):
             "text": f"Rótulo {label} removido",
         }
 
+def manage_label(**args):
+    str_label = args.get("label", None)
+    mode = args.get("mode", "add")
+
+    if str_label == None:
+        return {
+            "type": "error",
+            "text": "Missing data: label",
+        }
+    
+    manage_label_in_session(str_label, session, mode)
+
+    if mode == "add":
+        return {
+            "type": "OK",
+            "text": f"Rótulo {str_label} escondido",
+        }
+
+    elif mode == "remove":
+        return {
+            "type": "OK",
+            "text": f"Rótulo {str_label} mostrado",
+        }
+
+
 
 COMMANDS = {
     "hide-one": hide_one,
@@ -216,6 +242,7 @@ COMMANDS = {
     "new-label": new_label,
     "remove-hidden": remove_hidden,
     "remove-label": remove_label,
+    "manage-label": manage_label,
 }
 
 ERROR_NO_CMD = {"type": "error", "text": "No command passed"}
