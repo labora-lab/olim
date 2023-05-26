@@ -1,6 +1,14 @@
 from . import app
-from .functions import shorten, es_search, get_labels, get_all_hidden, get_queue
+from .functions import (
+    shorten, 
+    es_search, 
+    get_labels, 
+    get_all_hidden, 
+    get_queue, 
+    manage_label_in_session
+)
 from flask import request, render_template, redirect, session
+import json
 import pandas as pd
 from datetime import datetime, timedelta
 
@@ -140,6 +148,13 @@ def index(msg=""):
 
 @app.route("/patient", methods=["GET"])
 def patient():
+    hidden_labels = request.args.get("hidden_labels", [])
+    if len(hidden_labels) > 0:
+        try:
+            for label in json.loads(hidden_labels):
+                manage_label_in_session(label, session, "add")
+        except ValueError:
+            pass
     hidden_labels = session.get("hidden_labels", [])
     pid = request.args.get("id", "")
     queue_id = request.args.get("queue", "")
@@ -182,6 +197,7 @@ def patient():
             "highlight": highlight,
             "valid_patient": True,
             "queue_id": queue_id,
+            "hidden_labels": hidden_labels,
         }
     )
     if queue_id != "":
@@ -192,4 +208,4 @@ def patient():
             }
         )
 
-    return render_template("patient.html", **data, hidden_labels=hidden_labels)
+    return render_template("patient.html", **data)
