@@ -82,11 +82,12 @@ def update_hidden(txt_id, patient_id, hide):
     return es_update(id=patient_id, body=body, refresh=True)
 
 
-def add_patient_label(label, patient_id, value):
+def add_patient_label(label, patient_id, value, date_created=None):
+    date_created = date_created or now_ISO()
     body = {
         "script": {
             "source": "def targets = ctx._source.labels.add(params.label)",
-            "params": {"label": {"label": label, "date": now_ISO(), "value": value}},
+            "params": {"label": {"label": label, "date": date_created, "value": value}},
         }
     }
 
@@ -220,6 +221,8 @@ def store_queue(queue: List[str]) -> str:
     queue = json.dumps(queue)
     h = hashlib.md5(queue.encode('utf-8')).hexdigest()
     tmp_file = os.path.join(tmp_dir, h)
+    print(tmp_file)
+    print(queue)
     with open(tmp_file, 'w') as f:
         f.write(queue)
     return h

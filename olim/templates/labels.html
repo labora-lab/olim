@@ -7,11 +7,11 @@
 </div>
 {% if res %}
 <div class="row">
-    <div class="input-field col s7 l9">
+    <div class="input-field col s11">
         <input id="new_label" type="text">
         <label for="new_label">Novo Rótulo</label>
     </div>
-    <div class="input-field col s3 l2 center">
+    <div class="input-field col s1 center">
         <a class="btn waves-effect waves-light btn-narrow"
             onclick="create_label($('#new_label').val(),'{{patient_id}}',true)">
             <i class="material-icons right">add</i>
@@ -34,13 +34,36 @@
                 <i class="material-icons black-text text-darken-4">file_download</i>
             </a>
             <a class="btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped right
-                                                                data-position bottom" href='./label-queue/?label={{label}}'
-                data-tooltip="Abrir fila de pacientes rotulados">
+                                                                data-position bottom"
+                href='./label-queue/?label={{label}}' data-tooltip="Abrir fila de pacientes rotulados">
                 <i class="material-icons black-text text-darken-4">send</i>
             </a>
-            <h5>{{label}}</h5>
+            <h5>{{label}} ({{r['n_labeled']}} rótulos)</h5>
         </div>
         {% endfor %}
+    </div>
+    <div class="col card s12 tight-bottom">
+        <div class="card-content row tight-bottom">
+            <form action="./label-upload" method="post" enctype="multipart/form-data">
+                <div class="col s12">
+                    <h5>Upload de arquivo de rotulação</h5>
+                </div>
+                <div class="file-field input-field col l10 m8 s12">
+                    <div class="btn">
+                        <span><i class="material-icons">folder_open</i></span>
+                        <input type="file" name="file">
+                    </div>
+                    <div class="file-path-wrapper">
+                        <input class="file-path validate" type="text" name="filename">
+                    </div>
+                </div>
+                <div class="input-field col l2 m4 s12">
+                    <button class="btn waves-effect waves-light btn-wide" type="submit">Carregar
+                        <i class="material-icons right">file_upload</i>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% else %}

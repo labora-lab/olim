@@ -100,6 +100,7 @@ def new_label(**args):
     label = args.get("label", None)
 
     try:
+        label = label.replace(" ", "_")
         resp = create_new_label(label)
     except:
         return {
@@ -208,6 +209,7 @@ def remove_label(**args):
             "text": f"Rótulo {label} removido",
         }
 
+
 def manage_label(**args):
     str_label = args.get("label", None)
     mode = args.get("mode", "add")
@@ -217,7 +219,7 @@ def manage_label(**args):
             "type": "error",
             "text": "Missing data: label",
         }
-    
+
     manage_label_in_session(str_label, session, mode)
 
     if mode == "add":
@@ -231,7 +233,6 @@ def manage_label(**args):
             "type": "OK",
             "text": f"Rótulo {str_label} mostrado",
         }
-
 
 
 COMMANDS = {

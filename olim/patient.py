@@ -1,11 +1,11 @@
 from . import app
 from .functions import (
-    shorten, 
-    es_search, 
-    get_labels, 
-    get_all_hidden, 
-    get_queue, 
-    manage_label_in_session
+    shorten,
+    es_search,
+    get_labels,
+    get_all_hidden,
+    get_queue,
+    manage_label_in_session,
 )
 from flask import request, render_template, redirect, session
 import json

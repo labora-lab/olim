@@ -25,14 +25,14 @@
         </ul>
         <nav>
             <div class="nav-wrapper cyan darken-4">
-                <span class="brand-logo left tooltipped center" data-tooltip="Open Labeller for Iterative Machine learning">
+                <span class="brand-logo left tooltipped center"
+                    data-tooltip="Open Labeller for Iterative Machine learning">
                     OLIM
                 </span>
                 <div class="nav-mobile left">
                     <span data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></span>
                 </div>
             </div>
-            
         </nav>
     </header>
     <div id="warning" class="modal">
@@ -64,9 +64,9 @@
     <script type="text/javascript" src="{{url_for('static', filename='js/jquery.highlight.js')}}"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/materialize.min.js')}}"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/scripts.js')}}"></script>
-    <script type="text/javascript" >
-        $(document).ready(function(){
-          $('.sidenav').sidenav();
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('.sidenav').sidenav();
         });
     </script>
     {% block scripts %}{% endblock %}
