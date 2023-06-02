@@ -1,8 +1,8 @@
-<div class="input-field col s12 tight-top">
-    {% set label_str = label['_source']['label']%}
+{% set label_str = label['_source']['label']%}
+<div id="label_{{label_str}}" class="input-field col s12 tight-top{% if label_str in hidden_labels %} hidden-entry{% if not show_hidden %} hidden{% endif %}{% endif %}">
     <span>{{label_str}}</span>
     {% if valid_patient %}
-    
+
     {% if label_str in patient_labels %}
     {% if patient_labels[label_str] == 'sim' %}
     {% set p_label = 'yes' %}
@@ -21,13 +21,13 @@
         onclick="hide_label('{{label_str}}','{{label['_id']}}');"
         id="hide_{{label['_id']}}">
         <i class="material-icons grey-text">cancel</i>
-    </a>  
+    </a>
     <a class="tooltipped right cursor {% if label_str not in hidden_labels %} hidden{% endif %}"
         data-position="bottom" data-tooltip="Revelar valor desta label"
         onclick="unhide_label('{{label_str}}','{{label['_id']}}', '{{p_label}}');"
         id="hide_sel_{{label['_id']}}">
         <i class="material-icons red-text">cancel</i>
-    </a>    
+    </a>
 
     <a class="tooltipped right orange-text labels-text-icon cursor{% if label_str in patient_labels %}{% if (patient_labels[label_str] != 'nao_sei') or (label_str in hidden_labels) %} hidden{% endif %}{% else %} hidden{% endif %}"
         data-position="bottom" data-tooltip="Desmarcar não sei" id="idk_sel_{{label['_id']}}"

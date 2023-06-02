@@ -38,7 +38,7 @@
                 href='./label-queue/?label={{label}}' data-tooltip="Abrir fila de pacientes rotulados">
                 <i class="material-icons black-text text-darken-4">send</i>
             </a>
-            <h5>{{label}} ({{r['n_labeled']}} rótulos)</h5>
+            <h5>{{label}} <span class="tooltipped" data-tooltip="Sim: {{r['n_yes']}} Não: {{r['n_no']}} Não sei: {{r['n_dontknow']}}">({{r['n_labeled']}} rótulos)</span></h5>
         </div>
         {% endfor %}
     </div>

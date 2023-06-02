@@ -402,9 +402,12 @@ function unhide_by_id(id,curr_label) {
 
 
 function hide_label(label, label_id) {
+    $("#label_" + label).toggle();
+    $("#label_" + label).addClass("hidden-entry");
     run_command('manage-label', ['label=' + label, 'label_id=' + label_id, 'mode=add' , 'callback=hide_by_id("' + label_id + '");'])
 }
 
 function unhide_label(label, label_id,curr_label) {
+    $("#label_" + label).removeClass("hidden-entry");
     run_command('manage-label', ['label=' + label, 'label_id=' + label_id,'mode=remove', 'callback=unhide_by_id("' + label_id + '","'+curr_label+'");'])
 }

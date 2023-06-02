@@ -141,7 +141,7 @@ def remove_from_labels(label_id):
     return client.delete_by_query(index=ES_LABEL_INDEX, body=query, refresh=True)
 
 
-def extract_label(label, only_ids=False):
+def extract_label(label, only_ids=False, only_values=False):
     # Query to get all patients with the label
     # Getting only the more recent label
     # If the label value is empty, the patient doesn't have that label
@@ -165,6 +165,14 @@ def extract_label(label, only_ids=False):
 
     if only_ids:
         return [res["_id"] for res in scroll]
+
+    if only_values:
+        values = []
+        for res in scroll:
+            hits = res["inner_hits"]["labels"]["hits"]["hits"]
+            for hit in hits:
+                values.append(hit["_source"]["value"])
+        return values
 
     for res in scroll:
         hits = res["inner_hits"]["labels"]["hits"]["hits"]
@@ -221,8 +229,6 @@ def store_queue(queue: List[str]) -> str:
     queue = json.dumps(queue)
     h = hashlib.md5(queue.encode('utf-8')).hexdigest()
     tmp_file = os.path.join(tmp_dir, h)
-    print(tmp_file)
-    print(queue)
     with open(tmp_file, 'w') as f:
         f.write(queue)
     return h
