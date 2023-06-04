@@ -164,7 +164,7 @@ def extract_label(label, only_ids=False, only_values=False):
     results = []
 
     if only_ids:
-        return [res["_id"] for res in scroll]
+        return [res["_id"] for res in scroll if res["_source"]["label"] != '']
 
     if only_values:
         values = []
@@ -205,6 +205,18 @@ def extract_label(label, only_ids=False, only_values=False):
     return df.to_csv(index=False)
 
 
+def get_label_counts(label):
+    values = extract_label(label, only_values=True)
+    counts = {"total": 0}
+    for value in ["sim", "nao", "nao_sei"]:
+        counts[value] = 0
+        for v in values:
+            if v == value:
+                counts[value] += 1
+                counts["total"] += 1
+    return counts
+
+
 def parse_queue(text: str) -> List[str]:
     """Parse a queue input in to a queue list.
 
@@ -214,7 +226,13 @@ def parse_queue(text: str) -> List[str]:
     Returns:
         List[str]: Queue list
     """
-    return text.replace(';', ' ').replace(',', ' ').replace('\n', ' ').replace('\r\n', ' ').split()
+    return (
+        text.replace(";", " ")
+        .replace(",", " ")
+        .replace("\n", " ")
+        .replace("\r\n", " ")
+        .split()
+    )
 
 
 def store_queue(queue: List[str]) -> str:
@@ -227,11 +245,12 @@ def store_queue(queue: List[str]) -> str:
         str: Hash of the queue for access
     """
     queue = json.dumps(queue)
-    h = hashlib.md5(queue.encode('utf-8')).hexdigest()
+    h = hashlib.md5(queue.encode("utf-8")).hexdigest()
     tmp_file = os.path.join(tmp_dir, h)
-    with open(tmp_file, 'w') as f:
+    with open(tmp_file, "w") as f:
         f.write(queue)
     return h
+
 
 def get_queue(queue_hash: str) -> str:
     """Load the id of a position in a queue
@@ -243,9 +262,10 @@ def get_queue(queue_hash: str) -> str:
         str: Queue list
     """
     tmp_file = os.path.join(tmp_dir, queue_hash)
-    with open(tmp_file, 'r') as f:
+    with open(tmp_file, "r") as f:
         queue = json.load(f)
     return queue
+
 
 def manage_label_in_session(label: str, session, mode: str = "add"):
     """Hide a label in a session
@@ -268,4 +288,3 @@ def manage_label_in_session(label: str, session, mode: str = "add"):
             pass
 
     session["hidden_labels"] = labels_list
-

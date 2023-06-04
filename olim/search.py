@@ -1,10 +1,7 @@
 from . import app
 from .functions import es_search, store_queue
 from flask import request, render_template
-import secrets
 import json
-
-app.secret_key = secrets.token_hex(16)
 
 
 def get_terms(field):
@@ -26,7 +23,7 @@ def search():
     number = int(request.args.get("number", 20))
 
     only_queue = request.args.get("only-queue", "off")
-    only_queue = True if only_queue == 'on' else False    
+    only_queue = True if only_queue == "on" else False
 
     # No search return empty page
     if (
@@ -82,7 +79,7 @@ def search():
     patients = []
 
     for patient in results:
-        patients.append(patient['_id'])
+        patients.append(patient["_id"])
         if not only_queue:
             for text in patient["_source"]["texts"]:
                 count = 0
@@ -92,8 +89,9 @@ def search():
                 text["data"] = text["date"].split("T")[0].split("-")
                 text["data"].reverse()
                 text["data"] = "/".join(text["data"])
-            patient["_source"]["texts"].sort(key=lambda t: t["match_count"], reverse=True)
-
+            patient["_source"]["texts"].sort(
+                key=lambda t: t["match_count"], reverse=True
+            )
 
     queue_id = store_queue(patients)
 

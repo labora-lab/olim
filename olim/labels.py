@@ -2,6 +2,7 @@ from . import app
 from .functions import (
     get_labels,
     extract_label,
+    get_label_counts,
     store_queue,
     get_labels,
     create_new_label,
@@ -18,15 +19,15 @@ def labels():
     result = get_labels()["hits"]["hits"]
     res = []
     for r in result:
-        values = np.array(extract_label(r["_source"]["label"].lower(), only_values=True))
+        values = get_label_counts(r["_source"]["label"].lower())
         res.append(
             dict(
                 r["_source"],
                 _id=r["_id"],
-                n_labeled=len(values),
-                n_yes=np.sum(values == "sim"),
-                n_no=np.sum(values == "nao"),
-                n_dontknow=np.sum(values == "nao_sei"),
+                n_labeled=values["total"],
+                n_yes=values["sim"],
+                n_no=values["nao"],
+                n_dontknow=values["nao_sei"],
             )
         )
     return render_template("labels.html", res=res)

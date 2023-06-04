@@ -16,3 +16,4 @@ if ES_SERVER == "":
 debug = os.getenv("DEBUG")
 debug = debug or "false"
 DEBUG = debug.lower() == "true"
+SECRET_KEY = os.getenv("SECRET_KEY")
