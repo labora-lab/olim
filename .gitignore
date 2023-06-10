@@ -166,3 +166,4 @@ test*
 *.sqlite
 
 .vscode/
+flask_session/
