@@ -17,3 +17,13 @@ debug = os.getenv("DEBUG")
 debug = debug or "false"
 DEBUG = debug.lower() == "true"
 SECRET_KEY = os.getenv("SECRET_KEY")
+
+DB_PATH = os.path.join(os.getcwd(), "database.sqlite")
+"""Database Sqlite3 path"""
+
+PERMISSIONS = {
+    "admin": ["static", "login", "users", "commands", "hidden", "labels", "patient", "queue", "/", "search"],
+    "user": ["static", "login", "commands", "hidden", "labels", "patient", "queue", "/", "search"],
+    "guest": ["static", "login"]
+}
+"""Mapping of permissions to routes that can be accessed by roles"""

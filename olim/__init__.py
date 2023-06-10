@@ -13,6 +13,7 @@ tmp_dir = tempfile.mkdtemp(prefix="olim_")
 
 app = Flask(__name__)
 app.config["DEBUG"] = DEBUG
+app.config["SESSION_TYPE"] = SESSION_TYPE # To not receive RuntimeError talking that ths session is unavailable beaceuse no secret key was set.
 app.secret_key = SECRET_KEY
 Session(app)
 
@@ -22,3 +23,5 @@ from . import commands
 from . import hidden
 from . import labels
 from . import queue
+from . import db
+from . import auth

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col s12 m6 offset-m3">
+      <div class="card">
+        <div class="card-content">
+          <span class="card-title">Login</span>
+          <form method="POST" action="{{ url_for('login') }}">
+            <div class="input-field">
+              <input id="username" type="text" name="username" required>
+              <label for="username">Username</label>
+            </div>
+            <div class="input-field">
+              <input id="password" type="password" name="password" required>
+              <label for="password">Password</label>
+            </div>
+            <button class="btn waves-effect waves-light" type="submit" name="action">Login
+              <i class="material-icons right">send</i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Flash message divs -->
+{% with warning_messages = get_flashed_messages(category_filter=["warning"]) %}
+  {% if warning_messages %}
+    <div class="card orange lighten-5">
+      <div class="card-content">
+        <span class="card-title orange-text">Warning</span>
+        {% for message in warning_messages %}
+          <p class="orange-text">{{ message }}</p>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% with success_messages = get_flashed_messages(category_filter=["success"]) %}
+  {% if success_messages %}
+    <div class="card green lighten-5">
+      <div class="card-content">
+        <span class="card-title green-text">Success</span>
+        {% for message in success_messages %}
+          <p class="green-text">{{ message }}</p>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% with error_messages = get_flashed_messages(category_filter=["error"]) %}
+  {% if error_messages %}
+    <div class="card red lighten-5">
+      <div class="card-content">
+        <span class="card-title red-text">Error</span>
+        {% for message in error_messages %}
+          <p class="red-text">{{ message }}</p>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+{% endwith %}
+{% endblock %}
