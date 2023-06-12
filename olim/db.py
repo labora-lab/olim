@@ -1,7 +1,7 @@
 import sqlite3
 import os
 from .settings import DB_PATH
-from flask import session, abort
+from flask import g, abort
 from . import app
 from getpass import getpass
 from werkzeug.security import generate_password_hash
@@ -21,7 +21,7 @@ def get_conn(ignore_errors=False):
     
     # TODO: Make this more robust.
     try:
-        session_db = session.get("db")
+        session_db = g.get("db")
     except RuntimeError:
         conn = sqlite3.connect(DB_PATH)
         conn.row_factory = sqlite3.Row
@@ -29,13 +29,24 @@ def get_conn(ignore_errors=False):
     else:
         if session_db is None:
             conn = sqlite3.connect(DB_PATH)
-            conn.row_factory = sqlite3.Row; return conn # !WARNING! This session is set to save on file using pickle, however we cannot use pickle with sqlite3
-            session["db"] = conn
-    finally: # !WARNING! This session is set to save on file using pickle, however we cannot use pickle with sqlite3
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
-        return conn 
-    return session["db"]
+            conn.row_factory = sqlite3.Row
+            g.db = conn
+    return g.db
+
+def close_db():
+    """
+    Closes the database connection.
+    """
+    db = g.pop("db", None)
+    if db is not None:
+        db.close()
+
+@app.after_request
+def after_request(response):
+    """Closes the database connection after each request"""
+    close_db()
+    return response
+
 
 def get_user(identification: int, by: str = "id"):
     """
@@ -69,6 +80,15 @@ def insert_user(username: str, hashed_password: str, role: str, **kwargs):
 
     conn = get_conn()
     conn.execute("INSERT INTO users (username, password, role, name) VALUES (?, ?, ?, ?)", (username, hashed_password, role, name))
+    conn.commit()
+
+
+def update_user_password(identification: int, new_password: str, by: str = "id"):
+    """
+    Updates a user's password.
+    """
+    conn = get_conn()
+    conn.execute("UPDATE users SET password = ? WHERE id = ?", (generate_password_hash(new_password), identification))
     conn.commit()
 
 

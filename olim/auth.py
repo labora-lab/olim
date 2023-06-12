@@ -39,6 +39,7 @@ def verify_password(password, hashed_password):
     
 def login_user(user):
     session["user_id"] = user["id"]
+    session["user"] = dict(user)
 
 @app.before_request
 def check_permission():
@@ -77,6 +78,8 @@ def role_has_permission(role):
 @app.route("/users", methods=("POST", "GET"))
 def users():
     if request.method == "POST":
+        if session.user.role != "admin":
+            abort(403)
         username = request.form.get("username")
         password = request.form.get("password")
         role = request.form.get("role")
@@ -92,3 +95,14 @@ def users():
     }
 
     return render_template("users.html", **context)
+
+@app.route("/edit-password", methods=("POST", "GET"))
+def edit_password():
+    to_change_user_id = request.args.get("user_id") or session.get("user")["id"]
+    to_change_user = get_user(to_change_user_id, by="id")
+    changer_user = session.get("user")
+    if changer_user["role"] != "admin" and int(to_change_user_id) != changer_user["id"]:
+        abort(403)
+    if request.method == "POST":
+        pass
+    return render_template("edit-password.html", user=to_change_user)

@@ -2,7 +2,7 @@
 {% block title %}User Management{% endblock %}
 {% block content %}
 <div class="row">
-    <div class="col s8">
+    <div class="col {% if session.user.role == 'admin' %}s8{% else %}s12{% endif %}">
         <div class="card">
             <div class="card-content">
                 <span class="card-title">User Management</span>
@@ -12,6 +12,7 @@
                             <th>Name</th>
                             <th>Username</th>
                             <th>Role</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -20,6 +21,11 @@
                             <td>{{ user.name }}</td>
                             <td>{{ user.username }}</td>
                             <td>{{ user.role }}</td>
+                            <td>
+                                <a href="{{ url_for('edit_password', user_id=user.id) }}" class="btn waves-effect waves-light">
+                                    <i class="material-icons">edit</i>
+                                </a>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -27,6 +33,7 @@
             </div>
         </div>
     </div>
+    {% if session.user.role == 'admin' %}
     <div class="col s4">
         <div class="card">
             <div class="card-content">
@@ -38,7 +45,9 @@
                     </div>
                     <div class="input-field">
                         <input id="password" type="password" name="password" required>
-                        <label for="password">Password</label>
+                        <label id="password_label" for="password">Password</label>
+                        <button class="btn waves-effect waves-light" type="button" onclick="generateRandomPassword()">Random Password</button>
+                        <button class="btn waves-effect waves-light" type="button" onclick="viewPassword()"><i class="material-icons">remove_red_eye</i></button>
                     </div>
                     <div class="input-field">
                         <input id="name" type="text" name="name" required>
@@ -60,5 +69,21 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function generateRandomPassword() {
+        let randomPassword = Math.random().toString(36).slice(-12);
+        document.getElementById("password").value = randomPassword;
+        document.getElementById("password_label").classList.add("active");
+
+    }
+    function viewPassword() {
+        let password_tag = document.getElementById("password");
+        password_tag.type === 'password' ? password_tag.type = 'text' : password_tag.type = 'password';
+    }
+</script>
 {% endblock %}
