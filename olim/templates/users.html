@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}User Management{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col s8">
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title">User Management</span>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Username</th>
+                            <th>Role</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.name }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.role }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col s4">
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title">Add User</span>
+                <form method="post" action="{{ url_for('users') }}">
+                    <div class="input-field">
+                        <input id="username" type="text" name="username" required>
+                        <label for="username">Username</label>
+                    </div>
+                    <div class="input-field">
+                        <input id="password" type="password" name="password" required>
+                        <label for="password">Password</label>
+                    </div>
+                    <div class="input-field">
+                        <input id="name" type="text" name="name" required>
+                        <label for="name">Name</label>
+                    </div>
+                    <div class="input-field">
+                        <select id="role" name="role" required>
+                            <option value="" disabled selected>Select a role</option>
+                            {% for role in roles %}
+                            <option value="{{ role }}">{{ role }}</option>
+                            {% endfor %}
+                        </select>
+                        <label for="role">Role</label>
+                    </div>
+                    <button class="btn waves-effect waves-light" type="submit" name="action">Add User
+                        <i class="material-icons right">person_add</i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

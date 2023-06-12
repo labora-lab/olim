@@ -1,5 +1,5 @@
 from . import app
-from .db import get_user, insert_user
+from .db import get_user, insert_user, get_users
 from flask import session, flash, abort, request, url_for, redirect, render_template
 from werkzeug.security import generate_password_hash, check_password_hash
 from .settings import PERMISSIONS
@@ -14,6 +14,7 @@ def login():
     If the user is not found, or the password is incorrect, it flashes a warning message. 
     If the user is found and the password is correct, it logs the user in and flashes a success message. 
     Finally, it renders the login template.
+
     :return: The rendered login.html template.
     """
     user_id = session["user_id"] if session.get("user_id") != "guest" else None
@@ -24,9 +25,9 @@ def login():
         password = request.form.get("password")
         user = get_user(username, by="username")
         if user is None:
-            flash("Incorrect username and/or password!", category="warning")
+            flash("Incorrect username and/or password!", category="error")
         elif not verify_password(password, user["password"]):
-            flash("Incorrect username and/or password!", category="warning")
+            flash("Incorrect username and/or password!", category="error")
         else:
             login_user(user)
             flash("You have successfully logged in!", category="success")
@@ -48,16 +49,17 @@ def check_permission():
         flash("You are not logged in.", category="warning")
         return redirect(url_for("login")) # redirect to login page
     
-    if current_user_id != "guest": # if user_id is not 'guest' 
+    if current_user_id == "guest" and not role_has_permission("guest"):
+        flash("You are not logged in.", category="warning")
+        return redirect(url_for("login"))
+    
+    if current_user_id != "guest":
         user = get_user(current_user_id, by="id")
         if user is None:
             abort(404) # user not found
         if not role_has_permission(user["role"]):
             abort(403) # user does not have permission
     
-    if not role_has_permission("guest"):
-        flash("You are not logged in.", category="warning")
-        return redirect(url_for("login"))
 
 
 def set_guest_user():
@@ -78,8 +80,15 @@ def users():
         username = request.form.get("username")
         password = request.form.get("password")
         role = request.form.get("role")
-        hashed_password = generate_password_hash(password)
         if get_user(username, by="username") is None:
-            insert_user(username, password, role)
+            insert_user(username, generate_password_hash(password), role)
+            flash(f"User {username} has successfully registered!", category="success")
+        else:
+            flash(f"User {username} already exists!", category="warning")
     
-    return render_template("users.html")
+    context = {
+        "users": get_users(),
+        "roles": list(PERMISSIONS.keys()),
+    }
+
+    return render_template("users.html", **context)

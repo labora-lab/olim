@@ -3,6 +3,8 @@ import os
 from .settings import DB_PATH
 from flask import session, abort
 from . import app
+from getpass import getpass
+from werkzeug.security import generate_password_hash
 
 def get_conn(ignore_errors=False):
     """
@@ -25,13 +27,17 @@ def get_conn(ignore_errors=False):
         conn.row_factory = sqlite3.Row
         return conn
     else:
-        if session_db is not None:
+        if session_db is None:
             conn = sqlite3.connect(DB_PATH)
-            conn.row_factory = sqlite3.Row
+            conn.row_factory = sqlite3.Row; return conn # !WARNING! This session is set to save on file using pickle, however we cannot use pickle with sqlite3
             session["db"] = conn
+    finally: # !WARNING! This session is set to save on file using pickle, however we cannot use pickle with sqlite3
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        return conn 
     return session["db"]
 
-def get_user(identification: int, by:str="id"):
+def get_user(identification: int, by: str = "id"):
     """
     Retrieves a user from the database by either their ID or username.
 
@@ -66,6 +72,16 @@ def insert_user(username: str, hashed_password: str, role: str, **kwargs):
     conn.commit()
 
 
+def get_users():
+    """
+    Retrieves all users from the database.
+
+    :return: A list of dictionaries, where each dict represents a row in the users table.
+    """
+    conn = get_conn()
+    return conn.execute("SELECT * FROM users").fetchall()
+
+
 @app.cli.command("initdb")
 def init_db():
     """
@@ -77,3 +93,25 @@ def init_db():
         db.cursor().executescript(f.read())
     db.commit()
     print("Database initialized.")
+
+
+@app.cli.command("createsuperuser")
+def create_superuser():
+    """
+    Creates a superuser.
+    """
+    print("Creating superuser...")
+    print("Insert the username and password for superuser: ")
+    username = input("Username: ")
+    while True:
+        password = getpass("Password: ")
+        if password == "":
+            print("Password cannot be empty.")
+            continue
+        confimation_password = getpass("Confirm password: ")
+        if password != confimation_password:
+            print("Passwords do not match.")
+            continue
+        break
+    insert_user(username, generate_password_hash(password), "admin")
+    print("Superuser created.")
