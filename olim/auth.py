@@ -82,13 +82,14 @@ def role_has_permission(role):
 @app.route("/users", methods=("POST", "GET"))
 def users():
     if request.method == "POST":
-        if session.user.role != "admin":
+        if session["user"]["role"] != "admin":
             abort(403)
         username = request.form.get("username")
         password = request.form.get("password")
+        name = request.form.get("name")
         role = request.form.get("role")
         if get_user(username, by="username") is None:
-            insert_user(username, generate_password_hash(password), role)
+            insert_user(username, generate_password_hash(password), role, name=name)
             flash(f"User {username} has successfully registered!", category="success")
         else:
             flash(f"User {username} already exists!", category="warning")
