@@ -1,5 +1,5 @@
 from . import app
-from .db import get_user, insert_user, get_users
+from .db import get_user, insert_user, get_users, update_user_password
 from flask import session, flash, abort, request, url_for, redirect, render_template
 from werkzeug.security import generate_password_hash, check_password_hash
 from .settings import PERMISSIONS
@@ -33,7 +33,11 @@ def login():
             flash("You have successfully logged in!", category="success")
     return render_template("login.html")
 
-    
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
 def verify_password(password, hashed_password):
     return check_password_hash(hashed_password, password)
     
@@ -96,13 +100,34 @@ def users():
 
     return render_template("users.html", **context)
 
+def security_edit_password(to_change_user, changer_user, old_password, new_password):
+    if new_password is None:
+        flash("Please enter a new password!", category="error") # no new password
+        return
+    
+    if changer_user["role"] != "admin" and old_password is None:
+        flash("Please enter the old password!", category="error") # no old password when is not admin
+        return
+    
+    if changer_user["role"] != "admin" and not verify_password(old_password, changer_user["password"]):
+        flash("Incorrect old password!", category="error") # old password is incorrect
+        return
+    
+    update_user_password(to_change_user["id"], new_password) # if old_password is corrrect and got here, update password
+    flash("Password successfully changed!", category="success")
+
+    
 @app.route("/edit-password", methods=("POST", "GET"))
 def edit_password():
     to_change_user_id = request.args.get("user_id") or session.get("user")["id"]
     to_change_user = get_user(to_change_user_id, by="id")
     changer_user = session.get("user")
+    # verify if user is non-admin and id that it wants to change
     if changer_user["role"] != "admin" and int(to_change_user_id) != changer_user["id"]:
         abort(403)
     if request.method == "POST":
-        pass
+        old_password = request.form.get("old_password")
+        new_password = request.form.get("new_password")
+        security_edit_password(to_change_user, changer_user, old_password, new_password)    
+
     return render_template("edit-password.html", user=to_change_user)

@@ -22,8 +22,8 @@ DB_PATH = os.path.join(os.getcwd(), "database.sqlite")
 """Database Sqlite3 path"""
 
 PERMISSIONS = {
-    "admin": ["static", "login", "users", "commands", "hidden", "labels", "patient", "new_queue", "/", "search", "edit_password"],
-    "user": ["static", "login", "commands", "hidden", "labels", "patient", "new_queue", "/", "search", "edit_password", "users"],
+    "admin": ["static", "login", "users", "commands", "hidden", "labels", "patient", "new_queue", "/", "search", "edit_password", "logout"],
+    "user": ["static", "login", "commands", "hidden", "labels", "patient", "new_queue", "/", "search", "edit_password", "users", "logout"],
     "guest": ["static", "login"]
 }
 """Mapping of permissions to routes that can be accessed by roles"""

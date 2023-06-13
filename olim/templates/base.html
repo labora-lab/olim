@@ -23,6 +23,11 @@
             <li><a href="./hidden">Textos ocultos</a></li>
             <li><a href="./queue">Gerar fila</a></li>
             <li><a href="./users">Usuários</a></li>
+            {% if session['user_id'] == 'guest' %}
+            <li><a href="{{ url_for('login') }}">Login</a></li>
+            {% else %}
+            <li><a href="{{ url_for('logout') }}">Sair</a></li>   
+            {% endif %}         
         </ul>
         <nav>
             <div class="nav-wrapper cyan darken-4">

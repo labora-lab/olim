@@ -254,7 +254,7 @@ function add_patient_label(patient_id, label_id, label, value) {
 }
 
 // Calls the backend to create a label
-function create_label(label, patient_id, reload=false) {
+function create_label(label, patient_id, reload = false) {
     if (reload) {
         run_command('new-label', ['label=' + label, 'patient_id=' + patient_id, 'callback=setTimeout(() => {window.location.reload();}, 1000);']);
         $("#new_label").val("");
@@ -393,7 +393,7 @@ function hide_by_id(id) {
     $("#hide_sel_" + id).removeClass("hidden");
 }
 
-function unhide_by_id(id,curr_label) {
+function unhide_by_id(id, curr_label) {
     $("#" + curr_label + "_sel_" + id).removeClass("hidden");
     $("#" + curr_label + "_" + id).addClass("hidden");
     $("#hide_" + id).removeClass("hidden");
@@ -404,10 +404,10 @@ function unhide_by_id(id,curr_label) {
 function hide_label(label, label_id) {
     $("#label_" + label).toggle();
     $("#label_" + label).addClass("hidden-entry");
-    run_command('manage-label', ['label=' + label, 'label_id=' + label_id, 'mode=add' , 'callback=hide_by_id("' + label_id + '");'])
+    run_command('manage-label', ['label=' + label, 'label_id=' + label_id, 'mode=add', 'callback=hide_by_id("' + label_id + '");'])
 }
 
-function unhide_label(label, label_id,curr_label) {
+function unhide_label(label, label_id, curr_label) {
     $("#label_" + label).removeClass("hidden-entry");
-    run_command('manage-label', ['label=' + label, 'label_id=' + label_id,'mode=remove', 'callback=unhide_by_id("' + label_id + '","'+curr_label+'");'])
+    run_command('manage-label', ['label=' + label, 'label_id=' + label_id, 'mode=remove', 'callback=unhide_by_id("' + label_id + '","' + curr_label + '");'])
 }
