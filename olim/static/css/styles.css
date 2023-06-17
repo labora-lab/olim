@@ -68,6 +68,7 @@
 
 .patient-header {
     font-size: 23px;
+    border-bottom: solid 1px;
 }
 
 .highlight {

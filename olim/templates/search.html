@@ -28,7 +28,7 @@
         </div>
         <div class="input-field col s12 m6">
             <label>
-                <input type="checkbox" name="only-queue"/>
+                <input type="checkbox" name="only-queue" />
                 <span>Somente gerar fila</span>
             </label>
         </div>
@@ -44,39 +44,24 @@
 {% if results %}
 <div class="row">
     <div class="col s12">
-        <a class="waves-effect waves-light btn btn-wide" href="./patient?queue={{queue_id}}&highlight={{highlight|safe}}">
+        <a class="waves-effect waves-light btn btn-wide" href="./queue/{{queue_id}}?highlight={{highlight|safe}}">
             <i class="material-icons right">send</i>Abrir fila
         </a>
     </div>
     {%if not only_queue%}
-    {% for patient in results %}
-    {% set pacient_id = patient['_id']%}
     <div class="col s12">
         <div class="card day">
+            {% for entry in results %}
             <div class="card-content blue-grey white-text patient-header" style="display:block;">
-                Paciente ID: {{ pacient_id }}
-                <span class="small-title">Score de busca: {{patient['_score']}}</span>
-                <a href="./patient?id={{ pacient_id }}&highlight={{highlight|safe}}" class="btn btn-float right"
-                    target="_blank">Abrir ficha</a>
+                <a href="/entry/{{entry['entry_id']}}?highlight={{highlight|safe}}" class="btn btn-float right"
+                    target="_blank">Abrir</a>
+                <p><b>{{ entry['entry_id'] }}</b>: {{ entry['description'] }}</p>
+                <span class="small-title">Ocorrências: {{entry['match_count']}} - Score de busca:
+                    {{entry['score']}}</span>
             </div>
-            <div class="patient-body">
-                {% for result in patient['_source']['texts'] %}
-                {% if not loop.first %}<div class="divider"></div>{% endif %}
-                <div class="card-content left-align" id="short_{{result['text_id']}}"
-                    onclick="toggle_pannel('{{result['text_id']}}')">
-                    <span class="grey-text text-darken-2">{{ result['data']}}:</span> {{ result['text']|safe }}
-                </div>
-                <div class="card-content left-align tight-top tight-bottom hidden" id="full_{{result['text_id']}}"
-                    onclick="toggle_pannel('{{result['text_id']}}')">
-                    {% for key, value in result.items() %}
-                    <p><strong>{{key}}:</strong> {{value|safe}}</p>
-                    {% endfor %}
-                </div>
-                {% endfor %}
-            </div>
+            {% endfor %}
         </div>
     </div>
-    {% endfor %}
     {%endif%}
 </div>
 {% else %}

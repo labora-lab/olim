@@ -1,6 +1,10 @@
 <div class="card">
-    <div class="card-content no-bottom-pad text-entry">
-        <h5>{{res['_source']['text']}}</h5>
+    <div class="card-content text-entry">
+        <span class="card-title">
+            {{res['_source']['text']}}
+        </span>
+    </div>
+    <div class="card-action text-entry">
         <ul>
             {% for key in res['_source'].keys() %}
             {% if key != 'text' %}

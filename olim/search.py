@@ -1,6 +1,7 @@
-from . import app
-from .functions import es_search, store_queue
+from . import app, entry_types
+from .functions import store_queue
 from flask import request, render_template
+import pandas as pd
 import json
 
 
@@ -40,70 +41,35 @@ def search():
             highlight="[]",
         )
 
-    all_must = must_terms + must_phrases
-    all_not = not_must_terms + not_must_phrases
-    col_search = "texts.text"
-    es_query = {
-        "nested": {
-            "path": "texts",
-            "query": {
-                "bool": {"must": [], "must_not": [], "should": []},
-            },
-        }
-    }
-    es_sort = [
-        {"_score": {"order": "desc"}},
-        {"texts.date": {"order": "asc", "nested": {"path": "texts"}}},
-    ]
-
-    es_query["nested"]["query"]["bool"]["must"].extend(
-        [{"query_string": {"query": term, "fields": [col_search]}} for term in all_must]
-    )
-    # es_query["nested"]["query"]["bool"]["must"].extend(
-    #     [{"match_phrase": {col_search: {"query": phrase}}} for phrase in must_phrases]
-    # )
-    es_query["nested"]["query"]["bool"]["must_not"].extend(
-        [{"query_string": {"query": term, "fields": [col_search]}} for term in all_not]
-    )
-    # es_query["nested"]["query"]["bool"]["must_not"].extend(
-    #     [
-    #         {"match_phrase": {col_search: {"query": phrase}}}
-    #         for phrase in not_must_phrases
-    #     ]
-    # )
-
-    # print(json.dumps(es_query, indent=2))
-
-    # pacient_id = cd_usu_cadsus
-    results = es_search(query=es_query, sort=es_sort, size=number)["hits"]["hits"]
-    patients = []
-
-    for patient in results:
-        patients.append(patient["_id"])
-        if not only_queue:
-            for text in patient["_source"]["texts"]:
-                count = 0
-                for term in all_must:
-                    count += text["text"].count(term)
-                text["match_count"] = count
-                text["data"] = text["date"].split("T")[0].split("-")
-                text["data"].reverse()
-                text["data"] = "/".join(text["data"])
-            patient["_source"]["texts"].sort(
-                key=lambda t: t["match_count"], reverse=True
+    data = []
+    for mod in dir(entry_types):
+        module = getattr(entry_types, mod)
+        if hasattr(module, "search"):
+            data += module.search(
+                must_terms=must_terms,
+                must_phrases=must_terms,
+                not_must_terms=not_must_terms,
+                not_must_phrases=not_must_phrases,
+                number=number,
             )
 
-    queue_id = store_queue(patients)
+    if len(data) > 0:
+        df_results = pd.DataFrame(data)
+        df_results = df_results.sort_values(
+            by="score", ascending=False, ignore_index=True
+        ).iloc[:number]
+        data = df_results.to_dict("records")
+        queue_id = store_queue(df_results["entry_id"])
+    else:
+        queue_id = None
 
     return render_template(
         "search.html",
-        results=results,
+        results=data,
         include=include,
         exclude=exclude,
-        default_es_column=col_search,
-        len_f=len,
         number=number,
-        highlight=all_must,
+        highlight=must_terms + must_phrases,
         only_queue=only_queue,
         queue_id=queue_id,
     )

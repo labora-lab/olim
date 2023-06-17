@@ -110,7 +110,7 @@ def store_queue(queue: List[str]) -> str:
     Returns:
         str: Hash of the queue for access
     """
-    queue = json.dumps(queue)
+    queue = json.dumps(list(queue))
     h = hashlib.md5(queue.encode("utf-8")).hexdigest()
     tmp_file = os.path.join(tmp_dir, h)
     with open(tmp_file, "w") as f:

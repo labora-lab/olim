@@ -3,6 +3,7 @@ from flask import render_template
 import click
 from tqdm import tqdm
 from ..cli import upload
+from typing import List, Dict, Tuple
 
 ES_INDEX = "single_text_entries"
 
@@ -51,3 +52,54 @@ def up_single_text(csv_file, id_column, text_column):
 
 
 upload.add_command(up_single_text)
+
+
+def search(
+    must_terms: List[str],
+    must_phrases: List[str],
+    not_must_terms: List[str],
+    not_must_phrases: List[str],
+    number: int,
+) -> List[Dict]:
+    all_must = must_terms + must_phrases
+    all_not = not_must_terms + not_must_phrases
+    col_search = "text"
+
+    # Create query
+    es_query = {
+        "bool": {
+            "must": [
+                {"query_string": {"query": term, "fields": [col_search]}}
+                for term in all_must
+            ],
+            "must_not": [
+                {"query_string": {"query": term, "fields": [col_search]}}
+                for term in all_not
+            ],
+            "should": [],
+        },
+    }
+
+    # Runs query
+    results = es_search(query=es_query, size=number, index=ES_INDEX)["hits"]["hits"]
+
+    # Aggregates results
+    patients = []
+    for patient in results:
+        text = patient["_source"]["text"]
+        try:
+            patient_desc = " ".join(text.split(" ")[:5]) + "..."
+        except IndexError:
+            patient_desc = text
+        count = sum([text.lower().count(term.lower()) for term in all_must])
+        patients.append(
+            {
+                "entry_id": patient["_id"],
+                "match_count": count,
+                "description": patient_desc,
+                "score": patient["_score"],
+                "type": "patient",
+            }
+        )
+
+    return patients
