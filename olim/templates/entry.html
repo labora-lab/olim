@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Entrada {{entry_id}}{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col s9">
+        <div class="card">
+            <div class="card-content row tight-bottom">
+                <div class="input-field col m8 s12">
+                    <input id="id" name="id" type="text" class="validate" value="{{entry_id}}">
+                    <label for="id">Id da entrada</label>
+                </div>
+                <div class="input-field col m4 s12">
+                    <a class="btn waves-effect waves-light btn-wide"
+                        onclick="window.location.href = '/entry/'+$('#id').val();">Carregar entrada
+                        <i class="material-icons right">assignment</i>
+                    </a>
+                </div>
+                {%if queue_id%}
+                <div class="col s5">
+                    <a class="waves-effect waves-light btn btn-wide{%if queue_pos == 1%} disabled{%endif%}"
+                        href="/queue/{{queue_id}}/{{queue_pos-1}}">
+                        <i class="material-icons left">arrow_back</i>Anterior
+                    </a>
+                </div>
+                <div class="col s2">
+                    <a class="waves-effect waves-light btn btn-wide disabled" style="color:black !important;">
+                        {{queue_pos}}/{{queue_len}}
+                    </a>
+                </div>
+                <div class="col s5">
+                    <a class="waves-effect waves-light btn btn-wide{%if queue_pos == queue_len%} disabled{%endif%}"
+                        href="/queue/{{queue_id}}/{{queue_pos+1}}">
+                        <i class="material-icons right">arrow_forward</i>Próximo
+                    </a>
+                </div>
+                {%endif%}
+            </div>
+        </div>
+    </div>
+    {% if valid_entry %}
+    <div class="col s3">
+        <div class="toc-wrapper pinned labels-menu">
+            <h5>Rótulos</h5>
+            <div class="row" style="padding-top:15px;">
+                <div id="labels">
+                    {% for label in labels%}
+                    {% include 'labels-menu.html' %}
+                    {%endfor%}
+                </div>
+                <div class="input-field col s12 tight-top">
+                    <button
+                        class="btn waves-effect waves-light btn-wide hidden-entry{% if show_hidden %} hidden{% endif %}"
+                        onclick='toggle_hidden(true)'>
+                        Exibir ocultos
+                        <i class="material-icons right">remove_red_eye</i>
+                    </button>
+                    <button
+                        class="btn btn-hide waves-effect waves-light btn-wide red darken-4 hidden-entry{% if not show_hidden %} hidden{% endif %}"
+                        onclick='toggle_hidden(false)'>
+                        Esconder ocultos
+                        <i class="material-icons right">remove_red_eye</i>
+                    </button>
+                </div>
+                <div class="input-field col s12 tight-top">
+                    <button class="btn waves-effect waves-light btn-wide" onclick='expand_all(true)'>
+                        Expandir todos
+                        <i class="material-icons right">add</i>
+                    </button>
+                </div>
+                <div class="input-field col s12 tight-top">
+                    <button class="btn waves-effect waves-light btn-wide" onclick='retract_all(false)'>
+                        Recolher todos
+                        <i class="material-icons right">remove</i>
+                    </button>
+                </div>
+                <div class="input-field col s12 chips tight-top" id="highlights">
+                    <input style="width: max-content !important;">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col s9">
+        <div class="row">
+            <div class="col s12">
+                {{ entry_html|safe }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        init_picker('#start-date', "{{start_date}}");
+        init_picker('#end-date', "{{end_date}}");
+        {% if valid_entry %}
+        init_highlight({{ highlight| safe}});
+    {% endif %}
+    });
+
+</script>
+{% block more_scripts %}{% endblock %}
+{% endblock %}

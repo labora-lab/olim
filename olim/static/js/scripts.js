@@ -177,11 +177,8 @@ function update_hidden_counts() {
     })
 }
 
-//// Queue navigation functions
-// Loads a new position on the queue
-function goto_queue_pos(pos) {
-    update_url('queue-pos', pos);
-    window.location.reload();
+function delete_label(id) {
+    window.location.href = "/labels/" + id + "/delete";
 }
 
 //// Search form functions
@@ -201,7 +198,7 @@ function datestr(datestr) {
 //// Backend communication functions
 // Sends a command to the backend
 function run_command(cmd, args) {
-    var URL = "commands?cmd=" + cmd;
+    var URL = "/commands?cmd=" + cmd;
 
     for (i in args) {
         URL = URL + "&" + args[i];
@@ -228,8 +225,8 @@ function run_command(cmd, args) {
 }
 
 // Calls the backend to hide an entry
-function hide_one(text_id, patient_id) {
-    run_command('hide-one', ['txt_id=' + text_id, 'patient_id=' + patient_id, 'callback=hide_text("' + text_id + '");'])
+function hide_one(text_id, entry_id) {
+    run_command('hide-one', ['txt_id=' + text_id, 'entry_id=' + entry_id, 'callback=hide_text("' + text_id + '");'])
 }
 
 function show_warnning(message, action) {
@@ -239,40 +236,23 @@ function show_warnning(message, action) {
 }
 
 // Calls the backend to hide all equal an entry
-function hide_all(text, text_id, patient_id) {
-    run_command('hide-all', ['text_id=' + text_id, 'patient_id=' + patient_id, 'text=' + text, 'callback=setTimeout(() => {window.location.reload();}, 1000);']);
+function hide_all(text, text_id, entry_id) {
+    run_command('hide-all', ['text_id=' + text_id, 'entry_id=' + entry_id, 'text=' + text, 'callback=setTimeout(() => {window.location.reload();}, 1000);']);
 }
 
 // Calls the backend to unhide an entry
-function unhide(text_id, patient_id) {
-    run_command('show', ['txt_id=' + text_id, 'patient_id=' + patient_id, 'callback=unhide_text("' + text_id + '");']);
+function unhide(text_id, entry_id) {
+    run_command('show', ['txt_id=' + text_id, 'entry_id=' + entry_id, 'callback=unhide_text("' + text_id + '");']);
 }
 
 // Calls the backend to add a yes label to a patient
-function add_patient_label(patient_id, label_id, label, value) {
-    run_command('add-label', ['patient_id=' + patient_id, 'label=' + label, 'value=' + value, 'callback=mark_label("' + label_id + '", "' + value + '");']);
-}
-
-// Calls the backend to create a label
-function create_label(label, patient_id, reload = false) {
-    if (reload) {
-        run_command('new-label', ['label=' + label, 'patient_id=' + patient_id, 'callback=setTimeout(() => {window.location.reload();}, 1000);']);
-        $("#new_label").val("");
-
-    } else {
-        run_command('new-label', ['label=' + label, 'patient_id=' + patient_id]);
-        $("#new_label").val("");
-    }
+function add_patient_label(entry_id, label_id, value) {
+    run_command('add-label', ['entry_id=' + entry_id, 'label_id=' + label_id, 'value=' + value, 'callback=mark_label("' + label_id + '", "' + value + '");']);
 }
 
 // Calls the backend to remove an entry from hidden index
 function remove_from_hidden(text_id) {
     run_command('remove-hidden', ['text_id=' + text_id, 'callback=delete_id("text_' + text_id + '");'])
-}
-
-// Calls the backend to remove an entry from hidden index
-function remove_label(label, label_id) {
-    run_command('remove-label', ['label=' + label, 'label_id=' + label_id, 'callback=delete_by_class("label_' + label_id + '");'])
 }
 
 //// Callback functions to hide, unhide entries, add elements, etc
@@ -331,11 +311,6 @@ function mark_label(label_id, value) {
         $("#idk_sel_" + label_id).removeClass("hidden");
         $("#idk_" + label_id).addClass("hidden");
     }
-}
-
-// Callback: Add a label to the screen
-function add_label(html) {
-    $("#labels").append(html)
 }
 
 //Callback: Delete a text from hidden page

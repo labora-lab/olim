@@ -1,8 +1,9 @@
 ## Auxiliary functions
 # All functions here must have type hints and docstrings
-from .settings import ES_INDEX, ES_LABEL_INDEX, ES_TO_HIDE_INDEX, ES_SERVER
+from .settings import ES_INDEX, ES_LABEL_INDEX, ES_SERVER
+from .database import register_entries
 from . import tmp_dir
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, helpers
 from elasticsearch.helpers import scan
 from datetime import datetime
 from typing import List
@@ -22,9 +23,7 @@ def shorten(string: str, n: int = 80, add: str = " (...)") -> str:
 
     Args:
         string (str): Original string.
-        n (int): Minimum number of characters to preserve
-
-    Returns:
+        n (int): Minimum number of characters to prese¨
         str: Shortened string.
     """
     pos = string.find(" ", n)
@@ -71,54 +70,9 @@ def es_update(**kwargs):
     return client.update(**kwargs)
 
 
-def update_hidden(txt_id, patient_id, hide):
-    body = {
-        "script": {
-            "source": "def targets = ctx._source.texts.findAll(texts -> texts.text_id == params.text_id); for(text in targets) { text.is_hidden = params.is_hidden }",
-            "params": {"text_id": txt_id, "is_hidden": hide},
-        }
-    }
-
-    return es_update(id=patient_id, body=body, refresh=True)
-
-
-def add_patient_label(label, patient_id, value, date_created=None):
-    date_created = date_created or now_ISO()
-    body = {
-        "script": {
-            "source": "def targets = ctx._source.labels.add(params.label)",
-            "params": {"label": {"label": label, "date": date_created, "value": value}},
-        }
-    }
-
-    return es_update(id=patient_id, body=body, refresh=True)
-
-
-def create_new_label(label):
-    label_doc = {"label": label, "created": now_ISO()}
-
-    client = get_es_conn()
-    return client.index(index=ES_LABEL_INDEX, document=label_doc)
-
-
-def get_labels():
-    client = get_es_conn()
-    return client.search(index=ES_LABEL_INDEX, query={"match_all": {}}, size=10000)
-
-
-def add_text_to_hide(text, text_id, patient_id):
-    label_doc = {
-        "text": text,
-        "text_id": text_id,
-        "patient_id": patient_id,
-        "date": now_ISO(),
-    }
-
-    client = get_es_conn()
-    return client.index(index=ES_TO_HIDE_INDEX, document=label_doc)
-
-
 def get_all_hidden():
+    from .entry_types.patient import ES_TO_HIDE_INDEX
+
     client = get_es_conn()
     return client.search(
         index=ES_TO_HIDE_INDEX,
@@ -127,94 +81,6 @@ def get_all_hidden():
     )[
         "hits"
     ]["hits"]
-
-
-def remove_from_hidden(text_id):
-    client = get_es_conn()
-    query = {"query": {"bool": {"must": [{"match": {"text_id": text_id}}]}}}
-    return client.delete_by_query(index=ES_TO_HIDE_INDEX, body=query, refresh=True)
-
-
-def remove_from_labels(label_id):
-    client = get_es_conn()
-    query = {"query": {"bool": {"must": [{"match": {"_id": label_id}}]}}}
-    return client.delete_by_query(index=ES_LABEL_INDEX, body=query, refresh=True)
-
-
-def extract_label(label, only_ids=False, only_values=False):
-    # Query to get all patients with the label
-    # Getting only the more recent label
-    # If the label value is empty, the patient doesn't have that label
-    query = {
-        "query": {
-            "nested": {
-                "path": "labels",
-                "query": {"bool": {"filter": [{"term": {"labels.label": label}}]}},
-                "inner_hits": {"size": 1, "sort": [{"labels.date": {"order": "desc"}}]},
-            }
-        },
-    }
-
-    # Query the search using scroll to get all the results
-    es = get_es_conn()
-    scroll = scan(
-        es, query=query, index=ES_INDEX, scroll="10m", size=10000, request_timeout=30
-    )
-
-    results = []
-
-    if only_ids:
-        return [res["_id"] for res in scroll if res["_source"]["label"] != '']
-
-    if only_values:
-        values = []
-        for res in scroll:
-            hits = res["inner_hits"]["labels"]["hits"]["hits"]
-            for hit in hits:
-                values.append(hit["_source"]["value"])
-        return values
-
-    for res in scroll:
-        hits = res["inner_hits"]["labels"]["hits"]["hits"]
-        res["_source"]["patient_id"] = res["_id"]
-        for hit in hits:
-            results.append((res["_source"], hit["_source"]))
-
-    # Create a dataframe with the results
-    # Initialize the dataframe with text, text_id, date, patient_id, visitation_id, label, label_value, label_created
-    data = []
-    for patient, label in results:
-        if label["value"] == "":
-            continue
-        for texts in patient["texts"]:
-            data.append(
-                {
-                    "text": texts["text"],
-                    "text_id": texts["text_id"],
-                    "date": texts["date"],
-                    "patient_id": patient["patient_id"],
-                    "visitation_id": texts["visitation_id"],
-                    "label": label["label"],
-                    "label_value": label["value"],
-                    "label_created": label["date"],
-                }
-            )
-
-    # Df to csv
-    df = pd.DataFrame(data)
-    return df.to_csv(index=False)
-
-
-def get_label_counts(label):
-    values = extract_label(label, only_values=True)
-    counts = {"total": 0}
-    for value in ["sim", "nao", "nao_sei"]:
-        counts[value] = 0
-        for v in values:
-            if v == value:
-                counts[value] += 1
-                counts["total"] += 1
-    return counts
 
 
 def parse_queue(text: str) -> List[str]:
@@ -288,3 +154,83 @@ def manage_label_in_session(label: str, session, mode: str = "add"):
             pass
 
     session["hidden_labels"] = labels_list
+
+
+class ESManager:
+    def __init__(self, serverfile="", **params) -> None:
+        if len(params) == 0:
+            with open(serverfile, "r") as f:
+                params = json.load(f)
+
+        self.es = Elasticsearch(**params)
+
+    def create_index(self, index, mapping):
+        return self.es.indices.create(index=index, mappings=mapping)
+
+    def delete_index(self, index):
+        return self.es.indices.delete(index=index)
+
+    def list_indices(self):
+        return self.es.indices.get_alias(index="*")
+
+    def get_mapping(self, index):
+        return self.es.indices.get_mapping(index=index)
+
+    def add_document(self, document, index):
+        return self.es.index(index=index, document=document)
+
+    def get_all_documents(self, index, size=10000):
+        return self.es.search(index=index, query={"match_all": {}}, size=size)
+
+    def get_head_documents(self, index, n=10):
+        return self.es.search(
+            index=index, query={"query": {"match_all": {}}, "from": 0, "size": n}
+        )
+
+    def search(self, **kwargs):
+        return self.es.search(**kwargs)
+
+
+def es_bulk_upload(
+    csv_file,
+    id_column,
+    text_column,
+    index,
+    mapping,
+    doc_generator,
+    entry_type,
+    additional_indexes=[],
+):
+    client = ESManager(
+        hosts=ES_SERVER,
+        request_timeout=1000,
+        read_timeout=1000,
+        timeout=1000,
+        max_retries=20,
+    )
+
+    print(f"Trying to create {index} index...")
+    try:
+        client.create_index(index, mapping)
+    except:
+        print("Index creation failed, index already exists?")
+
+    for ind, mp in additional_indexes:
+        print(f"Trying to create {ind} additional index...")
+        try:
+            client.create_index(ind, mp)
+        except:
+            print("Index creation failed, index already exists?")
+
+    print(f"Loading data from {csv_file}...")
+    df = pd.read_csv(csv_file)
+    df = df.drop_duplicates()
+
+    print("Uploading texts to ElasticSearch...")
+    helpers.bulk(client.es, doc_generator(df, index, id_column, text_column))
+
+    print("Registring entries on OLIM database...")
+    register_entries(df[id_column].unique(), entry_type)
+
+    print()
+    print("Data uploaded!")

@@ -6,45 +6,61 @@
     <h4 class="center">Rótulos</h4>
 </div>
 <div class="row">
-    {% if res %}
-    <div class="input-field col s11">
-        <input id="new_label" type="text">
-        <label for="new_label">Novo Rótulo</label>
-    </div>
-    <div class="input-field col s1 center">
-        <a class="btn waves-effect waves-light btn-narrow"
-            onclick="create_label($('#new_label').val(),'{{patient_id}}',true)">
-            <i class="material-icons right">add</i>
-        </a>
-    </div>
-    <div class="col card s12 tight-bottom">
-        {% for r in res %}
-        {% set label = r['label'] %}
-        {% set label_id = r['_id'] %}
-        {% if not loop.first %}<div class="divider label_{{label_id}}"></div>{% endif %}
-        <div class="card-content label_{{label_id}}">
-            <a class="btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped right
-                                                                data-positionb bottom" data-tooltip="Remover rótulo"
-                onclick="show_warnning('Remover este rótulo não remove as rotulações efetuadas com ele, caso ele seja recriado as rotulações serão restauradas, para novas rotulações crie um novo rótulo com novo nome.','remove_label(\'{{label}}\', \'{{label_id}}\');');">
-                <i class="material-icons red-text text-darken-4">remove_circle_outline</i>
-            </a>
-            <a class="btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped right
-                                                                data-position bottom" href='./labels/{{label}}.csv'
-                data-tooltip="Baixar dados rotulados" download>
-                <i class="material-icons black-text text-darken-4">file_download</i>
-            </a>
-            <a class="btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped right
-                                                                data-position bottom"
-                href='./label-queue/?label={{label}}' data-tooltip="Abrir fila de pacientes rotulados">
-                <i class="material-icons black-text text-darken-4">send</i>
-            </a>
-            <h5>{{label}} <span class="tooltipped" data-tooltip="Sim: {{r['n_yes']}} Não: {{r['n_no']}} Não sei: {{r['n_dontknow']}}">({{r['n_labeled']}} rótulos)</span></h5>
+    <form action="/labels/new" method="post">
+        <div class="input-field col s11">
+            <input id="new_label" type="text" name="label">
+            <label for="new_label">Novo Rótulo</label>
         </div>
-        {% endfor %}
+        <div class="input-field col s1 center">
+            <button class="btn waves-effect waves-light btn-narrow">
+                <i class="material-icons right">add</i>
+            </button>
+        </div>
+    </form>
+    <div class="col card s12 tight-bottom">
+        <table>
+            <thead>
+                <tr>
+                    <th>Rótulo</th>
+                    {%for value in possible_values%}
+                    {%if value != ""%}
+                    <td>{{ value }}</td>
+                    {%endif%}
+                    {%endfor%}
+                    <th>Criado por</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for label in labels %}
+                <tr>
+                    <td>{{ label.name }}</td>
+                    {%for value in possible_values%}
+                    {%if value != ""%}
+                    <td>{%if value in values[label.id]%}{{ values[label.id][value] }}{%else%}0{%endif%}</td>
+                    {%endif%}
+                    {%endfor%}
+                    <td>{{ label.creator.name }}</td>
+                    <td>
+                        <a class="btn waves-ligh tooltipped data-position bottom red darken-4"
+                            data-tooltip="Remover rótulo"
+                            onclick="show_warnning('Remover este rótulo não remove as rotulações efetuadas com ele, caso ele seja recriado as rotulações serão restauradas, para novas rotulações crie um novo rótulo com novo nome.','delete_label(\'{{label.id}}\');');">
+                            <i class="material-icons">remove_circle_outline</i>
+                        </a>
+                        <a class="btn waves-ligh tooltipped data-position bottom" href='./labels/{{label.id}}.csv'
+                            data-tooltip="Baixar dados rotulados" download>
+                            <i class="material-icons">file_download</i>
+                        </a>
+                        <a class="btn waves-ligh tooltipped data-position bottom" href='./labels/{{label.id}}/queue'
+                            data-tooltip="Abrir fila de pacientes rotulados">
+                            <i class="material-icons">send</i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    {% else %}
-    <h4 class="center">Não há nenhum rótulo.</h4>
-    {% endif %}
     <div class="col card s12 tight-bottom">
         <div class="card-content row tight-bottom">
             <form action="./label-upload" method="post" enctype="multipart/form-data">

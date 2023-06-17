@@ -25,44 +25,4 @@
     </div>
   </div>
 </div>
-
-<!-- Flash message divs -->
-{% with warning_messages = get_flashed_messages(category_filter=["warning"]) %}
-  {% if warning_messages %}
-    <div class="card orange lighten-5">
-      <div class="card-content">
-        <span class="card-title orange-text">Warning</span>
-        {% for message in warning_messages %}
-          <p class="orange-text">{{ message }}</p>
-        {% endfor %}
-      </div>
-    </div>
-  {% endif %}
-{% endwith %}
-
-{% with success_messages = get_flashed_messages(category_filter=["success"]) %}
-  {% if success_messages %}
-    <div class="card green lighten-5">
-      <div class="card-content">
-        <span class="card-title green-text">Success</span>
-        {% for message in success_messages %}
-          <p class="green-text">{{ message }}</p>
-        {% endfor %}
-      </div>
-    </div>
-  {% endif %}
-{% endwith %}
-
-{% with error_messages = get_flashed_messages(category_filter=["error"]) %}
-  {% if error_messages %}
-    <div class="card red lighten-5">
-      <div class="card-content">
-        <span class="card-title red-text">Error</span>
-        {% for message in error_messages %}
-          <p class="red-text">{{ message }}</p>
-        {% endfor %}
-      </div>
-    </div>
-  {% endif %}
-{% endwith %}
 {% endblock %}

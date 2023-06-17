@@ -17,17 +17,17 @@
 <body>
     <header>
         <ul id="slide-out" class="sidenav">
-            <li><a href="./">Pesquisa de pacientes</a></li>
-            <li><a href="./patient">Abrir ficha</a></li>
-            <li><a href="./labels">Rótulos</a></li>
-            <li><a href="./hidden">Textos ocultos</a></li>
-            <li><a href="./queue">Gerar fila</a></li>
-            <li><a href="./users">Usuários</a></li>
+            <li><a href="/">Pesquisa</a></li>
+            <li><a href="/entry">Abrir entrada</a></li>
+            <li><a href="/labels">Rótulos</a></li>
+            <li><a href="/hidden">Textos ocultos</a></li>
+            <li><a href="/new-queue">Gerar fila</a></li>
+            <li><a href="/users">Usuários</a></li>
             {% if session['user_id'] == 'guest' %}
             <li><a href="{{ url_for('login') }}">Login</a></li>
             {% else %}
-            <li><a href="{{ url_for('logout') }}">Sair</a></li>   
-            {% endif %}         
+            <li><a href="{{ url_for('logout') }}">Sair</a></li>
+            {% endif %}
         </ul>
         <nav>
             <div class="nav-wrapper cyan darken-4">
@@ -49,6 +49,67 @@
         <div class="modal-footer">
             <a class="modal-close red darken-3 btn waves-effect waves-red" id="warning-close">Continuar</a>
             <a class="modal-close btn waves-effect waves-green">Sair</a>
+        </div>
+    </div>
+    <div class="container" style="margin-bottom: -30px;">
+        <div class="row">
+            <!-- Flash message divs -->
+            {% with warning_messages = get_flashed_messages(category_filter=["warning"]) %}
+            {% if warning_messages %}
+            <div class="card orange lighten-5 col s12" id="warning-div">
+                <div class="card-content">
+                    <span class="right clear">
+                        <a class='btn-flat tooltipped' data-position="bottom" data-tooltip="Fechar"
+                            onclick="$('#warning-div').hide();">
+                            <i class="material-icons grey-text text-darken-4">clear</i>
+                        </a>
+                    </span>
+                    <!-- <span class="card-title orange-text">Warning</span> -->
+                    {% for message in warning_messages %}
+                    <p class="orange-text">{{ message }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            {% with success_messages = get_flashed_messages(category_filter=["success"]) %}
+            {% if success_messages %}
+            <div class="card green lighten-5 col s12" id="success-div">
+                <div class="card-content">
+                    <span class="right clear">
+                        <a class='btn-flat tooltipped' data-position="bottom" data-tooltip="Fechar"
+                            onclick="$('#success-div').hide();">
+                            <i class="material-icons grey-text text-darken-4">clear</i>
+                        </a>
+                    </span>
+                    <!-- <span class="card-title green-text">Success</span> -->
+                    {% for message in success_messages %}
+                    <p class="green-text">{{ message }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            {% with error_messages = get_flashed_messages(category_filter=["error"]) %}
+            {% if error_messages %}
+            <div class="card red lighten-5 col s12" id="error-div">
+                <div class="card-content">
+                    <span class="right clear">
+                        <a class='btn-flat tooltipped' data-position="bottom" data-tooltip="Fechar"
+                            onclick="$('#error-div').hide();">
+                            <i class="material-icons grey-text text-darken-4">clear</i>
+                        </a>
+                    </span>
+                    <!-- <span class="card-title red-text">Error</span> -->
+                    {% for message in error_messages %}
+                    <p class="red-text">{{ message }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            {% endwith %}
         </div>
     </div>
     <main>
