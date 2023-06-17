@@ -2,7 +2,7 @@ from flask import Flask
 from .settings import DEBUG, SECRET_KEY
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
-import tempfile
+import os
 from datetime import timedelta
 
 SESSION_TYPE = "filesystem"
@@ -10,7 +10,9 @@ SESSION_PERMANENT = True
 SESSION_USE_SIGNER = False
 PERMANENT_SESSION_LIFETIME = timedelta(days=30)
 
-tmp_dir = tempfile.mkdtemp(prefix="olim_")
+tmp_dir = "queues"
+if not os.path.isdir(tmp_dir):
+    os.mkdir(tmp_dir)
 
 db = SQLAlchemy()
 app = Flask(__name__)

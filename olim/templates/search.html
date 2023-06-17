@@ -44,7 +44,7 @@
 {% if results %}
 <div class="row">
     <div class="col s12">
-        <a class="waves-effect waves-light btn btn-wide" href="./queue/{{queue_id}}?highlight={{highlight|safe}}">
+        <a class="waves-effect waves-light btn btn-wide" href="./queue/{{queue_id}}">
             <i class="material-icons right">send</i>Abrir fila
         </a>
     </div>
@@ -53,8 +53,7 @@
         <div class="card day">
             {% for entry in results %}
             <div class="card-content blue-grey white-text patient-header" style="display:block;">
-                <a href="/entry/{{entry['entry_id']}}?highlight={{highlight|safe}}" class="btn btn-float right"
-                    target="_blank">Abrir</a>
+                <a href="/entry/{{entry['entry_id']}}" class="btn btn-float right" target="_blank">Abrir</a>
                 <p><b>{{ entry['entry_id'] }}</b>: {{ entry['description'] }}</p>
                 <span class="small-title">Ocorrências: {{entry['match_count']}} - Score de busca:
                     {{entry['score']}}</span>

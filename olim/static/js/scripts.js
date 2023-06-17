@@ -215,6 +215,12 @@ function run_command(cmd, args) {
                     eval(data.callback);
                 }
             }
+            else if (data.type == 'silentOK') {
+                if (data.callback) {
+                    console.log(data.callback)
+                    eval(data.callback);
+                }
+            }
             else {
                 M.toast({ html: "ERROR: " + data.text, displayLength: 20000, classes: 'red darken-4' });
                 if (data.fail_callback) {
@@ -331,9 +337,7 @@ function update_highlight() {
     }).get();
     if (data.length > 0) {
         $('.text-entry').highlight(data);
-        update_url('highlight', '["' + data.join('","') + '"]');
-    } else {
-        update_url('highlight');
+        run_command('update-session', ['parameter=highlight', 'data=' + JSON.stringify(data)])
     }
 }
 

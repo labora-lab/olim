@@ -67,10 +67,33 @@ def manage_label(**args):
         }
 
 
+def update_session(**args):
+    parameter = args.get("parameter", None)
+    data = args.get("data", None)
+
+    if parameter == None:
+        return {
+            "type": "error",
+            "text": "Missing parameter",
+        }
+    if data == None:
+        return {
+            "type": "error",
+            "text": "Missing data",
+        }
+
+    session[parameter] = json.loads(data)
+    return {
+        "type": "silentOK",
+    }
+
+
 COMMANDS = {
     "add-label": add_label,
     "manage-label": manage_label,
+    "update-session": update_session,
 }
+
 for mod in dir(entry_types):
     module = getattr(entry_types, mod)
     if hasattr(module, "COMMANDS"):

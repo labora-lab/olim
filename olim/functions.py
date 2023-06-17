@@ -4,7 +4,7 @@ from .settings import ES_INDEX, ES_LABEL_INDEX, ES_SERVER
 from .database import register_entries
 from . import tmp_dir
 from elasticsearch import Elasticsearch, helpers
-from elasticsearch.helpers import scan
+from flask import session
 from datetime import datetime
 from typing import List
 import pandas as pd
@@ -101,7 +101,7 @@ def parse_queue(text: str) -> List[str]:
     )
 
 
-def store_queue(queue: List[str]) -> str:
+def store_queue(queue: List[str], highlight: List[str] = None) -> str:
     """Stores a queue in a temporay file.
 
     Args:
@@ -110,7 +110,12 @@ def store_queue(queue: List[str]) -> str:
     Returns:
         str: Hash of the queue for access
     """
-    queue = json.dumps(list(queue))
+    queue = json.dumps(
+        {
+            "queue": list(queue),
+            "highlight": highlight,
+        }
+    )
     h = hashlib.md5(queue.encode("utf-8")).hexdigest()
     tmp_file = os.path.join(tmp_dir, h)
     with open(tmp_file, "w") as f:
@@ -130,7 +135,9 @@ def get_queue(queue_hash: str) -> str:
     tmp_file = os.path.join(tmp_dir, queue_hash)
     with open(tmp_file, "r") as f:
         queue = json.load(f)
-    return queue
+    if queue["highlight"] != None:
+        session["highlight"] = queue["highlight"]
+    return queue["queue"]
 
 
 def manage_label_in_session(label: str, session, mode: str = "add"):

@@ -1,6 +1,6 @@
 from . import app, entry_types
 from .functions import store_queue
-from flask import request, render_template
+from flask import request, render_template, session
 import pandas as pd
 import json
 
@@ -41,6 +41,8 @@ def search():
             highlight="[]",
         )
 
+    session["highlight"] = must_terms + must_phrases
+
     data = []
     for mod in dir(entry_types):
         module = getattr(entry_types, mod)
@@ -53,13 +55,14 @@ def search():
                 number=number,
             )
 
+    highlight = must_terms + must_phrases
     if len(data) > 0:
         df_results = pd.DataFrame(data)
         df_results = df_results.sort_values(
             by="score", ascending=False, ignore_index=True
         ).iloc[:number]
         data = df_results.to_dict("records")
-        queue_id = store_queue(df_results["entry_id"])
+        queue_id = store_queue(df_results["entry_id"], highlight)
     else:
         queue_id = None
 
@@ -69,7 +72,7 @@ def search():
         include=include,
         exclude=exclude,
         number=number,
-        highlight=must_terms + must_phrases,
+        highlight=highlight,
         only_queue=only_queue,
         queue_id=queue_id,
     )

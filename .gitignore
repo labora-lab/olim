@@ -162,8 +162,11 @@ cython_debug/
 server_credentials.json
 *.crt
 *.csv
+*.pdf
 test*
 *.sqlite
 
 .vscode/
 flask_session/
+instance/
+queues/

@@ -18,44 +18,57 @@ def entry(entry_id=None, queue_id=None, queue_pos=1):
         except ValueError:
             pass
 
-    hidden_labels = session.get("hidden_labels", [])
     show_hidden = request.args.get("show-hidden", False) == "True"
-    highlight = request.args.get("highlight", [])
 
     data = {"valid_entry": False}
 
-    # Load queue
+    # Load queue (queue must be loaded before highlight)
     if queue_id != None:
         try:
             queue = get_queue(queue_id)
             entry_id = queue[queue_pos - 1]
+            data.update(
+                {
+                    "queue_id": queue_id,
+                    "queue_len": len(queue),
+                    "queue_pos": queue_pos,
+                }
+            )
         except:
             flash(f"Fila {queue_id} não encontrada", category="error")
             queue_id = None
 
+    # Load highlight
+    if "highlight" in session:
+        highlight = session["highlight"]
+
+    # Check if entry exists ans try to render it
     if entry_id != None:
-        try:
-            entry = get_entry(entry_id)
-            print(entry)
-            e_type = getattr(entry_types, entry.type)
-            data.update(
-                {
-                    "entry_id": entry_id,
-                    "entry_html": e_type.render(
-                        entry_id,
-                        show_hidden=show_hidden,
-                        highlight=highlight,
-                    ),
-                    "entry": entry,
-                    "labels_values": {
-                        label.label_id: label.value
-                        for label in entry.labels
-                        if not label.is_deleted
-                    },
-                    "valid_entry": True,
-                }
-            )
-        except:
+        entry = get_entry(entry_id)
+        if not entry == None:
+            try:
+                e_type = getattr(entry_types, entry.type)
+                data.update(
+                    {
+                        "entry_id": entry_id,
+                        "entry_html": e_type.render(
+                            entry_id,
+                            show_hidden=show_hidden,
+                            highlight=highlight,
+                        ),
+                        "entry": entry,
+                        "labels_values": {
+                            label.label_id: label.value
+                            for label in entry.labels
+                            if not label.is_deleted
+                        },
+                        "valid_entry": True,
+                    }
+                )
+            except:
+                flash(f"Error rendering entry {entry_id}!", category="error")
+                data["valid_entry"] = False
+        else:
             flash(f"Entrada {entry_id} não encontrada", category="error")
             data["valid_entry"] = False
 
@@ -67,13 +80,4 @@ def entry(entry_id=None, queue_id=None, queue_pos=1):
             "hidden_labels": hidden_labels,
         }
     )
-    if queue_id != None:
-        data.update(
-            {
-                "queue_id": queue_id,
-                "queue_len": len(queue),
-                "queue_pos": queue_pos,
-            }
-        )
-
     return render_template("entry.html", **data)

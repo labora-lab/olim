@@ -11,6 +11,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from typing import Tuple
 
+
 def load_patient(
     pid: int,
     start_date: datetime = None,
@@ -135,13 +136,6 @@ def render(entry_id: str, **pars) -> str:
     Returns:
         str: Rendered HTML.
     """
-    hidden_labels = request.args.get("hidden_labels", [])
-    if len(hidden_labels) > 0:
-        try:
-            for label in json.loads(hidden_labels):
-                manage_label_in_session(label, session, "add")
-        except ValueError:
-            pass
     pid = entry_id
 
     # Checks integrity of dates
