@@ -32,14 +32,14 @@ def labels_ls():
     "upload",
     help="Uploads labels values from a CSV file."
     "\n\n\tCSV_FILE\tPath to the CSV file to load data."
-    "\n\n\USERNAME\tUsername to register labels as.",
+    "\n\n\tUSERNAME\tUsername to register labels as.",
 )
 @click.argument("csv_file")
 @click.argument("username")
 def up_labels(csv_file):
     print("Loading labels values from CSV file...")
     df = pd.read_csv(csv_file)
-    user = get_user(user, 'username')
+    user = get_user(user, "username")
 
     print(f"Uploading labels values as {user.name}...")
     label_upload(df, user.id)
