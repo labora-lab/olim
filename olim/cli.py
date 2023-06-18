@@ -32,6 +32,7 @@ def labels_ls():
     help="Uploads labels values from a CSV file."
     "\n\n\tCSV_FILE\tPath to the CSV file to load data.",
 )
+@click.argument("csv_file")
 def up_labels(csv_file):
     print("Loading labels values from CSV file...")
     df = pd.read_csv(csv_file)
