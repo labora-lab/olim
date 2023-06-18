@@ -2,6 +2,7 @@ from . import app, db
 from .database import (
     get_labels,
     get_users,
+    get_user,
     get_entry,
     init_db,
 )
@@ -30,15 +31,18 @@ def labels_ls():
 @click.command(
     "upload",
     help="Uploads labels values from a CSV file."
-    "\n\n\tCSV_FILE\tPath to the CSV file to load data.",
+    "\n\n\tCSV_FILE\tPath to the CSV file to load data."
+    "\n\n\USERNAME\tUsername to register labels as.",
 )
 @click.argument("csv_file")
+@click.argument("username")
 def up_labels(csv_file):
     print("Loading labels values from CSV file...")
     df = pd.read_csv(csv_file)
+    user = get_user(user, 'username')
 
-    print("Uploading labels values...")
-    label_upload(df)
+    print(f"Uploading labels values as {user.name}...")
+    label_upload(df, user.id)
 
 
 labels.add_command(up_labels)

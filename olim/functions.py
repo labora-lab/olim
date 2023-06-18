@@ -277,7 +277,8 @@ def es_bulk_upload(
     print("Data uploaded!")
 
 
-def label_upload(df):
+def label_upload(df, user_id=None):
+    user_id = user_id or session["user_id"]
     # Parse dates and sort by them
     df["created"] = pd.to_datetime(df["created"])
     df = df.sort_values(by="created")
@@ -292,9 +293,7 @@ def label_upload(df):
     for entry_id, label, value, created in tqdm(group):
         # If the label dont exist create it
         if label not in labels:
-            l = new_label(label, session["user_id"])
+            l = new_label(label, user_id)
             labels[l.name] = l.id
         # And label the patient
-        add_entry_label(
-            labels[label], entry_id, session["user_id"], value, created=created
-        )
+        add_entry_label(labels[label], entry_id, user_id, value, created=created)
