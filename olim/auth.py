@@ -81,11 +81,14 @@ def check_permission():
             set_guest_user()
             return redirect(url_for("login") + f"?redirect={request.path}")
         if not role_has_permission(role=user.role):
-            flash(
-                "Você não tem permissão para acessar essa página.",
-                category="warning",
-            )
-            return redirect("/")
+            if "favicon" in request.url:
+                abort(403)
+            else:
+                flash(
+                    f"Você não tem permissão para acessar {request.url}.",
+                    category="warning",
+                )
+                return redirect("/")
 
 
 def set_guest_user():
