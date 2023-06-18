@@ -58,7 +58,7 @@ def up_patients(csv_file: str) -> None:
         csv_file (str): Path to csv file.
     """
 
-    def get_texts(pid, df):
+    def get_texts(df_a):
         def parse_row(row):
             if "visitation_id" in row:
                 if row["visitation_id"] == "nan":
@@ -70,18 +70,16 @@ def up_patients(csv_file: str) -> None:
             row["labels"] = []
             return row
 
-        df_a = df[df["patient_id"] == pid]
-        df_a = df_a.drop(columns="patient_id")
         df_a["date"] = pd.to_datetime(df_a["date"])
         return [parse_row(row.dropna().to_dict()) for _, row in df_a.iterrows()]
 
     def doc_generator(df, *_):
-        for pid in tqdm(df["patient_id"].unique()):
+        for pid, sub_df in tqdm(df.groupby("patient_id")):
             yield {
                 "_index": ES_INDEX,
                 "_id": f"{pid}",
                 "_source": {
-                    "texts": get_texts(pid, df),
+                    "texts": get_texts(sub_df),
                     "labels": [],
                 },
             }
