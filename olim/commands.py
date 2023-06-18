@@ -44,15 +44,22 @@ def add_label(**args):
 
 def manage_label(**args):
     str_label = args.get("label", None)
+    label_id = args.get("label_id", None)
     mode = args.get("mode", "add")
 
-    if str_label == None:
+    if str_label == None or label_id == None:
         return {
             "type": "error",
             "text": "Missing data: label",
         }
 
-    manage_label_in_session(str_label, session, mode)
+    try:
+        manage_label_in_session(int(label_id), mode)
+    except:
+        return {
+            "type": "error",
+            "text": "Error hidding label.",
+        }
 
     if mode == "add":
         return {

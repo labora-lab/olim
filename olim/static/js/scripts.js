@@ -352,33 +352,27 @@ function init_highlight(data) {
 }
 
 function hide_by_id(id) {
-    $("#idk_sel_" + id).addClass("hidden");
-    $("#idk_" + id).removeClass("hidden");
-    $("#no_sel_" + id).addClass("hidden");
-    $("#no_" + id).removeClass("hidden");
-    $("#yes_sel_" + id).addClass("hidden");
-    $("#yes_" + id).removeClass("hidden");
-    $("#hide_" + id).addClass("hidden");
-    $("#hide_sel_" + id).removeClass("hidden");
+    if (!$('#hidden_sel_btn').is(':visible')) {
+        $("#label_" + id).toggle();
+    }
+    $("#label_" + id).addClass("hidden-entry");
+    $('#hide_sel_' + id).removeClass("hidden");
+    $('#hide_' + id).addClass("hidden");
 }
 
-function unhide_by_id(id, curr_label) {
-    $("#" + curr_label + "_sel_" + id).removeClass("hidden");
-    $("#" + curr_label + "_" + id).addClass("hidden");
-    $("#hide_" + id).removeClass("hidden");
-    $("#hide_sel_" + id).addClass("hidden");
+function unhide_by_id(id) {
+    $("#label_" + id).removeClass("hidden-entry");
+    $('#hide_sel_' + id).addClass("hidden");
+    $('#hide_' + id).removeClass("hidden");
 }
 
 
 function hide_label(label, label_id) {
-    $("#label_" + label).toggle();
-    $("#label_" + label).addClass("hidden-entry");
     run_command('manage-label', ['label=' + label, 'label_id=' + label_id, 'mode=add', 'callback=hide_by_id("' + label_id + '");'])
 }
 
-function unhide_label(label, label_id, curr_label) {
-    $("#label_" + label).removeClass("hidden-entry");
-    run_command('manage-label', ['label=' + label, 'label_id=' + label_id, 'mode=remove', 'callback=unhide_by_id("' + label_id + '","' + curr_label + '");'])
+function unhide_label(label, label_id) {
+    run_command('manage-label', ['label=' + label, 'label_id=' + label_id, 'mode=remove', 'callback=unhide_by_id("' + label_id + '");'])
 }
 
 function randomString(len, charSet) {

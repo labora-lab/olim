@@ -10,13 +10,7 @@ import json
 @app.route("/queue/<queue_id>", methods=["GET"])
 @app.route("/queue/<queue_id>/<int:queue_pos>", methods=["GET"])
 def entry(entry_id=None, queue_id=None, queue_pos=1):
-    hidden_labels = request.args.get("hidden_labels", [])
-    if len(hidden_labels) > 0:
-        try:
-            for label in json.loads(hidden_labels):
-                manage_label_in_session(label, session, "add")
-        except ValueError:
-            pass
+    hidden_labels = session.get("hidden_labels", [])
 
     show_hidden = request.args.get("show-hidden", False) == "True"
 

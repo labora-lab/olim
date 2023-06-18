@@ -48,13 +48,13 @@
                     {%endfor%}
                 </div>
                 <div class="input-field col s12 tight-top">
-                    <button
+                    <button id="show_hidden_btn"
                         class="btn waves-effect waves-light btn-wide hidden-entry{% if show_hidden %} hidden{% endif %}"
                         onclick='toggle_hidden(true)'>
                         Exibir ocultos
                         <i class="material-icons right">remove_red_eye</i>
                     </button>
-                    <button
+                    <button id="hidden_sel_btn"
                         class="btn btn-hide waves-effect waves-light btn-wide red darken-4 hidden-entry{% if not show_hidden %} hidden{% endif %}"
                         onclick='toggle_hidden(false)'>
                         Esconder ocultos
@@ -94,6 +94,7 @@
     $(document).ready(function () {
         init_picker('#start-date', "{{start_date}}");
         init_picker('#end-date', "{{end_date}}");
+
         {% if valid_entry %}
         init_highlight({{ highlight| safe}});
     {% endif %}
