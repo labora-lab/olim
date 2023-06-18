@@ -22,8 +22,9 @@
                             <td>{{ user.username }}</td>
                             <td>{{ user.role }}</td>
                             <td>
-                                <a href="{{ url_for('edit_password', user_id=user.id) }}" class="btn waves-effect waves-light">
-                                    <i class="material-icons">edit</i>
+                                <a href="{{ url_for('edit_password', user_id=user.id) }}"
+                                    class="btn waves-effect waves-light tooltipped" data-tooltip="Mudar senha"">
+                                    <i class=" material-icons">edit</i>
                                 </a>
                             </td>
                         </tr>
@@ -43,11 +44,23 @@
                         <input id="username" type="text" name="username" required>
                         <label for="username">Username</label>
                     </div>
-                    <div class="input-field">
-                        <input id="password" type="password" name="password" required>
-                        <label id="password_label" for="password">Password</label>
-                        <button class="btn waves-effect waves-light" type="button" onclick="generateRandomPassword()">Random Password</button>
-                        <button class="btn waves-effect waves-light" type="button" onclick="viewPassword()"><i class="material-icons">remove_red_eye</i></button>
+                    <div id="new" class="input-field">
+                        <input id="new_password" type="password" name="new_password" required>
+                        <label for="new_password">Nova Senha</label>
+                    </div>
+                    <div id="text" class="input-field hidden">
+                        <input id="new_password_text" type="text" name="new_password_text">
+                        <label for="new_password_text">Nova Senha</label>
+                    </div>
+                    <div id="check" class="input-field ">
+                        <input id="password_check" type="password" name="password_check" required>
+                        <label for="password_check">Confirmação da Senha</label>
+                    </div>
+                    <div id="random">
+                        <button class="btn btn-wide waves-effect waves-light" type="button"
+                            onclick="generateRandomPassword()">
+                            Senha Aleatória<i class="material-icons right">loop</i>
+                        </button>
                     </div>
                     <div class="input-field">
                         <input id="name" type="text" name="name">
@@ -57,7 +70,9 @@
                         <select id="role" name="role" required>
                             <option value="" disabled selected>Select a role</option>
                             {% for role in roles %}
+                            {% if role != 'guest'%}
                             <option value="{{ role }}">{{ role }}</option>
+                            {% endif %}
                             {% endfor %}
                         </select>
                         <label for="role">Role</label>
@@ -71,19 +86,4 @@
     </div>
     {% endif %}
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    function generateRandomPassword() {
-        let randomPassword = Math.random().toString(36).slice(-12);
-        document.getElementById("password").value = randomPassword;
-        document.getElementById("password_label").classList.add("active");
-
-    }
-    function viewPassword() {
-        let password_tag = document.getElementById("password");
-        password_tag.type === 'password' ? password_tag.type = 'text' : password_tag.type = 'password';
-    }
-</script>
 {% endblock %}

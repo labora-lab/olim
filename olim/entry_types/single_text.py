@@ -4,8 +4,10 @@ import click
 from tqdm import tqdm
 from ..cli import upload
 from typing import List, Dict, Tuple
+import pandas as pd
 
 ES_INDEX = "single_text_entries"
+ENTRY_TYPE = "single_text"
 
 
 def render(entry_id, **pars):
@@ -14,9 +16,13 @@ def render(entry_id, **pars):
 
     return render_template("entry_types/single_text.html", res=res, **pars)
 
+def extract_texts(entry_id, **pars):
+    query = {"bool": {"must": [{"terms": {"_id": [entry_id]}}]}}
+    res = es_search(query=query, index=ES_INDEX)["hits"]["hits"][0]
+    return pd.DataFrame({"entry_id": [entry_id], 'text': res['_source']['text']})
 
 @click.command(
-    "single_text",
+    ENTRY_TYPE,
     help="Upload data of the single_text type."
     "\n\n\tCSV_FILE\tPath to the CSV file to load data."
     "\n\n\tID_COLUMN\tColumn name to use as id for the entries (must be unique with all other entries in OLIM)."
@@ -47,7 +53,7 @@ def up_single_text(csv_file, id_column, text_column):
         ES_INDEX,
         mapping,
         doc_generator,
-        "single_text",
+        ENTRY_TYPE,
     )
 
 
@@ -98,7 +104,7 @@ def search(
                 "match_count": count,
                 "description": patient_desc,
                 "score": patient["_score"],
-                "type": "patient",
+                "type": ENTRY_TYPE,
             }
         )
 

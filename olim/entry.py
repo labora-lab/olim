@@ -41,6 +41,8 @@ def entry(entry_id=None, queue_id=None, queue_pos=1):
     # Load highlight
     if "highlight" in session:
         highlight = session["highlight"]
+    else:
+        highlight = []
 
     # Check if entry exists ans try to render it
     if entry_id != None:

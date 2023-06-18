@@ -3,15 +3,7 @@
     <span>{{label.name}}</span>
     {% if valid_entry %}
     {% if label.id in labels_values %}
-    {% if labels_values[label.id] == 'sim' %}
-    {% set p_label = 'yes' %}
-    {% elif labels_values[label.id] == 'nao' %}
-    {% set p_label = 'no' %}
-    {% elif labels_values[label.id] == 'nao_sei' %}
-    {% set p_label = 'idk' %}
-    {% else %}
-    {% set p_label = 'none' %}
-    {% endif %}
+    {% set p_label = labels_values[label.id] %}
     {% else %}
     {% set p_label = 'none' %}
     {% endif %}
@@ -25,35 +17,31 @@
         id="hide_sel_{{label.id}}">
         <i class="material-icons red-text">cancel</i>
     </a>
-
-    <a class="tooltipped right orange-text labels-text-icon cursor{%if p_label != 'idk'%} hidden{%endif%}"
-        data-position="bottom" data-tooltip="Desmarcar não sei" id="idk_sel_{{label.id}}"
-        onclick="add_patient_label({{entry_id}},'{{label.id}}', '');">
-        <strong>?</strong>
+    {% for label_str, type, icon, color in labels_rev %}
+    {% if type == 'text'%}
+    <a class="tooltipped right {{color}}-text labels-text-icon cursor{%if p_label != label_str%} hidden{%endif%}"
+        data-position="bottom" data-tooltip="Desmarcar {{label_str}}"
+        id="{{label_str | replace(' ', '_')}}_sel_{{label.id}}"
+        onclick="add_entry_label({{entry_id}},'{{label.id}}', '');">
+        <strong>{{icon}}</strong>
     </a>
-    <a class="tooltipped right grey-text labels-text-icon cursor{%if p_label == 'idk'%} hidden{%endif%}"
-        data-position="bottom" data-tooltip="Marcar não sei" id="idk_{{label.id}}"
-        onclick="add_patient_label({{entry_id}},'{{label.id}}', 'nao_sei');">
-        <strong>?</strong>
+    <a class="tooltipped right grey-text labels-text-icon cursor{%if p_label == label_str%} hidden{%endif%}"
+        data-position="bottom" data-tooltip="Marcar {{label}}" id="{{label_str | replace(' ', '_')}}_{{label.id}}"
+        onclick="add_entry_label({{entry_id}},'{{label.id}}', '{{label_str}}');">
+        <strong>{{icon}}</strong>
     </a>
-    <a class="tooltipped right cursor{%if p_label != 'no'%} hidden{%endif%}" data-position="bottom"
-        data-tooltip="Desmarcar não" onclick="add_patient_label({{entry_id}},'{{label.id}}', '');"
-        id="no_sel_{{label.id}}">
-        <i class="material-icons red-text">clear</i>
+    {% else %}
+    <a class="tooltipped right cursor{%if p_label != label_str%} hidden{%endif%}" data-position="bottom"
+        data-tooltip="Desmarcar {{label_str}}" onclick="add_entry_label({{entry_id}},'{{label.id}}', '');"
+        id="{{label_str | replace(' ', '_')}}_sel_{{label.id}}">
+        <i class="material-icons {{color}}-text">{{icon}}</i>
     </a>
-    <a class="tooltipped right cursor{%if p_label == 'no'%} hidden{%endif%}" data-position="bottom"
-        data-tooltip="Marcar não" onclick="add_patient_label({{entry_id}},'{{label.id}}', 'nao');" id="no_{{label.id}}">
-        <i class="material-icons grey-text">clear</i>
+    <a class="tooltipped right cursor{%if p_label == label_str%} hidden{%endif%}" data-position="bottom"
+        data-tooltip="Marcar {{label_str}}" onclick="add_entry_label({{entry_id}},'{{label.id}}', '{{label_str}}');"
+        id="{{label_str | replace(' ', '_')}}_{{label.id}}">
+        <i class="material-icons grey-text">{{icon}}</i>
     </a>
-    <a class="tooltipped right cursor{%if p_label != 'yes'%} hidden{%endif%}" data-position="bottom"
-        data-tooltip="Desmarcar sim" onclick="add_patient_label({{entry_id}},'{{label.id}}', '');"
-        id="yes_sel_{{label.id}}">
-        <i class="material-icons green-text">check</i>
-    </a>
-    <a class="tooltipped right cursor{%if p_label == 'yes'%} hidden{%endif%}" data-position="bottom"
-        data-tooltip="Marcar sim" onclick="add_patient_label({{entry_id}},'{{label.id}}', 'sim');"
-        id="yes_{{label.id}}">
-        <i class="material-icons grey-text">check</i>
-    </a>
+    {%endif%}
+    {% endfor %}
     {% endif %}
 </div>

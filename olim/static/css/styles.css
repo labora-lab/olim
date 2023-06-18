@@ -49,6 +49,12 @@
     margin-top: 2px;
 }
 
+
+.msg_close {
+    margin-right: -32px;
+    margin-top: -12px;
+}
+
 .tight-top {
     margin-top: 0px;
     padding-top: 0px;

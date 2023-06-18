@@ -1,7 +1,15 @@
-from . import app
+from . import app, db, entry_types
 from .functions import store_queue
-from .database import get_labels, new_label, del_label, get_label, add_entry_label
-from flask import render_template, redirect, request, session, flash
+from .database import (
+    get_labels,
+    get_user,
+    new_label,
+    del_label,
+    get_label,
+    add_entry_label,
+    get_labeled,
+)
+from flask import render_template, redirect, request, session, flash, Response
 import pandas as pd
 import numpy as np
 import time
@@ -49,12 +57,22 @@ def delete_label(label_id):
     return redirect("/labels")
 
 
-# @app.route("/labels/", defaults={"path": ""})
-# @app.route("/labels/<path:path>")
-# def catch_all(path):
-#     if path.lower().endswith(".csv"):
-#         label = path[:-4].lower()
-#         return Response(extract_label(label), mimetype="text/csv")
+@app.route("/labels/<label_id>/csv")
+def extract_labels(label_id):
+    label = get_label(label_id)
+    label_str = label.name
+    df = pd.read_sql(get_labeled(label_id), db.engine)
+    dfs_entries = []
+    for le in label.entries:
+        if not le.is_deleted:
+            module = getattr(entry_types, le.entry.type)
+            dfs_entries.append(module.extract_texts(le.entry.entry_id))
+    df = df.merge(pd.concat(dfs_entries, ignore_index=True), how="left", on="entry_id")
+    return Response(
+        df.to_csv(index=False),
+        mimetype="text/csv",
+        headers={"Content-disposition": f"attachment; filename={label_str}.csv"},
+    )
 
 
 @app.route("/labels/<int:label_id>/queue", methods=["GET"])
@@ -75,29 +93,26 @@ def label_upload():
     # Create a df from csv passed by POST
     df = pd.read_csv(request.files["file"])
 
-    # Create empty label_created column if it doenst exists
-    if "label_created" not in df:
-        df["label_created"] = None
+    # Parse dates and sort by them
+    df["created"] = pd.to_datetime(df["created"])
+    df = df.sort_values(by="created")
 
     # Group by the columns we are interested
-    group = (
-        df.groupby(["entry_id", "label", "label_value", "label_created"]).any().index
-    )
+    group = df.groupby(["entry_id", "label", "value", "created"]).any().index
 
-    # Get a list of existing labels
-    labels = [label.name for label in get_labels()]
+    # Get a list of existing labels and respective ids
+    labels = {l.name: l.id for l in get_labels()}
 
     # Store labels
     for entry_id, label, value, created in group:
-        label = label.replace(" ", "_")
         # If the label dont exist create it
         if label not in labels:
-            new_label(label, session["user_id"])
-            labels.append(label)
+            l = new_label(label, session["user_id"])
+            labels[l.name] = l.id
         # And label the patient
         add_entry_label(
-            label, entry_id, session["user_id"], value
-        )  # , date_created=created)
+            labels[label], entry_id, session["user_id"], value, created=created
+        )
 
     # Wait 2 seconds for write operations to finish and redirect back to labels page
     time.sleep(2)

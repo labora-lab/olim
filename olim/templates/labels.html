@@ -22,33 +22,32 @@
             <thead>
                 <tr>
                     <th>Rótulo</th>
-                    {%for value in possible_values%}
-                    {%if value != ""%}
-                    <td>{{ value }}</td>
-                    {%endif%}
+                    {%for label in labels_types%}
+                    <th style="width:80px;text-align: center;">{{ label[0] }}</th>
                     {%endfor%}
-                    <th>Criado por</th>
-                    <th>Actions</th>
+                    <th style="width:80px;text-align: center;">Total</th>
+                    <th style="width:130px;text-align: center;">Criado por</th>
+                    <th style="width:180px;text-align: center;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for label in labels %}
                 <tr>
                     <td>{{ label.name }}</td>
-                    {%for value in possible_values%}
-                    {%if value != ""%}
-                    <td>{%if value in values[label.id]%}{{ values[label.id][value] }}{%else%}0{%endif%}</td>
-                    {%endif%}
+                    {%for value, x, y, z in labels_types%}
+                    <td style="text-align: center;">{%if value in values[label.id]%}{{ values[label.id][value]
+                        }}{%else%}0{%endif%}</td>
                     {%endfor%}
-                    <td>{{ label.creator.name }}</td>
+                    <td style="text-align: center;">{{ values[label.id]["Total"] }}</td>
+                    <td style="text-align: center;">{{ label.creator.name }}</td>
                     <td>
                         <a class="btn waves-ligh tooltipped data-position bottom red darken-4"
                             data-tooltip="Remover rótulo"
                             onclick="show_warnning('Remover este rótulo não remove as rotulações efetuadas com ele, caso ele seja recriado as rotulações serão restauradas, para novas rotulações crie um novo rótulo com novo nome.','delete_label(\'{{label.id}}\');');">
                             <i class="material-icons">remove_circle_outline</i>
                         </a>
-                        <a class="btn waves-ligh tooltipped data-position bottom" href='./labels/{{label.id}}.csv'
-                            data-tooltip="Baixar dados rotulados" download>
+                        <a class="btn waves-ligh tooltipped data-position bottom" href='./labels/{{label.id}}/csv'
+                            data-tooltip="Baixar dados rotulados">
                             <i class="material-icons">file_download</i>
                         </a>
                         <a class="btn waves-ligh tooltipped data-position bottom" href='./labels/{{label.id}}/queue'

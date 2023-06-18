@@ -1,12 +1,12 @@
 ## Auxiliary functions
 # All functions here must have type hints and docstrings
-from .settings import ES_INDEX, ES_LABEL_INDEX, ES_SERVER
+from .settings import ES_INDEX, ES_SERVER
 from .database import register_entries
-from . import tmp_dir
+from . import queue_dir, entry_types
 from elasticsearch import Elasticsearch, helpers
-from flask import session
+from flask import session, flash
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 import pandas as pd
 import json
 import os
@@ -71,16 +71,21 @@ def es_update(**kwargs):
 
 
 def get_all_hidden():
-    from .entry_types.patient import ES_TO_HIDE_INDEX
+    hidden = []
+    for mod in dir(entry_types):
+        module = getattr(entry_types, mod)
+        if hasattr(module, "get_all_hidden"):
+            hidden += module.get_all_hidden()
+    return hidden
 
-    client = get_es_conn()
-    return client.search(
-        index=ES_TO_HIDE_INDEX,
-        query={"match_all": {}},
-        size=10000,
-    )[
-        "hits"
-    ]["hits"]
+
+def have_hidden():
+    have_hidden = False
+    for mod in dir(entry_types):
+        module = getattr(entry_types, mod)
+        if hasattr(module, "have_hidden"):
+            have_hidden = have_hidden or module.have_hidden()
+    return have_hidden
 
 
 def parse_queue(text: str) -> List[str]:
@@ -101,7 +106,7 @@ def parse_queue(text: str) -> List[str]:
     )
 
 
-def store_queue(queue: List[str], highlight: List[str] = None) -> str:
+def store_queue(queue: List[str], highlight: List[str] = None, **extra_data) -> str:
     """Stores a queue in a temporay file.
 
     Args:
@@ -110,20 +115,22 @@ def store_queue(queue: List[str], highlight: List[str] = None) -> str:
     Returns:
         str: Hash of the queue for access
     """
-    queue = json.dumps(
-        {
-            "queue": list(queue),
-            "highlight": highlight,
-        }
-    )
-    h = hashlib.md5(queue.encode("utf-8")).hexdigest()
-    tmp_file = os.path.join(tmp_dir, h)
-    with open(tmp_file, "w") as f:
-        f.write(queue)
-    return h
+    queue = list(queue)
+    queue_id = hashlib.md5(json.dumps(queue).encode("utf-8")).hexdigest()
+    queue_data = {
+        "id": queue_id,
+        "queue": queue,
+        "highlight": highlight,
+        "exta_data": extra_data,
+        "lenght": len(queue),
+    }
+    queue_file = os.path.join(queue_dir, "queue_" + queue_id + ".json")
+    with open(queue_file, "w") as f:
+        json.dump(queue_data, f)
+    return queue_id
 
 
-def get_queue(queue_hash: str) -> str:
+def get_queue(queue_id: str) -> str:
     """Load the id of a position in a queue
 
     Args:
@@ -132,12 +139,38 @@ def get_queue(queue_hash: str) -> str:
     Returns:
         str: Queue list
     """
-    tmp_file = os.path.join(tmp_dir, queue_hash)
-    with open(tmp_file, "r") as f:
+    queue_file = os.path.join(queue_dir, "queue_" + queue_id + ".json")
+    with open(queue_file, "r") as f:
         queue = json.load(f)
     if queue["highlight"] != None:
         session["highlight"] = queue["highlight"]
     return queue["queue"]
+
+
+def get_all_queues() -> List[Dict]:
+    queues = []
+    for queue_file in os.listdir(queue_dir):
+        if queue_file.startswith("queue_") and queue_file.endswith(".json"):
+            try:
+                with open(os.path.join(queue_dir, queue_file), "r") as f:
+                    queue = json.load(f)
+            except:
+                flash(f"Failed to read queue file {queue_file}.", category="error")
+                queue = None
+            if queue != None:
+                queues.append(queue)
+    return queues
+
+
+def get_def_nentries() -> int:
+    """Gets the number os entries for the session.
+
+    Returns:
+        int: Number of entries.
+    """
+    if "number_of_entries" not in session:
+        session["number_of_entries"] = 1000
+    return session["number_of_entries"]
 
 
 def manage_label_in_session(label: str, session, mode: str = "add"):

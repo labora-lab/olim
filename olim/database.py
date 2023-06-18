@@ -102,28 +102,55 @@ def get_labels():
     return labels
 
 
-def add_entry_label(label_id, entry_id, user_id, value):
+def get_labeled(label_id):
+    return (
+        db.select(
+            LabelEntry.created,
+            Entry.entry_id,
+            Label.name.label("label"),
+            LabelEntry.value,
+            User.username.label("created_by"),
+        )
+        .filter_by(is_deleted=False, label_id=label_id)
+        .join(LabelEntry.entry)
+        .join(LabelEntry.label)
+        .join(LabelEntry.creator)
+    )
+
+
+def add_entry_label(label_id, entry_id, user_id, value, created=None):
     entry = get_entry(entry_id)
     label = get_label(label_id)
     for le in db.session.execute(
         db.select(LabelEntry).filter_by(label=label, entry=entry, is_deleted=False)
     ).scalars():
         del_controled(le, user_id)
-    label_entry = LabelEntry(
-        value=value,
-        created=datetime.now(),
-        created_by=user_id,
-        is_deleted=False,
-        entry_id=entry.id,
-        label_id=label.id,
-    )
-    db.session.add(label_entry)
-    db.session.commit()
-    return label_entry
+    if value != "":
+        created = created or datetime.now()
+        label_entry = LabelEntry(
+            value=value,
+            created=created,
+            created_by=user_id,
+            is_deleted=False,
+            entry_id=entry.id,
+            label_id=label.id,
+        )
+        db.session.add(label_entry)
+        db.session.commit()
+        return label_entry
 
 
-def get_entry(entry_id):
-    return get_by(Entry, "entry_id", entry_id, False)
+def get_entry(entry_id, by=None):
+    if by == None:
+        return get_by(Entry, "entry_id", entry_id, False)
+    else:
+        return get_by(Entry, by, entry_id, False)
+
+
+def random_entries(number: int) -> List[str]:
+    return db.session.execute(
+        db.select(Entry).order_by(db.func.random()).limit(number)
+    ).scalars()
 
 
 def get_label(idt: int, by: str = "id"):
@@ -199,6 +226,18 @@ def get_users():
         db.select(User).filter_by(is_deleted=False).order_by(User.username)
     ).scalars()
     return users
+
+
+def get_entries(type=None):
+    """
+    Retrieves entries from the database.
+
+    :return: A list of dictionaries, where each dict represents a row in the users table.
+    """
+    if type == None:
+        return db.session.execute(db.select(Entry.id)).scalars()
+    else:
+        return db.session.execute(db.select(Entry.id).filter_by(type=type)).scalars()
 
 
 def register_entries(entries_ids: List[str], entries_type: str):

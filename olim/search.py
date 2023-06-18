@@ -1,5 +1,5 @@
 from . import app, entry_types
-from .functions import store_queue
+from .functions import store_queue, get_def_nentries
 from flask import request, render_template, session
 import pandas as pd
 import json
@@ -21,7 +21,8 @@ def get_terms(field):
 def search():
     include, must_terms, must_phrases = get_terms("include")
     exclude, not_must_terms, not_must_phrases = get_terms("exclude")
-    number = int(request.args.get("number", 20))
+    number = int(request.args.get("number", get_def_nentries()))
+    session["number_of_entries"] = number
 
     only_queue = request.args.get("only-queue", "off")
     only_queue = True if only_queue == "on" else False
@@ -62,7 +63,11 @@ def search():
             by="score", ascending=False, ignore_index=True
         ).iloc[:number]
         data = df_results.to_dict("records")
-        queue_id = store_queue(df_results["entry_id"], highlight)
+        extra_data = {
+            "Include": must_terms + must_phrases,
+            "Exclude": not_must_terms + not_must_phrases,
+        }
+        queue_id = store_queue(df_results["entry_id"], highlight, **extra_data)
     else:
         queue_id = None
 

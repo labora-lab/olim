@@ -1,5 +1,5 @@
-from . import ES_INDEX, ES_TO_HIDE_INDEX
-from ...database import upload
+from . import ES_INDEX, ES_TO_HIDE_INDEX, ENTRY_TYPE
+from ...cli import upload
 from ...functions import es_bulk_upload
 import pandas as pd
 from tqdm import tqdm
@@ -46,7 +46,7 @@ to_hide_mapping = {
 
 
 @click.command(
-    "patient",
+    ENTRY_TYPE,
     help="Upload data of the patient type."
     "\n\n\tCSV_FILE\tPath to the CSV file to load data.",
 )
@@ -57,6 +57,7 @@ def up_patients(csv_file: str) -> None:
     Args:
         csv_file (str): Path to csv file.
     """
+
     def get_texts(pid, df):
         def parse_row(row):
             if "visitation_id" in row:
@@ -92,7 +93,7 @@ def up_patients(csv_file: str) -> None:
         ES_INDEX,
         patients_mapping,
         doc_generator,
-        "patient",
+        ENTRY_TYPE,
         additional_indexes=[(ES_TO_HIDE_INDEX, to_hide_mapping)],
     )
 

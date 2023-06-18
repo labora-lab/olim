@@ -252,7 +252,7 @@ function unhide(text_id, entry_id) {
 }
 
 // Calls the backend to add a yes label to a patient
-function add_patient_label(entry_id, label_id, value) {
+function add_entry_label(entry_id, label_id, value) {
     run_command('add-label', ['entry_id=' + entry_id, 'label_id=' + label_id, 'value=' + value, 'callback=mark_label("' + label_id + '", "' + value + '");']);
 }
 
@@ -299,24 +299,14 @@ function unhide_text(id) {
 // Callback: Change a label selection to yes
 function mark_label(label_id, value) {
     // Unselect all
-    $("#no_sel_" + label_id).addClass("hidden");
-    $("#no_" + label_id).removeClass("hidden");
-    $("#yes_sel_" + label_id).addClass("hidden");
-    $("#yes_" + label_id).removeClass("hidden");
-    $("#idk_sel_" + label_id).addClass("hidden");
-    $("#idk_" + label_id).removeClass("hidden");
-
-    // Select back according to value
-    if (value == "sim") {
-        $("#yes_sel_" + label_id).removeClass("hidden");
-        $("#yes_" + label_id).addClass("hidden");
-    } else if (value == "nao") {
-        $("#no_sel_" + label_id).removeClass("hidden");
-        $("#no_" + label_id).addClass("hidden");
-    } else if (value == "nao_sei") {
-        $("#idk_sel_" + label_id).removeClass("hidden");
-        $("#idk_" + label_id).addClass("hidden");
+    for (i in LABELS) {
+        $("#" + LABELS[i] + "_sel_" + label_id).addClass("hidden");
+        $("#" + LABELS[i] + "_" + label_id).removeClass("hidden");
     }
+    // Select back according to value
+    value = value.replace(' ', '_')
+    $("#" + value + "_sel_" + label_id).removeClass("hidden");
+    $("#" + value + "_" + label_id).addClass("hidden");
 }
 
 //Callback: Delete a text from hidden page
@@ -335,9 +325,9 @@ function update_highlight() {
         var text = $(this).text()
         return text.substring(0, text.length - 5);
     }).get();
+    run_command('update-session', ['parameter=highlight', 'data=' + JSON.stringify(data)])
     if (data.length > 0) {
         $('.text-entry').highlight(data);
-        run_command('update-session', ['parameter=highlight', 'data=' + JSON.stringify(data)])
     }
 }
 
@@ -389,4 +379,29 @@ function hide_label(label, label_id) {
 function unhide_label(label, label_id, curr_label) {
     $("#label_" + label).removeClass("hidden-entry");
     run_command('manage-label', ['label=' + label, 'label_id=' + label_id, 'mode=remove', 'callback=unhide_by_id("' + label_id + '","' + curr_label + '");'])
+}
+
+function randomString(len, charSet) {
+    charSet = charSet || 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    var randomString = '';
+    for (var i = 0; i < len; i++) {
+        var randomPoz = Math.floor(Math.random() * charSet.length);
+        randomString += charSet.substring(randomPoz, randomPoz + 1);
+    }
+    return randomString;
+}
+
+function generateRandomPassword() {
+    let randomPassword = randomString(12);
+    $("#new_password").val(randomPassword);
+    $("#new_password_text").val(randomPassword);
+    $("#password_check").val(randomPassword);
+    $("#check").hide();
+    $("#random").hide();
+    $("#new").hide();
+    $("#text").show();
+    M.updateTextFields();
+    $("#new_password_text").on('change', function (e) {
+        $("#new_password_text").val(randomPassword);
+    });
 }

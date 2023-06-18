@@ -1,4 +1,4 @@
-from . import ES_INDEX
+from . import ES_INDEX, ENTRY_TYPE
 from ...functions import es_search
 from typing import List, Dict
 
@@ -59,7 +59,7 @@ def search(
                 "match_count": count,
                 "description": patient_desc,
                 "score": patient["_score"],
-                "type": "patient",
+                "type": ENTRY_TYPE,
             }
         )
 

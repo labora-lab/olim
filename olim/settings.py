@@ -21,6 +21,37 @@ SECRET_KEY = os.getenv("SECRET_KEY", "6DUUwdKqwkaXPvjqCS4y")
 DB_PATH = os.path.join(os.getcwd(), "database.sqlite")
 """Database Sqlite3 path"""
 
+
+class LABELS_TYPES:
+    SIM_NAO = [
+        ("sim", "icon", "check", "green"),
+        ("não", "icon", "clear", "red"),
+    ]
+    SIM_NAO_NS = [
+        ("sim", "icon", "check", "green"),
+        ("não", "icon", "clear", "red"),
+        ("não sei", "text", "?", "orange"),
+    ]
+    YES_NO = [
+        ("yes", "icon", "check", "green"),
+        ("no", "icon", "clear", "red"),
+    ]
+    CHECK = [
+        ("check", "icon", "check", "green"),
+    ]
+    YES_NO_IDK = [
+        ("yes", "icon", "check", "green"),
+        ("no", "icon", "clear", "red"),
+        ("don't know", "text", "?", "orange"),
+    ]
+
+
+labels = os.getenv("LABELS")
+try:
+    LABELS = eval(labels)
+except TypeError:
+    LABELS = LABELS_TYPES.SIM_NAO_NS
+
 PERMISSIONS = {
     "admin": [
         "static",
@@ -31,6 +62,8 @@ PERMISSIONS = {
         "labels",
         "create_label",
         "delete_label",
+        "extract_labels",
+        "label_upload",
         "entry",
         "new_queue",
         "catch_queue",
@@ -47,13 +80,13 @@ PERMISSIONS = {
         "labels",
         "create_label",
         "delete_label",
+        "extract_labels",
         "entry",
         "new_queue",
         "catch_queue",
         "/",
         "search",
         "edit_password",
-        "users",
         "logout",
     ],
     "guest": ["static", "login"],

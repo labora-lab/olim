@@ -17,12 +17,27 @@
 <body>
     <header>
         <ul id="slide-out" class="sidenav">
-            <li><a href="/">Pesquisa</a></li>
-            <li><a href="/entry">Abrir entrada</a></li>
-            <li><a href="/labels">Rótulos</a></li>
-            <li><a href="/hidden">Textos ocultos</a></li>
-            <li><a href="/new-queue">Gerar fila</a></li>
-            <li><a href="/users">Usuários</a></li>
+            {% if has_permition('search') %}
+            <li><a href="{{ url_for('search') }}">Pesquisa</a></li>
+            {% endif %}
+            {% if has_permition('entry') %}
+            <li><a href="{{ url_for('entry') }}">Abrir entrada</a></li>
+            {% endif %}
+            {% if has_permition('labels') %}
+            <li><a href="{{ url_for('labels') }}">Rótulos</a></li>
+            {% endif %}
+            {% if has_permition('new_queue') %}
+            <li><a href="{{ url_for('new_queue') }}"">Filas</a></li>
+            {%endif%}
+            {% if have_hidden() and has_permition('hidden') %}
+            <li><a href=" {{ url_for('hidden') }}">Textos ocultos</a></li>
+            {% endif %}
+            {% if has_permition('users') %}
+            <li><a href="{{ url_for('users') }}">Usuários</a></li>
+            {% endif %}
+            {% if has_permition('edit_password') %}
+            <li><a href="{{ url_for('edit_password') }}">Trocar senha</a></li>
+            {% endif %}
             {% if session['user_id'] == 'guest' %}
             <li><a href="{{ url_for('login') }}">Login</a></li>
             {% else %}
@@ -58,7 +73,7 @@
             {% if warning_messages %}
             <div class="card orange lighten-5 col s12" id="warning-div">
                 <div class="card-content">
-                    <span class="right clear">
+                    <span class="right msg_close">
                         <a class='btn-flat tooltipped' data-position="bottom" data-tooltip="Fechar"
                             onclick="$('#warning-div').hide();">
                             <i class="material-icons grey-text text-darken-4">clear</i>
@@ -77,7 +92,7 @@
             {% if success_messages %}
             <div class="card green lighten-5 col s12" id="success-div">
                 <div class="card-content">
-                    <span class="right clear">
+                    <span class="right msg_close">
                         <a class='btn-flat tooltipped' data-position="bottom" data-tooltip="Fechar"
                             onclick="$('#success-div').hide();">
                             <i class="material-icons grey-text text-darken-4">clear</i>
@@ -96,7 +111,7 @@
             {% if error_messages %}
             <div class="card red lighten-5 col s12" id="error-div">
                 <div class="card-content">
-                    <span class="right clear">
+                    <span class="right msg_close">
                         <a class='btn-flat tooltipped' data-position="bottom" data-tooltip="Fechar"
                             onclick="$('#error-div').hide();">
                             <i class="material-icons grey-text text-darken-4">clear</i>
@@ -135,6 +150,7 @@
         $(document).ready(function () {
             $('.sidenav').sidenav();
         });
+        LABELS = {{ labels_array | safe }}
     </script>
     {% block scripts %}{% endblock %}
 </body>
