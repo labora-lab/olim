@@ -5,8 +5,10 @@ from .database import (
     get_entry,
     init_db,
 )
+from .functions import label_upload
 import click
 import sys
+import pandas as pd
 
 
 @app.cli.command("init-db", help="Inializes database and create Administrator user.")
@@ -25,6 +27,20 @@ def labels_ls():
         print(label.name, label.created, label.creator.username)
 
 
+@click.command(
+    "upload",
+    help="Uploads labels values from a CSV file."
+    "\n\n\tCSV_FILE\tPath to the CSV file to load data.",
+)
+def up_labels(csv_file):
+    print("Loading labels values from CSV file...")
+    df = pd.read_csv(csv_file)
+
+    print("Uploading labels values...")
+    label_upload(df)
+
+
+labels.add_command(up_labels)
 labels.add_command(labels_ls)
 
 

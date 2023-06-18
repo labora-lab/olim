@@ -7,3 +7,4 @@ numpy==1.24.2
 pandas==2.0.2
 tqdm==4.65.0
 Werkzeug==2.2.3
+gunicorn

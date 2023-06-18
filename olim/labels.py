@@ -1,5 +1,5 @@
 from . import app, db, entry_types
-from .functions import store_queue
+from .functions import store_queue, label_upload
 from .database import (
     get_labels,
     get_user,
@@ -89,30 +89,11 @@ def catch_queue(label_id):
 
 
 @app.route("/label-upload", methods=["POST"])
-def label_upload():
+def label_up():
     # Create a df from csv passed by POST
     df = pd.read_csv(request.files["file"])
 
-    # Parse dates and sort by them
-    df["created"] = pd.to_datetime(df["created"])
-    df = df.sort_values(by="created")
-
-    # Group by the columns we are interested
-    group = df.groupby(["entry_id", "label", "value", "created"]).any().index
-
-    # Get a list of existing labels and respective ids
-    labels = {l.name: l.id for l in get_labels()}
-
-    # Store labels
-    for entry_id, label, value, created in group:
-        # If the label dont exist create it
-        if label not in labels:
-            l = new_label(label, session["user_id"])
-            labels[l.name] = l.id
-        # And label the patient
-        add_entry_label(
-            labels[label], entry_id, session["user_id"], value, created=created
-        )
+    label_upload(df)
 
     # Wait 2 seconds for write operations to finish and redirect back to labels page
     time.sleep(2)

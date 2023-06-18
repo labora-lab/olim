@@ -1,12 +1,13 @@
 ## Auxiliary functions
 # All functions here must have type hints and docstrings
 from .settings import ES_INDEX, ES_SERVER
-from .database import register_entries
+from .database import register_entries, get_labels, new_label, add_entry_label
 from . import queue_dir, entry_types
 from elasticsearch import Elasticsearch, helpers
 from flask import session, flash
 from datetime import datetime
 from typing import List, Dict
+from tqdm import tqdm
 import pandas as pd
 import json
 import os
@@ -274,3 +275,26 @@ def es_bulk_upload(
 
     print()
     print("Data uploaded!")
+
+
+def label_upload(df):
+    # Parse dates and sort by them
+    df["created"] = pd.to_datetime(df["created"])
+    df = df.sort_values(by="created")
+
+    # Group by the columns we are interested
+    group = df.groupby(["entry_id", "label", "value", "created"]).any().index
+
+    # Get a list of existing labels and respective ids
+    labels = {l.name: l.id for l in get_labels()}
+
+    # Store labels
+    for entry_id, label, value, created in tqdm(group):
+        # If the label dont exist create it
+        if label not in labels:
+            l = new_label(label, session["user_id"])
+            labels[l.name] = l.id
+        # And label the patient
+        add_entry_label(
+            labels[label], entry_id, session["user_id"], value, created=created
+        )
