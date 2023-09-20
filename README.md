@@ -31,7 +31,7 @@ To run the standalone version see `requirements.txt` for the needed Python packa
 
     `docker compose exec olim python -m flask --app olim init-db`
 
-7. Upload your data to the elasticsearch server:
+7. Upload your data:
 
     * Simple text data:
 
