@@ -12,6 +12,7 @@ import pandas as pd
 import json
 import os
 import hashlib
+from flask_babel import _
 
 
 def now_ISO():
@@ -156,9 +157,13 @@ def get_all_queues() -> List[Dict]:
                 with open(os.path.join(queue_dir, queue_file), "r") as f:
                     queue = json.load(f)
             except:
-                flash(f"Failed to read queue file {queue_file}.", category="error")
+                flash(_("Failed to read queue file {queue_file}.").format(queue_file=queue_file), category="error")
                 queue = None
             if queue != None:
+                queue["frontend_text"] = _("Entries: {queue_length}").format(queue_length=queue["lenght"])
+                if queue["highlight"]:
+                    queue["frontend_text"] += " - " + _("Highlight: {highlight}") \
+                        .format(highlight=", ".join(h for h in queue["highlight"]))
                 queues.append(queue)
     return queues
 

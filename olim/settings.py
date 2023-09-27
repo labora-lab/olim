@@ -91,3 +91,12 @@ PERMISSIONS = {
     "guest": ["static", "login"],
 }
 """Mapping of permissions to routes that can be accessed by roles"""
+
+
+LANGUAGES = {
+    "pt_BR": "Português (Brasil)",
+    "en_US": 'English (United States)',
+}
+
+BABEL_DEFAULT_LOCALE = "pt_BR"
+BABEL_TRANSLATION_DIRECTORIES = "translations"

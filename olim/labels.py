@@ -10,6 +10,7 @@ from .database import (
     get_labeled,
 )
 from flask import render_template, redirect, request, session, flash, Response
+from flask_babel import _
 import pandas as pd
 import numpy as np
 import time
@@ -46,14 +47,14 @@ def labels():
 def create_label():
     label = request.form.get("label")
     label = new_label(label, session["user_id"])
-    flash(f"Criado rótulo {label.name}", category="success")
+    flash(_("Label {label_name} sucessfully created").format(label_name=label.name), category="success")
     return redirect("/labels")
 
 
 @app.route("/labels/<int:label_id>/delete", methods=["GET"])
 def delete_label(label_id):
     label = del_label(label_id, session["user_id"])
-    flash(f"Deletado rótulo {label.name}", category="success")
+    flash(_("Label {label_name} sucessfully deleted").format(label_name=label.name), category="success")
     return redirect("/labels")
 
 

@@ -6,6 +6,7 @@ from ...functions import (
     manage_label_in_session,
 )
 from flask import request, render_template, session, flash
+from flask_babel import _
 import json
 import pandas as pd
 from datetime import datetime, timedelta
@@ -121,7 +122,7 @@ def get_date(name: str) -> Tuple[str, datetime]:
         try:
             date_obj = datetime.strptime(date, "%d/%m/%Y")
         except ValueError:
-            flash('Data inválida "{}".'.format(date), category="error")
+            flash(_('Invalid date "{date}".').format(date=date), category="error")
         except TypeError:
             pass
     return date, date_obj

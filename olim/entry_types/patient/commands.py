@@ -1,5 +1,6 @@
 from...functions import get_es_conn, es_update, now_ISO
 from . import ES_INDEX, ES_TO_HIDE_INDEX
+from flask_babel import _
 
 def update_hidden(txt_id, entry_id, hide):
     body = {
@@ -39,18 +40,18 @@ def hide_one(**args):
     except:
         return {
             "type": "error",
-            "text": "Failed writing to database",
+            "text": _("Failed writing to database"),
         }
 
     if txt_id == None:
         return {
             "type": "error",
-            "text": "No ID passed",
+            "text": _("No ID passed"),
         }
     else:
         return {
             "type": "OK",
-            "text": f"Ocultado texto {txt_id}",
+            "text": _("Text {text_id} hidden").format(text_id=txt_id),
         }
 
 
@@ -63,18 +64,18 @@ def show(**args):
     except:
         return {
             "type": "error",
-            "text": "Failed writing to database",
+            "text": _("Failed writing to database"),
         }
 
     if txt_id == None:
         return {
             "type": "error",
-            "text": "No ID passed",
+            "text": _("No ID passed"),
         }
     else:
         return {
             "type": "OK",
-            "text": f"Desocultado texto {txt_id}",
+            "text": _("Text {text_id} unhidden").format(text_id=txt_id),
         }
 
 
@@ -88,18 +89,18 @@ def hide_all(**args):
     except:
         return {
             "type": "error",
-            "text": "Failed writing to database",
+            "text": _("Failed writing to database"),
         }
 
     if entry_id == None or text == None or text_id == None:
         return {
             "type": "error",
-            "text": f"Missing data: {entry_id}, {text_id}, {text}",
+            "text": _("Missing data: {entry_id}, {text_id}, {text}").format(entry_id=entry_id, text_id=text_id, text=text),
         }
     else:
         return {
             "type": "OK",
-            "text": f"Sempre esconderá texto {text}",
+            "text": _("Will always hide text {text}").format(text=text),
         }
 
 
@@ -111,18 +112,18 @@ def remove_hidden(**args):
     except:
         return {
             "type": "error",
-            "text": "Failed writing to database",
+            "text": _("Failed writing to database"),
         }
 
     if text_id == None:
         return {
             "type": "error",
-            "text": "Missing data: text_id",
+            "text": _("Missing data: text_id"),
         }
     else:
         return {
             "type": "OK",
-            "text": f"Texto {text_id} removido da lista de escondidos",
+            "text": _("Text {text_id} removed from list of hiddens").format(text_id=text_id),
         }
 
 

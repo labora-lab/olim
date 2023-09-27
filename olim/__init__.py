@@ -1,7 +1,15 @@
-from flask import Flask
-from .settings import DEBUG, SECRET_KEY, LABELS
+from flask import Flask, request
+from .settings import (
+    DEBUG, 
+    SECRET_KEY, 
+    LABELS, 
+    LANGUAGES, 
+    BABEL_DEFAULT_LOCALE, 
+    BABEL_TRANSLATION_DIRECTORIES
+)
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+from flask_babel import Babel
 import os
 import json
 from datetime import timedelta
@@ -18,13 +26,24 @@ if not os.path.isdir(queue_dir):
 db = SQLAlchemy()
 app = Flask(__name__)
 app.config["DEBUG"] = DEBUG
-# To not receive RuntimeError talking that ths session is unavailable beaceuse no secret key was set.
+# To not receive RuntimeError talking that the session is unavailable beacause no secret key was set.
 app.config["SESSION_TYPE"] = SESSION_TYPE
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///olim.sqlite"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 app.secret_key = SECRET_KEY
 Session(app)
 db.init_app(app)
+
+app.jinja_env.add_extension("jinja2.ext.i18n")
+app.config["LANGUAGES"] = LANGUAGES
+app.config["BABEL_DEFAULT_LOCALE"] = BABEL_DEFAULT_LOCALE
+app.config['BABEL_TRANSLATION_DIRECTORIES'] = BABEL_TRANSLATION_DIRECTORIES
+babel = Babel(app)
+
+def get_locale():
+    return request.accept_languages.best_match(app.config["LANGUAGES"].keys())
+
+babel.init_app(app, locale_selector=get_locale)
 
 
 # with app.app_context():

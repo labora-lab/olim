@@ -3,6 +3,7 @@ from .database import get_user, insert_user, get_users, update_user_password
 from flask import session, flash, abort, request, url_for, redirect, render_template
 from werkzeug.security import generate_password_hash, check_password_hash
 from .settings import PERMISSIONS
+from flask_babel import _
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -15,7 +16,8 @@ def login():
     If the user is found and the password is correct, it logs the user in and flashes a success message.
     Finally, it renders the login template.
 
-    :return: The rendered login.html template.
+    Return:
+        The rendered login.html template.
     """
     redirect_url = request.args.get("redirect", "/")
     user_id = session["user_id"] if session.get("user_id") != "guest" else None
@@ -27,9 +29,9 @@ def login():
         password = request.form.get("password")
         user = get_user(username, by="username")
         if user is None:
-            flash("Incorrect username and/or password!", category="error")
+            flash(_("Incorrect Username and/or Password!"), category="error")
         elif not verify_password(password, user.password):
-            flash("Incorrect username and/or password!", category="error")
+            flash(_("Incorrect Username and/or Password!"), category="error")
         else:
             login_user(user)
             # flash("You have successfully logged in!", category="success")
@@ -67,17 +69,17 @@ def check_permission():
     current_user_id = session.get("user_id")
     if current_user_id is None:  # the first request to the app
         set_guest_user()  # set user_id to 'guest' in session
-        flash("Você não está logado.", category="warning")
+        flash(_("You are not logged"), category="warning")
         return redirect(url_for("login") + f"?redirect={request.path}")
 
     if current_user_id == "guest" and not role_has_permission(role="guest"):
-        flash("Você não está logado.", category="warning")
+        flash(_("You are not logged"), category="warning")
         return redirect(url_for("login") + f"?redirect={request.path}")
 
     if current_user_id != "guest":
         user = get_user(current_user_id, by="id")
         if user is None:
-            flash("Seu login expirou.", category="warning")
+            flash(_("Your login has expired", ), category="warning")
             set_guest_user()
             return redirect(url_for("login") + f"?redirect={request.path}")
         if not role_has_permission(role=user.role):
@@ -85,7 +87,7 @@ def check_permission():
                 abort(403)
             else:
                 flash(
-                    f"Você não tem permissão para acessar {request.url}.",
+                    _("You do not have permission to access {requested_url}.").format(requested_url=request.url),
                     category="warning",
                 )
                 return redirect("/")
@@ -115,7 +117,7 @@ def users():
         name = request.form.get("name")
         role = request.form.get("role")
         if password != password_check:
-            flash(f"Passwords no not match!", category="warning")
+            flash(_("Passwords do not match"), category="warning")
         elif get_user(username, by="username") is None:
             insert_user(
                 username,
@@ -124,9 +126,9 @@ def users():
                 name=name,
                 creator=session.get("user_id"),
             )
-            flash(f"User {username} has successfully registered!", category="success")
+            flash(_("User {username} sucessfully registered!").format(username=username), category="success")
         else:
-            flash(f"User {username} already exists!", category="warning")
+            flash(_("User {username} already exists!").format(username=username), category="warning")
 
     context = {
         "users": get_users(),
@@ -140,33 +142,33 @@ def security_edit_password(
     to_change_user, changer_user, old_password, new_password, new_password_check
 ):
     if new_password is None:
-        flash("Please enter a new password!", category="error")  # no new password
+        flash(_("Please enter a new password!"), category="error")  # no new password
         return
 
     if new_password_check is None:
-        flash("Please enter a new on both fields!", category="error")  # no new password
+        flash(_("Please enter a new on both fields!"), category="error")  # no new password
         return
 
     if new_password != new_password_check:
-        flash("Passwords do not match!", category="error")
+        flash(_("Passwords do not match!"), category="error")
         return
 
     if changer_user["role"] != "admin" and old_password is None:
         flash(
-            "Please enter the old password!", category="error"
+            _("Please enter your old password!"), category="error"
         )  # no old password when is not admin
         return
 
     if changer_user["role"] != "admin" and not verify_password(
         old_password, changer_user["password"]
     ):
-        flash("Incorrect old password!", category="error")  # old password is incorrect
+        flash(_("Incorrect old password!"), category="error")  # old password is incorrect
         return
 
     update_user_password(
         to_change_user.id, new_password
     )  # if old_password is corrrect and got here, update password
-    flash("Password successfully changed!", category="success")
+    flash(_("Password sucessfully updated!"), category="success")
 
 
 @app.route("/edit-password", methods=("POST", "GET"))

@@ -1,75 +1,75 @@
 {% extends "base.html" %}
-{% block title %}Entrada {{entry_id}}{% endblock %}
+{% block title %}{{ _('Entry ') }}{{ entry_id }}{% endblock %}
 {% block content %}
 <div class="row">
-    <div class="col {% if valid_entry %}s9{%else%}s12{%endif%}">
+    <div class="col {% if valid_entry %}s9{% else %}s12{% endif %}">
         <div class="card">
             <div class="card-content row tight-bottom">
                 <div class="input-field col m7 s12">
                     <input id="id" name="id" type="text" class="validate" value="{{entry_id}}">
-                    <label for="id">Id da entrada</label>
+                    <label for="id">{{ _('Entry ID') }}</label>
                 </div>
                 <div class="input-field col m5 s12" style="height:55px;">
                     <a class="btn waves-effect waves-light btn-wide"
-                        onclick="window.location.href = '/entry/'+$('#id').val();">Carregar entrada
+                        onclick="window.location.href = '/entry/'+$('#id').val();">{{ _('Load Entry') }}
                         <i class="material-icons right">assignment</i>
                     </a>
                 </div>
-                {%if queue_id%}
+                {% if queue_id %}
                 <div class="col s4" style="height:50px;">
-                    <a class="waves-effect waves-light btn btn-wide{%if queue_pos == 1%} disabled{%endif%}"
+                    <a class="waves-effect waves-light btn btn-wide{% if queue_pos == 1 %} disabled{% endif %}"
                         href="/queue/{{queue_id}}/{{queue_pos-1}}">
-                        <i class="material-icons left">arrow_back</i>Anterior
+                        <i class="material-icons left">arrow_back</i>{{ _('Previous') }}
                     </a>
                 </div>
                 <div class="col s4" style="height:50px;">
                     <a class="waves-effect waves-light btn btn-wide" href="/new-queue/{{queue_id}}" target="_blank">
-                        {{queue_pos}}/{{queue_len}}
+                        {{ queue_pos }}/{{ queue_len }}
                     </a>
                 </div>
                 <div class="col s4" style="height:50px;">
-                    <a class="waves-effect waves-light btn btn-wide{%if queue_pos == queue_len%} disabled{%endif%}"
+                    <a class="waves-effect waves-light btn btn-wide{% if queue_pos == queue_len %} disabled{% endif %}"
                         href="/queue/{{queue_id}}/{{queue_pos+1}}">
-                        <i class="material-icons right">arrow_forward</i>Próximo
+                        <i class="material-icons right">arrow_forward</i>{{ _('Next') }}
                     </a>
                 </div>
-                {%endif%}
+                {% endif %}
             </div>
         </div>
     </div>
     {% if valid_entry %}
     <div class="col s3">
         <div class="toc-wrapper pinned labels-menu">
-            <h5>Rótulos</h5>
+            <h5>{{ _('Labels') }}</h5>
             <div class="row" style="padding-top:15px;">
                 <div id="labels">
-                    {% for label in labels%}
+                    {% for label in labels %}
                     {% include 'labels-menu.html' %}
-                    {%endfor%}
+                    {% endfor %}
                 </div>
                 <div class="input-field col s12 tight-top">
                     <button id="show_hidden_btn"
                         class="btn waves-effect waves-light btn-wide hidden-entry{% if show_hidden %} hidden{% endif %}"
                         onclick='toggle_hidden(true)'>
-                        Exibir ocultos
+                        {{ _('Show hidden') }}
                         <i class="material-icons right">remove_red_eye</i>
                     </button>
                     <button id="hidden_sel_btn"
                         class="btn btn-hide waves-effect waves-light btn-wide red darken-4 hidden-entry{% if not show_hidden %} hidden{% endif %}"
                         onclick='toggle_hidden(false)'>
-                        Esconder ocultos
+                        {{ _('Hide hidden') }}
                         <i class="material-icons right">remove_red_eye</i>
                     </button>
                 </div>
                 <div class="input-field col s12 tight-top">
                     <button class="btn waves-effect waves-light btn-wide" onclick='expand_all(true)'>
-                        Expandir todos
+                        {{ _('Expand all') }}
                         <i class="material-icons right">add</i>
                     </button>
                 </div>
                 <div class="input-field col s12 tight-top">
                     <button class="btn waves-effect waves-light btn-wide" onclick='retract_all(false)'>
-                        Recolher todos
+                        {{ _('Retract all') }}
                         <i class="material-icons right">remove</i>
                     </button>
                 </div>
@@ -92,8 +92,8 @@
 {% block scripts %}
 <script>
     $(document).ready(function () {
-        init_picker('#start-date', "{{start_date}}");
-        init_picker('#end-date', "{{end_date}}");
+        init_picker('#start-date', "{{ start_date }}");
+        init_picker('#end-date', "{{ end_date }}");
 
         {% if valid_entry %}
         init_highlight({{ highlight| safe}});

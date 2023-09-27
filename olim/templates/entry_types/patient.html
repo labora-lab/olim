@@ -5,26 +5,26 @@
                 <div class="input-field col m4 s12">
                     <span class="right clear">
                         <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
-                            data-tooltip="Limpar data" onclick="clear_date('start-date');">
+                            data-tooltip="{{ _('Clear Date') }}" onclick="clear_date('start-date');">
                             <i class="material-icons grey-text text-darken-4">clear</i>
                         </a>
                     </span>
                     <input type="text" name="start-date" id="start-date" class="datepicker" value="{{start_date}}">
-                    <label for="start">Data inicio</label>
+                    <label for="start">{{ _('Start Date') }}</label>
                 </div>
                 <div class="input-field col m4 s12">
                     <span class="right clear">
                         <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
-                            data-tooltip="Limpar data" onclick="clear_date('end-date');">
+                            data-tooltip="{{ _('Clear Date') }}" onclick="clear_date('end-date');">
                             <i class="material-icons grey-text text-darken-4">clear</i>
                         </a>
                     </span>
                     <input type="text" name="end-date" id="end-date" class="datepicker" value="{{end_date}}">
-                    <label for="end">Data fim</label>
+                    <label for="end">{{ _('End Date') }}</label>
                 </div>
                 <div class="input-field col m4 s12">
                     <input type="hidden" name="show-hidden" id="show-hidden" value="{{show_hidden}}">
-                    <button class="btn waves-effect waves-light btn-wide" id="search" type="submit">Aplicar datas
+                    <button class="btn waves-effect waves-light btn-wide" id="search" type="submit">{{ _('Apply Dates') }}
                         <i class="material-icons right">date_range</i>
                     </button>
                 </div>
@@ -33,65 +33,65 @@
     </div>
 </div>
 
-{%for date in dates.keys()%}
-{%set date_id='day_'+date.replace('/', '_')%}
-<div class="card day" id="{{date_id}}">
-    <div class="card-content reduced-pad">
-        <span class="right top-right">
-            <a class="btn-floating btn btn-flat waves-ligh tooltipped" data-position="bottom"
-                data-tooltip="Esconder todos acima" onclick="hide_before('{{date_id}}', '{{date}}');">
-                <i class="material-icons grey-text text-darken-4" style="transform: rotate(90deg);">first_page</i>
-            </a>
-            <a class=" btn-floating btn btn-flat waves-light tooltipped" data-position="bottom"
-                data-tooltip="Esconder todos abaixo" onclick="hide_after('{{date_id}}', '{{date}}');">
-                <i class="material-icons grey-text text-darken-4" style="transform: rotate(90deg);">last_page</i>
-            </a>
-        </span>
-        <div class="card-title cursor" onclick="toggle_day('{{date_id}}')">
-            {{date}}
-            <span class="hidden-count small-title"></span>
-            <a class="btn-expand hidden toggle_inline_{{date_id}}"></a>
-        </div>
-    </div>
-    <div class="toggle_{{date_id}}">
-        {%for row in dates[date]['texts']%}
-        <div class="entry{%if row['is_hidden'] or row['hidden_everywhere'] %} hidden-entry{% if not show_hidden %} hidden{% endif %}{% endif %}"
-            id="text_{{row['text_id']}}">
-            {% if not loop.first %}<div class="divider"></div>{% endif %}
-            <div class="hidden cursor{%if loop.first %} no-top-pad{%endif%}{%if row['is_hidden'] %} red lighten-5{%elif row['hidden_everywhere'] %} orange lighten-4{% else %} grey lighten-4{%endif%}"
-                id="full_{{row['text_id']}}">
-                <span class="right" style="margin: 12px;">
-                    <a class="btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped{%if row['is_hidden'] or row['hidden_everywhere'] %} hidden{%endif%}"
-                        data-position="bottom" data-tooltip="Ocultar este"
-                        onclick="hide_one('{{row['text_id']}}', '{{patient_id}}')">
-                        <i class="material-icons grey-text text-darken-4">remove_circle_outline</i>
-                    </a>
-                    <a class="btn-floating btn btn-to-hide btn-flat waves-light tooltipped{%if row['is_hidden'] or row['hidden_everywhere'] %} hidden{%endif%}"
-                        data-position="bottom" data-tooltip="Ocultar todos como este"
-                        onclick="show_warnning('Isto esconderá todos os textos iguais a \'{{row['short_text']}}\'!\n\nDeseja continuar?', 'hide_all(\'{{row['text']}}\', \'{{row['text_id']}}\', \'{{patient_id}}\');');">
-                        <i class=" material-icons grey-text text-darken-4">remove_circle</i>
-                    </a>
-                    <a class="btn-floating btn btn-to-show btn-flat waves-light tooltipped{%if not row['is_hidden'] %} hidden{%endif%}"
-                        data-position="bottom" data-tooltip="Desocultar"
-                        onclick="unhide('{{row['text_id']}}', '{{patient_id}}')">
-                        <i class=" material-icons grey-text text-darken-4">add_circle_outline</i>
-                    </a>
-                </span>
-                <div class="card-content btn-retract" onclick="toggle_pannel('{{row['text_id']}}')">
-                    <span class="card-title small-title">{{row['text_type']}}</span>
-                    <span class="text-entry">{{row['text']}}</span>
-                </div>
+{% for date in dates.keys() %}
+    {% set date_id = 'day_' + date.replace('/', '_') %}
+    <div class="card day" id="{{ date_id }}">
+        <div class="card-content reduced-pad">
+            <span class="right top-right">
+                <a class="btn-floating btn btn-flat waves-ligh tooltipped" data-position="bottom"
+                    data-tooltip="{{ _('Hide all above') }}" onclick="hide_before('{{ date_id }}', '{{ date }}');">
+                    <i class="material-icons grey-text text-darken-4" style="transform: rotate(90deg);">first_page</i>
+                </a>
+                <a class="btn-floating btn btn-flat waves-light tooltipped" data-position="bottom"
+                    data-tooltip="{{ _('Hide all below') }}" onclick="hide_after('{{ date_id }}', '{{ date }}');">
+                    <i class="material-icons grey-text text-darken-4" style="transform: rotate(90deg);">last_page</i>
+                </a>
+            </span>
+            <div class="card-title cursor" onclick="toggle_day('{{ date_id }}')">
+                {{ date }}
+                <span class="hidden-count small-title"></span>
+                <a class="btn-expand hidden toggle_inline_{{ date_id }}"></a>
             </div>
+        </div>
+        <div class="toggle_{{ date_id }}">
+            {% for row in dates[date]['texts'] %}
+                <div class="entry{% if row['is_hidden'] or row['hidden_everywhere'] %} hidden-entry{% if not show_hidden %} hidden{% endif %}{% endif %}"
+                    id="text_{{ row['text_id'] }}">
+                    {% if not loop.first %}<div class="divider"></div>{% endif %}
+                    <div class="hidden cursor{% if loop.first %} no-top-pad{% endif %}{% if row['is_hidden'] %} red lighten-5{% elif row['hidden_everywhere'] %} orange lighten-4{% else %} grey lighten-4{% endif %}"
+                        id="full_{{ row['text_id'] }}">
+                        <span class="right" style="margin: 12px;">
+                            <a class="btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped{% if row['is_hidden'] or row['hidden_everywhere'] %} hidden{% endif %}"
+                                data-position="bottom" data-tooltip="{{ _('Hide this') }}"
+                                onclick="hide_one('{{ row['text_id'] }}', '{{ patient_id }}')">
+                                <i class="material-icons grey-text text-darken-4">remove_circle_outline</i>
+                            </a>
+                            <a class="btn-floating btn btn-to-hide btn-flat waves-light tooltipped{% if row['is_hidden'] or row['hidden_everywhere'] %} hidden{% endif %}"
+                                data-position="bottom" data-tooltip="{{ _('Hide all like this') }}"
+                                onclick="show_warnning('{{ _('This will hide all texts equal to') }} \'{{ row['short_text'] }}\'!\n\n{{ _('Do you want to continue?') }}', 'hide_all(\'{{ row['text'] }}\', \'{{ row['text_id'] }}\', \'{{ patient_id }}\');');">
+                                <i class=" material-icons grey-text text-darken-4">remove_circle</i>
+                            </a>
+                            <a class="btn-floating btn btn-to-show btn-flat waves-light tooltipped{% if not row['is_hidden'] %} hidden{% endif %}"
+                                data-position="bottom" data-tooltip="{{ _('Unhide') }}"
+                                onclick="unhide('{{ row['text_id'] }}', '{{ patient_id }}')">
+                                <i class=" material-icons grey-text text-darken-4">add_circle_outline</i>
+                            </a>
+                        </span>
+                        <div class="card-content btn-retract" onclick="toggle_pannel('{{ row['text_id'] }}')">
+                            <span class="card-title small-title">{{ row['text_type'] }}</span>
+                            <span class="text-entry">{{ row['text'] }}</span>
+                        </div>
+                    </div>
 
-            <div class="card-content btn-expand cursor{%if loop.first %} no-top-pad{%endif%}{%if row['is_hidden'] %} red lighten-4{%elif row['hidden_everywhere'] %} orange lighten-3{%else%} grey lighten-3{%endif%}"
-                id="short_{{row['text_id']}}" onclick="toggle_pannel('{{row['text_id']}}')">
-                <span class="card-title small-title">
-                    {{row['text_type']}}:
-                    <span class="black-text text-entry">{{row['short_text']}}</span>
-                </span>
-            </div>
+                    <div class="card-content btn-expand cursor{% if loop.first %} no-top-pad{% endif %}{% if row['is_hidden'] %} red lighten-4{% elif row['hidden_everywhere'] %} orange lighten-3{% else %} grey lighten-3{% endif %}"
+                        id="short_{{ row['text_id'] }}" onclick="toggle_pannel('{{ row['text_id'] }}')">
+                        <span class="card-title small-title">
+                            {{ row['text_type'] }}:
+                            <span class="black-text text-entry">{{ row['short_text'] }}</span>
+                        </span>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-        {%endfor%}
     </div>
-</div>
-{%endfor%}
+{% endfor %}

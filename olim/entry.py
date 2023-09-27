@@ -2,8 +2,7 @@ from . import app, entry_types
 from .functions import get_queue, manage_label_in_session
 from .database import get_labels, get_entry
 from flask import request, render_template, flash, session
-import json
-
+from flask_babel import _
 
 @app.route("/entry", methods=["GET"])
 @app.route("/entry/<entry_id>", methods=["GET"])
@@ -29,7 +28,7 @@ def entry(entry_id=None, queue_id=None, queue_pos=1):
                 }
             )
         except:
-            flash(f"Fila {queue_id} não encontrada", category="error")
+            flash(_("Queue {queue_id} not found").format(queue_id=queue_id), category="error")
             queue_id = None
 
     # Load highlight
@@ -62,10 +61,10 @@ def entry(entry_id=None, queue_id=None, queue_pos=1):
                     }
                 )
             except:
-                flash(f"Error rendering entry {entry_id}!", category="error")
+                flash(_("Error rendering entry {entry_id}!").format(entry_id=entry_id), category="error")
                 data["valid_entry"] = False
         else:
-            flash(f"Entrada {entry_id} não encontrada", category="error")
+            flash(_("Entry {entry_id} not found").format(entry_id=entry_id), category="error")
             data["valid_entry"] = False
 
     data.update(

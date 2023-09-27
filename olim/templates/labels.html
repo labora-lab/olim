@@ -1,15 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Rótulos{% endblock %}
+{% block title %}{{ _('Labels') }}{% endblock %}
 
 {% block content %}
 <div class="col s12">
-    <h4 class="center">Rótulos</h4>
+    <h4 class="center">{{ _('Labels') }}</h4>
 </div>
 <div class="row">
     <form action="/labels/new" method="post">
         <div class="input-field col s11">
             <input id="new_label" type="text" name="label">
-            <label for="new_label">Novo Rótulo</label>
+            <label for="new_label">{{ _('New Label') }}</label>
         </div>
         <div class="input-field col s1 center">
             <button class="btn waves-effect waves-light btn-narrow">
@@ -21,15 +21,15 @@
         <table>
             <thead>
                 <tr>
-                    <th>Rótulo</th>
+                    <th>{{ _('Label') }}</th>
                     {%for label in labels_types%}
                     <th style="width:80px;text-align: center;">{{ label[0] }}</th>
                     {%endfor%}
-                    <th style="width:80px;text-align: center;">Total</th>
-                    <th style="width:130px;text-align: center;">Criado por</th>
+                    <th style="width:80px;text-align: center;">{{ _('Total') }}</th>
+                    <th style="width:130px;text-align: center;">{{ _('Creator') }}</th>
                     {%if has_permition('delete_label') or has_permition('extract_labels') or
                     has_permition('catch_queue')%}
-                    <th style="width:180px;text-align: center;">Actions</th>
+                    <th style="width:180px;text-align: center;">{{ _('Actions') }}</th>
                     {%endif%}
                 </tr>
             </thead>
@@ -48,20 +48,20 @@
                     <td>
                         {%if has_permition('delete_label')%}
                         <a class="btn waves-ligh tooltipped data-position bottom red darken-4"
-                            data-tooltip="Remover rótulo"
-                            onclick="show_warnning('Remover este rótulo não remove as rotulações efetuadas com ele, caso ele seja recriado as rotulações serão restauradas, para novas rotulações crie um novo rótulo com novo nome.','delete_label(\'{{label.id}}\');');">
+                            data-tooltip="{{ _('Remove Label') }}"
+                            onclick="show_warnning('{{ _('Removing this label does not remove the labels made with it, if it is recreated the labels will be restored, for new labels create a new label with a new name.') }}','delete_label(\'{{label.id}}\');');">
                             <i class="material-icons">remove_circle_outline</i>
                         </a>
                         {%endif%}
                         {%if has_permition('extract_labels')%}
                         <a class="btn waves-ligh tooltipped data-position bottom" href='./labels/{{label.id}}/csv'
-                            data-tooltip="Baixar dados rotulados">
+                            data-tooltip="{{ _('Download labeled data') }}">
                             <i class="material-icons">file_download</i>
                         </a>
                         {%endif%}
                         {%if has_permition('catch_queue')%}
                         <a class="btn waves-ligh tooltipped data-position bottom" href='./labels/{{label.id}}/queue'
-                            data-tooltip="Abrir fila de pacientes rotulados">
+                            data-tooltip="{{ _('Open queue of labeled patients') }}">
                             <i class="material-icons">send</i>
                         </a>
                         {%endif%}
@@ -77,7 +77,7 @@
         <div class="card-content row tight-bottom">
             <form action="./label-upload" method="post" enctype="multipart/form-data">
                 <div class="col s12">
-                    <h5>Upload de arquivo de rotulação</h5>
+                    <h5>{{ _('Upload of Labelling File') }}</h5>
                 </div>
                 <div class="file-field input-field col l10 m8 s12">
                     <div class="btn">
@@ -89,7 +89,7 @@
                     </div>
                 </div>
                 <div class="input-field col l2 m4 s12">
-                    <button class="btn waves-effect waves-light btn-wide" type="submit">Carregar
+                    <button class="btn waves-effect waves-light btn-wide" type="submit">{{ _('Upload') }}
                         <i class="material-icons right">file_upload</i>
                     </button>
                 </div>

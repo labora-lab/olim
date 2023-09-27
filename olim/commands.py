@@ -4,7 +4,7 @@ from .functions import manage_label_in_session
 from .database import add_entry_label, get_label
 from flask import request, session
 import json
-
+from flask_babel import _
 
 def add_label(**args):
     entry_id = args.get("entry_id", None)
@@ -17,23 +17,23 @@ def add_label(**args):
     except:
         return {
             "type": "error",
-            "text": "Failed writing to database",
+            "text": _("Failed writing to database"),
         }
 
     if value == "":
-        msg = f"Removido o rótulo {label} para a entrada {entry_id}"
+        msg = _(f"Removed the label {label} for the entry {entry_id}")
     else:
-        msg = f"{label}: {value} para a entrada {entry_id}"
+        msg = f"{label}: {value} for the entry {entry_id}"
 
     if entry_id == None:
         return {
             "type": "error",
-            "text": "No entry ID passed",
+            "text": _("No entry ID passed"),
         }
     elif label == None:
         return {
             "type": "error",
-            "text": "No label passed",
+            "text": _("No label passed"),
         }
     else:
         return {
@@ -50,7 +50,7 @@ def manage_label(**args):
     if str_label == None or label_id == None:
         return {
             "type": "error",
-            "text": "Missing data: label",
+            "text": _("Missing data: label"),
         }
 
     try:
@@ -58,19 +58,19 @@ def manage_label(**args):
     except:
         return {
             "type": "error",
-            "text": "Error hidding label.",
+            "text": _("Error hidding label."),
         }
 
     if mode == "add":
         return {
             "type": "OK",
-            "text": f"Rótulo {str_label} escondido",
+            "text": _("Label {label} hidden").format(label=str_label),
         }
 
     elif mode == "remove":
         return {
             "type": "OK",
-            "text": f"Rótulo {str_label} mostrado",
+            "text": _("Label {label} unhidden").format(label=str_label),
         }
 
 
@@ -81,12 +81,12 @@ def update_session(**args):
     if parameter == None:
         return {
             "type": "error",
-            "text": "Missing parameter",
+            "text": _("Missing parameter"),
         }
     if data == None:
         return {
             "type": "error",
-            "text": "Missing data",
+            "text": _("Missing data"),
         }
 
     session[parameter] = json.loads(data)
@@ -106,9 +106,9 @@ for mod in dir(entry_types):
     if hasattr(module, "COMMANDS"):
         COMMANDS.update(module.COMMANDS)
 
-ERROR_NO_CMD = {"type": "error", "text": "No command passed"}
+ERROR_NO_CMD = {"type": "error", "text": _("No command passed")}
 
-ERROR_NOT_FOUND = {"type": "error", "text": "Command {} not found"}
+ERROR_NOT_FOUND = {"type": "error", "text": _("Command {command} not found")}
 
 
 @app.route("/commands")
@@ -120,7 +120,7 @@ def commands():
             response = f(**request.args)
         else:
             response = ERROR_NOT_FOUND.copy()
-            response["text"] = response["text"].format(cmd)
+            response["text"] = response["text"].format(command=cmd)
     else:
         cmd = None
         response = ERROR_NO_CMD

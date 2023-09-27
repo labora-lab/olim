@@ -1,36 +1,35 @@
 {% extends "base.html" %}
-{% block title %}Rótulos{% endblock %}
+{% block title %}{{ _('Labels') }}{% endblock %}
 
 {% block content %}
 <div class="row">
-    {%if queue%}
+    {% if queue %}
     <div class="col card s12">
         <div class="card-content">
-            <a class="btn btn-wide" href="/queue/{{queue_hash}}"><i class="material-icons right">send</i>Ir para a
-                fila</a>
+            <a class="btn btn-wide" href="/queue/{{queue_hash}}"><i class="material-icons right">send</i>{{ _('Go to Queue') }}</a>
         </div>
         <div class="card-content" style="line-height: 50px;">
-            <span class="card-title">Entradas</span>
-            {%for entry_id in queue%}
+            <span class="card-title">{{ _('Entry') }}</span>
+            {% for entry_id in queue %}
             <a class="btn" href="/entry/{{entry_id}}" target="_blank">{{entry_id}}</a>
-            {%endfor%}
+            {% endfor %}
         </div>
     </div>
-    {%else%}
+    {% else %}
     <div class="col card s12">
         <div class="card-content">
             <div class="row">
                 <span class="card-title col s12">
-                    Gerar Aleatóriamente
+                    {{ _('Random Generate') }}
                 </span>
                 <form method="post">
                     <div class="input-field col s12">
                         <input id="number" name="number" type="text" class="validate" value="{{number}}">
-                        <label for="number">Número de entradas</label>
+                        <label for="number">{{ _('Number of entries') }}</label>
                     </div>
                     <input type="hidden" name="type" value="random">
                     <div class="col s12">
-                        <button class="btn btn-wide waves-effect waves-light" type="submit" name="action">Gerar fila
+                        <button class="btn btn-wide waves-effect waves-light" type="submit" name="action">{{ _('Generate queue') }}
                             <i class="material-icons right">send</i>
                         </button>
                     </div>
@@ -42,17 +41,17 @@
         <div class="card-content">
             <div class="row">
                 <span class="card-title col s12">
-                    Gerar por IDs
+                    {{ _('Generate by IDs') }}
                 </span>
                 <form method="post">
                     <div class="input-field col s12">
                         <textarea id="textarea1" name="text" class="materialize-textarea tooltipped"
-                            data-tooltip="Separados por virgula, espaços, ponto e virgula ou quebra de linha"></textarea>
-                        <label for="textarea1">IDs para fila</label>
+                            data-tooltip="{{ _('Separated by comma, spaces, semicolon or line break') }}"></textarea>
+                        <label for="textarea1">{{ _('IDs by Queue') }}</label>
                     </div>
                     <input type="hidden" name="type" value="list">
                     <div class="col s12">
-                        <button class="btn btn-wide waves-effect waves-light" type="submit" name="action">Gerar fila
+                        <button class="btn btn-wide waves-effect waves-light" type="submit" name="action">{{ _('Generate queue') }}
                             <i class="material-icons right">send</i>
                         </button>
                     </div>
@@ -60,38 +59,37 @@
             </div>
         </div>
     </div>
-    {%if queues%}
+    {% if queues %}
     <div class="col s12 card" style="padding:0px;">
         <div class="card-content" style="display:block;">
-            <span class="card-title">Filas geradas</span>
+            <span class="card-title">{{ _('Generated Queues') }}</span>
         </div>
-        {% for queue in queues%}
+        {% for queue in queues %}
         <div class="card-content blue-grey white-text patient-header" style="display:block;">
-            <a href="/queue/{{queue['id']}}" class="btn btn-float right" target="_blank">Abrir Fila</a>
+            <a href="/queue/{{queue['id']}}" class="btn btn-float right" target="_blank">{{ _('Open queue') }}</a>
             <p><b>{{queue['id']}}</b></p>
-            <p><span class="small-title">Entradas: {{queue['lenght']}}
-                    {% if queue['highlight'] %} - Destaque: {% for h in queue['highlight'] %}{{h}}{%if not loop.last
-                    %},
-                    {%endif%}{%endfor%}{%endif%}</span></p>
+            <p><span class="small-title">
+                {{ queue.fronend_text }}
+            </span></p>
             {% if queue['exta_data'] %}
             <p>
                 <span class="small-title">
                     {% for k in queue['exta_data'].keys() %}
-                    {%if queue['exta_data'][k] is sequence %}
-                    {{k}}: {% for v in queue['exta_data'][k] %}{{v}}{%if not loop.last %} ,{%endif%}{%endfor%}
-                    {%else%}
+                    {% if queue['exta_data'][k] is sequence %}
+                    {{k}}: {% for v in queue['exta_data'][k] %}{{v}}{% if not loop.last %}, {% endif %}{% endfor %}
+                    {% else %}
                     {{k}}: {{queue['exta_data'][k]}}
-                    {%endif%}
-                    {%if not loop.last %} - {%endif%}
-                    {%endfor%}
+                    {% endif %}
+                    {% if not loop.last %} - {% endif %}
+                    {% endfor %}
                 </span>
             </p>
-            {%endif%}
+            {% endif %}
         </div>
-        {%endfor%}
+        {% endfor %}
     </div>
-    {%endif%}
-    {%endif%}
+    {% endif %}
+    {% endif %}
 </div>
 {% endblock %}
 
