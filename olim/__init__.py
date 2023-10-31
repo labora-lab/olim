@@ -1,11 +1,11 @@
 from flask import Flask, request
 from .settings import (
-    DEBUG, 
-    SECRET_KEY, 
-    LABELS, 
-    LANGUAGES, 
-    BABEL_DEFAULT_LOCALE, 
-    BABEL_TRANSLATION_DIRECTORIES
+    DEBUG,
+    SECRET_KEY,
+    LABELS,
+    LANGUAGES,
+    BABEL_DEFAULT_LOCALE,
+    BABEL_TRANSLATION_DIRECTORIES,
 )
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
@@ -37,11 +37,13 @@ db.init_app(app)
 app.jinja_env.add_extension("jinja2.ext.i18n")
 app.config["LANGUAGES"] = LANGUAGES
 app.config["BABEL_DEFAULT_LOCALE"] = BABEL_DEFAULT_LOCALE
-app.config['BABEL_TRANSLATION_DIRECTORIES'] = BABEL_TRANSLATION_DIRECTORIES
+app.config["BABEL_TRANSLATION_DIRECTORIES"] = BABEL_TRANSLATION_DIRECTORIES
 babel = Babel(app)
 
+
 def get_locale():
-    return request.accept_languages.best_match(app.config["LANGUAGES"].keys())
+    return BABEL_DEFAULT_LOCALE  # request.accept_languages.best_match(app.config["LANGUAGES"].keys())
+
 
 babel.init_app(app, locale_selector=get_locale)
 
