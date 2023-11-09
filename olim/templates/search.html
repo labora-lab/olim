@@ -56,8 +56,9 @@
                 <a href="/entry/{{entry['entry_id']}}" class="btn btn-float right" target="_blank">{{ _('Open') }}</a>
                 <p><b>{{ entry['entry_id'] }}</b>: {{ entry['description'] }}</p>
                 <span class="small-title">
-                    {{ _('Occurences: { occurences_count } - Score of Search: { search_score }').format(occurences_count=entry['match_count'], search_score=entry["score"])
-                    }}</span>   
+                    {{ _('Occurences: { occurences_count } - Score of Search: { search_score
+                    }').format(occurences_count=entry['match_count'], search_score=entry["score"])
+                    }}</span>
             </div>
             {% endfor %}
         </div>

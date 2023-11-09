@@ -10,6 +10,7 @@ from .settings import (
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_babel import Babel
+from flask_migrate import Migrate
 import os
 import json
 from datetime import timedelta
@@ -33,6 +34,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
 app.secret_key = SECRET_KEY
 Session(app)
 db.init_app(app)
+migrate = Migrate(app, db)
 
 app.jinja_env.add_extension("jinja2.ext.i18n")
 app.config["LANGUAGES"] = LANGUAGES
@@ -42,7 +44,7 @@ babel = Babel(app)
 
 
 def get_locale():
-    return BABEL_DEFAULT_LOCALE  # request.accept_languages.best_match(app.config["LANGUAGES"].keys())
+    return request.accept_languages.best_match(app.config["LANGUAGES"].keys())
 
 
 babel.init_app(app, locale_selector=get_locale)

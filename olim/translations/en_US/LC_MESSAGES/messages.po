@@ -497,12 +497,12 @@ msgid "No results for the search"
 msgstr "No results for the search"
 
 #: olim/templates/search.html:87
-msgid "Add terms(type and press ENTER)"
-msgstr "Add terms(type and press ENTER)"
+msgid "Add terms (type and press ENTER)"
+msgstr "Add terms (type and press ENTER)"
 
 #: olim/templates/search.html:88
-msgid "Add more terms(type and press ENTER)"
-msgstr "Add more terms(type and press ENTER)"
+msgid "Add more terms (type and press ENTER)"
+msgstr "Add more terms (type and press ENTER)"
 
 #: olim/templates/users.html:2 olim/templates/users.html:8
 msgid "User Management"

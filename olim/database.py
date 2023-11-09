@@ -28,6 +28,7 @@ class User(CreationControl, db.Model):
     username: db.Mapped[str] = db.mapped_column(unique=True, nullable=False)
     password: db.Mapped[str] = db.mapped_column(nullable=False)
     role: db.Mapped[str] = db.mapped_column(nullable=False)
+    # language: db.Mapped[str] = db.mapped_column(nullable=True)
 
 
 class LabelEntry(CreationControl, db.Model):
@@ -61,6 +62,7 @@ class Label(CreationControl, db.Model):
     # Columns
     id: db.Mapped[int] = db.mapped_column(primary_key=True)
     name: db.Mapped[str] = db.mapped_column(db.String, nullable=False)
+    # al_key: db.Mapped[str] = db.mapped_column(nullable=True)
 
     # Relations
     entries: db.Mapped[List["LabelEntry"]] = db.relationship(back_populates="label")

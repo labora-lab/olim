@@ -25,6 +25,8 @@ services:
     environment:
       - ES_SERVER=http://olim_es:9200
       - DEBUG=true
+    volumes:
+      - ./:/app
     restart: unless-stopped
 
 volumes:

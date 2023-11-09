@@ -95,8 +95,8 @@ PERMISSIONS = {
 
 LANGUAGES = {
     "pt_BR": "Português (Brasil)",
-    "en_US": 'English (United States)',
+    "en_US": "English (United States)",
 }
 
 BABEL_DEFAULT_LOCALE = "pt_BR"
-BABEL_TRANSLATION_DIRECTORIES = "translations"
+BABEL_TRANSLATION_DIRECTORIES = "/app/olim/translations"

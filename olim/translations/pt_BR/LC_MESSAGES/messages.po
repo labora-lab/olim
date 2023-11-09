@@ -501,7 +501,7 @@ msgid "Add terms(type and press ENTER)"
 msgstr "Adicionar termos (digite e pressione ENTER)"
 
 #: olim/templates/search.html:88
-msgid "Add more terms(type and press ENTER)"
+msgid "Add more terms (type and press ENTER)"
 msgstr "Adicionar mais termos (digite e pressione ENTER)"
 
 #: olim/templates/users.html:2 olim/templates/users.html:8
