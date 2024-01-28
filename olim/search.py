@@ -1,5 +1,6 @@
 from . import app, entry_types
 from .functions import store_queue, get_def_nentries
+from .database import get_entries
 from flask import request, render_template, session
 import pandas as pd
 import json
@@ -46,15 +47,16 @@ def search():
 
     data = []
     for mod in dir(entry_types):
-        module = getattr(entry_types, mod)
-        if hasattr(module, "search"):
-            data += module.search(
-                must_terms=must_terms,
-                must_phrases=must_terms,
-                not_must_terms=not_must_terms,
-                not_must_phrases=not_must_phrases,
-                number=number,
-            )
+        if get_entries(type=mod).all():
+            module = getattr(entry_types, mod)
+            if hasattr(module, "search"):
+                data += module.search(
+                    must_terms=must_terms,
+                    must_phrases=must_terms,
+                    not_must_terms=not_must_terms,
+                    not_must_phrases=not_must_phrases,
+                    number=number,
+                )
 
     highlight = must_terms + must_phrases
     if len(data) > 0:

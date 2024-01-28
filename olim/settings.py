@@ -44,6 +44,11 @@ class LABELS_TYPES:
         ("no", "icon", "clear", "red"),
         ("don't know", "text", "?", "orange"),
     ]
+    YES_NO_DUNNO = [
+        ("yes", "icon", "check", "green"),
+        ("no", "icon", "clear", "red"),
+        ("dunno", "text", "?", "orange"),
+    ]
 
 
 labels = os.getenv("LABELS")
@@ -63,6 +68,7 @@ PERMISSIONS = {
         "create_label",
         "delete_label",
         "extract_labels",
+        "extract_labels_json",
         "label_up",
         "entry",
         "new_queue",

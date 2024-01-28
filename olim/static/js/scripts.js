@@ -209,7 +209,7 @@ function run_command(cmd, args) {
         .then((data) => {
             console.log(data);
             if (data.type == 'OK') {
-                M.toast({ html: data.text, displayLength: 4000, classes: 'teal darken-3' });
+                //M.toast({ html: data.text, displayLength: 2000, classes: 'teal darken-3' });
                 if (data.callback) {
                     console.log(data.callback)
                     eval(data.callback);

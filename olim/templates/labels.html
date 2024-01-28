@@ -29,7 +29,7 @@
                     <th style="width:130px;text-align: center;">Criado por</th>
                     {%if has_permition('delete_label') or has_permition('extract_labels') or
                     has_permition('catch_queue')%}
-                    <th style="width:180px;text-align: center;">Actions</th>
+                    <th style="width:325px;text-align: center;">Actions</th>
                     {%endif%}
                 </tr>
             </thead>
@@ -55,8 +55,12 @@
                         {%endif%}
                         {%if has_permition('extract_labels')%}
                         <a class="btn waves-ligh tooltipped data-position bottom" href='./labels/{{label.id}}/csv'
-                            data-tooltip="Baixar dados rotulados">
-                            <i class="material-icons">file_download</i>
+                            data-tooltip="Baixar dados rotulados"> CSV
+                            <i class="material-icons left">file_download</i>
+                        </a>
+                        <a class="btn waves-ligh tooltipped data-position bottom" href='./labels/{{label.id}}/json'
+                            data-tooltip="Baixar dados rotulados">JSON
+                            <i class="material-icons left">file_download</i>
                         </a>
                         {%endif%}
                         {%if has_permition('catch_queue')%}

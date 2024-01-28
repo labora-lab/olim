@@ -13,6 +13,7 @@ from flask import render_template, redirect, request, session, flash, Response
 import pandas as pd
 import numpy as np
 import time
+import json
 
 
 @app.route("/labels", methods=["GET"])
@@ -74,6 +75,19 @@ def extract_labels(label_id):
         headers={"Content-disposition": f"attachment; filename={label_str}.csv"},
     )
 
+@app.route("/labels/<label_id>/json")
+def extract_labels_json(label_id):
+    label = get_label(label_id)
+    label_str = label.name
+    entries_values = {}
+    for le in label.entries:
+        if not le.is_deleted:
+            entries_values[le.entry.entry_id] = le.value
+    return Response(
+        json.dumps(entries_values),
+        mimetype="text/json",
+        headers={"Content-disposition": f"attachment; filename={label_str}.json"},
+    )
 
 @app.route("/labels/<int:label_id>/queue", methods=["GET"])
 def catch_queue(label_id):

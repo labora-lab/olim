@@ -258,16 +258,26 @@ def es_bulk_upload(
             client.create_index(ind, mp)
         except:
             print("Index creation failed, index already exists?")
+            
 
     print(f"Loading data from {csv_file}...")
     df = pd.read_csv(csv_file)
     df = df.drop_duplicates()
+    df = df.fillna(-1)
+    if "date" in df:
+        df["date"] = pd.to_datetime(df["date"], format='mixed')
 
     print("Uploading texts to ElasticSearch...")
     helpers.bulk(client.es, doc_generator(df, index, id_column, text_column))
 
     print("Registring entries on OLIM database...")
-    register_entries(df[id_column].unique(), entry_type)
+    batch_size = 1000
+    n_batchs = int(len(df)/batch_size)
+    for i in tqdm(range(0, n_batchs + 1)):
+        if i == n_batchs:
+            register_entries(df[id_column][i*batch_size:], entry_type)
+        else: 
+            register_entries(df[id_column][i*batch_size:(i+1)*batch_size], entry_type)
 
     print()
     print("Data uploaded!")

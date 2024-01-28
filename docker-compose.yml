@@ -25,6 +25,7 @@ services:
     environment:
       - ES_SERVER=http://olim_es:9200
       - DEBUG=true
+      - LABELS=LABELS_TYPES.YES_NO_IDK
     restart: unless-stopped
 
 volumes:
