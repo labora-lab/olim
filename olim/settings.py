@@ -47,10 +47,10 @@ class LABELS_TYPES:
         ("no", "icon", "clear", "red"),
         ("unknown", "text", "?", "orange"),
     ]
-    YES_NO_DUNNO = [
+    YES_NO_IDK = [
         ("yes", "icon", "check", "green"),
         ("no", "icon", "clear", "red"),
-        ("dunno", "text", "?", "orange"),
+        ("don't know", "text", "?", "orange"),
     ]
 
 
