@@ -2,7 +2,7 @@ from . import app
 from .database import get_user, insert_user, get_users, update_user_password
 from flask import session, flash, abort, request, url_for, redirect, render_template
 from werkzeug.security import generate_password_hash, check_password_hash
-from .settings import PERMISSIONS
+from .settings import PERMISSIONS, NEED_BACKEND, BACKEND_KEY, BACKEND_URL
 from flask_babel import _
 
 
@@ -79,7 +79,12 @@ def check_permission():
     if current_user_id != "guest":
         user = get_user(current_user_id, by="id")
         if user is None:
-            flash(_("Your login has expired", ), category="warning")
+            flash(
+                _(
+                    "Your login has expired",
+                ),
+                category="warning",
+            )
             set_guest_user()
             return redirect(url_for("login") + f"?redirect={request.path}")
         if not role_has_permission(role=user.role):
@@ -87,10 +92,26 @@ def check_permission():
                 abort(403)
             else:
                 flash(
-                    _("You do not have permission to access {requested_url}.").format(requested_url=request.url),
+                    _("You do not have permission to access {requested_url}.").format(
+                        requested_url=request.url
+                    ),
                     category="warning",
                 )
                 return redirect("/")
+
+
+@app.before_request
+def check_backend():
+    if request.endpoint in NEED_BACKEND and (
+        BACKEND_KEY is None or BACKEND_URL is None
+    ):
+        flash(
+            _(
+                "{requested_url} needs a backend connection, see https://gitlab.com/nanogennari/olim-backend."
+            ).format(requested_url=request.url),
+            category="error",
+        )
+        return redirect("/")
 
 
 def set_guest_user():
@@ -126,9 +147,15 @@ def users():
                 name=name,
                 creator=session.get("user_id"),
             )
-            flash(_("User {username} sucessfully registered!").format(username=username), category="success")
+            flash(
+                _("User {username} sucessfully registered!").format(username=username),
+                category="success",
+            )
         else:
-            flash(_("User {username} already exists!").format(username=username), category="warning")
+            flash(
+                _("User {username} already exists!").format(username=username),
+                category="warning",
+            )
 
     context = {
         "users": get_users(),
@@ -146,7 +173,9 @@ def security_edit_password(
         return
 
     if new_password_check is None:
-        flash(_("Please enter a new on both fields!"), category="error")  # no new password
+        flash(
+            _("Please enter a new on both fields!"), category="error"
+        )  # no new password
         return
 
     if new_password != new_password_check:
@@ -162,7 +191,9 @@ def security_edit_password(
     if changer_user["role"] != "admin" and not verify_password(
         old_password, changer_user["password"]
     ):
-        flash(_("Incorrect old password!"), category="error")  # old password is incorrect
+        flash(
+            _("Incorrect old password!"), category="error"
+        )  # old password is incorrect
         return
 
     update_user_password(

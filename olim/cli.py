@@ -5,11 +5,14 @@ from .database import (
     get_user,
     get_entry,
     init_db,
+    update_user_password,
 )
 from .functions import label_upload
 import click
 import sys
 import pandas as pd
+from getpass import getpass
+from icecream import ic
 
 
 @app.cli.command("init-db", help="Inializes database and create Administrator user.")
@@ -57,10 +60,31 @@ def users():
 @click.command("list", help="Print list of active users.")
 def users_ls():
     for user in get_users():
-        print(user.id, user.username, user.name, user.creator.name)
+        print(user.id, user.username)
+
+
+@click.command(
+    "password",
+    help="Change user password.",
+)
+@click.argument("username")
+def change_passwd(username):
+    user = get_user(username, by="username")
+    if user:
+        passwd = getpass("New password:")
+        if passwd == getpass("Again:"):
+            if update_user_password(user.id, passwd):
+                print("Password changed!")
+            else:
+                print("Error updating password")
+        else:
+            print("Passwords don't match, try again.")
+    else:
+        print(f"Error: User {username} not found!")
 
 
 users.add_command(users_ls)
+users.add_command(change_passwd)
 
 
 @app.cli.group("upload", help="Data upload related commands.")

@@ -1,7 +1,13 @@
 ## Auxiliary functions
 # All functions here must have type hints and docstrings
 from .settings import ES_INDEX, ES_SERVER
-from .database import register_entries, get_labels, new_label, add_entry_label
+from .database import (
+    register_entries,
+    get_labels,
+    new_label,
+    add_entry_label,
+    get_entry,
+)
 from . import queue_dir, entry_types
 from elasticsearch import Elasticsearch, helpers
 from flask import session, flash
@@ -88,6 +94,51 @@ def have_hidden():
         if hasattr(module, "have_hidden"):
             have_hidden = have_hidden or module.have_hidden()
     return have_hidden
+
+
+def get_highlights():
+    # Load highlight
+    if "highlight" in session:
+        return session["highlight"]
+    else:
+        return []
+
+
+def render_entry(entry_id: int, data: dict = {}):
+    if entry_id != None:
+        entry = get_entry(entry_id)
+        if not entry == None:
+            try:
+                e_type = getattr(entry_types, entry.type)
+                data.update(
+                    {
+                        "entry_id": entry_id,
+                        "entry_html": e_type.render(
+                            entry_id,
+                            highlight=get_highlights(),
+                        ),
+                        "entry": entry,
+                        "labels_values": {
+                            label.label_id: label.value
+                            for label in entry.labels
+                            if not label.is_deleted
+                        },
+                        "valid_entry": True,
+                    }
+                )
+            except:
+                flash(
+                    _("Error rendering entry {entry_id}!").format(entry_id=entry_id),
+                    category="error",
+                )
+                data["valid_entry"] = False
+        else:
+            flash(
+                _("Entry {entry_id} not found").format(entry_id=entry_id),
+                category="error",
+            )
+            data["valid_entry"] = False
+    return data
 
 
 def parse_queue(text: str) -> List[str]:

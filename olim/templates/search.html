@@ -53,11 +53,11 @@
         <div class="card day">
             {% for entry in results %}
             <div class="card-content blue-grey white-text patient-header" style="display:block;">
-                <a href="/entry/{{entry['entry_id']}}" class="btn btn-float right" target="_blank">{{ _('Open') }}</a>
+                <a href="./queue/{{queue_id}}/{{loop.index}}" class="btn btn-float right" target="_blank">{{ _('Open')
+                    }}</a>
                 <p><b>{{ entry['entry_id'] }}</b>: {{ entry['description'] }}</p>
                 <span class="small-title">
-                    {{ _('Occurences: { occurences_count } - Score of Search: { search_score
-                    }').format(occurences_count=entry['match_count'], search_score=entry["score"])
+                    {{ _('Occurences: {} - Score of Search: {}').format(entry['match_count'], entry["score"])
                     }}</span>
             </div>
             {% endfor %}

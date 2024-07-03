@@ -2,17 +2,14 @@ from . import app, db, entry_types
 from .functions import store_queue, label_upload
 from .database import (
     get_labels,
-    get_user,
     new_label,
     del_label,
     get_label,
-    add_entry_label,
     get_labeled,
 )
 from flask import render_template, redirect, request, session, flash, Response
 from flask_babel import _
 import pandas as pd
-import numpy as np
 import time
 
 
@@ -47,14 +44,20 @@ def labels():
 def create_label():
     label = request.form.get("label")
     label = new_label(label, session["user_id"])
-    flash(_("Label {label_name} sucessfully created").format(label_name=label.name), category="success")
+    flash(
+        _("Label {label_name} sucessfully created").format(label_name=label.name),
+        category="success",
+    )
     return redirect("/labels")
 
 
 @app.route("/labels/<int:label_id>/delete", methods=["GET"])
 def delete_label(label_id):
     label = del_label(label_id, session["user_id"])
-    flash(_("Label {label_name} sucessfully deleted").format(label_name=label.name), category="success")
+    flash(
+        _("Label {label_name} sucessfully deleted").format(label_name=label.name),
+        category="success",
+    )
     return redirect("/labels")
 
 

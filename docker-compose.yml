@@ -25,6 +25,8 @@ services:
     environment:
       - ES_SERVER=http://olim_es:9200
       - DEBUG=true
+      - BACKEND_URL=
+      - BACKEND_KEY=
     volumes:
       - ./:/app
     restart: unless-stopped

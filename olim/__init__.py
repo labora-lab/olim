@@ -6,6 +6,8 @@ from .settings import (
     LANGUAGES,
     BABEL_DEFAULT_LOCALE,
     BABEL_TRANSLATION_DIRECTORIES,
+    BACKEND_KEY,
+    BACKEND_URL,
 )
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
@@ -62,6 +64,7 @@ from . import queue
 from . import database
 from . import auth
 from . import cli
+from . import active_learning
 
 from .functions import have_hidden
 
@@ -71,4 +74,5 @@ app.jinja_env.globals.update(
     labels_types=LABELS,
     labels_rev=[l for l in LABELS[::-1]],
     labels_array=json.dumps([l[0].replace(" ", "_") for l in LABELS]),
+    has_backend=not (BACKEND_URL in [None, ""] or BACKEND_KEY in [None, ""]),
 )
