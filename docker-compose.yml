@@ -27,8 +27,7 @@ services:
       - DEBUG=true
       - BACKEND_URL=
       - BACKEND_KEY=
-    volumes:
-      - ./:/app
+      - LABELS=LABELS_TYPES.YES_NO_IDK
     restart: unless-stopped
 
 volumes:

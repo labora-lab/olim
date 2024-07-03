@@ -43,7 +43,33 @@
             <h5>{{ _('Labels') }}</h5>
             <div class="row" style="padding-top:15px;">
                 <div id="labels">
-                    {% for label in labels %}
+                    {% if valid_entry %}
+                    <div id="apply_all" class="input-field col s12 tight-top">
+                        <span>Apply to all</span>
+                        {% for label_str, type, icon, color in labels_rev %}
+                        {% if type == 'text'%}
+                        <a class="tooltipped right grey-text labels-text-icon cursor" data-position="bottom"
+                            data-tooltip="Desmarcar todos" onclick="$('.{{label_str}}_unsel').click();">
+                            <strong>{{icon}}</strong>
+                        </a>
+                        <a class="tooltipped right {{color}}-text labels-text-icon cursor" data-position="bottom"
+                            data-tooltip="Marcar todos" onclick="$('.{{label_str}}_sel').click();">
+                            <strong>{{icon}}</strong>
+                        </a>
+                        {% else %}
+                        <a class="tooltipped right cursor" data-position="bottom" data-tooltip="Desmarcar todos"
+                            onclick="$('.{{label_str}}_unsel').click();">
+                            <i class="material-icons grey-text">{{icon}}</i>
+                        </a>
+                        <a class="tooltipped right cursor" data-position="bottom" data-tooltip="Marcar todos"
+                            onclick="$('.{{label_str}}_sel').click();">
+                            <i class="material-icons {{color}}-text">{{icon}}</i>
+                        </a>
+                        {%endif%}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% for label in labels%}
                     {% include 'labels-menu.html' %}
                     {% endfor %}
                 </div>
