@@ -20,4 +20,4 @@ USER root
 RUN export SECRET_KEY=`python -c 'import secrets; print(secrets.token_hex())'`
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-CMD ["gunicorn", "--bind", "0.0.0.0:42000", "olim:app"]
+CMD ["gunicorn", "--reload", "--bind", "0.0.0.0:42000", "olim:app"]

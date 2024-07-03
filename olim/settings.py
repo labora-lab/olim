@@ -21,6 +21,9 @@ SECRET_KEY = os.getenv("SECRET_KEY", "6DUUwdKqwkaXPvjqCS4y")
 DB_PATH = os.path.join(os.getcwd(), "database.sqlite")
 """Database Sqlite3 path"""
 
+BACKEND_URL = os.getenv("BACKEND_URL", None)
+BACKEND_KEY = os.getenv("BACKEND_KEY", None)
+
 
 class LABELS_TYPES:
     SIM_NAO = [
@@ -39,10 +42,10 @@ class LABELS_TYPES:
     CHECK = [
         ("check", "icon", "check", "green"),
     ]
-    YES_NO_IDK = [
+    YES_NO_UNKNOWN = [
         ("yes", "icon", "check", "green"),
         ("no", "icon", "clear", "red"),
-        ("don't know", "text", "?", "orange"),
+        ("unknown", "text", "?", "orange"),
     ]
     YES_NO_DUNNO = [
         ("yes", "icon", "check", "green"),
@@ -57,6 +60,14 @@ try:
 except TypeError:
     LABELS = LABELS_TYPES.SIM_NAO_NS
 
+"""List of endpoints that need a setup backend."""
+NEED_BACKEND = [
+    "active_learning",
+    "create_al",
+    "catch_al",
+]
+
+"""Lists of permited endpoints for each user."""
 PERMISSIONS = {
     "admin": [
         "static",
@@ -77,6 +88,9 @@ PERMISSIONS = {
         "search",
         "edit_password",
         "logout",
+        "active_learning",
+        "create_al",
+        "catch_al",
     ],
     "user": [
         "static",
@@ -93,7 +107,19 @@ PERMISSIONS = {
         "search",
         "edit_password",
         "logout",
+        "active_learning",
+        "create_al",
+        "catch_al",
     ],
     "guest": ["static", "login"],
 }
 """Mapping of permissions to routes that can be accessed by roles"""
+
+
+LANGUAGES = {
+    "pt_BR": "Português (Brasil)",
+    "en_US": "English (United States)",
+}
+
+BABEL_DEFAULT_LOCALE = "pt_BR"
+BABEL_TRANSLATION_DIRECTORIES = "/app/olim/translations"

@@ -8,6 +8,7 @@ from .functions import (
 )
 from .database import random_entries
 from flask import request, render_template, flash, redirect, session
+from flask_babel import _
 
 
 @app.route("/new-queue", methods=["POST", "GET"])
@@ -30,7 +31,7 @@ def new_queue(queue_id=None):
             # Generate the queue
             queue = [entry.entry_id for entry in random_entries(number)]
         except ValueError:
-            flash("Número de entradas inválido.", category="error")
+            flash(_("Invalid number of entries"), category="error")
     # If our request is of type list
     elif type == "list":
         # Try to parse the list and store it

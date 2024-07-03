@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Entradas Ocultas{% endblock %}
+{% block title %}{{ _('Hidden Entry') }}{% endblock %}
 
 {% block content %}
 <div class="col s12">
-    <h4 class="center">Entradas Ocultas</h4>
-    <p class="center">Textos nessa plágina foram marcados com "Esconder todos como este".</p>
+    <h4 class="center">{{ _('Hidden Entries') }}</h4>
+    <p class="center">{{ _('Texts on this page were marked with "Hide all as this".') }}</p>
 </div>
 {% if res %}
 {% for r in res %}
@@ -13,12 +13,11 @@
 <div class="col s12 m7" id="text_{{text_id}}">
     <div class="card horizontal">
         <div class="card-content">
-            <p>{{text}}</p>
+            <p>{{ text }}</p>
         </div>
         <div class="card-action">
-            <a class="btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped right-align
-                        data-position=" bottom" data-tooltip="Remover  de entradas ocultas" ,
-                onclick="remove_from_hidden('{{text_id}}')">
+            <a class="btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped right-align" data-position="bottom"
+                data-tooltip="{{ _('Remove from hidden entries') }}" onclick="remove_from_hidden('{{ text_id }}')">
                 <i class="material-icons red-text text-darken-4">remove_circle_outline</i>
             </a>
         </div>
@@ -26,9 +25,8 @@
 </div>
 {% endfor %}
 {% else %}
-<h4 class="center">Não há nenhum texto marcado "Ocultar todos como este".</h4>
+<h4 class="center">{{ _('There is not text marked "Hide all as this"') }}</h4>
 {% endif %}
-
 {% endblock %}
 
 {% block more_scripts %}

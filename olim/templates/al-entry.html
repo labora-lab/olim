@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Active Learning - ') }}{{ label }}{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col s9">
+        <div class="row">
+            <div class="col s12">
+                {{ entry_html|safe }}
+            </div>
+        </div>
+    </div>
+    <div class="col s3">
+        <div class="toc-wrapper pinned labels-menu">
+            <div class="row" style="padding-top:15px;">
+                <div id="labels">
+                    <div id="label_{{label.id}}" class="input-field col s12 tight-top">
+                        <span>{{label.name}}</span>
+                        {% for label_str, type, icon, color in labels_rev %}
+                        <form id="label_form_{{loop.index}}" action="/al/{{label.id}}" style="display:inline;"
+                            method="post">
+                            <input type="hidden" name="value" value="{{loop.index-1}}" />
+                            <input type="hidden" name="text_id" value="{{entry_id}}" />
+                            {% if type == 'text'%}
+                            <a type="submit" class="tooltipped right {{color}}-text labels-text-icon cursor"
+                                data-position="bottom"
+                                data-tooltip="{{ _('Check {label_str}').format(label_str=label_str)}}"
+                                onclick="document.getElementById('label_form_{{loop.index}}').submit();">
+                                <strong>{{icon}}</strong>
+                            </a>
+                            {% else %}
+                            <a type="submit" class="tooltipped right cursor" data-position="bottom"
+                                data-tooltip="{{ _('Check {label_str}').format(label_str=label_str) }}"
+                                onclick="document.getElementById('label_form_{{loop.index}}').submit();">
+                                <i class="material-icons {{color}}-text">{{icon}}</i>
+                            </a>
+                            {% endif %}
+
+                        </form>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="input-field col s12 chips tight-top" id="highlights">
+                    <input style="width: max-content !important;">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+    $(document).ready(function () {
+        init_highlight({{ highlight| safe}});
+    });
+
+</script>
+{% endblock %}

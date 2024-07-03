@@ -1,0 +1,566 @@
+# Portuguese (Brazil) translations for OLIM.
+# Copyright (C) 2023 LED
+# This file is distributed under the same license as the PROJECT project.
+# Felipe Adeildo <felipe.adeildo@proton.me>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 1.0\n"
+"Report-Msgid-Bugs-To: felipe.adeildo@proton.me\n"
+"POT-Creation-Date: 2023-09-23 11:22-0300\n"
+"PO-Revision-Date: 2023-09-23 11:23-0300\n"
+"Last-Translator: Felipe Adeildo <felipe.adeildo@proton.me>\n"
+"Language: pt_BR\n"
+"Language-Team: pt_BR <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.12.1\n"
+
+
+#: olim/auth.py:32 olim/auth.py:34
+msgid "Incorrect Username and/or Password!"
+msgstr "Nome de usuário e/ou senha incorretos!"
+
+#: olim/auth.py:72 olim/auth.py:76
+msgid "You are not logged"
+msgstr "Você não está logado"
+
+#: olim/auth.py:82
+msgid "Your login has expired"
+msgstr "Seu login expirou"
+
+#: olim/auth.py:90
+msgid "You do not have permission to access {requested_url}."
+msgstr "Você não tem permissão para acessar {requested_url}."
+
+#: olim/auth.py:120
+msgid "Passwords do not match"
+msgstr "As senhas não coincidem"
+
+#: olim/auth.py:129
+msgid "User {username} sucessfully registered!"
+msgstr "Usuário {username} registrado com sucesso!"
+
+#: olim/auth.py:131
+msgid "User {username} already exists!"
+msgstr "Usuário {username} já existe!"
+
+#: olim/auth.py:145
+msgid "Please enter a new password!"
+msgstr "Por favor, insira uma nova senha!"
+
+#: olim/auth.py:149
+msgid "Please enter a new on both fields!"
+msgstr "Por favor, insira uma nova em ambos os campos!"
+
+#: olim/auth.py:153
+msgid "Passwords do not match!"
+msgstr "As senhas não coincidem!"
+
+#: olim/auth.py:158
+msgid "Please enter your old password!"
+msgstr "Por favor, insira sua senha antiga!"
+
+#: olim/auth.py:165
+msgid "Incorrect old password!"
+msgstr "Senha antiga incorreta!"
+
+#: olim/auth.py:171
+msgid "Password sucessfully updated!"
+msgstr "Senha atualizada com sucesso!"
+
+#: olim/commands.py:20 olim/entry_types/patient/commands.py:43
+#: olim/entry_types/patient/commands.py:67
+#: olim/entry_types/patient/commands.py:92
+#: olim/entry_types/patient/commands.py:115
+msgid "Failed writing to database"
+msgstr "Falha ao escrever no banco de dados"
+
+#: olim/commands.py:31
+msgid "No entry ID passed"
+msgstr "Nenhum ID de entrada passado"
+
+#: olim/commands.py:36
+msgid "No label passed"
+msgstr "Nenhum rótulo passado"
+
+#: olim/commands.py:53
+msgid "Missing data: label"
+msgstr "Dados ausentes: rótulo"
+
+#: olim/commands.py:61
+msgid "Error hidding label."
+msgstr "Erro ao ocultar rótulo."
+
+#: olim/commands.py:67
+msgid "Label {label} hidden"
+msgstr "Rótulo {label} oculta"
+
+#: olim/commands.py:73
+msgid "Label {label} unhidden"
+msgstr "Rótulo {label} revelada"
+
+#: olim/commands.py:84
+msgid "Missing parameter"
+msgstr "Parâmetro ausente"
+
+#: olim/commands.py:89
+msgid "Missing data"
+msgstr "Dados ausentes"
+
+#: olim/commands.py:109
+msgid "No command passed"
+msgstr "Nenhum comando passado"
+
+#: olim/commands.py:111
+msgid "Command {command} not found"
+msgstr "Comando {command} não encontrado"
+
+#: olim/entry.py:31
+msgid "Queue {queue_id} not found"
+msgstr "Fila {queue_id} não encontrada"
+
+#: olim/entry.py:64
+msgid "Error rendering entry {entry_id}!"
+msgstr "Erro ao renderizar entrada {entry_id}!"
+
+#: olim/entry.py:67
+msgid "Entry {entry_id} not found"
+msgstr "Entrada {entry_id} não encontrada"
+
+#: olim/functions.py:160
+msgid "Failed to read queue file {queue_file}."
+msgstr "Falha ao ler o arquivo da fila {queue_file}."
+
+#: olim/functions.py:163
+msgid "Entries: {queue_length}"
+msgstr "Entradas: {queue_length}"
+
+#: olim/functions.py:165
+msgid "Highlight: {highlight}"
+msgstr "Destaque: {highlight}"
+
+#: olim/labels.py:50
+msgid "Label {label_name} sucessfully created"
+msgstr "Rótulo {label_name} criado com sucesso"
+
+#: olim/labels.py:57
+msgid "Label {label_name} sucessfully deleted"
+msgstr "Rótulo {label_name} excluído com sucesso"
+
+#: olim/queue.py:34
+msgid "Invalid number of entries"
+msgstr "Número inválido de entradas"
+
+#: olim/entry_types/patient/commands.py:49
+#: olim/entry_types/patient/commands.py:73
+msgid "No ID passed"
+msgstr "Nenhum ID passado"
+
+#: olim/entry_types/patient/commands.py:54
+msgid "Text {text_id} hidden"
+msgstr "Texto {text_id} oculto"
+
+#: olim/entry_types/patient/commands.py:78
+msgid "Text {text_id} unhidden"
+msgstr "Texto {text_id} revelado"
+
+#: olim/entry_types/patient/commands.py:98
+msgid "Missing data: {entry_id}, {text_id}, {text}"
+msgstr "Dados ausentes: {entry_id}, {text_id}, {text}"
+
+#: olim/entry_types/patient/commands.py:103
+msgid "Will always hide text {text}"
+msgstr "Sempre irá ocultar o texto {text}"
+
+#: olim/entry_types/patient/commands.py:121
+msgid "Missing data: text_id"
+msgstr "Dados ausentes: text_id"
+
+#: olim/entry_types/patient/commands.py:126
+msgid "Text {text_id} removed from list of hiddens"
+msgstr "Texto {text_id} removido da lista de ocultos"
+
+#: olim/entry_types/patient/render.py:125
+msgid "Invalid date \"{date}\"."
+msgstr "Data inválida \"{date}\"."
+
+#: olim/templates/base.html:16 olim/templates/base.html:142
+msgid "OLIM - Open Labeller for Iterative Machine learning"
+msgstr "OLIM - Rotulador Aberto para Aprendizado de Máquina Iterativo"
+
+#: olim/templates/base.html:23 olim/templates/search.html:38
+msgid "Search"
+msgstr "Buscar"
+
+#: olim/templates/base.html:26
+msgid "Open Entries"
+msgstr "Abrir Entradas"
+
+#: olim/templates/base.html:29 olim/templates/entry.html:43
+#: olim/templates/labels.html:2 olim/templates/labels.html:6
+#: olim/templates/queue.html:2
+msgid "Labels"
+msgstr "Rótulos"
+
+#: olim/templates/base.html:32
+msgid "Queues"
+msgstr "Filas"
+
+#: olim/templates/base.html:35
+msgid "Hidden texts"
+msgstr "Textos ocultos"
+
+#: olim/templates/base.html:38
+msgid "Users"
+msgstr "Usuários"
+
+#: olim/templates/base.html:41 olim/templates/edit-password.html:35
+#: olim/templates/users.html:27
+msgid "Change Password"
+msgstr "Alterar Senha"
+
+#: olim/templates/base.html:44 olim/templates/login.html:2
+#: olim/templates/login.html:7
+msgid "Login"
+msgstr "Login"
+
+#: olim/templates/base.html:46
+msgid "Logout"
+msgstr "Sair"
+
+#: olim/templates/base.html:52
+msgid "Open Labeller for Iterative Machine learning"
+msgstr "Rotulador Aberto para Aprendizado de Máquina Iterativo"
+
+#: olim/templates/base.html:64 olim/templates/base.html:85
+msgid "Warning"
+msgstr "Aviso"
+
+#: olim/templates/base.html:65
+msgid "A buch of text"
+msgstr "Um monte de texto"
+
+#: olim/templates/base.html:68
+msgid "Continue"
+msgstr "Continuar"
+
+#: olim/templates/base.html:69 olim/templates/base.html:80
+#: olim/templates/base.html:99 olim/templates/base.html:118
+msgid "Close"
+msgstr "Fechar"
+
+#: olim/templates/base.html:104
+msgid "Success"
+msgstr "Sucesso"
+
+#: olim/templates/base.html:123
+msgid "Error"
+msgstr "Erro"
+
+#: olim/templates/edit-password.html:2
+msgid "Edit Password"
+msgstr "Editar Senha"
+
+#: olim/templates/edit-password.html:7
+msgid "Change Password of {username}"
+msgstr "Alterar Senha de {username}"
+
+#: olim/templates/edit-password.html:13
+msgid "Old Password"
+msgstr "Senha Antiga"
+
+#: olim/templates/edit-password.html:18 olim/templates/edit-password.html:22
+#: olim/templates/users.html:50 olim/templates/users.html:54
+msgid "New Password"
+msgstr "Nova Senha"
+
+#: olim/templates/edit-password.html:26 olim/templates/users.html:58
+msgid "Confirm Password"
+msgstr "Confirmar Senha"
+
+#: olim/templates/edit-password.html:30 olim/templates/users.html:63
+msgid "Generate Random Password"
+msgstr "Gerar Senha Aleatória"
+
+#: olim/templates/entry.html:2
+msgid "Entry "
+msgstr "Entrada "
+
+#: olim/templates/entry.html:10
+msgid "Entry ID"
+msgstr "ID da Entrada"
+
+#: olim/templates/entry.html:14
+msgid "Load Entry"
+msgstr "Carregar Entrada"
+
+#: olim/templates/entry.html:22
+msgid "Previous"
+msgstr "Anterior"
+
+#: olim/templates/entry.html:33
+msgid "Next"
+msgstr "Próxima"
+
+#: olim/templates/entry.html:54
+msgid "Show hidden"
+msgstr "Mostrar ocultos"
+
+#: olim/templates/entry.html:60
+msgid "Hide hidden"
+msgstr "Ocultar ocultos"
+
+#: olim/templates/entry.html:66
+msgid "Expand all"
+msgstr "Expandir todos"
+
+#: olim/templates/entry.html:72
+msgid "Retract all"
+msgstr "Recolher todos"
+
+#: olim/templates/hidden.html:2
+msgid "Hidden Entry"
+msgstr "Entrada Oculta"
+
+#: olim/templates/hidden.html:6
+msgid "Hidden Entries"
+msgstr "Entradas Ocultas"
+
+#: olim/templates/hidden.html:7
+msgid "Texts on this page were marked with \"Hide all as this\"."
+msgstr "Textos nesta página foram marcados com \"Ocultar todos como este\"."
+
+#: olim/templates/hidden.html:20
+msgid "Remove from hidden entries"
+msgstr "Remover de entradas ocultas"
+
+#: olim/templates/hidden.html:28
+msgid "There is not text marked \"Hide all as this\""
+msgstr "Não há texto marcado como \"Ocultar todos como este\""
+
+#: olim/templates/labels-menu.html:11
+msgid "Hide the value of this label"
+msgstr "Ocultar o valor deste rótulo"
+
+#: olim/templates/labels-menu.html:16
+msgid "Show the value of this label"
+msgstr "Mostrar o valor deste rótulo"
+
+#: olim/templates/labels-menu.html:23 olim/templates/labels-menu.html:36
+msgid "Uncheck {label_str}"
+msgstr "Desmarcar {label_str}"
+
+#: olim/templates/labels-menu.html:29 olim/templates/labels-menu.html:41
+msgid "Check {label_str}"
+msgstr "Marcar {label_str}"
+
+#: olim/templates/labels.html:12
+msgid "New Label"
+msgstr "Novo Rótulo"
+
+#: olim/templates/labels.html:24
+msgid "Label"
+msgstr "Rótulo"
+
+#: olim/templates/labels.html:28
+msgid "Total"
+msgstr "Total"
+
+#: olim/templates/labels.html:29
+msgid "Creator"
+msgstr "Criador"
+
+#: olim/templates/labels.html:32 olim/templates/users.html:15
+msgid "Actions"
+msgstr "Ações"
+
+#: olim/templates/labels.html:51
+msgid "Remove Label"
+msgstr "Remover Rótulo"
+
+#: olim/templates/labels.html:52
+msgid ""
+"Removing this label does not remove the labels made with it, if it is "
+"recreated the labels will be restored, for new labels create a new label "
+"with a new name."
+msgstr ""
+"A remoção deste rótulo não remove os rótulos feitos com ele, se ele "
+"for recriado, os rótulos serão restaurados, para novis rótulos, crie "
+"um novo rótulo com um novo nome."
+
+#: olim/templates/labels.html:58
+msgid "Download labeled data"
+msgstr "Baixar dados rotulados"
+
+#: olim/templates/labels.html:64
+msgid "Open queue of labeled patients"
+msgstr "Abrir fila de pacientes rotulados"
+
+#: olim/templates/labels.html:80
+msgid "Upload of Labelling File"
+msgstr "Upload de Arquivo de Rotulagem"
+
+#: olim/templates/labels.html:92
+msgid "Upload"
+msgstr "Enviar"
+
+#: olim/templates/login.html:11 olim/templates/users.html:13
+#: olim/templates/users.html:46
+msgid "Username"
+msgstr "Nome de Usuário"
+
+#: olim/templates/login.html:15
+msgid "Password"
+msgstr "Senha"
+
+#: olim/templates/login.html:18
+msgid "Sign In"
+msgstr "Entrar"
+
+#: olim/templates/queue.html:9
+msgid "Go to Queue"
+msgstr "Ir para Fila"
+
+#: olim/templates/queue.html:12
+msgid "Entry"
+msgstr "Entrada"
+
+#: olim/templates/queue.html:23
+msgid "Random Generate"
+msgstr "Geração Aleatória"
+
+#: olim/templates/queue.html:28
+msgid "Number of entries"
+msgstr "Número de entradas"
+
+#: olim/templates/queue.html:32 olim/templates/queue.html:54
+msgid "Generate queue"
+msgstr "Gerar fila"
+
+#: olim/templates/queue.html:44
+msgid "Generate by IDs"
+msgstr "Gerar por IDs"
+
+#: olim/templates/queue.html:49
+msgid "Separated by comma, spaces, semicolon or line break"
+msgstr "Separados por vírgula, espaço, ponto e vírgula ou quebra de linha"
+
+#: olim/templates/queue.html:50
+msgid "IDs by Queue"
+msgstr "IDs por Fila"
+
+#: olim/templates/queue.html:65
+msgid "Generated Queues"
+msgstr "Filas Geradas"
+
+#: olim/templates/queue.html:69
+msgid "Open queue"
+msgstr "Abrir fila"
+
+#: olim/templates/search.html:2
+msgid "Patient Search"
+msgstr "Busca de Paciente"
+
+#: olim/templates/search.html:9
+msgid "Inclusion of terms"
+msgstr "Inclusão de termos"
+
+#: olim/templates/search.html:17
+msgid "Exclusion of terms"
+msgstr "Exclusão de termos"
+
+#: olim/templates/search.html:26 olim/templates/search.html:27
+msgid "Number of Patients"
+msgstr "Número de Pacientes"
+
+#: olim/templates/search.html:32
+msgid "Generate queue only"
+msgstr "Gerar apenas fila"
+
+#: olim/templates/search.html:48
+msgid "Open Queue"
+msgstr "Abrir Fila"
+
+#: olim/templates/search.html:56
+msgid "Open"
+msgstr "Abrir"
+
+#: olim/templates/search.html:59
+msgid "Occurences: { occurences_count } - Score of Search: { search_score }"
+msgstr "Ocorrências: { occurences_count } - Pontuação da Busca: { search_score }"
+
+#: olim/templates/search.html:68
+msgid "No results for the search"
+msgstr "Nenhum resultado para a busca"
+
+#: olim/templates/search.html:87
+msgid "Add terms(type and press ENTER)"
+msgstr "Adicionar termos (digite e pressione ENTER)"
+
+#: olim/templates/search.html:88
+msgid "Add more terms (type and press ENTER)"
+msgstr "Adicionar mais termos (digite e pressione ENTER)"
+
+#: olim/templates/users.html:2 olim/templates/users.html:8
+msgid "User Management"
+msgstr "Gerenciamento de Usuários"
+
+#: olim/templates/users.html:12 olim/templates/users.html:68
+msgid "Name"
+msgstr "Nome"
+
+#: olim/templates/users.html:14 olim/templates/users.html:79
+msgid "Role"
+msgstr "Função"
+
+#: olim/templates/users.html:42 olim/templates/users.html:81
+msgid "Add User"
+msgstr "Adicionar Usuário"
+
+#: olim/templates/users.html:72
+msgid "Select a Role"
+msgstr "Selecione uma Função"
+
+#: olim/templates/entry_types/patient.html:8
+#: olim/templates/entry_types/patient.html:18
+msgid "Clear Date"
+msgstr "Limpar Data"
+
+#: olim/templates/entry_types/patient.html:13
+msgid "Start Date"
+msgstr "Data de Início"
+
+#: olim/templates/entry_types/patient.html:23
+msgid "End Date"
+msgstr "Data de Término"
+
+#: olim/templates/entry_types/patient.html:27
+msgid "Apply Dates"
+msgstr "Aplicar Datas"
+
+#: olim/templates/entry_types/patient.html:42
+msgid "Hide all above"
+msgstr "Ocultar tudo acima"
+
+#: olim/templates/entry_types/patient.html:46
+msgid "Hide all below"
+msgstr "Ocultar tudo abaixo"
+
+#: olim/templates/entry_types/patient.html:65
+msgid "Hide this"
+msgstr "Ocultar isso"
+
+#: olim/templates/entry_types/patient.html:70
+msgid "Hide all like this"
+msgstr "Ocultar todos iguais a isso"
+
+#: olim/templates/entry_types/patient.html:71
+msgid "This will hide all texts equal to"
+msgstr "Isso irá ocultar todos os textos iguais a"
+
+#: olim/templates/entry_types/patient.html:71
+msgid "Do you want to continue?"
+msgstr "Deseja continuar?"

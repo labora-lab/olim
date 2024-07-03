@@ -28,6 +28,7 @@ class User(CreationControl, db.Model):
     username: db.Mapped[str] = db.mapped_column(unique=True, nullable=False)
     password: db.Mapped[str] = db.mapped_column(nullable=False)
     role: db.Mapped[str] = db.mapped_column(nullable=False)
+    language: db.Mapped[str] = db.mapped_column(nullable=True)
 
 
 class LabelEntry(CreationControl, db.Model):
@@ -61,6 +62,7 @@ class Label(CreationControl, db.Model):
     # Columns
     id: db.Mapped[int] = db.mapped_column(primary_key=True)
     name: db.Mapped[str] = db.mapped_column(db.String, nullable=False)
+    al_key: db.Mapped[str] = db.mapped_column(nullable=True)
 
     # Relations
     entries: db.Mapped[List["LabelEntry"]] = db.relationship(back_populates="label")
@@ -75,12 +77,13 @@ def del_controled(obj, user_id):
         db.session.commit()
 
 
-def new_label(label, user_id):
+def new_label(label, user_id, al_id=None):
     label = Label(
         name=label,
         created_by=user_id,
         created=datetime.now(),
         is_deleted=False,
+        al_key=al_id,
     )
     db.session.add(label)
     db.session.commit()
@@ -214,6 +217,7 @@ def update_user_password(identification: int, new_password: str, by: str = "id")
     user = get_user(identification, by)
     user.password = generate_password_hash(new_password)
     db.session.commit()
+    return user
 
 
 def get_users():

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Pesquisa de pacientes{% endblock %}
+{% block title %}{{ _('Patient Search') }}{% endblock %}
 
 {% block content %}
 <div class="row">
     <form action="/search" method="GET" id="form">
         <div class="input-field col s12">
             <p class='tight-bottom' style="font-size: 24px;margin-top:0px;">
-                <i class="material-icons green-text">check</i> Inclusão de termos
+                <i class="material-icons green-text">check</i> {{ _('Inclusion of terms') }}
             </p>
             <div class="input-field tight-bottom" id="include">
                 <input style="width: 100% !important;">
@@ -14,7 +14,7 @@
         </div>
         <div class="input-field col s12">
             <p class='tight-bottom' style="font-size: 24px;margin-top:0px;">
-                <i class="material-icons red-text">close</i> Exclusao de termos
+                <i class="material-icons red-text">close</i> {{ _('Exclusion of terms') }}
             </p>
             <div class="input-field" id="exclude">
                 <input style="width: 100% !important;">
@@ -23,19 +23,19 @@
         </div>
         <div class="input-field col s12 m6">
             <input type="text" id="number" name="number" class="tooltipped" data-position="bottom"
-                data-tooltip="Número de pacientes" value="{{ number }}">
-            <label for="number">Número de pacientes <i class="material-icons left">inbox</i></label>
+                data-tooltip="{{ _('Number of Patients') }}" value="{{ number }}">
+            <label for="number">{{ _('Number of Patients') }} <i class="material-icons left">inbox</i></label>
         </div>
         <div class="input-field col s12 m6">
             <label>
                 <input type="checkbox" name="only-queue" />
-                <span>Somente gerar fila</span>
+                <span>{{ _('Generate queue only') }}</span>
             </label>
         </div>
         <div class="input-field col s12 center">
             <input type="hidden" name="include" id="include_field">
             <input type="hidden" name="exclude" id="exclude_field">
-            <button class="btn waves-effect waves-light btn-wide">Pesquisar
+            <button class="btn waves-effect waves-light btn-wide">{{ _('Search') }}
                 <i class="material-icons right">search</i>
             </button>
         </div>
@@ -45,7 +45,7 @@
 <div class="row">
     <div class="col s12">
         <a class="waves-effect waves-light btn btn-wide" href="./queue/{{queue_id}}">
-            <i class="material-icons right">send</i>Abrir fila
+            <i class="material-icons right">send</i>{{ _('Open Queue') }}
         </a>
     </div>
     {%if not only_queue%}
@@ -53,10 +53,12 @@
         <div class="card day">
             {% for entry in results %}
             <div class="card-content blue-grey white-text patient-header" style="display:block;">
-                <a href="/entry/{{entry['entry_id']}}" class="btn btn-float right" target="_blank">Abrir</a>
+                <a href="./queue/{{queue_id}}/{{loop.index}}" class="btn btn-float right" target="_blank">{{ _('Open')
+                    }}</a>
                 <p><b>{{ entry['entry_id'] }}</b>: {{ entry['description'] }}</p>
-                <span class="small-title">Ocorrências: {{entry['match_count']}} - Score de busca:
-                    {{entry['score']}}</span>
+                <span class="small-title">
+                    {{ _('Occurences: {} - Score of Search: {}').format(entry['match_count'], entry["score"])
+                    }}</span>
             </div>
             {% endfor %}
         </div>
@@ -64,7 +66,7 @@
     {%endif%}
 </div>
 {% else %}
-<h4 class="center">Sem resultados para a pesquisa.</h4>
+<h4 class="center">{{ _('No results for the search') }}</h4>
 {% endif %}
 
 {% endblock %}
@@ -83,8 +85,8 @@
         let options = {
             onChipAdd: () => update_search(id),
             onChipDelete: () => update_search(id),
-            placeholder: 'Adicionar termos (digite e precione ENTER)',
-            secondaryPlaceholder: 'Adicionar mais termos (digite e precione ENTER)',
+            placeholder: '{{ _('Add terms(type and press ENTER)') }}',
+            secondaryPlaceholder: '{{ _('Add more terms(type and press ENTER)') }}',
             data: data,
         }
         let instances = M.Chips.init(elems, options);
@@ -102,9 +104,9 @@
             update_search("exclude");
             return true
         });
-        init_field('include', JSON.parse('{{include | safe}}'));
-        init_field('exclude', JSON.parse('{{exclude | safe}}'));
-        $(".patient-body").highlight({{ highlight| safe}});
+        init_field('include', JSON.parse('{{ include | safe }}'));
+        init_field('exclude', JSON.parse('{{ exclude | safe }}'));
+        $(".patient-body").highlight({{ highlight | safe }});
     });
 </script>
 {% endblock %}

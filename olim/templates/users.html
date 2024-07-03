@@ -1,18 +1,18 @@
 {% extends "base.html" %}
-{% block title %}User Management{% endblock %}
+{% block title %}{{ _('User Management') }}{% endblock %}
 {% block content %}
 <div class="row">
     <div class="col {% if session.user.role == 'admin' %}s8{% else %}s12{% endif %}">
         <div class="card">
             <div class="card-content">
-                <span class="card-title">User Management</span>
+                <span class="card-title">{{ _('User Management') }}</span>
                 <table>
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Username</th>
-                            <th>Role</th>
-                            <th>Actions</th>
+                            <th>{{ _('Name') }}</th>
+                            <th>{{ _('Username') }}</th>
+                            <th>{{ _('Role') }}</th>
+                            <th>{{ _('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -23,8 +23,9 @@
                             <td>{{ user.role }}</td>
                             <td>
                                 <a href="{{ url_for('edit_password', user_id=user.id) }}"
-                                    class="btn waves-effect waves-light tooltipped" data-tooltip="Mudar senha"">
-                                    <i class=" material-icons">edit</i>
+                                    class="btn waves-effect waves-light tooltipped"
+                                    data-tooltip="{{ _('Change Password') }}">
+                                    <i class="material-icons">edit</i>
                                 </a>
                             </td>
                         </tr>
@@ -38,46 +39,46 @@
     <div class="col s4">
         <div class="card">
             <div class="card-content">
-                <span class="card-title">Add User</span>
+                <span class="card-title">{{ _('Add User') }}</span>
                 <form method="post" action="{{ url_for('users') }}">
                     <div class="input-field">
                         <input id="username" type="text" name="username" required>
-                        <label for="username">Username</label>
+                        <label for="username">{{ _('Username') }}</label>
                     </div>
                     <div id="new" class="input-field">
                         <input id="new_password" type="password" name="new_password" required>
-                        <label for="new_password">Nova Senha</label>
+                        <label for="new_password">{{ _('New Password') }}</label>
                     </div>
                     <div id="text" class="input-field hidden">
                         <input id="new_password_text" type="text" name="new_password_text">
-                        <label for="new_password_text">Nova Senha</label>
+                        <label for="new_password_text">{{ _('New Password') }}</label>
                     </div>
                     <div id="check" class="input-field ">
                         <input id="password_check" type="password" name="password_check" required>
-                        <label for="password_check">Confirmação da Senha</label>
+                        <label for="password_check">{{ _('Confirm Password') }}</label>
                     </div>
                     <div id="random">
                         <button class="btn btn-wide waves-effect waves-light" type="button"
                             onclick="generateRandomPassword()">
-                            Senha Aleatória<i class="material-icons right">loop</i>
+                            {{ _('Generate Random Password') }}<i class="material-icons right">loop</i>
                         </button>
                     </div>
                     <div class="input-field">
                         <input id="name" type="text" name="name">
-                        <label for="name">Name</label>
+                        <label for="name">{{ _('Name') }}</label>
                     </div>
                     <div class="input-field">
                         <select id="role" name="role" required>
-                            <option value="" disabled selected>Select a role</option>
+                            <option value="" disabled selected>{{ _('Select a Role') }}</option>
                             {% for role in roles %}
                             {% if role != 'guest'%}
                             <option value="{{ role }}">{{ role }}</option>
                             {% endif %}
                             {% endfor %}
                         </select>
-                        <label for="role">Role</label>
+                        <label for="role">{{ _('Role') }}</label>
                     </div>
-                    <button class="btn waves-effect waves-light" type="submit" name="action">Add User
+                    <button class="btn waves-effect waves-light" type="submit" name="action">{{ _('Add User') }}
                         <i class="material-icons right">person_add</i>
                     </button>
                 </form>
