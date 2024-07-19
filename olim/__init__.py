@@ -65,6 +65,7 @@ from . import database
 from . import auth
 from . import cli
 from . import active_learning
+from . import upload_data
 
 from .functions import have_hidden
 
