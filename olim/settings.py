@@ -91,6 +91,7 @@ PERMISSIONS = {
         "active_learning",
         "create_al",
         "catch_al",
+        "upload_data",
     ],
     "user": [
         "static",

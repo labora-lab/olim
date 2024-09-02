@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Upload Data') }}{% endblock %}
+
+{% block content %}
+<div class="col s12">
+    <h4 class="center">{{ _('Upload Data') }}</h4>
+</div>
+<form action="/upload-data" method="post" enctype="multipart/form-data">
+    <h5 class="left-align">{{ _('Select Data Format') }}</h5>
+
+    <div class="collection">
+        <a href="#!" class="collection-item upload-option" data-value="simple_text">
+            <span class="title">{{ _('Simple Format') }}</span>
+            <p>{{ _('Use this option if your CSV file does not meet the patient format. You need to specify which columns are equivalent to') }} <strong>text</strong> {{ _('and') }} <strong>text_id</strong>. 
+            {{ _('Make sure to provide the correct column names during the upload.') }}</p>
+        </a>
+        <a href="#!" class="collection-item upload-option" data-value="patient_sheet">
+            <span class="title">{{ _('Patient Format') }}</span>
+            <p>{{ _('Use this option if your CSV file has the following columns:') }} <strong>patient_id, text_id, visitation_id, text_type, text, date</strong>. 
+            {{ _('Make sure that the columns are exactly as mentioned to ensure correct data upload.') }}</p>
+        </a>
+    </div>
+</form>
+<div class="col card s12 tight-bottom">
+    <div class="card-content row tight-bottom">
+        <form action="./upload-data" method="post" enctype="multipart/form-data">
+            <div class="col s12">
+                <h5>{{ _('File Upload') }}</h5>
+            </div>
+            <input type="hidden" name="upload_type" id="upload_type" value="simple_text">
+            <div id="additional-fields" class="input-field" style="display: block;">
+                <div class="input-field col s12">
+                    <input id="text_id" name="text_id" type="text">
+                    <label for="text_id">{{ _('Column for Text ID') }}</label>
+                </div>
+                <div class="input-field col s12">
+                    <input id="text" name="text" type="text">
+                    <label for="text">{{ _('Column for Text') }}</label>
+                </div>
+            </div>
+            
+            <div class="file-field input-field col l10 m8 s12">
+                <div class="btn">
+                    <span><i class="material-icons">folder_open</i></span>
+                    <input type="file" name="file">
+                </div>
+                <div class="file-path-wrapper">
+                    <input class="file-path validate" type="text" name="filename">
+                </div>
+            </div>
+            <div class="input-field col l2 m4 s12">
+                <button class="btn waves-effect waves-light btn-wide" type="submit">{{ _('Upload') }}
+                    <i class="material-icons right">file_upload</i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        M.AutoInit();
+        const options = document.querySelectorAll('.upload-option');
+        const uploadTypeInput = document.getElementById('upload_type');
+        const additionalFields = document.getElementById('additional-fields');
+
+        options.forEach(option => {
+            option.addEventListener('click', function() {
+                options.forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                uploadTypeInput.value = option.getAttribute('data-value');
+
+                if (uploadTypeInput.value === 'simple_text') {
+                    additionalFields.style.display = 'block';
+                } else {
+                    additionalFields.style.display = 'none';
+                }
+            });
+        });
+
+        // Set default selection
+        document.querySelector('.upload-option[data-value="simple_text"]').classList.add('active');
+    });
+</script>
+{% endblock %}
