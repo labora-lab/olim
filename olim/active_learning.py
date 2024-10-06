@@ -42,8 +42,7 @@ def create_al():
         user_id=session["user_id"],
         label=label,
     )
-    res = requests.post(f"{settings.BACKEND_URL}/al/new-label", data).json()
-    print(res)
+    res = requests.put(f"{settings.BACKEND_URL}/al/new-label", data).json()
     label = new_label(label, session["user_id"], al_id=res["label_id"])
     flash(
         _("Active learning for  {label_name} sucessfully created").format(
@@ -68,12 +67,12 @@ def catch_al(label_id):
             value=request.form["value"],
         )
         value_str = settings.LABELS[-1 - int(request.form["value"])][0]
-        res = requests.post(f"{settings.BACKEND_URL}/al/add-value", data_req).json()
-        add_entry_label(
-            label_id, request.form["text_id"], session["user_id"], value_str
-        )
+        res = requests.put(f"{settings.BACKEND_URL}/al/add-value", data_req).json()
         try:
             if res["text_id"] == data_req["text_id"]:
+                add_entry_label(
+                    label_id, request.form["text_id"], session["user_id"], value_str
+                )
                 flash(
                     _(
                         f"Added value \"{value_str}\" for entry {request.form['text_id']}."
@@ -90,7 +89,7 @@ def catch_al(label_id):
         except KeyError:
             flash(
                 _(
-                    f"Error adding value \"{value_str}\" for entry {request.form['text_id']}."
+                    f"Error adding value \"{value_str}\" for entry {request.form['text_id']}. Got key error."
                 ).format(label_name=label.name),
                 category="error",
             )
@@ -99,7 +98,7 @@ def catch_al(label_id):
         user_id=session["user_id"],
         label_id=label.al_key,
     )
-    res = requests.post(f"{settings.BACKEND_URL}/al/req-entry", data_req).json()
+    res = requests.put(f"{settings.BACKEND_URL}/al/req-entry", data_req).json()
     data = {
         "label": label,
         "highlight": get_highlights(),

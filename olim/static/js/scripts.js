@@ -253,7 +253,12 @@ function unhide(text_id, entry_id) {
 
 // Calls the backend to add a yes label to a patient
 function add_entry_label(entry_id, label_id, value) {
-    run_command('add-label', ['entry_id=' + entry_id, 'label_id=' + label_id, 'value=' + value, 'callback=mark_label("' + label_id + '", "' + value + '");']);
+    run_command('add-label', ['entry_id=' + entry_id, 'label_id=' + label_id, 'value=' + value, 'callback=mark_label("' + label_id + '", "' + value + '"); ']);
+    // reload current page: 
+    // TODO: Find a better way to update the page
+    setTimeout(function(){
+        location.reload();
+    }, 500);
 }
 
 // Calls the backend to remove an entry from hidden index
