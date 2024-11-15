@@ -41,6 +41,7 @@ def create_al():
         app_key=settings.BACKEND_KEY,
         user_id=session["user_id"],
         label=label,
+        values=[l for l, *_ in settings.LABELS]
     )
     res = requests.post(f"{settings.BACKEND_URL}/al/new-label", data).json()
     print(res)
