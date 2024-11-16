@@ -5,6 +5,7 @@ from flask import render_template, redirect, request, session, flash
 from flask_babel import _
 import requests
 from . import settings
+import json
 
 
 @app.route("/al", methods=["GET"])
@@ -41,8 +42,10 @@ def create_al():
         app_key=settings.BACKEND_KEY,
         user_id=session["user_id"],
         label=label,
+        values=[l for l, *_ in settings.LABELS]
     )
-    res = requests.put(f"{settings.BACKEND_URL}/al/new-label", data).json()
+    # print(data["values"])
+    res = requests.put(f"{settings.BACKEND_URL}/al/new-label", json=json.dumps(data)).json()
     label = new_label(label, session["user_id"], al_id=res["label_id"])
     flash(
         _("Active learning for  {label_name} sucessfully created").format(
@@ -106,3 +109,25 @@ def catch_al(label_id):
     }
     data = render_entry(res["text_id"], data)
     return render_template("al-entry.html", **data)
+
+
+@app.route("/al/sync/<int:label_id>", methods=["GET", "POST"])
+def sync_label(label_id):
+    label = get_label(label_id)
+    data = {
+        "app_key": settings.BACKEND_KEY,
+        "user_id": session["user_id"],
+        "values": [l for l, *_ in settings.LABELS],
+        "labels": {"label_name": label.name,
+                    "label_id": label.al_key,
+                    "entries": {entry.entry_id: entry.value
+                                for entry in label.entries}},
+    }
+    res = requests.post(f"{settings.BACKEND_URL}/al/sync", json=data).json()
+    
+    # TODO: the idea here is to receive a al_key if the label was created in the backend
+    # if res.get("success"):
+    #     flash(_("Labels successfully synced."), category="success")
+    # else:
+    #     flash(_("Error syncing labels."), category="error")
+    return redirect("/al")
