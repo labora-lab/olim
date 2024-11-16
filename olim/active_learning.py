@@ -111,23 +111,29 @@ def catch_al(label_id):
     return render_template("al-entry.html", **data)
 
 
-@app.route("/al/sync/<int:label_id>", methods=["GET", "POST"])
+@app.route("/al/<int:label_id>/sync", methods=["GET", "POST"])
 def sync_label(label_id):
     label = get_label(label_id)
     data = {
         "app_key": settings.BACKEND_KEY,
         "user_id": session["user_id"],
         "values": [l for l, *_ in settings.LABELS],
-        "labels": {"label_name": label.name,
+        "label": {"label_name": label.name,
                     "label_id": label.al_key,
                     "entries": {entry.entry_id: entry.value
                                 for entry in label.entries}},
     }
-    res = requests.post(f"{settings.BACKEND_URL}/al/sync", json=data).json()
     
-    # TODO: the idea here is to receive a al_key if the label was created in the backend
-    # if res.get("success"):
-    #     flash(_("Labels successfully synced."), category="success")
-    # else:
-    #     flash(_("Error syncing labels."), category="error")
-    return redirect("/al")
+    res = requests.put(f"{settings.BACKEND_URL}/al/sync-label", json=json.dumps(data))
+    al_key = res.json()["al_key"]
+    
+    # TODO update label al_key
+    print(al_key)
+    
+    
+    if res.status_code == 200:
+        flash(_("Labels successfully synced."), category="success")
+    else:
+        flash(_("Error syncing labels."), category="error")
+    
+    return redirect("/labels")
