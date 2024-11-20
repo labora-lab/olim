@@ -12,6 +12,8 @@ from flask_babel import _
 import pandas as pd
 import time
 import json
+import requests
+from . import settings
 
 
 @app.route("/labels", methods=["GET"])
@@ -54,6 +56,23 @@ def create_label():
 
 @app.route("/labels/<int:label_id>/delete", methods=["GET"])
 def delete_label(label_id):
+    # TODO: Delete label from active
+    label = get_label(label_id)
+    if label.al_key:
+        # Delete label from active
+        data = dict(
+            app_key=settings.BACKEND_KEY,
+            user_id=session["user_id"],
+            label_id=label.al_key,
+        )
+        res = requests.delete(f"{settings.BACKEND_URL}/al/delete-label", json=json.dumps(data)).json()
+        
+        if res["label_id"] != label.al_key:
+            flash(
+                _("Error deleting label {label_name} from active").format(label_name=label.name),
+                category="error",
+            )
+            return redirect("/labels")
     label = del_label(label_id, session["user_id"])
     flash(
         _("Label {label_name} sucessfully deleted").format(label_name=label.name),

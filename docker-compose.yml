@@ -1,4 +1,4 @@
-version: '3.4'
+version: '3.5'
 
 services:
   es:
@@ -14,6 +14,8 @@ services:
       - xpack.security.enrollment.enabled=false
     mem_limit: 4G
     restart: unless-stopped
+    networks:
+      - main-net
 
   olim:
     image: olim
@@ -25,11 +27,19 @@ services:
     environment:
       - ES_SERVER=http://olim_es:9200
       - DEBUG=true
-      - BACKEND_URL=
-      - BACKEND_KEY=
+      - BACKEND_URL=http://olim-backend:42010
+      - BACKEND_KEY=zACPf77y9fbeWMnLh01ypF9DUhZODCLO
       - LABELS=LABELS_TYPES.YES_NO_IDK
+    volumes:
+      - ./:/app
     restart: unless-stopped
+    networks:
+      - main-net
 
 volumes:
   data:
     driver: local
+
+networks:
+  main-net:
+    driver: bridge

@@ -92,6 +92,7 @@ PERMISSIONS = {
         "create_al",
         "catch_al",
         "upload_data",
+        "sync_label",
     ],
     "user": [
         "static",

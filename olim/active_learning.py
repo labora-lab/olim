@@ -5,6 +5,7 @@ from flask import render_template, redirect, request, session, flash
 from flask_babel import _
 import requests
 from . import settings
+import json
 
 
 @app.route("/al", methods=["GET"])
@@ -43,8 +44,8 @@ def create_al():
         label=label,
         values=[l for l, *_ in settings.LABELS]
     )
-    res = requests.post(f"{settings.BACKEND_URL}/al/new-label", data).json()
-    print(res)
+    # print(data["values"])
+    res = requests.put(f"{settings.BACKEND_URL}/al/new-label", json=json.dumps(data)).json()
     label = new_label(label, session["user_id"], al_id=res["label_id"])
     flash(
         _("Active learning for  {label_name} sucessfully created").format(
@@ -69,12 +70,12 @@ def catch_al(label_id):
             value=request.form["value"],
         )
         value_str = settings.LABELS[-1 - int(request.form["value"])][0]
-        res = requests.post(f"{settings.BACKEND_URL}/al/add-value", data_req).json()
-        add_entry_label(
-            label_id, request.form["text_id"], session["user_id"], value_str
-        )
+        res = requests.put(f"{settings.BACKEND_URL}/al/add-value", data_req).json()
         try:
             if res["text_id"] == data_req["text_id"]:
+                add_entry_label(
+                    label_id, request.form["text_id"], session["user_id"], value_str
+                )
                 flash(
                     _(
                         f"Added value \"{value_str}\" for entry {request.form['text_id']}."
@@ -91,7 +92,7 @@ def catch_al(label_id):
         except KeyError:
             flash(
                 _(
-                    f"Error adding value \"{value_str}\" for entry {request.form['text_id']}."
+                    f"Error adding value \"{value_str}\" for entry {request.form['text_id']}. Got key error."
                 ).format(label_name=label.name),
                 category="error",
             )
@@ -100,7 +101,7 @@ def catch_al(label_id):
         user_id=session["user_id"],
         label_id=label.al_key,
     )
-    res = requests.post(f"{settings.BACKEND_URL}/al/req-entry", data_req).json()
+    res = requests.put(f"{settings.BACKEND_URL}/al/req-entry", data_req).json()
     data = {
         "label": label,
         "highlight": get_highlights(),
@@ -108,3 +109,31 @@ def catch_al(label_id):
     }
     data = render_entry(res["text_id"], data)
     return render_template("al-entry.html", **data)
+
+
+@app.route("/al/<int:label_id>/sync", methods=["GET", "POST"])
+def sync_label(label_id):
+    label = get_label(label_id)
+    data = {
+        "app_key": settings.BACKEND_KEY,
+        "user_id": session["user_id"],
+        "values": [l for l, *_ in settings.LABELS],
+        "label": {"label_name": label.name,
+                    "label_id": label.al_key,
+                    "entries": {entry.entry_id: entry.value
+                                for entry in label.entries}},
+    }
+    
+    res = requests.put(f"{settings.BACKEND_URL}/al/sync-label", json=json.dumps(data))
+    al_key = res.json()["al_key"]
+    
+    # TODO update label al_key
+    print(al_key)
+    
+    
+    if res.status_code == 200:
+        flash(_("Labels successfully synced."), category="success")
+    else:
+        flash(_("Error syncing labels."), category="error")
+    
+    return redirect("/labels")
