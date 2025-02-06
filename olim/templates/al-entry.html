@@ -19,7 +19,7 @@
                         <form id="label_form_{{loop.index}}" action="/al/{{label.id}}" style="display:inline;"
                             method="post">
                             <input type="hidden" name="value" value="{{loop.index-1}}" />
-                            <input type="hidden" name="text_id" value="{{entry_id}}" />
+                            <input type="hidden" name="entry_id" value="{{entry_id}}" />
                             {% if type == 'text'%}
                             <a type="submit" class="tooltipped right {{color}}-text labels-text-icon cursor"
                                 data-position="bottom"

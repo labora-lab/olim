@@ -2,7 +2,7 @@ from . import app
 from .database import get_user, insert_user, get_users, update_user_password
 from flask import session, flash, abort, request, url_for, redirect, render_template
 from werkzeug.security import generate_password_hash, check_password_hash
-from .settings import PERMISSIONS, NEED_BACKEND, BACKEND_KEY, BACKEND_URL
+from .settings import PERMISSIONS, NEED_BACKEND, LEARNER_KEY, LEARNER_URL
 from flask_babel import _
 
 
@@ -103,7 +103,7 @@ def check_permission():
 @app.before_request
 def check_backend():
     if request.endpoint in NEED_BACKEND and (
-        BACKEND_KEY is None or BACKEND_URL is None
+        LEARNER_KEY is None or LEARNER_URL is None
     ):
         flash(
             _(

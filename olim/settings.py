@@ -21,8 +21,8 @@ SECRET_KEY = os.getenv("SECRET_KEY", "6DUUwdKqwkaXPvjqCS4y")
 DB_PATH = os.path.join(os.getcwd(), "database.sqlite")
 """Database Sqlite3 path"""
 
-BACKEND_URL = os.getenv("BACKEND_URL", None)
-BACKEND_KEY = os.getenv("BACKEND_KEY", None)
+LEARNER_URL = os.getenv("LEARNER_URL", None)
+LEARNER_KEY = os.getenv("LEARNER_KEY", None)
 
 
 class LABELS_TYPES:

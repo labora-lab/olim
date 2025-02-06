@@ -1,5 +1,3 @@
-version: '3.5'
-
 services:
   es:
     container_name: olim_es
@@ -15,7 +13,7 @@ services:
     mem_limit: 4G
     restart: unless-stopped
     networks:
-      - main-net
+      - olim-es
 
   olim:
     image: olim
@@ -27,19 +25,24 @@ services:
     environment:
       - ES_SERVER=http://olim_es:9200
       - DEBUG=true
-      - BACKEND_URL=http://olim-backend:42010
-      - BACKEND_KEY=zACPf77y9fbeWMnLh01ypF9DUhZODCLO
-      - LABELS=LABELS_TYPES.YES_NO_IDK
-    volumes:
-      - ./:/app
+      - LEARNER_URL=http://olim-learner:42010
+      # Run `docker compose exec olim-learner poetry run flask --app api app-keys new data/sample_data.csv text_id text`
+      # on the learner directory to upload data to it and get the key
+      - LEARNER_KEY=
+      - LABELS=LABELS_TYPES.YES_NO
     restart: unless-stopped
     networks:
-      - main-net
+      - olim-es
+      # Uncoment this network if you are running the learner on the same machine on Docker
+      # - olim-learner_main
 
 volumes:
   data:
     driver: local
 
 networks:
-  main-net:
+  olim-es:
     driver: bridge
+  # Uncoment this network if you are running the learner on the same machine on Docker
+  # olim-learner_main:
+  #   external: true
