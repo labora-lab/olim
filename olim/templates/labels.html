@@ -71,6 +71,13 @@
                             data-tooltip="{{ _('Open queue of labeled patients') }}">
                             <i class="material-icons">send</i>
                         </a>
+                        {%if label.al_key%}
+                        <a class="btn waves-ligh tooltipped data-position bottom" href='./al/{{label.id}}'
+                            data-tooltip="{{ _('Open active learling queue') }}">
+                            <i class="material-icons right">send</i>
+                            {{_('Enter')}}
+                        </a>
+                        {%endif%}
                         {%endif%}
                     </td>
                     {%endif%}
