@@ -16,6 +16,7 @@ import requests
 from . import settings
 from icecream import ic
 
+@app.route("/", methods=["GET"])
 @app.route("/labels", methods=["GET"])
 def labels():
     labels_values = {label.id: {} for label in get_labels()}
@@ -132,6 +133,15 @@ def catch_queue(label_id):
     queue_hash = store_queue(queue)
     # Redirect to queue
     return redirect(f"/queue/{queue_hash}")
+
+
+@app.route("/labels/<int:label_id>/configurations", methods=["GET"])
+def label_configurations(label_id):
+    label = get_label(label_id)
+    if not label:
+        flash(_("Label não encontrada."), category="error")
+        return redirect("/labels")
+    return render_template("label-configurations.html", label=label)
 
 
 @app.route("/label-upload", methods=["POST"])

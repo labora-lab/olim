@@ -17,7 +17,6 @@ def get_terms(field):
     return value, terms, phrases
 
 
-@app.route("/", methods=["GET"])
 @app.route("/search", methods=["GET"])
 def search():
     include, must_terms, must_phrases = get_terms("include")

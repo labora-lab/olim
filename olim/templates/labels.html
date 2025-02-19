@@ -43,44 +43,23 @@
                     {%endfor%}
                     <td style="text-align: center;">{{ values[label.id]["Total"] }}</td>
                     <td style="text-align: center;">{{ label.creator.name }}</td>
-                    {%if has_permition('delete_label') or has_permition('extract_labels') or
+                    {% if has_permition('delete_label') or has_permition('extract_labels') or
                     has_permition('catch_queue') or
-                    has_permition('sync_label') or not label.al_key%}
-                    <td style="text-align: center; width:20%;">
-                        {%if has_permition('delete_label')%}
-                        <a class="btn waves-ligh tooltipped data-position bottom red darken-4"
-                            data-tooltip="{{ _('Remove Label') }}"
-                            onclick="show_warnning('{{ _('Removing this label does not remove the labels made with it, if it is recreated the labels will be restored, for new labels create a new label with a new name.') }}','delete_label(\'{{label.id}}\');');">
-                            <i class="material-icons">remove_circle_outline</i>
-                        </a>
-                        {%endif%}
-                        {%if has_permition('sync_label')%}
-                        <a class="btn waves-ligh tooltipped data-position bottom" href='../al/{{label.id}}/sync'
-                            data-tooltip="{{ _('Synchronize label') }}">
-                            <i class="material-icons">sync</i>
-                        </a>
-                        {%endif%}
-                        {%if has_permition('extract_labels')%}
-                        <a class="btn waves-ligh tooltipped data-position bottom" href='./labels/{{label.id}}/csv'
-                            data-tooltip="{{ _('Download labeled data') }}">
-                            <i class="material-icons">file_download</i>
-                        </a>
-                        {%endif%}
-                        {%if has_permition('catch_queue')%}
-                        <a class="btn waves-ligh tooltipped data-position bottom" href='./labels/{{label.id}}/queue'
-                            data-tooltip="{{ _('Open queue of labeled patients') }}">
-                            <i class="material-icons">send</i>
-                        </a>
-                        {%if label.al_key%}
-                        <a class="btn waves-ligh tooltipped data-position bottom" href='./al/{{label.id}}'
-                            data-tooltip="{{ _('Open active learling queue') }}">
-                            <i class="material-icons right">send</i>
-                            {{_('Enter')}}
-                        </a>
-                        {%endif%}
-                        {%endif%}
-                    </td>
-                    {%endif%}
+                    has_permition('sync_label') or not label.al_key %}
+              <td style="text-align: center; width:20%;">
+                {% if has_permition('label_configurations') %}
+                  <a class="btn waves-effect waves-light tooltipped" href="/labels/{{ label.id }}/configurations" data-tooltip="{{ _('Configurations') }}">
+                      <i class="material-icons">settings</i> {{ _('Config') }}
+                  </a>
+                  {% endif %}
+                  {% if label.al_key %}
+                  <a class="btn waves-ligh tooltipped data-position bottom" href="./al/{{ label.id }}" data-tooltip="{{ _('Open active learling queue') }}">
+                      <i class="material-icons right">send</i>
+                      {{ _('Enter') }}
+                  </a>
+                  {% endif %}
+              </td>
+              {% endif %}
                 </tr>
                 {% endfor %}
             </tbody>
