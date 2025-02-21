@@ -8,6 +8,23 @@ from . import settings
 from . import db
 import json
 from icecream import ic
+from time import sleep
+
+
+def new_al(label):
+    data = dict(
+        app_key=settings.LEARNER_KEY,
+        user_id=session["user_id"],
+        label=label.name,
+        values=[l for l, *_ in settings.LABELS],
+    )
+    res = requests.put(
+        f"{settings.LEARNER_URL}/al/new-label", json=json.dumps(data)
+    ).json()
+
+    print(res["label_id"])
+    label.al_key = res["label_id"]
+    db.session.commit()
 
 
 @app.route("/al", methods=["GET"])
@@ -39,17 +56,9 @@ def active_learning():
 
 @app.route("/al/new", methods=["POST"])
 def create_al():
-    label = request.form.get("label")
-    data = dict(
-        app_key=settings.LEARNER_KEY,
-        user_id=session["user_id"],
-        label=label,
-        values=[l for l, *_ in settings.LABELS]
-    )
-    # print(data["values"])
-    res = requests.put(f"{settings.LEARNER_URL}/al/new-label", json=json.dumps(data)).json()
-    ic(res)
-    label = new_label(label, session["user_id"], al_id=res["label_id"])
+    label = new_label(request.form.get("label"), session["user_id"])
+    new_al(label)
+
     flash(
         _("Active learning for  {label_name} sucessfully created").format(
             label_name=label.name
@@ -111,6 +120,7 @@ def catch_al(label_id):
         "label": label,
         "highlight": get_highlights(),
         "valid_entry": True,
+        "messages": res["messages"],
     }
     data = render_entry(res["entry_id"], data)
     return render_template("al-entry.html", **data)
@@ -119,17 +129,22 @@ def catch_al(label_id):
 @app.route("/al/<int:label_id>/sync", methods=["GET", "POST"])
 def sync_label(label_id):
     label = get_label(label_id)
+    if not label.al_key:
+        new_al(label)
+        sleep(5.0)
     data = {
         "app_key": settings.LEARNER_KEY,
         "user_id": session["user_id"],
         "values": [l for l, *_ in settings.LABELS],
-        "label": {"label_name": label.name,
-                    "label_id": label.al_key,
-                    "entries": {entry.entry_id: entry.value
-                                for entry in label.entries}},
+        "label": {
+            "label_name": label.name,
+            "label_id": label.al_key,
+            "entries": {entry.entry_id: entry.value for entry in label.entries},
+        },
     }
 
     res = requests.put(f"{settings.LEARNER_URL}/al/sync-label", json=json.dumps(data))
+    ic(res.json())
     al_key = res.json()["al_key"]
 
     # TODO update label al_key
