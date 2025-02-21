@@ -61,6 +61,7 @@ def search():
     highlight = must_terms + must_phrases
     if len(data) > 0:
         df_results = pd.DataFrame(data)
+        df_results = df_results[df_results["match_count"] > 0]
         df_results = df_results.sort_values(
             by="score", ascending=False, ignore_index=True
         ).iloc[:number]
