@@ -46,14 +46,14 @@
                     {% if has_permition('delete_label') or has_permition('extract_labels') or
                     has_permition('catch_queue') or
                     has_permition('sync_label') or not label.al_key %}
-              <td style="text-align: center; width:20%;">
+              <td style="text-align: center; width:25%;">
                 {% if has_permition('label_configurations') %}
-                  <a class="btn waves-effect waves-light tooltipped" href="/labels/{{ label.id }}/configurations" data-tooltip="{{ _('Configurations') }}">
-                      <i class="material-icons">settings</i> {{ _('Config') }}
+                  <a class="btn waves-effect waves-light" href="/labels/{{ label.id }}/configurations" data-tooltip="{{ _('Configurations') }}">
+                      <i class="material-icons">settings</i>
                   </a>
                   {% endif %}
                   {% if label.al_key %}
-                  <a class="btn waves-ligh tooltipped data-position bottom" href="./al/{{ label.id }}" data-tooltip="{{ _('Open active learling queue') }}">
+                  <a class="btn waves-effect waves-light tooltipped" href="./al/{{ label.id }}" data-tooltip="{{ _('Open active learling queue') }}">
                       <i class="material-icons right">send</i>
                       {{ _('Enter') }}
                   </a>
