@@ -19,18 +19,18 @@
 <body>
     <header>
         <ul id="slide-out" class="sidenav">
+            {% if has_permition('labels') %}
+            <li><a href="{{ url_for('labels') }}">{{ _('Homepage') }}</a></li>
+            {% endif %}
             {% if has_permition('search') %}
             <li><a href="{{ url_for('search') }}">{{ _('Search') }}</a></li>
             {% endif %}
             {% if has_permition('entry') %}
             <li><a href="{{ url_for('entry') }}">{{ _('Open Entries') }}</a></li>
             {% endif %}
-            {% if has_permition('labels') %}
-            <li><a href="{{ url_for('labels') }}">{{ _('Labels') }}</a></li>
-            {% endif %}
-            {% if has_permition('active_learning') and has_backend%}
+            {# {% if has_permition('active_learning') and has_backend%}
             <li><a href="{{ url_for('active_learning') }}">{{ _('Active Learning') }}</a></li>
-            {% endif %}
+            {% endif %} #}
             {% if has_permition('new_queue') %}
             <li><a href="{{ url_for('new_queue') }}">{{ _('Queues') }}</a></li>
             {% endif %}

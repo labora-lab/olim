@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Label Configurations') }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col s12">
+            <h4 class="center-align">{{ _('Label Configurations') }} - Label Id: {{ label.id }}</h4>
+        </div>
+    </div>
+    <div class="card hoverable">
+        <div class="card-content">
+            <span class="card-title">Name: {{ label.name }}</span>
+            <div class="row">
+                <div class="col s12 m6">
+                    <p><strong>{{ _('Creator') }}:</strong> {{ label.creator.name }}</p>
+                    <p><strong>{{ _('Username') }}:</strong> {{ label.creator.username }}</p>
+                </div>
+                <div class="col s12 m6">
+                    <p><strong>{{ _('AL Key') }}:</strong> {{ label.al_key if label.al_key else _('Not Set') }}</p>
+                    <p><strong>{{ _('Created At') }}:</strong> {{ label.created.strftime('%Y-%m-%d %H:%M:%S') if label.created else '' }}</p>
+                </div>
+                <div class="col s12">
+                    <p><strong>{{ _('Total Labeled Entries') }}:</strong> {{ label.entries|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-action">
+            <div class="col s12 tight-bottom">
+            <a href="javascript:void(0);" onclick="show_warnning('{{ _('Removing this label does not remove the labels made with it. If it is recreated, the labels will be restored. For new labels, create a new label with a new name.') }}','delete_label(\'{{ label.id }}\');');" class="btn-flat waves-effect red-text">
+                <i class="material-icons left">remove_circle_outline</i>
+                {{ _('Remove Label') }}
+            </a>
+            {%if has_permition('sync_label')%}
+            <a href="../../al/{{ label.id }}/sync" class="btn-flat waves-effect blue-text">
+                <i class="material-icons left">sync</i>
+                {{ _('Synchronize Label') }}
+            </a>
+            {% endif %}
+            {%if has_permition('extract_labels')%}
+            <a href="./csv" class="btn-flat waves-effect green-text">
+                <i class="material-icons left">file_download</i>
+                {{ _('Download Labeled Data') }}
+            </a>
+            {% endif %}
+            {%if has_permition('catch_queue')%}
+            <a href="./queue" class="btn-flat waves-effect orange-text">
+                <i class="material-icons left">send</i>{{ _('Open Queue') }}
+            </a>
+            {% endif %}
+        </div>
+        </div>
+    </div>
+    <div class="row center-align">
+        <a class="btn waves-effect waves-light" href="../..">{{ _('Back') }}</a>
+    </div>
+</div>
+{% endblock %}
