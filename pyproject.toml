@@ -1,0 +1,22 @@
+[project]
+name = "olim"
+version = "0.1.0"
+description = "A simple labelling interface aimed to be used by personal without data science specific knowledge. Currently OLIM supports the labelling of patients from medical texts relative to that patient. In future versions we expect to expand the possibilities of the data shape."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "click==8.1.3",
+    "elasticsearch==7.17.9",
+    "flask==2.2.3",
+    "flask-babel==4.0.0",
+    "flask-migrate>=4.1.0",
+    "flask-session==0.5.0",
+    "flask-sqlalchemy==3.0.3",
+    "gunicorn==21.2.0",
+    "icecream>=2.1.4",
+    "numpy==1.24.2",
+    "pandas==2.0.2",
+    "requests==2.31.0",
+    "tqdm==4.65.0",
+    "werkzeug==2.2.3",
+]
