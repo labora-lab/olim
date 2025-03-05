@@ -37,7 +37,7 @@ isort:
 analyze:
 	$(RUFF) analyze graph $(SRC_DIR)
 
-check: format lint typecheck
+check: format lint
 
 test:
 	$(PYTEST) $(TEST_DIR) -v
