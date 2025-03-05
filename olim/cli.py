@@ -1,32 +1,26 @@
-from . import app, db
-from .database import (
-    get_labels,
-    get_users,
-    get_user,
-    get_entry,
-    init_db,
-    update_user_password,
-)
-from .functions import label_upload
-import click
 import sys
-import pandas as pd
 from getpass import getpass
-from icecream import ic
+
+import click
+import pandas as pd
+
+from . import app, db
+from .database import get_entry, get_labels, get_user, get_users, init_db, update_user_password
+from .functions import label_upload
 
 
 @app.cli.command("init-db", help="Inializes database and create Administrator user.")
-def init_db_cli():
+def init_db_cli() -> None:
     init_db()
 
 
 @app.cli.group("labels", help="Labels related commands.")
-def labels():
+def labels() -> None:
     pass
 
 
 @click.command("list", help="Print list of active labels.")
-def labels_ls():
+def labels_ls() -> None:
     for label in get_labels():
         print(label.name, label.created, label.creator.username)
 
@@ -39,10 +33,13 @@ def labels_ls():
 )
 @click.argument("csv_file")
 @click.argument("username")
-def up_labels(csv_file, username):
+def up_labels(csv_file: str, username: str) -> None:
     print("Loading labels values from CSV file...")
     df = pd.read_csv(csv_file)
     user = get_user(username, "username")
+    if not user:
+        print(f"Error: User {username} not found!")
+        sys.exit(1)
 
     print(f"Uploading labels values as {user.name}...")
     label_upload(df, user.id)
@@ -53,12 +50,12 @@ labels.add_command(labels_ls)
 
 
 @app.cli.group("users", help="Users related commands.")
-def users():
+def users() -> None:
     pass
 
 
 @click.command("list", help="Print list of active users.")
-def users_ls():
+def users_ls() -> None:
     for user in get_users():
         print(user.id, user.username)
 
@@ -68,7 +65,7 @@ def users_ls():
     help="Change user password.",
 )
 @click.argument("username")
-def change_passwd(username):
+def change_passwd(username: str) -> None:
     user = get_user(username, by="username")
     if user:
         passwd = getpass("New password:")
@@ -88,7 +85,7 @@ users.add_command(change_passwd)
 
 
 @app.cli.group("upload", help="Data upload related commands.")
-def upload():
+def upload() -> None:
     # check if db is initialized
     try:
         get_entry(1)

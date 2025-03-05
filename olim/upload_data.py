@@ -1,23 +1,24 @@
 import os
-import click
 import tempfile
-from flask import request, render_template, redirect, flash
+
+import click
+from flask import flash, redirect, render_template, request
 from flask_babel import _
 
 from . import app
-from .entry_types.single_text import up_single_text
 from .entry_types.patient import up_patients
+from .entry_types.single_text import up_single_text
 
 
 @app.route("/upload-data", methods=["GET", "POST"])
-def upload_data():
+def upload_data() -> ...:
     if request.method == "POST":
         upload_type = request.form.get("upload_type")
         file = request.files.get("file")
         text_id = request.form.get("text_id")
         text = request.form.get("text")
 
-        if not file:
+        if not file or not file.filename:
             flash(_("No file selected", category="error"))
             return redirect(request.url)
 
@@ -57,11 +58,12 @@ def upload_data():
                             )
                     flash(
                         _(
-                            f"Uploaded simple_text data with file {file.filename} and columns text_id={text_id}, text={text}",
+                            f"Uploaded simple_text data with file {file.filename} and columns "
+                            f"{text_id=}, {text=}",
                             category="success",
                         )
                     )
-            except Exception as e:
+            except Exception:
                 # flash(_(f"Error executing upload command: {e}"), category="error")
                 return redirect(request.url)
 

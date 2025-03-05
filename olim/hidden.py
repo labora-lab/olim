@@ -1,10 +1,11 @@
+from flask import render_template
+
 from . import app
 from .functions import get_all_hidden
-from flask import render_template
 
 
 @app.route("/hidden", methods=["GET"])
-def hidden():
+def hidden() -> ...:
     result = get_all_hidden()
     res = []
     for r in result:

@@ -1,75 +1,81 @@
-from . import db, app
-from werkzeug.security import generate_password_hash
-import random, string
+import random
+import string
 from datetime import datetime
-from typing import List
+
+from sqlalchemy import ScalarResult, Select
+from sqlalchemy.orm import Mapped, declared_attr
+from werkzeug.security import generate_password_hash
+
+from . import db
 
 
 ## DB tables
 class CreationControl:
-    created: db.Mapped[datetime] = db.mapped_column(nullable=False)
-    created_by: db.Mapped[int] = db.mapped_column(db.ForeignKey("users.id"))
-    is_deleted: db.Mapped[bool] = db.mapped_column(nullable=False)
-    deleted: db.Mapped[datetime] = db.mapped_column(nullable=True)
-    deleted_by: db.Mapped[int] = db.mapped_column(db.Integer, nullable=True)
+    created: Mapped[datetime] = db.mapped_column(nullable=False)
+    created_by: Mapped[int] = db.mapped_column(db.ForeignKey("users.id"))
+    is_deleted: Mapped[bool] = db.mapped_column(nullable=False)
+    deleted: Mapped[datetime] = db.mapped_column(nullable=True)
+    deleted_by: Mapped[int] = db.mapped_column(db.Integer, nullable=True)
 
     # Relations
-    @db.declared_attr
-    def creator(cls):
+    # https://docs.sqlalchemy.org/en/20/orm/mapping_api.html#sqlalchemy.orm.declared_attr justifies
+    # the use of `cls` instead of `self`
+    @declared_attr
+    def creator(cls) -> Mapped["User"]:  # noqa: N805
         return db.relationship("User", uselist=False)
 
 
-class User(CreationControl, db.Model):
+class User(db.Model, CreationControl):
     __tablename__ = "users"
 
     # Columns
-    id: db.Mapped[int] = db.mapped_column(primary_key=True)
-    name: db.Mapped[str] = db.mapped_column(nullable=False)
-    username: db.Mapped[str] = db.mapped_column(unique=True, nullable=False)
-    password: db.Mapped[str] = db.mapped_column(nullable=False)
-    role: db.Mapped[str] = db.mapped_column(nullable=False)
-    language: db.Mapped[str] = db.mapped_column(nullable=True)
+    id: Mapped[int] = db.mapped_column(primary_key=True)
+    name: Mapped[str] = db.mapped_column(nullable=False)
+    username: Mapped[str] = db.mapped_column(unique=True, nullable=False)
+    password: Mapped[str] = db.mapped_column(nullable=False)
+    role: Mapped[str] = db.mapped_column(nullable=False)
+    language: Mapped[str] = db.mapped_column(nullable=True)
 
 
-class LabelEntry(CreationControl, db.Model):
+class LabelEntry(db.Model, CreationControl):
     __tablename__ = "label-patient"
 
     # Columns
-    id: db.Mapped[int] = db.mapped_column(primary_key=True)
-    entry_id: db.Mapped[int] = db.mapped_column(db.ForeignKey("entries.id"))
-    label_id: db.Mapped[int] = db.mapped_column(db.ForeignKey("labels.id"))
-    value: db.Mapped[str] = db.mapped_column(nullable=True)
+    id: Mapped[int] = db.mapped_column(primary_key=True)
+    entry_id: Mapped[int] = db.mapped_column(db.ForeignKey("entries.id"))
+    label_id: Mapped[int] = db.mapped_column(db.ForeignKey("labels.id"))
+    value: Mapped[str] = db.mapped_column(nullable=True)
 
     # Relations
-    label: db.Mapped["Label"] = db.relationship(back_populates="entries")
-    entry: db.Mapped["Entry"] = db.relationship(back_populates="labels")
+    label: Mapped["Label"] = db.relationship(back_populates="entries")
+    entry: Mapped["Entry"] = db.relationship(back_populates="labels")
 
 
 class Entry(db.Model):
     __tablename__ = "entries"
     # Columns
-    id: db.Mapped[int] = db.mapped_column(primary_key=True)
-    entry_id: db.Mapped[str] = db.mapped_column(nullable=False, unique=True)
-    type: db.Mapped[str] = db.mapped_column(nullable=False)
+    id: Mapped[int] = db.mapped_column(primary_key=True)
+    entry_id: Mapped[str] = db.mapped_column(nullable=False, unique=True)
+    type: Mapped[str] = db.mapped_column(nullable=False)
 
     # Relations
-    labels: db.Mapped[List["LabelEntry"]] = db.relationship(back_populates="entry")
+    labels: Mapped[list["LabelEntry"]] = db.relationship(back_populates="entry")
 
 
-class Label(CreationControl, db.Model):
+class Label(db.Model, CreationControl):
     __tablename__ = "labels"
 
     # Columns
-    id: db.Mapped[int] = db.mapped_column(primary_key=True)
-    name: db.Mapped[str] = db.mapped_column(db.String, nullable=False)
-    al_key: db.Mapped[str] = db.mapped_column(nullable=True)
+    id: Mapped[int] = db.mapped_column(primary_key=True)
+    name: Mapped[str] = db.mapped_column(db.String, nullable=False)
+    al_key: Mapped[str] = db.mapped_column(nullable=True)
 
     # Relations
-    entries: db.Mapped[List["LabelEntry"]] = db.relationship(back_populates="label")
+    entries: Mapped[list["LabelEntry"]] = db.relationship(back_populates="label")
 
 
 ## Manipulation functions
-def del_controled(obj, user_id):
+def del_controled(obj, user_id) -> None:
     if not obj.is_deleted:
         obj.is_deleted = True
         obj.deleted = datetime.now()
@@ -77,7 +83,7 @@ def del_controled(obj, user_id):
         db.session.commit()
 
 
-def new_label(label, user_id, al_id=None):
+def new_label(label, user_id, al_id=None) -> Label:
     label = Label(
         name=label,
         created_by=user_id,
@@ -90,7 +96,7 @@ def new_label(label, user_id, al_id=None):
     return label
 
 
-def del_label(label_id, user_id):
+def del_label(label_id, user_id) -> Label:
     label = db.get_or_404(Label, label_id)
     for le in label.entries:
         del_controled(le, user_id)
@@ -98,14 +104,14 @@ def del_label(label_id, user_id):
     return label
 
 
-def get_labels():
+def get_labels() -> list[Label]:
     labels = db.session.execute(
         db.select(Label).filter_by(is_deleted=False).order_by(Label.name)
     ).scalars()
     return labels
 
 
-def get_labeled(label_id):
+def get_labeled(label_id) -> Select:
     return (
         db.select(
             LabelEntry.created,
@@ -121,9 +127,13 @@ def get_labeled(label_id):
     )
 
 
-def add_entry_label(label_id, entry_id, user_id, value, created=None):
+def add_entry_label(label_id, entry_id, user_id, value, created=None) -> LabelEntry | None:
     entry = get_entry(entry_id)
+    if entry is None:
+        raise Exception("Entry not found")
     label = get_label(label_id)
+    if label is None:
+        raise Exception("Label not found")
     for le in db.session.execute(
         db.select(LabelEntry).filter_by(label=label, entry=entry, is_deleted=False)
     ).scalars():
@@ -143,32 +153,31 @@ def add_entry_label(label_id, entry_id, user_id, value, created=None):
         return label_entry
 
 
-def get_entry(entry_id, by=None):
-    if by == None:
+def get_entry(entry_id, by=None) -> Entry | None:
+    if by is None:
         return get_by(Entry, "entry_id", entry_id, False)
     else:
         return get_by(Entry, by, entry_id, False)
 
 
-def random_entries(number: int) -> List[str]:
-    return db.session.execute(
-        db.select(Entry).order_by(db.func.random()).limit(number)
-    ).scalars()
+def random_entries(number: int) -> list[Entry]:
+    return db.session.execute(db.select(Entry).order_by(db.func.random()).limit(number)).scalars()
 
 
-def get_label(idt: int, by: str = "id"):
+def get_label(idt: int, by: str = "id") -> Label | None:
     return get_by(Label, by, idt, True)
 
 
-def get_user(idt: int, by: str = "id"):
+def get_user(idt: int | str, by: str = "id") -> User | None:
     return get_by(User, by, idt, True)
 
 
-def get_by(table: db.Model, col: str, idt: int, filter_deleted=False):
+def get_by(table: ..., col: str, idt: int | str, filter_deleted=False) -> ...:
     """
     Retrieves a user from the database by either their ID or username.
 
-    :param identification: An integer representing the user's ID or a string representing their username.
+    :param identification: An integer representing the user's ID or a string representing their
+        username.
     :param by: A string indicating whether to search by ID or username. Defaults to "id".
     :return: A tuple representing the user's information from the database or None if not found.
     :raises: Exception if an invalid 'by' parameter is provided.
@@ -180,14 +189,12 @@ def get_by(table: db.Model, col: str, idt: int, filter_deleted=False):
         if filter_deleted:
             filter_pars["is_deleted"] = False
         try:
-            return db.session.execute(
-                db.select(table).filter_by(**filter_pars)
-            ).scalar_one()
+            return db.session.execute(db.select(table).filter_by(**filter_pars)).scalar_one()
         except db.orm.exc.NoResultFound:
             return None
 
 
-def insert_user(username: str, hashed_password: str, role: str, creator: int, **kwargs):
+def insert_user(username: str, hashed_password: str, role: str, creator: int, **kwargs) -> User:
     """
     Inserts a user into the database.
 
@@ -210,17 +217,19 @@ def insert_user(username: str, hashed_password: str, role: str, creator: int, **
     return user
 
 
-def update_user_password(identification: int, new_password: str, by: str = "id"):
+def update_user_password(identification: int, new_password: str, by: str = "id") -> User:
     """
     Updates a user's password.
     """
     user = get_user(identification, by)
+    if user is None:
+        raise Exception("User not found")
     user.password = generate_password_hash(new_password)
     db.session.commit()
     return user
 
 
-def get_users():
+def get_users() -> list[User]:
     """
     Retrieves all users from the database.
 
@@ -232,25 +241,25 @@ def get_users():
     return users
 
 
-def get_entries(type=None):
+def get_entries(type=None) -> ScalarResult:
     """
     Retrieves entries from the database.
 
     :return: A list of dictionaries, where each dict represents a row in the users table.
     """
-    if type == None:
+    if type is None:
         return db.session.execute(db.select(Entry.id)).scalars()
     else:
         return db.session.execute(db.select(Entry.id).filter_by(type=type)).scalars()
 
 
-def register_entries(entries_ids: List[str], entries_type: str):
+def register_entries(entries_ids: list[str], entries_type: str) -> None:
     entries = [Entry(entry_id=str(eid), type=entries_type) for eid in entries_ids]
     db.session.add_all(entries)
     db.session.commit()
 
 
-def init_db():
+def init_db() -> None:
     """Initializes the database."""
     print("Initializing database...")
     db.create_all()

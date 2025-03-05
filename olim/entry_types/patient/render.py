@@ -1,22 +1,17 @@
-from . import ES_INDEX
-from ...functions import (
-    shorten,
-    es_search,
-    get_all_hidden,
-    manage_label_in_session,
-)
-from flask import request, render_template, session, flash
-from flask_babel import _
-import json
-import pandas as pd
 from datetime import datetime, timedelta
-from typing import Tuple
+
+import pandas as pd
+from flask import flash, render_template, request, session
+from flask_babel import _
+
+from ...functions import es_search, get_all_hidden, shorten
+from .constants import ES_INDEX
 
 
 def load_patient(
     pid: int,
-    start_date: datetime = None,
-    end_date: datetime = None,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
     ascending: bool = False,
 ) -> dict:
     """Loads all texts for a given pacient, data will be  stored in the format:
@@ -76,9 +71,9 @@ def load_patient(
     # Filter and format dates
     df["datetime"] = pd.to_datetime(df["date"])
     df["date"] = df["datetime"].dt.strftime("%d/%m/%Y")
-    if start_date != "":
+    if start_date is not None:
         df = df[df["datetime"] >= start_date]
-    if end_date != "":
+    if end_date is not None:
         df = df[df["datetime"] < end_date + timedelta(days=1)]
     df = df.sort_values(by="datetime", ascending=ascending)
     df = df.drop(columns=["datetime"])
@@ -88,7 +83,7 @@ def load_patient(
         df = df.iloc[::-1]
 
     # Iterate on returned DataFrame
-    for _, row in df.iterrows():
+    for _, row in df.iterrows():  # noqa: F402 [_ will not be shadowed]
         date = row["date"]
         if date not in data["dates"].keys():
             data["dates"][date] = {
@@ -101,14 +96,14 @@ def load_patient(
     return data
 
 
-def get_date(name: str) -> Tuple[str, datetime]:
+def get_date(name: str) -> tuple[str, datetime | None]:
     """Gets a date from the GET request or the session info.
 
     Args:
         name (str): Name of the parameter containing the date
 
     Returns:
-        Tuple[str, datetime]: Date string and object.
+        Tuple[str, datetime | None]: Date string and object.
     """
     date = request.args.get(name, "")
     date = date.strip()
@@ -117,7 +112,7 @@ def get_date(name: str) -> Tuple[str, datetime]:
             date = session["patient_" + name]
     if name in request.args:
         session["patient_" + name] = date
-    date_obj = ""
+    date_obj = None
     if date != "":
         try:
             date_obj = datetime.strptime(date, "%d/%m/%Y")
@@ -128,11 +123,11 @@ def get_date(name: str) -> Tuple[str, datetime]:
     return date, date_obj
 
 
-def render(entry_id: str, **pars) -> str:
+def render(entry_id: int, **pars) -> str:
     """Renders a patient view.
 
     Args:
-        entry_id (str): Patient entry id.
+        entry_id (int): Patient entry id.
 
     Returns:
         str: Rendered HTML.

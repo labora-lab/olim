@@ -1,15 +1,14 @@
-from . import ES_INDEX, ENTRY_TYPE
 from ...functions import es_search
-from typing import List, Dict
+from . import ENTRY_TYPE, ES_INDEX
 
 
 def search(
-    must_terms: List[str],
-    must_phrases: List[str],
-    not_must_terms: List[str],
-    not_must_phrases: List[str],
+    must_terms: list[str],
+    must_phrases: list[str],
+    not_must_terms: list[str],
+    not_must_phrases: list[str],
     number: int,
-) -> List[Dict]:
+) -> list[dict]:
     all_must = must_terms + must_phrases
     all_not = not_must_terms + not_must_phrases
     col_search = "texts.text"
@@ -39,17 +38,15 @@ def search(
     )
 
     # Runs query
-    results = es_search(query=es_query, sort=es_sort, size=number, index=ES_INDEX)[
-        "hits"
-    ]["hits"]
+    results = es_search(query=es_query, sort=es_sort, size=number, index=ES_INDEX)["hits"]["hits"]
 
     # Aggregates results
     patients = []
     for patient in results:
         texts = patient["_source"]["texts"]
         # Count matchs
+        count = 0
         for text in texts:
-            count = 0
             for term in all_must:
                 count += text["text"].lower().count(term.lower())
         patient_desc = f"{len(texts)} texts"

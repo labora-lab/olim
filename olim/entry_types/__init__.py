@@ -1,3 +1,3 @@
-from . import single_text
-from . import patient
-from . import pdf
+from . import patient, pdf, single_text
+
+__all__ = ["patient", "pdf", "single_text"]

@@ -1,9 +1,10 @@
-from . import ES_INDEX
-from ...functions import es_search
 import pandas as pd
 
+from ...functions import es_search
+from .constants import ES_INDEX
 
-def extract_texts(entry_id, only_ids=False, only_values=False):
+
+def extract_texts(entry_id, only_ids=False, only_values=False) -> pd.DataFrame:
     query = {"bool": {"must": [{"terms": {"_id": [entry_id]}}]}}
     res = es_search(query=query, index=ES_INDEX)["hits"]["hits"][0]
 

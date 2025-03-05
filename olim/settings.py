@@ -1,4 +1,5 @@
 import os
+from typing import ClassVar
 
 ES_INDEX = "patients-texts"
 """Elasticserach index to load patient data"""
@@ -25,40 +26,40 @@ LEARNER_URL = os.getenv("LEARNER_URL", None)
 LEARNER_KEY = os.getenv("LEARNER_KEY", None)
 
 
-class LABELS_TYPES:
-    SIM_NAO = [
+class LabelTypes:
+    SIM_NAO: ClassVar = [
         ("sim", "icon", "check", "green"),
         ("não", "icon", "clear", "red"),
     ]
-    SIM_NAO_NS = [
+    SIM_NAO_NS: ClassVar = [
         ("sim", "icon", "check", "green"),
         ("não", "icon", "clear", "red"),
         ("não sei", "text", "?", "orange"),
     ]
-    YES_NO = [
+    YES_NO: ClassVar = [
         ("yes", "icon", "check", "green"),
         ("no", "icon", "clear", "red"),
     ]
-    CHECK = [
+    CHECK: ClassVar = [
         ("check", "icon", "check", "green"),
     ]
-    YES_NO_UNKNOWN = [
+    YES_NO_UNKNOWN: ClassVar = [
         ("yes", "icon", "check", "green"),
         ("no", "icon", "clear", "red"),
         ("unknown", "text", "?", "orange"),
     ]
-    YES_NO_IDK = [
+    YES_NO_IDK: ClassVar = [
         ("yes", "icon", "check", "green"),
         ("no", "icon", "clear", "red"),
         ("don't know", "text", "?", "orange"),
     ]
 
 
-labels = os.getenv("LABELS")
+labels = os.getenv("LABELS", "LabelTypes.SIM_NAO_NS")
 try:
     LABELS = eval(labels)
 except TypeError:
-    LABELS = LABELS_TYPES.SIM_NAO_NS
+    LABELS = LabelTypes.SIM_NAO_NS
 
 """List of endpoints that need a setup backend."""
 NEED_BACKEND = [

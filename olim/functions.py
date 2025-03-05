@@ -1,27 +1,23 @@
 ## Auxiliary functions
 # All functions here must have type hints and docstrings
-from .settings import ES_INDEX, ES_SERVER
-from .database import (
-    register_entries,
-    get_labels,
-    new_label,
-    add_entry_label,
-    get_entry,
-)
-from . import queue_dir, entry_types
-from elasticsearch import Elasticsearch, helpers
-from flask import session, flash
-from datetime import datetime
-from typing import List, Dict
-from tqdm import tqdm
-import pandas as pd
+import hashlib
 import json
 import os
-import hashlib
+from datetime import datetime
+from typing import Literal
+
+import pandas as pd
+from elasticsearch import Elasticsearch, helpers
+from flask import flash, session
 from flask_babel import _
+from tqdm import tqdm
+
+from . import entry_types, queue_dir
+from .database import add_entry_label, get_entry, get_labels, new_label, register_entries
+from .settings import ES_INDEX, ES_SERVER
 
 
-def now_ISO():
+def now_iso() -> str:
     return datetime.now().isoformat()
 
 
@@ -41,15 +37,11 @@ def shorten(string: str, n: int = 80, add: str = " (...)") -> str:
         return string
 
 
-def get_es_conn(**kwargs):
-    pars = dict(
-        hosts=ES_SERVER,
-    )
-    pars.update(kwargs)
-    return Elasticsearch(**pars)
+def get_es_conn(**kwargs) -> Elasticsearch:
+    return Elasticsearch(**{"hosts": ES_SERVER}, **kwargs)
 
 
-def get_index(kwargs):
+def get_index(kwargs) -> tuple[str, dict]:
     if "index" in kwargs:
         index = kwargs["index"]
     else:
@@ -58,27 +50,25 @@ def get_index(kwargs):
     return index, kwargs
 
 
-def es_list_fields(**kwargs):
+def es_list_fields(**kwargs) -> list[str]:
     index, kwargs = get_index(kwargs)
     client = get_es_conn()
-    return list(
-        client.indices.get_mapping(**kwargs)[index]["mappings"]["properties"].keys()
-    )
+    return list(client.indices.get_mapping(**kwargs)[index]["mappings"]["properties"].keys())
 
 
-def es_search(**kwargs):
+def es_search(**kwargs) -> dict:
     _, kwargs = get_index(kwargs)
     client = get_es_conn()
     return client.search(**kwargs)
 
 
-def es_update(**kwargs):
+def es_update(**kwargs) -> dict:
     _, kwargs = get_index(kwargs)
     client = get_es_conn()
     return client.update(**kwargs)
 
 
-def get_all_hidden():
+def get_all_hidden() -> list:
     hidden = []
     for mod in dir(entry_types):
         module = getattr(entry_types, mod)
@@ -87,7 +77,7 @@ def get_all_hidden():
     return hidden
 
 
-def have_hidden():
+def have_hidden() -> bool:
     have_hidden = False
     for mod in dir(entry_types):
         module = getattr(entry_types, mod)
@@ -96,7 +86,7 @@ def have_hidden():
     return have_hidden
 
 
-def get_highlights():
+def get_highlights() -> list:
     # Load highlight
     if "highlight" in session:
         return session["highlight"]
@@ -104,10 +94,12 @@ def get_highlights():
         return []
 
 
-def render_entry(entry_id: int, data: dict = {}):
-    if entry_id != None:
+def render_entry(entry_id: int | None, data: dict | None = None) -> dict:
+    if data is None:
+        data = {}
+    if entry_id is not None:
         entry = get_entry(entry_id)
-        if not entry == None:
+        if entry is not None:
             try:
                 e_type = getattr(entry_types, entry.type)
                 data.update(
@@ -126,7 +118,7 @@ def render_entry(entry_id: int, data: dict = {}):
                         "valid_entry": True,
                     }
                 )
-            except:
+            except Exception:
                 flash(
                     _("Error rendering entry {entry_id}!").format(entry_id=entry_id),
                     category="error",
@@ -141,7 +133,7 @@ def render_entry(entry_id: int, data: dict = {}):
     return data
 
 
-def parse_queue(text: str) -> List[str]:
+def parse_queue(text: str) -> list[str]:
     """Parse a queue input in to a queue list.
 
     Args:
@@ -150,20 +142,16 @@ def parse_queue(text: str) -> List[str]:
     Returns:
         List[str]: Queue list
     """
-    return (
-        text.replace(";", " ")
-        .replace(",", " ")
-        .replace("\n", " ")
-        .replace("\r\n", " ")
-        .split()
-    )
+    return text.replace(";", " ").replace(",", " ").replace("\n", " ").replace("\r\n", " ").split()
 
 
-def store_queue(queue: List[str], highlight: List[str] = None, **extra_data) -> str:
+def store_queue(
+    queue: list[str] | pd.Series, highlight: list[str] | None = None, **extra_data: dict
+) -> str:
     """Stores a queue in a temporay file.
 
     Args:
-        queue (List[str]): Queue list
+        queue (iterable): Queue list
 
     Returns:
         str: Hash of the queue for access
@@ -193,36 +181,34 @@ def get_queue(queue_id: str) -> str:
         str: Queue list
     """
     queue_file = os.path.join(queue_dir, "queue_" + queue_id + ".json")
-    with open(queue_file, "r") as f:
+    with open(queue_file) as f:
         queue = json.load(f)
-    if queue["highlight"] != None:
+    if queue["highlight"] is not None:
         session["highlight"] = queue["highlight"]
     return queue["queue"]
 
 
-def get_all_queues() -> List[Dict]:
+def get_all_queues() -> list[dict]:
     queues = []
     for queue_file in os.listdir(queue_dir):
         if queue_file.startswith("queue_") and queue_file.endswith(".json"):
             try:
-                with open(os.path.join(queue_dir, queue_file), "r") as f:
+                with open(os.path.join(queue_dir, queue_file)) as f:
                     queue = json.load(f)
-            except:
+            except Exception:
                 flash(
-                    _("Failed to read queue file {queue_file}.").format(
-                        queue_file=queue_file
-                    ),
+                    _("Failed to read queue file {queue_file}.").format(queue_file=queue_file),
                     category="error",
                 )
                 queue = None
-            if queue != None:
+            if queue is not None:
                 queue["frontend_text"] = _("Entries: {queue_length}").format(
                     queue_length=queue["lenght"]
                 )
                 if queue["highlight"]:
-                    queue["frontend_text"] += " - " + _(
-                        "Highlight: {highlight}"
-                    ).format(highlight=", ".join(h for h in queue["highlight"]))
+                    queue["frontend_text"] += " - " + _("Highlight: {highlight}").format(
+                        highlight=", ".join(h for h in queue["highlight"])
+                    )
                 queues.append(queue)
     return queues
 
@@ -238,7 +224,7 @@ def get_def_nentries() -> int:
     return session["number_of_entries"]
 
 
-def manage_label_in_session(label: str, mode: str = "add"):
+def manage_label_in_session(label: str, mode: Literal["add", "remove"] = "add") -> None:
     """Hide a label in a session
 
     Args:
@@ -260,35 +246,33 @@ def manage_label_in_session(label: str, mode: str = "add"):
 class ESManager:
     def __init__(self, serverfile="", **params) -> None:
         if len(params) == 0:
-            with open(serverfile, "r") as f:
+            with open(serverfile) as f:
                 params = json.load(f)
 
         self.es = Elasticsearch(**params)
 
-    def create_index(self, index, mapping):
+    def create_index(self, index, mapping) -> dict:
         return self.es.indices.create(index=index, mappings=mapping)
 
-    def delete_index(self, index):
+    def delete_index(self, index) -> dict:
         return self.es.indices.delete(index=index)
 
-    def list_indices(self):
+    def list_indices(self) -> dict:
         return self.es.indices.get_alias(index="*")
 
-    def get_mapping(self, index):
+    def get_mapping(self, index) -> dict:
         return self.es.indices.get_mapping(index=index)
 
-    def add_document(self, document, index):
+    def add_document(self, document, index) -> dict:
         return self.es.index(index=index, document=document)
 
-    def get_all_documents(self, index, size=10000):
+    def get_all_documents(self, index, size=10000) -> dict:
         return self.es.search(index=index, query={"match_all": {}}, size=size)
 
-    def get_head_documents(self, index, n=10):
-        return self.es.search(
-            index=index, query={"query": {"match_all": {}}, "from": 0, "size": n}
-        )
+    def get_head_documents(self, index, n=10) -> dict:
+        return self.es.search(index=index, query={"query": {"match_all": {}}, "from": 0, "size": n})
 
-    def search(self, **kwargs):
+    def search(self, **kwargs) -> dict:
         return self.es.search(**kwargs)
 
 
@@ -300,8 +284,10 @@ def es_bulk_upload(
     mapping,
     doc_generator,
     entry_type,
-    additional_indexes=[],
-):
+    additional_indexes=None,
+) -> None:
+    if additional_indexes is None:
+        additional_indexes = []
     client = ESManager(
         hosts=ES_SERVER,
         request_timeout=1000,
@@ -313,23 +299,22 @@ def es_bulk_upload(
     print(f"Trying to create {index} index...")
     try:
         client.create_index(index, mapping)
-    except:
+    except Exception:
         print("Index creation failed, index already exists?")
 
     for ind, mp in additional_indexes:
         print(f"Trying to create {ind} additional index...")
         try:
             client.create_index(ind, mp)
-        except:
+        except Exception:
             print("Index creation failed, index already exists?")
-            
 
     print(f"Loading data from {csv_file}...")
     df = pd.read_csv(csv_file)
     df = df.drop_duplicates()
     df = df.fillna(-1)
     if "date" in df:
-        df["date"] = pd.to_datetime(df["date"], format='mixed')
+        df["date"] = pd.to_datetime(df["date"], format="mixed")
 
     print("Uploading texts to ElasticSearch...")
     helpers.bulk(client.es, doc_generator(df, index, id_column, text_column))
@@ -341,15 +326,13 @@ def es_bulk_upload(
         if i == n_batchs:
             register_entries(df[id_column][i * batch_size :], entry_type)
         else:
-            register_entries(
-                df[id_column][i * batch_size : (i + 1) * batch_size], entry_type
-            )
+            register_entries(df[id_column][i * batch_size : (i + 1) * batch_size], entry_type)
 
     print()
     print("Data uploaded!")
 
 
-def label_upload(df, user_id=None):
+def label_upload(df, user_id=None) -> None:
     user_id = user_id or session["user_id"]
     # Parse dates and sort by them
     df["created"] = pd.to_datetime(df["created"])
@@ -359,13 +342,13 @@ def label_upload(df, user_id=None):
     group = df.groupby(["entry_id", "label", "value", "created"]).any().index
 
     # Get a list of existing labels and respective ids
-    labels = {l.name: l.id for l in get_labels()}
+    labels = {L.name: L.id for L in get_labels()}
 
     # Store labels
     for entry_id, label, value, created in tqdm(group):
         # If the label dont exist create it
         if label not in labels:
-            l = new_label(label, user_id)
-            labels[l.name] = l.id
+            label_creation_result = new_label(label, user_id)
+            labels[label_creation_result.name] = label_creation_result.id
         # And label the patient
         add_entry_label(labels[label], entry_id, user_id, value, created=created)
