@@ -7,7 +7,8 @@ from flask_babel import _
 
 from . import app, db, entry_types
 from .database import del_label, get_label, get_labeled, get_labels, new_label
-from .functions import label_upload, store_queue
+from .functions import store_queue
+from .utils.label import label_upload
 
 
 @app.route("/labels", methods=["GET"])

@@ -1,5 +1,5 @@
 from ...database import get_entries
-from ...functions import get_es_conn
+from ...utils.es import get_es_conn
 from .constants import ENTRY_TYPE, ES_TO_HIDE_INDEX
 
 

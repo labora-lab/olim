@@ -68,7 +68,7 @@ from . import labels  # noqa
 from . import queue  # noqa
 from . import search  # noqa
 from . import upload_data  # noqa
-from .functions import have_hidden  # noqa
+from .utils.entry import have_hidden  # noqa
 
 app.jinja_env.globals.update(
     have_hidden=have_hidden,

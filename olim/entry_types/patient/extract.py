@@ -1,6 +1,6 @@
 import pandas as pd
 
-from ...functions import es_search
+from ...utils.es import es_search
 from .constants import ES_INDEX
 
 

@@ -1,7 +1,7 @@
 from flask import render_template
 
 from . import app
-from .functions import get_all_hidden
+from .utils.entry import get_all_hidden
 
 
 @app.route("/hidden", methods=["GET"])

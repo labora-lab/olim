@@ -5,7 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from ...cli import upload
-from ...functions import es_bulk_upload
+from ...upload_utils import es_bulk_upload
 from . import ENTRY_TYPE, ES_INDEX, ES_TO_HIDE_INDEX
 
 extra_fields_mapping = {

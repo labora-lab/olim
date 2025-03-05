@@ -7,8 +7,8 @@ from flask_babel import _
 from icecream import ic
 
 from . import app, db, settings
-from .database import get_label, get_labels, new_label
-from .functions import add_entry_label, get_highlights, render_entry
+from .database import add_entry_label, get_label, get_labels, new_label
+from .functions import get_highlights, render_entry
 
 
 def new_al(label) -> None:

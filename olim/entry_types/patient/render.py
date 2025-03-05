@@ -4,7 +4,9 @@ import pandas as pd
 from flask import flash, render_template, request, session
 from flask_babel import _
 
-from ...functions import es_search, get_all_hidden, shorten
+from ...utils.entry import get_all_hidden
+from ...utils.es import es_search
+from ...utils.text import shorten
 from .constants import ES_INDEX
 
 

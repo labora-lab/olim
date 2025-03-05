@@ -3,87 +3,15 @@
 import hashlib
 import json
 import os
-from datetime import datetime
 from typing import Literal
 
 import pandas as pd
-from elasticsearch import Elasticsearch, helpers
 from flask import flash, session
 from flask_babel import _
-from tqdm import tqdm
 
 from . import entry_types, queue_dir
-from .database import add_entry_label, get_entry, get_labels, new_label, register_entries
-from .settings import ES_INDEX, ES_SERVER
-
-
-def now_iso() -> str:
-    return datetime.now().isoformat()
-
-
-def shorten(string: str, n: int = 80, add: str = " (...)") -> str:
-    """Finds the first space after n characters and truncate the
-        string there.
-
-    Args:
-        string (str): Original string.
-        n (int): Minimum number of characters to prese¨
-        str: Shortened string.
-    """
-    pos = string.find(" ", n)
-    if pos != -1:
-        return string[:pos] + add
-    else:
-        return string
-
-
-def get_es_conn(**kwargs) -> Elasticsearch:
-    return Elasticsearch(**{"hosts": ES_SERVER}, **kwargs)
-
-
-def get_index(kwargs) -> tuple[str, dict]:
-    if "index" in kwargs:
-        index = kwargs["index"]
-    else:
-        kwargs["index"] = ES_INDEX
-        index = ES_INDEX
-    return index, kwargs
-
-
-def es_list_fields(**kwargs) -> list[str]:
-    index, kwargs = get_index(kwargs)
-    client = get_es_conn()
-    return list(client.indices.get_mapping(**kwargs)[index]["mappings"]["properties"].keys())
-
-
-def es_search(**kwargs) -> dict:
-    _, kwargs = get_index(kwargs)
-    client = get_es_conn()
-    return client.search(**kwargs)
-
-
-def es_update(**kwargs) -> dict:
-    _, kwargs = get_index(kwargs)
-    client = get_es_conn()
-    return client.update(**kwargs)
-
-
-def get_all_hidden() -> list:
-    hidden = []
-    for mod in dir(entry_types):
-        module = getattr(entry_types, mod)
-        if hasattr(module, "get_all_hidden"):
-            hidden += module.get_all_hidden()
-    return hidden
-
-
-def have_hidden() -> bool:
-    have_hidden = False
-    for mod in dir(entry_types):
-        module = getattr(entry_types, mod)
-        if hasattr(module, "have_hidden"):
-            have_hidden = have_hidden or module.have_hidden()
-    return have_hidden
+from .database import get_entry
+from .utils.es import get_es_conn
 
 
 def get_highlights() -> list:
@@ -249,7 +177,7 @@ class ESManager:
             with open(serverfile) as f:
                 params = json.load(f)
 
-        self.es = Elasticsearch(**params)
+        self.es = get_es_conn(**params)
 
     def create_index(self, index, mapping) -> dict:
         return self.es.indices.create(index=index, mappings=mapping)
@@ -274,81 +202,3 @@ class ESManager:
 
     def search(self, **kwargs) -> dict:
         return self.es.search(**kwargs)
-
-
-def es_bulk_upload(
-    csv_file,
-    id_column,
-    text_column,
-    index,
-    mapping,
-    doc_generator,
-    entry_type,
-    additional_indexes=None,
-) -> None:
-    if additional_indexes is None:
-        additional_indexes = []
-    client = ESManager(
-        hosts=ES_SERVER,
-        request_timeout=1000,
-        read_timeout=1000,
-        timeout=1000,
-        max_retries=20,
-    )
-
-    print(f"Trying to create {index} index...")
-    try:
-        client.create_index(index, mapping)
-    except Exception:
-        print("Index creation failed, index already exists?")
-
-    for ind, mp in additional_indexes:
-        print(f"Trying to create {ind} additional index...")
-        try:
-            client.create_index(ind, mp)
-        except Exception:
-            print("Index creation failed, index already exists?")
-
-    print(f"Loading data from {csv_file}...")
-    df = pd.read_csv(csv_file)
-    df = df.drop_duplicates()
-    df = df.fillna(-1)
-    if "date" in df:
-        df["date"] = pd.to_datetime(df["date"], format="mixed")
-
-    print("Uploading texts to ElasticSearch...")
-    helpers.bulk(client.es, doc_generator(df, index, id_column, text_column))
-
-    print("Registring entries on OLIM database...")
-    batch_size = 1000
-    n_batchs = int(len(df) / batch_size)
-    for i in tqdm(range(0, n_batchs + 1)):
-        if i == n_batchs:
-            register_entries(df[id_column][i * batch_size :], entry_type)
-        else:
-            register_entries(df[id_column][i * batch_size : (i + 1) * batch_size], entry_type)
-
-    print()
-    print("Data uploaded!")
-
-
-def label_upload(df, user_id=None) -> None:
-    user_id = user_id or session["user_id"]
-    # Parse dates and sort by them
-    df["created"] = pd.to_datetime(df["created"])
-    df = df.sort_values(by="created")
-
-    # Group by the columns we are interested
-    group = df.groupby(["entry_id", "label", "value", "created"]).any().index
-
-    # Get a list of existing labels and respective ids
-    labels = {L.name: L.id for L in get_labels()}
-
-    # Store labels
-    for entry_id, label, value, created in tqdm(group):
-        # If the label dont exist create it
-        if label not in labels:
-            label_creation_result = new_label(label, user_id)
-            labels[label_creation_result.name] = label_creation_result.id
-        # And label the patient
-        add_entry_label(labels[label], entry_id, user_id, value, created=created)

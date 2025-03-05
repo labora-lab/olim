@@ -1,6 +1,6 @@
 from flask_babel import _
 
-from ...functions import es_update, get_es_conn, now_iso
+from ...utils.es import es_update, get_es_conn, now_iso
 from .constants import ES_INDEX, ES_TO_HIDE_INDEX
 
 

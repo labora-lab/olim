@@ -5,8 +5,10 @@ import pandas as pd
 from flask import render_template
 from tqdm import tqdm
 
+from olim.utils.es import es_search
+
 from ..cli import upload
-from ..functions import es_bulk_upload, es_search
+from ..upload_utils import es_bulk_upload
 
 ES_INDEX = "single_text_entries"
 ENTRY_TYPE = "single_text"

@@ -1,4 +1,4 @@
-from ...functions import es_search
+from ...utils.es import es_search
 from . import ENTRY_TYPE, ES_INDEX
 
 

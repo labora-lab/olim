@@ -6,7 +6,7 @@ import pandas as pd
 
 from . import app, db
 from .database import get_entry, get_labels, get_user, get_users, init_db, update_user_password
-from .functions import label_upload
+from .utils.label import label_upload
 
 
 @app.cli.command("init-db", help="Inializes database and create Administrator user.")
