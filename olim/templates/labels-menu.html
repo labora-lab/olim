@@ -21,13 +21,13 @@
     {% if type == 'text'%}
     <a class="tooltipped right {{color}}-text labels-text-icon cursor{%if p_label != label_str%} hidden{%endif%}"
         data-position="bottom" data-tooltip="{{ _('Uncheck {label_str}').format(label_str=label_str)}}"
-        id="{{label_str | replace(' ', '_')}}_sel_{{label.id}}"
+        id="{{label_str | replace(' ', '_')}}_unsel_{{label.id}}"
         onclick="add_entry_label('{{entry_id}}','{{label.id}}', '');">
         <strong>{{icon}}</strong>
     </a>
     <a class="tooltipped right grey-text labels-text-icon cursor{%if p_label == label_str%} hidden{%endif%}"
         data-position="bottom" data-tooltip="{{ _('Check {label_str}').format(label_str=label_str) }}"
-        id="{{label_str | replace(' ', '_')}}_{{label.id}}"
+        id="{{label_str | replace(' ', '_')}}_sel_{{label.id}}"
         onclick="add_entry_label({{entry_id}},'{{label.id}}', '{{label_str}}');">
         <strong>{{icon}}</strong>
     </a>
@@ -35,13 +35,13 @@
     <a class="tooltipped right cursor{%if p_label != label_str%} hidden{%endif%}" data-position="bottom"
         data-tooltip="{{ _('Uncheck {label_str}').format(label_str=label_str) }}"
         onclick="add_entry_label({{entry_id}},'{{label.id}}', '');"
-        id="{{label_str | replace(' ', '_')}}_sel_{{label.id}}">
+        id="{{label_str | replace(' ', '_')}}_unsel_{{label.id}}">
         <i class="material-icons {{color}}-text">{{icon}}</i>
     </a>
     <a class="tooltipped right cursor{%if p_label == label_str%} hidden{%endif%}" data-position="bottom"
         data-tooltip="{{ _('Check {label_str}').format(label_str=label_str) }}"
         onclick="add_entry_label({{entry_id}},'{{label.id}}', '{{label_str}}');"
-        id="{{label_str | replace(' ', '_')}}_{{label.id}}">
+        id="{{label_str | replace(' ', '_')}}_sel_{{label.id}}">
         <i class="material-icons grey-text">{{icon}}</i>
     </a>
     {% endif %}
