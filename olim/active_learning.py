@@ -1,7 +1,7 @@
 from . import app
 from .database import get_labels, get_label, new_label
 from .functions import get_highlights, render_entry, add_entry_label
-from flask import render_template, redirect, request, session, flash
+from flask import render_template, redirect, request, session, flash, Response
 from flask_babel import _
 import requests
 from . import settings
@@ -9,6 +9,7 @@ from . import db
 import json
 from icecream import ic
 from time import sleep
+import pandas as pd
 
 
 def new_al(label):
@@ -158,3 +159,33 @@ def sync_label(label_id):
         flash(_("Error syncing labels."), category="error")
 
     return redirect("/labels")
+
+@app.route("/al/<int:label_id>/export", methods=["GET", "POST"])
+def export_label(label_id):
+    label = get_label(label_id)
+    data_req = dict(
+        app_key=settings.LEARNER_KEY,
+        user_id=session["user_id"],
+        label_id=label.al_key,
+    )
+    
+    if request.method == "POST":
+        # get alpha from request and add to data_req
+        alpha = request.form["alpha"]
+    else:
+        alpha = 0.95
+    
+    data_req["alpha"] = alpha
+    
+    res = requests.put(f"{settings.LEARNER_URL}/al/export-predictions", data_req)
+    
+    print(res)
+    
+    pred_df = pd.read_json(res["predictions"])
+    
+    # download json res["predictions"] as csv
+    return Response(
+        pred_df.to_csv(index=False),
+        mimetype="text/csv",
+        headers={"Content-disposition": f"attachment; filename={label.name}-{alpha}-predictions.csv"},
+    )
