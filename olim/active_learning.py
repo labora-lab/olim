@@ -160,6 +160,7 @@ def sync_label(label_id):
 
     return redirect("/labels")
 
+
 @app.route("/al/<int:label_id>/export", methods=["GET", "POST"])
 def export_label(label_id):
     label = get_label(label_id)
@@ -168,22 +169,26 @@ def export_label(label_id):
         user_id=session["user_id"],
         label_id=label.al_key,
     )
-    
+
     if request.method == "POST":
         # get alpha from request and add to data_req
         alpha = request.form["alpha"]
     else:
         alpha = 0.95
-    
+
     data_req["alpha"] = alpha
-    
-    res = requests.put(f"{settings.LEARNER_URL}/al/export-predictions", json=json.dumps(data_req))
-    
+
+    res = requests.put(
+        f"{settings.LEARNER_URL}/al/export-predictions", json=json.dumps(data_req)
+    )
+
     pred_df = pd.read_json(res.json()["predictions"])
-    
+
     # download json res["predictions"] as csv
     return Response(
         pred_df.to_csv(index=False),
         mimetype="text/csv",
-        headers={"Content-disposition": f"attachment; filename={label.name}-{alpha}-predictions.csv"},
+        headers={
+            "Content-disposition": f"attachment; filename={label.name}-{alpha}-predictions.csv"
+        },
     )
