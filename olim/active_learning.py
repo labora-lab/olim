@@ -177,11 +177,9 @@ def export_label(label_id):
     
     data_req["alpha"] = alpha
     
-    res = requests.put(f"{settings.LEARNER_URL}/al/export-predictions", data_req)
+    res = requests.put(f"{settings.LEARNER_URL}/al/export-predictions", json=json.dumps(data_req))
     
-    print(res)
-    
-    pred_df = pd.read_json(res["predictions"])
+    pred_df = pd.read_json(res.json()["predictions"])
     
     # download json res["predictions"] as csv
     return Response(
