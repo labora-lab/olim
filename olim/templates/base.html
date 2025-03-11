@@ -13,14 +13,17 @@
 
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 
+    {% block head%}{% endblock %}
+
     <title>{% block title %}{% endblock %} - {{ _('OLIM - Open Labeller for Iterative Machine learning')}}</title>
 </head>
 
 <body>
     <header>
+        {% block menu %}
         <ul id="slide-out" class="sidenav">
             {% if has_permition('labels') %}
-            <li><a href="{{ url_for('labels') }}">{{ _('Homepage') }}</a></li>
+            <li><a href="{{ url_for('labels') }}">{{ _('Labels') }}</a></li>
             {% endif %}
             {% if has_permition('search') %}
             <li><a href="{{ url_for('search') }}">{{ _('Search') }}</a></li>
@@ -28,9 +31,6 @@
             {% if has_permition('entry') %}
             <li><a href="{{ url_for('entry') }}">{{ _('Open Entries') }}</a></li>
             {% endif %}
-            {# {% if has_permition('active_learning') and has_backend%}
-            <li><a href="{{ url_for('active_learning') }}">{{ _('Active Learning') }}</a></li>
-            {% endif %} #}
             {% if has_permition('new_queue') %}
             <li><a href="{{ url_for('new_queue') }}">{{ _('Queues') }}</a></li>
             {% endif %}
@@ -44,7 +44,7 @@
             <li><a href="{{ url_for('edit_password') }}">{{ _('Change Password') }}</a></li>
             {% endif %}
             {% if has_permition('upload_data') %}
-            <li><a href="{{ url_for('upload_data') }}">Load data</a></li>
+            <li><a href="{{ url_for('upload_data') }}">{{_("Upload Data")}}</a></li>
             {% endif %}
             {% if session['user_id'] == 'guest' %}
             <li><a href="{{ url_for('login') }}">{{ _('Login') }}</a></li>
@@ -52,15 +52,18 @@
             <li><a href="{{ url_for('logout') }}">{{ _('Logout') }}</a></li>
             {% endif %}
         </ul>
+        {% endblock %}
         <nav>
             <div class="nav-wrapper cyan darken-4">
                 <span class="brand-logo left tooltipped center"
                     data-tooltip="{{ _('Open Labeller for Iterative Machine learning') }}">
                     OLIM
                 </span>
+                {% block menuicon %}
                 <div class="nav-mobile left">
                     <span data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></span>
                 </div>
+                {% endblock %}
             </div>
         </nav>
     </header>
