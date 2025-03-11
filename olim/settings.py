@@ -116,7 +116,7 @@ PERMISSIONS = {
         "catch_al",
         "export_label",
     ],
-    "guest": ["static", "login"],
+    "guest": ["static", "login", "init_config"],
 }
 """Mapping of permissions to routes that can be accessed by roles"""
 

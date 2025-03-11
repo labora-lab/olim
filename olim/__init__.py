@@ -13,6 +13,7 @@ from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_babel import Babel
 from flask_migrate import Migrate
+
 import os
 import json
 from datetime import timedelta
@@ -28,6 +29,10 @@ if not os.path.isdir(queue_dir):
 
 db = SQLAlchemy()
 app = Flask(__name__)
+# if DEBUG:
+#     from werkzeug.middleware.profiler import ProfilerMiddleware
+
+#     app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=("olim", ".py"))
 app.config["DEBUG"] = DEBUG
 # To not receive RuntimeError talking that the session is unavailable beacause no secret key was set.
 app.config["SESSION_TYPE"] = SESSION_TYPE

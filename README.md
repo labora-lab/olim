@@ -19,38 +19,20 @@ To run the standalone version see `requirements.txt` for the needed Python packa
 
     `cd olim`
 
-3. Copy your data to the `data/data.csv` (see the [`data`](./data) folder on details on how to format it)
+3. Copy your data to the `data` (see the [`data`](./data) folder on details on how to format it)
 
 4. Build and start the containers:
 
     `docker compose up -d`
 
-5. Wait for two minutes for the elasticsearch server to fully start.
+5. Wait for **two minutes** for the elasticsearch server to fully start.
 
-6. Initialize OLIM database:
+6. Go to `http://localhost:42000` and do the initial configuration.
 
-    `docker compose exec olim python -m flask --app olim init-db`
+## Command line configuration
 
-7. Upload your data:
+OLIM can also be initialized via command line, to do this run before accessing the interface:
 
-    * Simple text data:
+`docker compose exec olim python -m flask --app olim init-db`
 
-        `docker compose exec olim python -m flask --app olim upload single_text data/data.csv [text_id_column] [text_column]`
-
-    * Patient sheet data:
-
-        `docker compose exec olim python -m flask --app olim upload patient data/data.csv`
-
-    If you want to use the sample data run instead:
-
-
-
-    * Simple text data:
-
-        `docker compose exec olim python -m flask --app olim upload single_text /app/data/sample_data.csv text_id text`
-
-    * Patient sheet data:
-
-        `docker compose exec olim python -m flask --app olim upload patient /app/data/sample_data.csv`
-
-8. Access the labeler on http://localhost:42000
+Info on how to upload data via command line is available on [`data`](./data).
