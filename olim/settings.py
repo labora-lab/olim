@@ -80,7 +80,7 @@ PERMISSIONS = {
         "delete_label",
         "extract_labels",
         "extract_labels_json",
-        "label_configurations",
+        "label_settings",
         "label_up",
         "entry",
         "new_queue",

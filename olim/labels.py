@@ -16,6 +16,7 @@ import requests
 from . import settings
 from icecream import ic
 
+
 @app.route("/", methods=["GET"])
 @app.route("/labels", methods=["GET"])
 def labels():
@@ -53,7 +54,9 @@ def create_label():
         "label": label_name,
         "values": [l for l, *_ in settings.LABELS],
     }
-    res = requests.put(f"{settings.LEARNER_URL}/al/new-label", json=json.dumps(data)).json()
+    res = requests.put(
+        f"{settings.LEARNER_URL}/al/new-label", json=json.dumps(data)
+    ).json()
     ic(res)
     label = new_label(label_name, session["user_id"], al_id=res["label_id"])
     flash(
@@ -61,7 +64,6 @@ def create_label():
         category="success",
     )
     return redirect("/labels")
-
 
 
 @app.route("/labels/<int:label_id>/delete", methods=["GET"])
@@ -108,6 +110,7 @@ def extract_labels(label_id):
         headers={"Content-disposition": f"attachment; filename={label_str}.csv"},
     )
 
+
 @app.route("/labels/<label_id>/json")
 def extract_labels_json(label_id):
     label = get_label(label_id)
@@ -122,6 +125,7 @@ def extract_labels_json(label_id):
         headers={"Content-disposition": f"attachment; filename={label_str}.json"},
     )
 
+
 @app.route("/labels/<int:label_id>/queue", methods=["GET"])
 def catch_queue(label_id):
     # Create a queue from label
@@ -135,13 +139,13 @@ def catch_queue(label_id):
     return redirect(f"/queue/{queue_hash}")
 
 
-@app.route("/labels/<int:label_id>/configurations", methods=["GET"])
-def label_configurations(label_id):
+@app.route("/labels/<int:label_id>/settings", methods=["GET"])
+def label_settings(label_id):
     label = get_label(label_id)
     if not label:
         flash(_("Label não encontrada."), category="error")
         return redirect("/labels")
-    return render_template("label-configurations.html", label=label)
+    return render_template("label-settings.html", label=label)
 
 
 @app.route("/label-upload", methods=["POST"])
