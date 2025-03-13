@@ -10,6 +10,7 @@ import json
 from icecream import ic
 from time import sleep
 import pandas as pd
+import numpy as np
 
 
 def new_al(label):
@@ -178,11 +179,19 @@ def export_label(label_id):
 
     data_req["alpha"] = alpha
 
+    ic(data_req)
+
     res = requests.put(
-        f"{settings.LEARNER_URL}/al/export-predictions", json=json.dumps(data_req)
+        f"{settings.LEARNER_URL}/al/export-predictions",
+        json=json.dumps(data_req),
     )
 
-    pred_df = pd.read_json(res.json()["predictions"])
+    preds = res.json()["predictions"]
+    preds_values = [pred[0] if len(pred) == 1 else np.nan for pred in preds.values()]
+    preds_ids = list(preds.keys())
+    pred_df = pd.DataFrame({"entry_id": preds_ids, "value": preds_values})
+
+    ic(pred_df)
 
     # download json res["predictions"] as csv
     return Response(

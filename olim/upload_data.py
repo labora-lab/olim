@@ -48,20 +48,21 @@ class UploadManager:
         self._task_id = task_id
         self._last_error = None
 
-        ic(csv_file)
-
         # If we have it save csv file in a temporary folder
         if csv_file:
-            self._tmp_dir = tempfile.TemporaryDirectory()
-            temp_path = os.path.join(self._tmp_dir.name, csv_file.filename)
-            csv_file.save(temp_path)
-            parameters["csv_file"] = temp_path
-            print(temp_path)
+            if type(csv_file) is str:
+                parameters["csv_file"] = csv_file
+            else:
+                self._tmp_dir = tempfile.TemporaryDirectory()
+                temp_path = os.path.join(self._tmp_dir.name, csv_file.filename)
+                csv_file.save(temp_path)
+                parameters["csv_file"] = temp_path
 
         # Start a new thread to handle the upload function invocation
         thread = threading.Thread(
             target=self._run_function_with_context,
             args=(up_function, parameters),
+            daemon=True,
         )
         thread.start()
         return True
