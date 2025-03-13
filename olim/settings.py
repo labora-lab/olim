@@ -94,6 +94,7 @@ PERMISSIONS = {
         "catch_al",
         "upload_data",
         "sync_label",
+        "export_label",
     ],
     "user": [
         "static",
@@ -113,6 +114,7 @@ PERMISSIONS = {
         "active_learning",
         "create_al",
         "catch_al",
+        "export_label",
     ],
     "guest": ["static", "login", "init_config"],
 }

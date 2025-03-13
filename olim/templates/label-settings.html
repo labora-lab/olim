@@ -46,6 +46,12 @@
                     {{ _('Download Labeled Data') }}
                 </a>
                 {% endif %}
+                {%if has_permition('export_label')%}
+                <a href="../../al/{{ label.id }}/export" class="btn-flat waves-effect green-text">
+                    <i class="material-icons left">file_download</i>
+                    {{ _('Export Predictions') }}
+                </a>
+                {% endif %}
                 {%if has_permition('catch_queue')%}
                 <a href="./queue" class="btn-flat waves-effect orange-text">
                     <i class="material-icons left">send</i>{{ _('Open Queue') }}
