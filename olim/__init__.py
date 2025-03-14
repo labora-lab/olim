@@ -8,7 +8,8 @@ from .settings import (
     BABEL_TRANSLATION_DIRECTORIES,
     LEARNER_KEY,
     LEARNER_URL,
-    VERSION
+    VERSION,
+    HELP_URL,
 )
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
@@ -84,4 +85,5 @@ app.jinja_env.globals.update(
     labels_array=json.dumps([l[0].replace(" ", "_") for l in LABELS]),
     has_backend=not (LEARNER_URL in [None, ""] or LEARNER_KEY in [None, ""]),
     version=VERSION,
+    has_help=HELP_URL is not None,
 )

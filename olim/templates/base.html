@@ -146,18 +146,16 @@
     </main>
     <footer class="page-footer cyan darken-3">
         <div class="row">
-            <div class="col s1 center">
-            Release {{ version }}
-            </div>
-            <div class="col offset-s1 s8 center">
+            <div class="col s12 center">
                 <a class="grey-text text-lighten-4" href="https://gitlab.com/nanogennari/olim">
-                    {{ _('OLIM - Open Labeller for Iterative Machine learning') }}
+                    {{ _('OLIM - Open Labeller for Iterative Machine learning') }} - v{{ version }}
                 </a>
-            </div>
-            <div class="col s2 center">
-                <a class="grey-text text-lighten-4" href="{{ url_for('get_help') }}">
-                    {{ _('Report a problem with this page') }}
+                {% if has_help %}
+                <a class="grey-text text-lighten-4 right tooltipped" href="{{ url_for('get_help') }}"
+                    data-tooltip="{{_('Report a problem with this page')}}">
+                    <i class="material-icons">help</i>
                 </a>
+                {% endif %}
             </div>
         </div>
     </footer>
