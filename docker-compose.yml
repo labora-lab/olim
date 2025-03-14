@@ -30,7 +30,10 @@ services:
       # on the learner directory to upload data to it and get the key
       - LEARNER_KEY=
       - LABELS=LABELS_TYPES.YES_NO
+      - HELP_URL=
     restart: unless-stopped
+    volumes:
+      - ./:/app
     networks:
       - olim-es
       # Uncoment this network if you are running the learner on the same machine on Docker

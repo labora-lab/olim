@@ -254,11 +254,11 @@ function unhide(text_id, entry_id) {
 // Calls the backend to add a yes label to a patient
 function add_entry_label(entry_id, label_id, value) {
     run_command('add-label', ['entry_id=' + entry_id, 'label_id=' + label_id, 'value=' + value, 'callback=mark_label("' + label_id + '", "' + value + '"); ']);
-    // reload current page: 
+    // reload current page: (nano: Do we realy need to reload the page?)
     // TODO: Find a better way to update the page
-    setTimeout(function(){
-        location.reload();
-    }, 500);
+    // setTimeout(function(){
+    //     location.reload();
+    // }, 500);
 }
 
 // Calls the backend to remove an entry from hidden index
@@ -305,13 +305,13 @@ function unhide_text(id) {
 function mark_label(label_id, value) {
     // Unselect all
     for (i in LABELS) {
-        $("#" + LABELS[i] + "_sel_" + label_id).addClass("hidden");
-        $("#" + LABELS[i] + "_" + label_id).removeClass("hidden");
+        $("#" + LABELS[i] + "_unsel_" + label_id).addClass("hidden");
+        $("#" + LABELS[i] + "_sel_" + label_id).removeClass("hidden");
     }
     // Select back according to value
     value = value.replace(' ', '_')
-    $("#" + value + "_sel_" + label_id).removeClass("hidden");
-    $("#" + value + "_" + label_id).addClass("hidden");
+    $("#" + value + "_unsel_" + label_id).removeClass("hidden");
+    $("#" + value + "_sel_" + label_id).addClass("hidden");
 }
 
 //Callback: Delete a text from hidden page

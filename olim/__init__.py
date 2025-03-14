@@ -8,11 +8,14 @@ from .settings import (
     BABEL_TRANSLATION_DIRECTORIES,
     LEARNER_KEY,
     LEARNER_URL,
+    VERSION,
+    HELP_URL,
 )
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_babel import Babel
 from flask_migrate import Migrate
+
 import os
 import json
 from datetime import timedelta
@@ -28,6 +31,10 @@ if not os.path.isdir(queue_dir):
 
 db = SQLAlchemy()
 app = Flask(__name__)
+# if DEBUG:
+#     from werkzeug.middleware.profiler import ProfilerMiddleware
+
+#     app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=("olim", ".py"))
 app.config["DEBUG"] = DEBUG
 # To not receive RuntimeError talking that the session is unavailable beacause no secret key was set.
 app.config["SESSION_TYPE"] = SESSION_TYPE
@@ -66,6 +73,7 @@ from . import auth
 from . import cli
 from . import active_learning
 from . import upload_data
+from . import issue
 
 from .functions import have_hidden
 
@@ -76,4 +84,6 @@ app.jinja_env.globals.update(
     labels_rev=[l for l in LABELS[::-1]],
     labels_array=json.dumps([l[0].replace(" ", "_") for l in LABELS]),
     has_backend=not (LEARNER_URL in [None, ""] or LEARNER_KEY in [None, ""]),
+    version=VERSION,
+    has_help=HELP_URL is not None,
 )
