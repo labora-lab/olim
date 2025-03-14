@@ -1,5 +1,8 @@
 import os
 
+VERSION = "0.1.0"
+"""Version of the application"""
+
 ES_INDEX = "patients-texts"
 """Elasticserach index to load patient data"""
 
@@ -23,6 +26,9 @@ DB_PATH = os.path.join(os.getcwd(), "database.sqlite")
 
 LEARNER_URL = os.getenv("LEARNER_URL", None)
 LEARNER_KEY = os.getenv("LEARNER_KEY", None)
+
+HELP_URL = os.getenv("HELP_URL", None)
+"""URL to the API help page"""
 
 
 class LABELS_TYPES:
@@ -95,6 +101,8 @@ PERMISSIONS = {
         "upload_data",
         "sync_label",
         "export_label",
+        "get_help",
+        "send_ticket"
     ],
     "user": [
         "static",
@@ -115,6 +123,8 @@ PERMISSIONS = {
         "create_al",
         "catch_al",
         "export_label",
+        "get_help",
+        "send_ticket"
     ],
     "guest": ["static", "login", "init_config"],
 }

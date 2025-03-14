@@ -28,8 +28,9 @@ services:
       - LEARNER_URL=http://olim-learner:42010
       # Run `docker compose exec olim-learner poetry run flask --app api app-keys new data/sample_data.csv text_id text`
       # on the learner directory to upload data to it and get the key
-      - LEARNER_KEY=XI0vFKboeaVbVKR828nx5BoQnBF0gMYH
+      - LEARNER_KEY=
       - LABELS=LABELS_TYPES.YES_NO
+      - HELP_URL=
     restart: unless-stopped
     volumes:
       - ./:/app

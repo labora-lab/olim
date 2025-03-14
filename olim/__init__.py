@@ -8,6 +8,7 @@ from .settings import (
     BABEL_TRANSLATION_DIRECTORIES,
     LEARNER_KEY,
     LEARNER_URL,
+    VERSION
 )
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
@@ -71,6 +72,7 @@ from . import auth
 from . import cli
 from . import active_learning
 from . import upload_data
+from . import issue
 
 from .functions import have_hidden
 
@@ -81,4 +83,5 @@ app.jinja_env.globals.update(
     labels_rev=[l for l in LABELS[::-1]],
     labels_array=json.dumps([l[0].replace(" ", "_") for l in LABELS]),
     has_backend=not (LEARNER_URL in [None, ""] or LEARNER_KEY in [None, ""]),
+    version=VERSION,
 )

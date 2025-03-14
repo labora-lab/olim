@@ -146,9 +146,17 @@
     </main>
     <footer class="page-footer cyan darken-3">
         <div class="row">
-            <div class="col s12 center">
+            <div class="col s1 center">
+            Release {{ version }}
+            </div>
+            <div class="col offset-s1 s8 center">
                 <a class="grey-text text-lighten-4" href="https://gitlab.com/nanogennari/olim">
                     {{ _('OLIM - Open Labeller for Iterative Machine learning') }}
+                </a>
+            </div>
+            <div class="col s2 center">
+                <a class="grey-text text-lighten-4" href="{{ url_for('get_help') }}">
+                    {{ _('Report a problem with this page') }}
                 </a>
             </div>
         </div>
