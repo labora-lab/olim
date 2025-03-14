@@ -1,6 +1,7 @@
 from . import app
 from .database import get_labels, get_label, new_label
 from .functions import get_highlights, render_entry, add_entry_label
+from .labels import labels
 from flask import render_template, redirect, request, session, flash, Response
 from flask_babel import _
 import requests
@@ -184,20 +185,28 @@ def export_label(label_id):
     res = requests.put(
         f"{settings.LEARNER_URL}/al/export-predictions",
         json=json.dumps(data_req),
-    )
+    ).json()
 
-    preds = res.json()["predictions"]
-    preds_values = [pred[0] if len(pred) == 1 else np.nan for pred in preds.values()]
-    preds_ids = list(preds.keys())
-    pred_df = pd.DataFrame({"entry_id": preds_ids, "value": preds_values})
+    if res["status"] == "success":
+        preds = res["predictions"]
+        preds_values = [
+            pred[0] if len(pred) == 1 else np.nan for pred in preds.values()
+        ]
+        preds_ids = list(preds.keys())
+        pred_df = pd.DataFrame({"entry_id": preds_ids, "value": preds_values})
 
-    ic(pred_df)
+        ic(pred_df)
 
-    # download json res["predictions"] as csv
-    return Response(
-        pred_df.to_csv(index=False),
-        mimetype="text/csv",
-        headers={
-            "Content-disposition": f"attachment; filename={label.name}-{alpha}-predictions.csv"
-        },
-    )
+        # download json res["predictions"] as csv
+        return Response(
+            pred_df.to_csv(index=False),
+            mimetype="text/csv",
+            headers={
+                "Content-disposition": f"attachment; filename={label.name}-{alpha}-predictions.csv"
+            },
+        )
+    else:
+        flash(
+            _("Error exporting predictions: {}").format(res["error"]), category="error"
+        )
+        return redirect("/labels")
