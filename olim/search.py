@@ -1,12 +1,14 @@
-from . import app, entry_types
-from .functions import store_queue, get_def_nentries
-from .database import get_entries
-from flask import request, render_template, session
-import pandas as pd
 import json
 
+import pandas as pd
+from flask import render_template, request, session
 
-def get_terms(field):
+from . import app, entry_types
+from .database import get_entries
+from .functions import get_def_nentries, store_queue
+
+
+def get_terms(field) -> tuple[str, list[str], list[str]]:
     value = request.args.get(field, "")
     if len(value) == 0:
         return "[]", [], []
@@ -18,7 +20,7 @@ def get_terms(field):
 
 
 @app.route("/search", methods=["GET"])
-def search():
+def search() -> str:
     include, must_terms, must_phrases = get_terms("include")
     exclude, not_must_terms, not_must_phrases = get_terms("exclude")
     number = int(request.args.get("number", get_def_nentries()))
@@ -61,11 +63,11 @@ def search():
     if len(data) > 0:
         df_results = pd.DataFrame(data)
         df_results = df_results[df_results["match_count"] > 0]
-        df_results = df_results.sort_values(
-            by="score", ascending=False, ignore_index=True
-        ).iloc[:number]
+        df_results = df_results.sort_values(by="score", ascending=False, ignore_index=True).iloc[
+            :number
+        ]
         data = df_results.to_dict("records")
-        extra_data = {
+        extra_data: dict = {
             "Include": must_terms + must_phrases,
             "Exclude": not_must_terms + not_must_phrases,
         }

@@ -1,25 +1,23 @@
-from . import app, db, entry_types
-from .functions import store_queue, label_upload
-from flask import render_template, redirect, request, session, flash, Response
-from flask_babel import _
-import pandas as pd
-import time
-import json
-import requests
-from . import settings
-from icecream import ic
-from .database import get_user
 import datetime as dt
 
+from flask import flash, redirect, request, render_template, request, session
+from flask_babel import _
+import requests
+
+from . import app, settings
+from .database import get_user
+
 TIMEZONE = dt.timezone(dt.timedelta(hours=-3))
+
 
 @app.route("/help", methods=["GET"])
 def get_help():
     previous_url = request.referrer
     return render_template("help.html", previous_url=previous_url)
 
+
 @app.route("/help/send", methods=["POST"])
-def send_ticket():
+def send_ticket() -> ...:
     if request.method == "POST":
         email = request.form.get("email")
         subject = request.form.get("subject")
@@ -35,15 +33,16 @@ def send_ticket():
             "email": email,
             "url": previous_url,
             "version": settings.VERSION,
-            "time": dt.datetime.now(TIMEZONE).strftime("%d-%m-%Y %H:%M:%S")
+            "time": dt.datetime.now(TIMEZONE).strftime("%d-%m-%Y %H:%M:%S"),
         }
-        res = requests.post(
-            settings.HELP_URL,
-            data=data
-        ).json()
+        res = requests.post(settings.HELP_URL, data=data).json()
         if res["status"] == "error":
-            flash(_("Error sending ticket. Please try again later or check your HELP_URL environment variable."),
-                  category="error")
+            flash(
+                _(
+                    "Error sending ticket. Please try again later or check your HELP_URL environment variable."
+                ),
+                category="error",
+            )
             return redirect(previous_url)
         flash(_("Ticket sent. Thank you very much."), category="success")
     return redirect(previous_url)

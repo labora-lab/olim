@@ -1,4 +1,5 @@
 import os
+from typing import ClassVar
 
 VERSION = "0.1.0"
 """Version of the application"""
@@ -31,43 +32,43 @@ HELP_URL = os.getenv("HELP_URL", None)
 """URL to the API help page"""
 
 
-class LABELS_TYPES:
-    SIM_NAO = [
+class LabelTypes:
+    SIM_NAO: ClassVar = [
         ("sim", "icon", "check", "green"),
         ("não", "icon", "clear", "red"),
     ]
-    SIM_NAO_NS = [
+    SIM_NAO_NS: ClassVar = [
         ("sim", "icon", "check", "green"),
         ("não", "icon", "clear", "red"),
         ("não sei", "text", "?", "orange"),
     ]
-    YES_NO = [
+    YES_NO: ClassVar = [
         ("yes", "icon", "check", "green"),
         ("no", "icon", "clear", "red"),
     ]
-    CHECK = [
+    CHECK: ClassVar = [
         ("check", "icon", "check", "green"),
     ]
-    YES_NO_UNKNOWN = [
+    YES_NO_UNKNOWN: ClassVar = [
         ("yes", "icon", "check", "green"),
         ("no", "icon", "clear", "red"),
         ("unknown", "text", "?", "orange"),
     ]
-    YES_NO_IDK = [
+    YES_NO_IDK: ClassVar = [
         ("yes", "icon", "check", "green"),
         ("no", "icon", "clear", "red"),
         ("don't know", "text", "?", "orange"),
     ]
 
 
-labels = os.getenv("LABELS")
+labels = os.getenv("LABELS", "LabelTypes.SIM_NAO_NS")
 try:
     LABELS = eval(labels)
 except TypeError:
-    LABELS = LABELS_TYPES.SIM_NAO_NS
+    LABELS = LabelTypes.SIM_NAO_NS
 
 """List of endpoints that need a setup backend."""
-NEED_BACKEND = [
+NEED_LEARNER = [
     "active_learning",
     "create_al",
     "catch_al",
@@ -102,7 +103,7 @@ PERMISSIONS = {
         "sync_label",
         "export_label",
         "get_help",
-        "send_ticket"
+        "send_ticket",
     ],
     "user": [
         "static",
@@ -124,7 +125,7 @@ PERMISSIONS = {
         "catch_al",
         "export_label",
         "get_help",
-        "send_ticket"
+        "send_ticket",
     ],
     "guest": ["static", "login", "init_config"],
 }

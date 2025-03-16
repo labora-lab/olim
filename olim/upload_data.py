@@ -1,15 +1,14 @@
 import os
 import threading
-import click
 import tempfile
-from flask import request, render_template, redirect, flash
+
+import click
+from flask import flash, redirect, render_template, request
 from flask_babel import _
 
-from icecream import ic
-
 from . import app
-from .entry_types.single_text import up_single_text
 from .entry_types.patient import up_patients
+from .entry_types.single_text import up_single_text
 
 
 # Singleton to manage upload tasks
@@ -21,24 +20,30 @@ class UploadManager:
     _last_error = None
     _tmp_dir = None
 
-    def __new__(cls):
+    def __new__(cls) -> "UploadManager":
         if cls._instance is None:
             with cls._lock:
                 if not cls._instance:
                     cls._instance = super(UploadManager, cls).__new__(cls)
         return cls._instance
 
-    def get_task(self):
+    def get_task(self) -> bool | str:
         with self._lock:
             if self._is_uploading:
                 return self._task_id
         return False
 
-    def get_error(self):
+    def get_error(self) -> str:
         with self._lock:
             return self._last_error
 
-    def upload_data(self, up_function, task_id, csv_file=None, **parameters):
+    def upload_data(
+        self,
+        up_function: callable,
+        task_id: str,
+        csv_file: str | None = None,
+        **parameters,
+    ) -> bool:
         if self._is_uploading:
             print("Another upload is already in progress. Upload request ignored.")
             return False
@@ -67,7 +72,9 @@ class UploadManager:
         thread.start()
         return True
 
-    def _run_function_with_context(self, up_function, parameters):
+    def _run_function_with_context(
+        self, up_function: callable, parameters: ...
+    ) -> None:
         try:
             with app.app_context():
                 with click.Context(up_function) as ctx:
@@ -88,14 +95,12 @@ class UploadManager:
 
 
 @app.route("/upload-data", methods=["GET", "POST"])
-def upload_data():
+def upload_data() -> ...:
     if request.method == "POST":
         upload_type = request.form.get("upload_type")
         datafile = request.files.get("file")
         text_id = request.form.get("text_id")
         text = request.form.get("text")
-
-        ic(request.form)
 
         if upload_type == "sample_data":
             if not UploadManager().upload_data(
