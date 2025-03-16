@@ -19,7 +19,6 @@ def get_terms(field) -> tuple[str, list[str], list[str]]:
     return value, terms, phrases
 
 
-@app.route("/", methods=["GET"])
 @app.route("/search", methods=["GET"])
 def search() -> str:
     include, must_terms, must_phrases = get_terms("include")

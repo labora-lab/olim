@@ -4,13 +4,15 @@ import time
 import pandas as pd
 from flask import Response, flash, redirect, render_template, request, session
 from flask_babel import _
+import requests
 
-from . import app, db, entry_types
+from . import app, db, entry_types, settings
 from .database import del_label, get_label, get_labeled, get_labels, new_label
 from .functions import store_queue
 from .utils.label import label_upload
 
 
+@app.route("/", methods=["GET"])
 @app.route("/labels", methods=["GET"])
 def labels() -> ...:
     labels_values = {label.id: {} for label in get_labels()}
@@ -38,10 +40,19 @@ def labels() -> ...:
 
 @app.route("/labels/new", methods=["POST"])
 def create_label() -> ...:
-    label = request.form.get("label")
-    label = new_label(label, session["user_id"])
+    label_name = request.form.get("label")
+    data = {
+        "app_key": settings.LEARNER_KEY,
+        "user_id": session["user_id"],
+        "label": label_name,
+        "values": [l for l, *_ in settings.LABELS],
+    }
+    res = requests.put(
+        f"{settings.LEARNER_URL}/al/new-label", json=json.dumps(data)
+    ).json()
+    label = new_label(label_name, session["user_id"], al_id=res["label_id"])
     flash(
-        _("Label {label_name} sucessfully created").format(label_name=label.name),
+        _("Label {label_name} successfully created").format(label_name=label.name),
         category="success",
     )
     return redirect("/labels")
@@ -126,6 +137,15 @@ def catch_queue(label_id) -> ...:
     queue_hash = store_queue(queue)
     # Redirect to queue
     return redirect(f"/queue/{queue_hash}")
+
+
+@app.route("/labels/<int:label_id>/settings", methods=["GET"])
+def label_settings(label_id):
+    label = get_label(label_id)
+    if not label:
+        flash(_("Label não encontrada."), category="error")
+        return redirect("/labels")
+    return render_template("label-settings.html", label=label)
 
 
 @app.route("/label-upload", methods=["POST"])

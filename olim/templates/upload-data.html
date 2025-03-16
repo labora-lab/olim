@@ -1,73 +1,89 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Upload Data') }}{% endblock %}
+{% block head %}
+{% if up_task %}
+<meta http-equiv="refresh" content="10">
+{% endif %}
+{% endblock %}
 
 {% block content %}
-<div class="col s12">
-    <h4 class="center">{{ _('Upload Data') }}</h4>
+{% if up_task %}
+<div class="col card s12">
+    <div class="card-content">
+        <span class="card-title">{{_("Processing {} upload").format(up_task)}}</span>
+        <p>{{_("OLIM only supports one upload task at a time, to upload another file please come back later.")}}</p>
+    </div>
 </div>
+{% else %}
 <form action="/upload-data" method="post" enctype="multipart/form-data">
-    <h5 class="left-align">{{ _('Select Data Format') }}</h5>
-
-    <div class="collection">
+    <div class="collection with-header col s12">
+        <span class="colection-header">
+            <h5 class="center" style="font-weight: 300;">{{ _('Data Format') }}</h5>
+        </span>
         <a href="#!" class="collection-item upload-option" data-value="simple_text">
-            <span class="title">{{ _('Simple Format') }}</span>
-            <p>{{ _('Use this option if your CSV file does not meet the patient format. You need to specify which columns are equivalent to') }} <strong>text</strong> {{ _('and') }} <strong>text_id</strong>. 
-            {{ _('Make sure to provide the correct column names during the upload.') }}</p>
+            <span class="title">{{ _('Text Format') }}</span>
+            <p>{{ _('Use this option if your CSV is composed of independent texts. You need to specify which
+                columns are equivalent to <strong>text</strong> and <strong>text_id</strong>. Make sure to
+                provide the correct column names during the upload.') }}</p>
         </a>
         <a href="#!" class="collection-item upload-option" data-value="patient_sheet">
             <span class="title">{{ _('Patient Format') }}</span>
-            <p>{{ _('Use this option if your CSV file has the following columns:') }} <strong>patient_id, text_id, visitation_id, text_type, text, date</strong>. 
-            {{ _('Make sure that the columns are exactly as mentioned to ensure correct data upload.') }}</p>
+            <p>{{ _('Use this option if your CSV file has the following columns: <strong>patient_id, text_id,
+                    visitation_id, text_type, text, date</strong>. Make sure that the columns are exactly as
+                mentioned to ensure correct data upload.') }} {% if has_backend %}</br><strong>{{_('This format is
+                    NOT COMPATIBLE with OLIM-learner!')}}</strong>{% endif %}</p>
+        </a>
+        <a href="#!" class="collection-item upload-option" data-value="sample_data">
+            <span class="title">{{ _('Sample data') }}</span>
+            <p>{{ _('Upload built in sample data in the Text format.') }}</p>
         </a>
     </div>
-</form>
-<div class="col card s12 tight-bottom">
-    <div class="card-content row tight-bottom">
-        <form action="./upload-data" method="post" enctype="multipart/form-data">
-            <div class="col s12">
-                <h5>{{ _('File Upload') }}</h5>
-            </div>
-            <input type="hidden" name="upload_type" id="upload_type" value="simple_text">
-            <div id="additional-fields" class="input-field" style="display: block;">
-                <div class="input-field col s12">
-                    <input id="text_id" name="text_id" type="text">
-                    <label for="text_id">{{ _('Column for Text ID') }}</label>
-                </div>
-                <div class="input-field col s12">
-                    <input id="text" name="text" type="text">
-                    <label for="text">{{ _('Column for Text') }}</label>
-                </div>
-            </div>
-            
-            <div class="file-field input-field col l10 m8 s12">
+    <div class="col card s12" id="file-selector">
+        <div class="card-content">
+            <span class="card-title center"> Data file</span>
+            <div class="file-field input-field">
                 <div class="btn">
                     <span><i class="material-icons">folder_open</i></span>
                     <input type="file" name="file">
                 </div>
                 <div class="file-path-wrapper">
-                    <input class="file-path validate" type="text" name="filename">
+                    <input class="file-path validate" type="text" name="filename"
+                        placeholder="{{_('Select CSV file')}}">
                 </div>
             </div>
-            <div class="input-field col l2 m4 s12">
-                <button class="btn waves-effect waves-light btn-wide" type="submit">{{ _('Upload') }}
-                    <i class="material-icons right">file_upload</i>
-                </button>
+            <input type="hidden" name="upload_type" id="upload_type" value="simple_text">
+            <div id="additional-fields" class="input-field" style="display: block;">
+                <div class="input-field">
+                    <input id="text_id" name="text_id" type="text">
+                    <label for="text_id">{{ _('Column for Text ID') }}</label>
+                </div>
+                <div class="input-field">
+                    <input id="text" name="text" type="text">
+                    <label for="text">{{ _('Column for Text') }}</label>
+                </div>
             </div>
-        </form>
+        </div>
     </div>
-</div>
+    <div class="input-field col s12">
+        <button class="btn btn-wide waves-effect waves-light btn-wide" type="submit">{{ _('Upload data') }}
+            <i class="material-icons right">file_upload</i>
+        </button>
+    </div>
+</form>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         M.AutoInit();
         const options = document.querySelectorAll('.upload-option');
         const uploadTypeInput = document.getElementById('upload_type');
         const additionalFields = document.getElementById('additional-fields');
+        const fileFields = document.getElementById('file-selector');
 
         options.forEach(option => {
-            option.addEventListener('click', function() {
+            option.addEventListener('click', function () {
                 options.forEach(opt => opt.classList.remove('active'));
                 option.classList.add('active');
                 uploadTypeInput.value = option.getAttribute('data-value');
@@ -76,6 +92,12 @@
                     additionalFields.style.display = 'block';
                 } else {
                     additionalFields.style.display = 'none';
+                }
+
+                if (uploadTypeInput.value === "sample_data") {
+                    fileFields.style.display = 'none';
+                } else {
+                    fileFields.style.display = 'block';
                 }
             });
         });

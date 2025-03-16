@@ -1,17 +1,19 @@
 import json
 from time import sleep
+import pandas as pd
+import numpy as np
 
 import requests
-from flask import flash, redirect, render_template, request, session
+from flask import flash, redirect, render_template, request, Response, session
 from flask_babel import _
 from icecream import ic
 
 from . import app, db, settings
-from .database import add_entry_label, get_label, get_labels, new_label
+from .database import add_entry_label, Label, get_label, get_labels, new_label
 from .functions import get_highlights, render_entry
 
 
-def new_al(label) -> None:
+def new_al(label: Label) -> None:
     data = {
         "app_key": settings.LEARNER_KEY,
         "user_id": session["user_id"],
@@ -63,7 +65,7 @@ def create_al() -> ...:
 
 
 @app.route("/al/<int:label_id>", methods=["GET", "POST"])
-def catch_al(label_id) -> ...:
+def catch_al(label_id: int) -> ...:
     label = get_label(label_id)
     if not label:
         flash(_("Label not found."), category="error")
@@ -124,7 +126,7 @@ def catch_al(label_id) -> ...:
 
 
 @app.route("/al/<int:label_id>/sync", methods=["GET", "POST"])
-def sync_label(label_id) -> ...:
+def sync_label(label_id: int) -> ...:
     label = get_label(label_id)
     if not label:
         flash(_("Label not found."), category="error")
@@ -158,3 +160,52 @@ def sync_label(label_id) -> ...:
         flash(_("Error syncing labels."), category="error")
 
     return redirect("/labels")
+
+
+@app.route("/al/<int:label_id>/export", methods=["GET", "POST"])
+def export_label(label_id: int) -> ...:
+    label = get_label(label_id)
+    data_req = dict(
+        app_key=settings.LEARNER_KEY,
+        user_id=session["user_id"],
+        label_id=label.al_key,
+    )
+
+    if request.method == "POST":
+        # get alpha from request and add to data_req
+        alpha = request.form["alpha"]
+    else:
+        alpha = 0.95
+
+    data_req["alpha"] = alpha
+
+    ic(data_req)
+
+    res = requests.put(
+        f"{settings.LEARNER_URL}/al/export-predictions",
+        json=json.dumps(data_req),
+    ).json()
+
+    if res["status"] == "success":
+        preds = res["predictions"]
+        preds_values = [
+            pred[0] if len(pred) == 1 else np.nan for pred in preds.values()
+        ]
+        preds_ids = list(preds.keys())
+        pred_df = pd.DataFrame({"entry_id": preds_ids, "value": preds_values})
+
+        ic(pred_df)
+
+        # download json res["predictions"] as csv
+        return Response(
+            pred_df.to_csv(index=False),
+            mimetype="text/csv",
+            headers={
+                "Content-disposition": f"attachment; filename={label.name}-{alpha}-predictions.csv"
+            },
+        )
+    else:
+        flash(
+            _("Error exporting predictions: {}").format(res["error"]), category="error"
+        )
+        return redirect("/labels")

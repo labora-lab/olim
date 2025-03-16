@@ -1,10 +1,18 @@
 from flask import abort, flash, redirect, render_template, request, session, url_for
 from flask_babel import _
+from elasticsearch import Elasticsearch
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from . import app
+from . import app, settings
 from .database import get_user, get_users, insert_user, update_user_password
-from .settings import LEARNER_KEY, LEARNER_URL, NEED_BACKEND, PERMISSIONS
+from .database import (
+    check_db_initialized,
+    get_user,
+    get_users,
+    init_db,
+    insert_user,
+    update_user_password,
+)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -69,6 +77,12 @@ def get_user_role(user_id: str | None = None) -> str:
 @app.before_request
 def check_permission() -> ...:
     """Check user permission before each request"""
+    if not check_db_initialized():
+        if role_has_permission(role="guest"):
+            return None
+        else:
+            return render_template("init-config.html")
+
     current_user_id = session.get("user_id")
     if current_user_id is None:  # the first request to the app
         set_guest_user()  # set user_id to 'guest' in session
@@ -104,8 +118,32 @@ def check_permission() -> ...:
 
 
 @app.before_request
+def check_elasticsearch() -> ...:
+    if check_db_initialized() and not role_has_permission(role="guest"):
+        es = es = Elasticsearch([settings.ES_SERVER])
+        try:
+            # Attempt to ping the Elasticsearch server
+            if es.ping():
+                return  # Elasticsearch is available, proceed with the request
+            else:
+                raise Exception("Elasticsearch server is not responding")
+
+        except Exception as e:
+            flash(
+                _(
+                    "Elasticsearch server is unavailable: {}. If you just started the services, please wait for a few minutes, contact admin if problem persists."
+                ).format(str(e)),
+                category="error",
+            )
+            # Render base.html immediately and stop further processing of this request
+            return render_template("base.html")
+
+
+@app.before_request
 def check_backend() -> ...:
-    if request.endpoint in NEED_BACKEND and (LEARNER_KEY is None or LEARNER_URL is None):
+    if request.endpoint in settings.NEED_LEARNER and (
+        settings.LEARNER_KEY is None or settings.LEARNER_URL is None
+    ):
         flash(
             _(
                 "{requested_url} needs a backend connection, see https://gitlab.com/nanogennari/olim-backend."
@@ -122,10 +160,43 @@ def set_guest_user() -> None:
 
 def role_has_permission(endpoint=None, role=None) -> bool:
     """Check if user has permission to access current endpoint"""
-    role = role or get_user_role()
+    if role is None:
+        role = get_user_role()
     endpoint = endpoint or request.endpoint
-    permitted_endpoints = PERMISSIONS.get(role, [])
+    permitted_endpoints = settings.PERMISSIONS.get(role, [])
     return endpoint in permitted_endpoints
+
+
+@app.route("/init-config", methods=("POST", "GET"))
+def init_config() -> ...:
+    if check_db_initialized():
+        flash(_("Initial configuration already done!"), category="warning")
+    if (
+        request.method == "POST"
+        and ("username" in request.form)
+        and ("name" in request.form)
+        and ("new_password" in request.form)
+        and ("password_check" in request.form)
+    ):
+        username = request.form.get("username")
+        password = request.form.get("new_password")
+        password_check = request.form.get("password_check")
+        name = request.form.get("name")
+        if password != password_check:
+            flash(_("Passwords do not match"), category="warning")
+            return redirect("/")
+        init_db(admin_user=username, admin_passwd=password, admin_name=name)
+        flash(
+            _("Database initialized!").format(username=username),
+            category="success",
+        )
+        flash(
+            _("User {username} sucessfully registered!").format(username=username),
+            category="success",
+        )
+        login_user(get_user(username, by="username"))
+        return redirect(url_for("upload_data"))
+    return redirect("/")
 
 
 @app.route("/users", methods=("POST", "GET"))
@@ -160,7 +231,7 @@ def users() -> ...:
 
     context = {
         "users": get_users(),
-        "roles": list(PERMISSIONS.keys()),
+        "roles": list(settings.PERMISSIONS.keys()),
     }
 
     return render_template("users.html", **context)
@@ -174,7 +245,9 @@ def security_edit_password(
         return
 
     if new_password_check is None:
-        flash(_("Please enter a new on both fields!"), category="error")  # no new password
+        flash(
+            _("Please enter a new on both fields!"), category="error"
+        )  # no new password
         return
 
     if new_password != new_password_check:
@@ -190,7 +263,9 @@ def security_edit_password(
     if changer_user["role"] != "admin" and not verify_password(
         old_password, changer_user["password"]
     ):
-        flash(_("Incorrect old password!"), category="error")  # old password is incorrect
+        flash(
+            _("Incorrect old password!"), category="error"
+        )  # old password is incorrect
         return
 
     update_user_password(

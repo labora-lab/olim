@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Help') }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col s12">
+            <h4 class="center-align">{{ _('Help') }}</h4>
+            <p>{{ _('Fill in this form to send a ticket for the page: ') + previous_url }}</p>
+            <p>{{ _('We will get back to you as soon as possible. Some metadata will be sent together to help us understand.') }}</p>
+        </div>
+    </div>
+    <div class="card hoverable">
+        <div class="card-content">
+            <form action="/help/send" method="post">
+                <div class="row">
+                    <div class="input-field col s12">
+                        <input id="email" name="email" type="email" class="validate" required>
+                        <label for="email">{{ _('Your e-mail') }}</label>
+                    </div>
+                    <div class="input-field col s12">
+                        <input id="subject" name="subject" type="text" class="validate" required>
+                        <label for="subject">{{ _('Subject') }}</label>
+                    </div>
+                    <div class="input-field col s12">
+                        <textarea id="message" name="message" class="materialize-textarea" required></textarea>
+                        <label for="message">{{ _('Message') }}</label>
+                    </div>
+                    <div class="input-field col s12">
+                        <input id="url" name="url" type="text" class="validate" value="{{ previous_url }}" required>
+                        <label for="url">{{ _('Page URL') }}</label>
+                    </div>
+                    <div class="col s12">
+                        <button class="btn waves-effect waves-light right" type="submit" name="action">{{ _('Send') }}
+                            <i class="material-icons right">send</i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    
+</div>
+{% endblock %}

@@ -12,11 +12,13 @@ from .settings import (
     BABEL_DEFAULT_LOCALE,
     BABEL_TRANSLATION_DIRECTORIES,
     DEBUG,
+    HELP_URL,
     LABELS,
     LANGUAGES,
     LEARNER_KEY,
     LEARNER_URL,
     SECRET_KEY,
+    VERSION,
 )
 
 SESSION_TYPE = "filesystem"
@@ -30,6 +32,10 @@ if not os.path.isdir(queue_dir):
 
 db = SQLAlchemy()
 app = Flask(__name__)
+# if DEBUG:
+#     from werkzeug.middleware.profiler import ProfilerMiddleware
+
+#     app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=("olim", ".py"))
 app.config["DEBUG"] = DEBUG
 # To not receive RuntimeError talking that the session is unavailable beacause no secret key was set
 app.config["SESSION_TYPE"] = SESSION_TYPE
@@ -64,6 +70,7 @@ from . import commands  # noqa
 from . import database  # noqa
 from . import entry  # noqa
 from . import hidden  # noqa
+from . import issue  # noqa
 from . import labels  # noqa
 from . import queue  # noqa
 from . import search  # noqa
@@ -75,6 +82,10 @@ app.jinja_env.globals.update(
     has_permition=auth.role_has_permission,
     labels_types=LABELS,
     labels_rev=LABELS[::-1],
-    labels_array=json.dumps([label_values[0].replace(" ", "_") for label_values in LABELS]),
+    labels_array=json.dumps(
+        [label_values[0].replace(" ", "_") for label_values in LABELS]
+    ),
     has_backend=not (LEARNER_URL in [None, ""] or LEARNER_KEY in [None, ""]),
+    version=VERSION,
+    has_help=HELP_URL is not None,
 )

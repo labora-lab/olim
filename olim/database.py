@@ -2,7 +2,7 @@ import random
 import string
 from datetime import datetime
 
-from sqlalchemy import ScalarResult, Select
+from sqlalchemy import inspect, ScalarResult, Select
 from sqlalchemy.orm import Mapped, declared_attr
 from werkzeug.security import generate_password_hash
 
@@ -259,20 +259,32 @@ def register_entries(entries_ids: list[str], entries_type: str) -> None:
     db.session.commit()
 
 
-def init_db() -> None:
+def init_db(
+    admin_user: str = "admin",
+    admin_name: str = "Administrator",
+    admin_passwd: str | None = None,
+) -> ...:
     """Initializes the database."""
     print("Initializing database...")
     db.create_all()
-    if not get_user("admin", "username"):
+    if not get_user(admin_user, "username"):
         print("Creatting administrator user.")
-        password = "".join(random.choices(string.ascii_uppercase + string.digits, k=12))
+        if admin_passwd is None:
+            password = "".join(
+                random.choices(string.ascii_uppercase + string.digits, k=12)
+            )
+        else:
+            password = admin_passwd
         print("----------------------------------")
-        print("Username: admin")
-        print("Password:", password)
+        print("Username:", admin_user)
+        if admin_passwd is not None:
+            print("Password: [set via web interface]")
+        else:
+            print("Password:", password)
         print("----------------------------------")
         user = insert_user(
-            name="Adminstrator",
-            username="admin",
+            name=admin_name,
+            username=admin_user,
             hashed_password=generate_password_hash(password),
             role="admin",
             creator=1,
@@ -280,3 +292,16 @@ def init_db() -> None:
         user.created_by = user.id
         db.session.commit()
     print("Database initialized.")
+
+
+def check_db_initialized() -> bool:
+    """
+    Checks if the database has been initialized by verifying the presence of tables.
+
+    Returns:
+        bool: True if there are any tables in the database, False otherwise.
+    """
+    engine = db.engine
+    inspector = inspect(engine)
+    table_names = inspector.get_table_names()
+    return len(table_names) > 0
