@@ -1,0 +1,54 @@
+# .gitlab-ci.yml
+
+stages:
+  - check
+  # - test
+
+cache:
+  key: $CI_COMMIT_REF_SLUG
+  paths:
+    - .venv/
+    - .cache/uv/
+  policy: pull-push
+
+variables:
+  UV_VERSION: "0.6.6"
+  VIRTUAL_ENV: ".venv"
+  PATH: "${VIRTUAL_ENV}/bin:${PATH}"
+
+.ci_template: &ci_setup
+  image: python:3.13-slim-bookworm
+  before_script:
+    - apt-get update && apt-get install -y make curl
+    # Install UV once per pipeline
+    - if ! command -v uv >/dev/null; then
+        curl -L "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-$(uname -s)-$(uname -m).tar.gz" | tar -xz &&
+        mv uv /usr/local/bin/uv &&
+        chmod +x /usr/local/bin/uv;
+      fi
+    # Create venv only if not cached
+    - if [ ! -d ".venv" ]; then python -m venv .venv; fi
+
+code_checks:
+  <<: *ci_setup
+  stage: check
+  script:
+    - make install  # Uses UV if available from cache
+    - make install-hooks
+    - make pre-commit
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# unit_tests:
+#   <<: *ci_setup
+#   stage: test
+#   script:
+#     - make install  # Reuses cached dependencies
+#     - make test
+#   cache:
+#     policy: pull  # Only pull existing cache, don't push changes
+#   needs: ["code_checks"]
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+#     - if: $CI_COMMIT_BRANCH == "main"

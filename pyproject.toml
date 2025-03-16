@@ -16,6 +16,7 @@ dependencies = [
     "icecream>=2.1.4",
     "numpy>=2.1.0",
     "pandas==2.2.3",
+    "pre-commit>=4.1.0",
     "requests==2.31.0",
     "tqdm==4.65.0",
     "werkzeug==2.2.3",
@@ -24,7 +25,8 @@ dependencies = [
 [dependency-groups]
 dev = [
     "isort>=6.0.1",
-    "ruff>=0.9.9",
+    "pre-commit>=4.1.0",
+    "ruff>=0.11.0",
 ]
 
 [tool.ruff]
