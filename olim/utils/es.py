@@ -26,9 +26,7 @@ def get_index(kwargs) -> tuple[str, dict]:
 def es_list_fields(**kwargs) -> list[str]:
     index, kwargs = get_index(kwargs)
     client = get_es_conn()
-    return list(
-        client.indices.get_mapping(**kwargs)[index]["mappings"]["properties"].keys()
-    )
+    return list(client.indices.get_mapping(**kwargs)[index]["mappings"]["properties"].keys())
 
 
 def es_search(**kwargs) -> dict:

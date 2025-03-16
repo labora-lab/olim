@@ -75,7 +75,7 @@ def up_patients(csv_file: str) -> None:
         df_a["date"] = pd.to_datetime(df_a["date"])
         return [parse_row(row.dropna().to_dict()) for _, row in df_a.iterrows()]
 
-    def doc_generator(df, *_) -> Generator[dict, None, None]:
+    def doc_generator(df, *_) -> Generator[dict]:
         for pid, sub_df in tqdm(df.groupby("patient_id")):
             yield {
                 "_index": ES_INDEX,

@@ -2,9 +2,9 @@ import json
 import time
 
 import pandas as pd
+import requests
 from flask import Response, flash, redirect, render_template, request, session
 from flask_babel import _
-import requests
 
 from . import app, db, entry_types, settings
 from .database import del_label, get_label, get_labeled, get_labels, new_label
@@ -45,11 +45,9 @@ def create_label() -> ...:
         "app_key": settings.LEARNER_KEY,
         "user_id": session["user_id"],
         "label": label_name,
-        "values": [l for l, *_ in settings.LABELS],
+        "values": [label for label, *_ in settings.LABELS],
     }
-    res = requests.put(
-        f"{settings.LEARNER_URL}/al/new-label", json=json.dumps(data)
-    ).json()
+    res = requests.put(f"{settings.LEARNER_URL}/al/new-label", json=json.dumps(data)).json()
     label = new_label(label_name, session["user_id"], al_id=res["label_id"])
     flash(
         _("Label {label_name} successfully created").format(label_name=label.name),
@@ -140,7 +138,7 @@ def catch_queue(label_id) -> ...:
 
 
 @app.route("/labels/<int:label_id>/settings", methods=["GET"])
-def label_settings(label_id):
+def label_settings(label_id) -> ...:
     label = get_label(label_id)
     if not label:
         flash(_("Label não encontrada."), category="error")

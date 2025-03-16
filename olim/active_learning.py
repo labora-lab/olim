@@ -1,15 +1,15 @@
 import json
 from time import sleep
-import pandas as pd
-import numpy as np
 
+import numpy as np
+import pandas as pd
 import requests
-from flask import flash, redirect, render_template, request, Response, session
+from flask import Response, flash, redirect, render_template, request, session
 from flask_babel import _
 from icecream import ic
 
 from . import app, db, settings
-from .database import add_entry_label, Label, get_label, get_labels, new_label
+from .database import Label, add_entry_label, get_label, get_labels, new_label
 from .functions import get_highlights, render_entry
 
 
@@ -58,7 +58,7 @@ def create_al() -> ...:
     new_al(label)
 
     flash(
-        _("Active learning for  {label_name} sucessfully created").format(label_name=label.name),
+        _("Active learning for {label_name} sucessfully created").format(label_name=label.name),
         category="success",
     )
     return redirect("/al")
@@ -88,24 +88,23 @@ def catch_al(label_id: int) -> ...:
             if res["entry_id"] == data_req["entry_id"]:
                 add_entry_label(label_id, request.form["entry_id"], session["user_id"], value_str)
                 flash(
-                    _(f'Added value "{value_str}" for entry {request.form["entry_id"]}.').format(
-                        label_name=label.name
+                    _('Added value "{value}" for entry {entry_id}.').format(
+                        value=value_str, entry_id=request.form["entry_id"]
                     ),
                     category="success",
                 )
             else:
                 flash(
-                    _(
-                        f'Error adding value "{value_str}" for entry {request.form["entry_id"]}.'
-                    ).format(label_name=label.name),
+                    _('Error adding value "{value}" for entry {entry_id}.').format(
+                        value=value_str, entry_id=request.form["entry_id"]
+                    ),
                     category="error",
                 )
         except KeyError:
             flash(
-                _(
-                    f'Error adding value "{value_str}" for entry {request.form["entry_id"]}. '
-                    "Got key error."
-                ).format(label_name=label.name),
+                _('Error adding value "{value}" for entry {entry_id}. Got key error.').format(
+                    value=value_str, entry_id=request.form["entry_id"]
+                ),
                 category="error",
             )
 
@@ -149,7 +148,7 @@ def sync_label(label_id: int) -> ...:
     ic(res.json())
     al_key = res.json()["al_key"]
 
-    # TODO update label al_key
+    # TODO: update label al_key
     print(al_key)
     label.al_key = al_key
     db.session.commit()
@@ -165,11 +164,11 @@ def sync_label(label_id: int) -> ...:
 @app.route("/al/<int:label_id>/export", methods=["GET", "POST"])
 def export_label(label_id: int) -> ...:
     label = get_label(label_id)
-    data_req = dict(
-        app_key=settings.LEARNER_KEY,
-        user_id=session["user_id"],
-        label_id=label.al_key,
-    )
+    data_req = {
+        "app_key": settings.LEARNER_KEY,
+        "user_id": session["user_id"],
+        "label_id": label.al_key,
+    }
 
     if request.method == "POST":
         # get alpha from request and add to data_req
@@ -188,9 +187,7 @@ def export_label(label_id: int) -> ...:
 
     if res["status"] == "success":
         preds = res["predictions"]
-        preds_values = [
-            pred[0] if len(pred) == 1 else np.nan for pred in preds.values()
-        ]
+        preds_values = [pred[0] if len(pred) == 1 else np.nan for pred in preds.values()]
         preds_ids = list(preds.keys())
         pred_df = pd.DataFrame({"entry_id": preds_ids, "value": preds_values})
 
@@ -206,6 +203,6 @@ def export_label(label_id: int) -> ...:
         )
     else:
         flash(
-            _("Error exporting predictions: {}").format(res["error"]), category="error"
+            _("Error exporting predictions: {error}").format(error=res["error"]), category="error"
         )
         return redirect("/labels")

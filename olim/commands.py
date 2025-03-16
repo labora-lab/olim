@@ -27,7 +27,9 @@ def add_label(**args) -> dict:
         }
 
     if value == "":
-        msg = _(f"Removed the label {label} for the entry {entry_id}")
+        msg = _("Removed the label {label} for the entry {entry_id}").format(
+            label=label, entry_id=entry_id
+        )
     else:
         msg = f"{label}: {value} for the entry {entry_id}"
 

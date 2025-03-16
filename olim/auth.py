@@ -1,10 +1,9 @@
+from elasticsearch import Elasticsearch
 from flask import abort, flash, redirect, render_template, request, session, url_for
 from flask_babel import _
-from elasticsearch import Elasticsearch
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from . import app, settings
-from .database import get_user, get_users, insert_user, update_user_password
 from .database import (
     check_db_initialized,
     get_user,
@@ -131,8 +130,10 @@ def check_elasticsearch() -> ...:
         except Exception as e:
             flash(
                 _(
-                    "Elasticsearch server is unavailable: {}. If you just started the services, please wait for a few minutes, contact admin if problem persists."
-                ).format(str(e)),
+                    "Elasticsearch server is unavailable: {error}."
+                    "If you just started the services, please wait for "
+                    "a few minutes, contact admin if problem persists."
+                ).format(error=str(e)),
                 category="error",
             )
             # Render base.html immediately and stop further processing of this request
@@ -245,9 +246,7 @@ def security_edit_password(
         return
 
     if new_password_check is None:
-        flash(
-            _("Please enter a new on both fields!"), category="error"
-        )  # no new password
+        flash(_("Please enter a new on both fields!"), category="error")  # no new password
         return
 
     if new_password != new_password_check:
@@ -263,9 +262,7 @@ def security_edit_password(
     if changer_user["role"] != "admin" and not verify_password(
         old_password, changer_user["password"]
     ):
-        flash(
-            _("Incorrect old password!"), category="error"
-        )  # old password is incorrect
+        flash(_("Incorrect old password!"), category="error")  # old password is incorrect
         return
 
     update_user_password(

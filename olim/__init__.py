@@ -5,8 +5,9 @@ from datetime import timedelta
 from flask import Flask, request
 from flask_babel import Babel
 from flask_migrate import Migrate
-from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+
+from flask_session import Session
 
 from .settings import (
     BABEL_DEFAULT_LOCALE,
@@ -82,9 +83,7 @@ app.jinja_env.globals.update(
     has_permition=auth.role_has_permission,
     labels_types=LABELS,
     labels_rev=LABELS[::-1],
-    labels_array=json.dumps(
-        [label_values[0].replace(" ", "_") for label_values in LABELS]
-    ),
+    labels_array=json.dumps([label_values[0].replace(" ", "_") for label_values in LABELS]),
     has_backend=not (LEARNER_URL in [None, ""] or LEARNER_KEY in [None, ""]),
     version=VERSION,
     has_help=HELP_URL is not None,

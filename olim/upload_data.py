@@ -1,6 +1,6 @@
 import os
-import threading
 import tempfile
+import threading
 
 import click
 from flask import flash, redirect, render_template, request
@@ -24,7 +24,7 @@ class UploadManager:
         if cls._instance is None:
             with cls._lock:
                 if not cls._instance:
-                    cls._instance = super(UploadManager, cls).__new__(cls)
+                    cls._instance = super().__new__(cls)
         return cls._instance
 
     def get_task(self) -> bool | str:
@@ -72,16 +72,16 @@ class UploadManager:
         thread.start()
         return True
 
-    def _run_function_with_context(
-        self, up_function: callable, parameters: ...
-    ) -> None:
+    def _run_function_with_context(self, up_function: callable, parameters: ...) -> None:
         try:
             with app.app_context():
                 with click.Context(up_function) as ctx:
                     ctx.invoke(up_function, **parameters)
         except Exception as e:
             with self._lock:
-                self._last_error = _("Error processing {}: {}").format(self._task_id, e)
+                self._last_error = _("Error processing {task_id}: {error}").format(
+                    task_id=self._task_id, error=e
+                )
         else:
             self._last_error = None
         finally:
@@ -126,9 +126,7 @@ def upload_data() -> ...:
                         up_patients, task_id=filename, csv_file=datafile
                     ):
                         flash(
-                            _(
-                                "Can only process one data upload task at a time, try later"
-                            ),
+                            _("Can only process one data upload task at a time, try later"),
                             category="warning",
                         )
 
@@ -148,13 +146,14 @@ def upload_data() -> ...:
                         text_column=text,
                     ):
                         flash(
-                            _(
-                                "Can only process one data upload task at a time, try later"
-                            ),
+                            _("Can only process one data upload task at a time, try later"),
                             category="warning",
                         )
             except Exception as e:
-                flash(_(f"Error executing upload command: {e}"), category="error")
+                flash(
+                    _("Error executing upload command: {error}").format(error=str(e)),
+                    category="error",
+                )
                 return redirect(request.url)
 
     um = UploadManager()

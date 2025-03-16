@@ -40,7 +40,7 @@ def extract_texts(entry_id, **pars) -> pd.DataFrame:
 def up_single_text(csv_file, id_column, text_column) -> None:
     mapping = {"properties": {"texts": {"type": "text"}}}
 
-    def doc_generator(df, index, id_column, text_column) -> Generator[dict, None, None]:
+    def doc_generator(df, index, id_column, text_column) -> Generator[dict]:
         for _, row in tqdm(df.iterrows(), total=len(df)):
             data = {
                 "_index": index,
