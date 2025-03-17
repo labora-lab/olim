@@ -46,6 +46,7 @@ volumes:
 networks:
   olim-es:
     driver: bridge
-  # Uncoment this network if you are running the learner on the same machine on Docker
+  # Uncoment this network if you are running the learner on the same machine on Docker 
+  # Be aware of the indentation "external: true" should be one level below "olim-learner_main"
   # olim-learner_main:
   #   external: true

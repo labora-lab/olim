@@ -19,15 +19,19 @@ To run the standalone version see `requirements.txt` for the needed Python packa
 
     `cd olim`
 
-3. Copy your data to the `data` (see the [`data`](./data) folder on details on how to format it)
+>>> [!important] Configuring with Learner
+If planing to use active learner pipeline and model training tasks, you will need to also install [OLIM Learner](https://gitlab.com/nanogennari/olim-learner). After configuring the Learner add the app-key in the `docker-compose.yml`.
 
-4. Build and start the containers:
+If the OLIM Learner and OLIM are running on docker on the same machine uncomment the `olim-learner_main` network on the `docker-compose.yml` (lines 40, 51 and 52)
+>>>
+
+3. Build and start the containers:
 
     `docker compose up -d`
 
-5. Wait for **two minutes** for the elasticsearch server to fully start.
+4. Wait for **two minutes** for the elasticsearch server to fully start.
 
-6. Go to `http://localhost:42000` and do the initial configuration.
+5. Go to `http://localhost:42000` and do the initial configuration.
 
 ## Command line configuration
 
