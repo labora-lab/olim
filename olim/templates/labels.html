@@ -45,7 +45,7 @@
                     <td style="text-align: center;">{{ label.creator.name }}</td>
                     {% if has_permition('delete_label') or has_permition('extract_labels') or
                     has_permition('catch_queue') or
-                    has_permition('sync_label') or not label.al_key %}
+                    has_permition('sync_label') %}
                     <td style="text-align: center; width:25%;">
                         {% if has_permition('label_settings') %}
                         <a class="btn waves-effect waves-light tooltipped" href="/labels/{{ label.id }}/settings"
@@ -53,11 +53,17 @@
                             <i class="material-icons">settings</i>
                         </a>
                         {% endif %}
-                        {% if label.al_key %}
+                        {% if has_learner %}
                         <a class="btn waves-effect waves-light tooltipped" href="./al/{{ label.id }}"
                             data-tooltip="{{ _('Open active learling queue') }}">
                             <i class="material-icons right">send</i>
                             {{ _('Learn') }}
+                        </a>
+                        {% else %}
+                        <a class="btn waves-effect waves-light tooltipped" href="./labels/{{ label.id }}/queue"
+                            data-tooltip="{{ _('Open active learling queue') }}">
+                            <i class="material-icons right">assignment</i>
+                            {{ _('Labels') }}
                         </a>
                         {% endif %}
                     </td>

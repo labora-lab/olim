@@ -1,6 +1,6 @@
 import os
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 """Version of the application"""
 
 ES_INDEX = "patients-texts"
@@ -26,6 +26,8 @@ DB_PATH = os.path.join(os.getcwd(), "database.sqlite")
 
 LEARNER_URL = os.getenv("LEARNER_URL", None)
 LEARNER_KEY = os.getenv("LEARNER_KEY", None)
+
+HAS_LEARNER = not (LEARNER_URL in [None, ""] or LEARNER_KEY in [None, ""])
 
 HELP_URL = os.getenv("HELP_URL", None)
 """URL to the API help page"""
