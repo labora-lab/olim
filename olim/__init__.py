@@ -6,8 +6,7 @@ from .settings import (
     LANGUAGES,
     BABEL_DEFAULT_LOCALE,
     BABEL_TRANSLATION_DIRECTORIES,
-    LEARNER_KEY,
-    LEARNER_URL,
+    HAS_LEARNER,
     VERSION,
     HELP_URL,
 )
@@ -77,13 +76,15 @@ from . import issue
 
 from .functions import have_hidden
 
+
+
 app.jinja_env.globals.update(
     have_hidden=have_hidden,
     has_permition=auth.role_has_permission,
     labels_types=LABELS,
     labels_rev=[l for l in LABELS[::-1]],
     labels_array=json.dumps([l[0].replace(" ", "_") for l in LABELS]),
-    has_backend=not (LEARNER_URL in [None, ""] or LEARNER_KEY in [None, ""]),
+    has_learner=HAS_LEARNER,
     version=VERSION,
     has_help=HELP_URL is not None,
 )

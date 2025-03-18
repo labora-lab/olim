@@ -29,7 +29,7 @@
         <div class="card-action">
             <div class="col s12 tight-bottom">
                 <a href="javascript:void(0);"
-                    onclick="show_warnning('{{ _('Removing this label does not remove the labels made with it. If it is recreated, the labels will be restored. For new labels, create a new label with a new name.') }}','delete_label(\'{{ label.id }}\');');"
+                    onclick="show_warnning('{{ _('This permanent! Are you sure that you want to delete label {label_name}?').format(label_name=label.name) }}','delete_label(\'{{ label.id }}\');');"
                     class="btn-flat waves-effect red-text">
                     <i class="material-icons left">remove_circle_outline</i>
                     {{ _('Remove Label') }}

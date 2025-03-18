@@ -7,6 +7,7 @@ from .database import (
     get_label,
     get_labeled,
 )
+from .active_learning import new_al
 from flask import render_template, redirect, request, session, flash, Response
 from flask_babel import _
 import pandas as pd
@@ -54,15 +55,17 @@ def create_label():
         "label": label_name,
         "values": [l for l, *_ in settings.LABELS],
     }
-    res = requests.put(
-        f"{settings.LEARNER_URL}/al/new-label", json=json.dumps(data)
-    ).json()
-    ic(res)
-    label = new_label(label_name, session["user_id"], al_id=res["label_id"])
+    label = new_label(label_name, session["user_id"])
     flash(
         _("Label {label_name} successfully created").format(label_name=label.name),
         category="success",
     )
+    print(settings.HAS_LEARNER)
+    if settings.HAS_LEARNER:
+        try:
+            new_al(label)
+        except Exception as e:
+            print(f"Failed to create al for label {label.name}: {e}")
     return redirect("/labels")
 
 

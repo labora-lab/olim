@@ -1,7 +1,6 @@
 from . import app
 from .database import get_labels, get_label, new_label
 from .functions import get_highlights, render_entry, add_entry_label
-from .labels import labels
 from flask import render_template, redirect, request, session, flash, Response
 from flask_babel import _
 import requests
@@ -28,6 +27,32 @@ def new_al(label):
     print(res["label_id"])
     label.al_key = res["label_id"]
     db.session.commit()
+
+def sync_al(label):
+    if not label.al_key:
+        new_al(label)
+        sleep(4.0)
+    data = {
+        "app_key": settings.LEARNER_KEY,
+        "user_id": session["user_id"],
+        "values": [l for l, *_ in settings.LABELS],
+        "label": {
+            "label_name": label.name,
+            "label_id": label.al_key,
+            "entries": {entry.entry_id: entry.value for entry in label.entries},
+        },
+    }
+
+    res = requests.put(f"{settings.LEARNER_URL}/al/sync-label", json=json.dumps(data))
+    ic(res.json())
+    al_key = res.json()["al_key"]
+
+    # TODO update label al_key
+    print(al_key)
+    label.al_key = al_key
+    db.session.commit()
+
+    return res
 
 
 @app.route("/al", methods=["GET"])
@@ -75,138 +100,136 @@ def create_al():
 def catch_al(label_id):
     label = get_label(label_id)
 
-    # Assign label value if given
-    if request.method == "POST":
-        value_str = settings.LABELS[-1 - int(request.form["value"])][0]
+    try:
+        res = sync_al(label)
+
+        if res.status_code != 200:
+            flash(_("WARNING: Error syncing labels, models might not been trained on complete dataset!"), category="warning")
+
+        # Assign label value if given
+        if request.method == "POST":
+            value_str = settings.LABELS[-1 - int(request.form["value"])][0]
+            data_req = dict(
+                app_key=settings.LEARNER_KEY,
+                user_id=session["user_id"],
+                label_id=label.al_key,
+                entry_id=request.form["entry_id"],
+                value=value_str,
+            )
+            ic(data_req)
+            res = requests.put(f"{settings.LEARNER_URL}/al/add-value", data_req).json()
+            ic(res)
+            try:
+                if res["entry_id"] == data_req["entry_id"]:
+                    add_entry_label(
+                        label_id, request.form["entry_id"], session["user_id"], value_str
+                    )
+                    flash(
+                        _(
+                            f"Added value \"{value_str}\" for entry {request.form['entry_id']}."
+                        ).format(label_name=label.name),
+                        category="success",
+                    )
+                else:
+                    flash(
+                        _(
+                            f"Error adding value \"{value_str}\" for entry {request.form['entry_id']}."
+                        ).format(label_name=label.name),
+                        category="error",
+                    )
+            except KeyError:
+                flash(
+                    _(
+                        f"Error adding value \"{value_str}\" for entry {request.form['entry_id']}. Got key error."
+                    ).format(label_name=label.name),
+                    category="error",
+                )
         data_req = dict(
             app_key=settings.LEARNER_KEY,
             user_id=session["user_id"],
             label_id=label.al_key,
-            entry_id=request.form["entry_id"],
-            value=value_str,
         )
-        ic(data_req)
-        res = requests.put(f"{settings.LEARNER_URL}/al/add-value", data_req).json()
-        ic(res)
-        try:
-            if res["entry_id"] == data_req["entry_id"]:
-                add_entry_label(
-                    label_id, request.form["entry_id"], session["user_id"], value_str
-                )
-                flash(
-                    _(
-                        f"Added value \"{value_str}\" for entry {request.form['entry_id']}."
-                    ).format(label_name=label.name),
-                    category="success",
-                )
-            else:
-                flash(
-                    _(
-                        f"Error adding value \"{value_str}\" for entry {request.form['entry_id']}."
-                    ).format(label_name=label.name),
-                    category="error",
-                )
-        except KeyError:
-            flash(
-                _(
-                    f"Error adding value \"{value_str}\" for entry {request.form['entry_id']}. Got key error."
-                ).format(label_name=label.name),
-                category="error",
-            )
-    data_req = dict(
-        app_key=settings.LEARNER_KEY,
-        user_id=session["user_id"],
-        label_id=label.al_key,
-    )
-    res = requests.put(f"{settings.LEARNER_URL}/al/req-entry", data_req).json()
-    data = {
-        "label": label,
-        "highlight": get_highlights(),
-        "valid_entry": True,
-        "messages": res["messages"],
-    }
-    data = render_entry(res["entry_id"], data)
-    return render_template("al-entry.html", **data)
+        res = requests.put(f"{settings.LEARNER_URL}/al/req-entry", data_req).json()
+        data = {
+            "label": label,
+            "highlight": get_highlights(),
+            "valid_entry": True,
+            "messages": res["messages"],
+        }
+        data = render_entry(res["entry_id"], data)
+        return render_template("al-entry.html", **data)
+    except requests.exceptions.ConnectionError:
+        flash(_("Failed to enter active learner for label {label_name}, please check learner connection.").format(label_name=label.name), category='error')
+        return redirect("/labels")
 
 
 @app.route("/al/<int:label_id>/sync", methods=["GET", "POST"])
 def sync_label(label_id):
     label = get_label(label_id)
-    if not label.al_key:
-        new_al(label)
-        sleep(5.0)
-    data = {
-        "app_key": settings.LEARNER_KEY,
-        "user_id": session["user_id"],
-        "values": [l for l, *_ in settings.LABELS],
-        "label": {
-            "label_name": label.name,
-            "label_id": label.al_key,
-            "entries": {entry.entry_id: entry.value for entry in label.entries},
-        },
-    }
 
-    res = requests.put(f"{settings.LEARNER_URL}/al/sync-label", json=json.dumps(data))
-    ic(res.json())
-    al_key = res.json()["al_key"]
+    try:
+        res = sync_al(label)
 
-    # TODO update label al_key
-    print(al_key)
-    label.al_key = al_key
-    db.session.commit()
+        if res.status_code == 200:
+            flash(_("Labels successfully synced."), category="success")
+        else:
+            flash(_("Error syncing labels."), category="error")
 
-    if res.status_code == 200:
-        flash(_("Labels successfully synced."), category="success")
-    else:
-        flash(_("Error syncing labels."), category="error")
-
-    return redirect("/labels")
+        return redirect("/labels")
+    except requests.exceptions.ConnectionError:
+        flash(_("Failed to sync label {label_name}, please check learner connection.").format(label_name=label.name), category='error')
+        return redirect(f"/labels/{label_id}/settings")
 
 
 @app.route("/al/<int:label_id>/export", methods=["GET", "POST"])
 def export_label(label_id):
     label = get_label(label_id)
-    data_req = dict(
-        app_key=settings.LEARNER_KEY,
-        user_id=session["user_id"],
-        label_id=label.al_key,
-    )
 
-    if request.method == "POST":
-        # get alpha from request and add to data_req
-        alpha = request.form["alpha"]
-    else:
-        alpha = 0.95
-
-    data_req["alpha"] = alpha
-
-    ic(data_req)
-
-    res = requests.put(
-        f"{settings.LEARNER_URL}/al/export-predictions",
-        json=json.dumps(data_req),
-    ).json()
-
-    if res["status"] == "success":
-        preds = res["predictions"]
-        preds_values = [
-            pred[0] if len(pred) == 1 else np.nan for pred in preds.values()
-        ]
-        preds_ids = list(preds.keys())
-        pred_df = pd.DataFrame({"entry_id": preds_ids, "value": preds_values})
-
-        ic(pred_df)
-
-        # download json res["predictions"] as csv
-        return Response(
-            pred_df.to_csv(index=False),
-            mimetype="text/csv",
-            headers={
-                "Content-disposition": f"attachment; filename={label.name}-{alpha}-predictions.csv"
-            },
+    try:
+        data_req = dict(
+            app_key=settings.LEARNER_KEY,
+            user_id=session["user_id"],
+            label_id=label.al_key,
         )
-    else:
-        flash(
-            _("Error exporting predictions: {}").format(res["error"]), category="error"
-        )
-        return redirect("/labels")
+
+        if request.method == "POST":
+            # get alpha from request and add to data_req
+            alpha = request.form["alpha"]
+        else:
+            alpha = 0.95
+
+        data_req["alpha"] = alpha
+
+        ic(data_req)
+
+        res = requests.put(
+            f"{settings.LEARNER_URL}/al/export-predictions",
+            json=json.dumps(data_req),
+        ).json()
+
+        if res["status"] == "success":
+            preds = res["predictions"]
+            preds_values = [
+                pred[0] if len(pred) == 1 else np.nan for pred in preds.values()
+            ]
+            preds_ids = list(preds.keys())
+            pred_df = pd.DataFrame({"entry_id": preds_ids, "value": preds_values})
+
+            ic(pred_df)
+
+            # download json res["predictions"] as csv
+            return Response(
+                pred_df.to_csv(index=False),
+                mimetype="text/csv",
+                headers={
+                    "Content-disposition": f"attachment; filename={label.name}-{alpha}-predictions.csv"
+                },
+            )
+        else:
+            flash(
+                _("Error exporting predictions: {}").format(res["error"]), category="error"
+            )
+            return redirect("/labels")
+    except requests.exceptions.ConnectionError:
+        flash(_("Failed to export predictions for label {label_name}, please check learner connection.").format(label_name=label.name), category='error')
+        return redirect(f"/labels/{label_id}/settings")
