@@ -51,11 +51,14 @@ app.jinja_env.add_extension("jinja2.ext.i18n")
 app.config["LANGUAGES"] = LANGUAGES
 app.config["BABEL_DEFAULT_LOCALE"] = BABEL_DEFAULT_LOCALE
 app.config["BABEL_TRANSLATION_DIRECTORIES"] = BABEL_TRANSLATION_DIRECTORIES
+
+
 def get_locale() -> str | None:
     print(request.accept_languages)
     return request.accept_languages.best_match(app.config["LANGUAGES"].keys())
-babel = Babel(app, locale_selector=get_locale)
 
+
+babel = Babel(app, locale_selector=get_locale)
 
 
 # with app.app_context():
