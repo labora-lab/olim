@@ -1,13 +1,14 @@
 # English (United States) translations for OLIM.
 # Copyright (C) 2025 OLIM
 # This file is distributed under the same license as the  project.
-# Nano Gennari <me@nngn.net>, 2025, Felipe Adeildo <felipe.adeildo@proton.me>, 2023.
+# Nano Gennari <me@nngn.net>, 2025, Felipe Adeildo
+# <felipe.adeildo@proton.me>, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2024-07-05 00:59+0000\n"
+"POT-Creation-Date: 2025-03-20 21:16+0000\n"
 "PO-Revision-Date: 2025-03-20 20:21+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: en_US\n"
@@ -16,44 +17,67 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.15.0\n"
+"Generated-By: Babel 2.17.0\n"
 
-#: olim/active_learning.py:61
+#: olim/active_learning.py:87
 #, python-brace-format
 msgid "Active learning for {label_name} sucessfully created"
 msgstr "Active learning for {label_name} sucessfully created"
 
-#: olim/active_learning.py:71 olim/active_learning.py:131
+#: olim/active_learning.py:97
 msgid "Label not found."
 msgstr "Label not found."
 
-#: olim/active_learning.py:91
+#: olim/active_learning.py:118
 #, python-brace-format
 msgid "Added value \"{value}\" for entry {entry_id}."
 msgstr "Added value \"{value}\" for entry {entry_id}."
 
-#: olim/active_learning.py:98
+#: olim/active_learning.py:125
 #, python-brace-format
 msgid "Error adding value \"{value}\" for entry {entry_id}."
 msgstr "Error adding value \"{value}\" for entry {entry_id}."
 
-#: olim/active_learning.py:105
+#: olim/active_learning.py:132
 #, python-brace-format
 msgid "Error adding value \"{value}\" for entry {entry_id}. Got key error."
 msgstr "Error adding value \"{value}\" for entry {entry_id}. Got key error."
 
-#: olim/active_learning.py:157
+#: olim/active_learning.py:153
+#, python-brace-format
+msgid ""
+"Failed to enter active learner for label {label_name}, please check "
+"learner connection."
+msgstr ""
+"Failed to enter active learner for label {label_name}, please check "
+"learner connection."
+
+#: olim/active_learning.py:165
 msgid "Labels successfully synced."
 msgstr "Labels successfully synced."
 
-#: olim/active_learning.py:159
+#: olim/active_learning.py:167
 msgid "Error syncing labels."
 msgstr "Error syncing labels."
 
-#: olim/active_learning.py:206
+#: olim/active_learning.py:171
 #, python-brace-format
-msgid "Error exporting predictions: {error}"
+msgid "Failed to sync label {label_name}, please check learner connection."
+msgstr ""
+
+#: olim/active_learning.py:221
+#, fuzzy, python-brace-format
+msgid "Error exporting predictions: {}"
 msgstr "Error exporting predictions: {error}"
+
+#: olim/active_learning.py:225
+#, python-brace-format
+msgid ""
+"Failed to export predictions for label {label_name}, please check learner"
+" connection."
+msgstr ""
+"Failed to export predictions for label {label_name}, please check learner"
+" connection."
 
 #: olim/auth.py:42 olim/auth.py:44
 msgid "Incorrect Username and/or Password!"
@@ -235,21 +259,21 @@ msgstr ""
 msgid "Ticket sent. Thank you very much."
 msgstr "Ticket sent. Thank you very much."
 
-#: olim/labels.py:53
+#: olim/labels.py:52
 #, python-brace-format
 msgid "Label {label_name} successfully created"
 msgstr "Label {label_name} successfully created"
 
-#: olim/labels.py:80
+#: olim/labels.py:85
 #, python-brace-format
 msgid "Label {label_name} sucessfully deleted"
 msgstr "Label {label_name} sucessfully deleted"
 
-#: olim/labels.py:90 olim/labels.py:111 olim/labels.py:130
+#: olim/labels.py:95 olim/labels.py:116 olim/labels.py:135
 msgid "Label not found"
 msgstr "Label not found"
 
-#: olim/labels.py:144
+#: olim/labels.py:149
 msgid "Label não encontrada."
 msgstr "Label não encontrada."
 
@@ -355,6 +379,7 @@ msgid "Actions"
 msgstr "Actions"
 
 #: olim/templates/al-list.html:51 olim/templates/labels.html:58
+#: olim/templates/labels.html:64
 msgid "Open active learling queue"
 msgstr "Open active learling queue"
 
@@ -368,7 +393,7 @@ msgstr "OLIM - Open Labeller for Iterative Machine learning"
 
 #: olim/templates/base.html:26 olim/templates/entry.html:43
 #: olim/templates/labels.html:2 olim/templates/labels.html:6
-#: olim/templates/queue.html:2
+#: olim/templates/labels.html:66 olim/templates/queue.html:2
 msgid "Labels"
 msgstr "Labels"
 
@@ -617,14 +642,9 @@ msgid "Total Labeled Entries"
 msgstr "Total Labeled Entries"
 
 #: olim/templates/label-settings.html:32
-msgid ""
-"Removing this label does not remove the labels made with it. If it is "
-"recreated, the labels will be restored. For new labels, create a new "
-"label with a new name."
-msgstr ""
-"Removing this label does not remove the labels made with it. If it is "
-"recreated, the labels will be restored. For new labels, create a new "
-"label with a new name."
+#, python-brace-format
+msgid "This permanent! Are you sure that you want to delete label {label_name}?"
+msgstr "This permanent! Are you sure that you want to delete label {label_name}?"
 
 #: olim/templates/label-settings.html:35
 msgid "Remove Label"
@@ -675,11 +695,11 @@ msgstr "Settings"
 msgid "Learn"
 msgstr "Learn"
 
-#: olim/templates/labels.html:75
+#: olim/templates/labels.html:81
 msgid "Upload of Labelling File"
 msgstr "Upload of Labelling File"
 
-#: olim/templates/labels.html:87
+#: olim/templates/labels.html:93
 msgid "Upload"
 msgstr "Upload"
 

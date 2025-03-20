@@ -13,11 +13,10 @@ from .settings import (
     BABEL_DEFAULT_LOCALE,
     BABEL_TRANSLATION_DIRECTORIES,
     DEBUG,
+    HAS_LEARNER,
     HELP_URL,
     LABELS,
     LANGUAGES,
-    LEARNER_KEY,
-    LEARNER_URL,
     SECRET_KEY,
     VERSION,
 )
@@ -54,7 +53,6 @@ app.config["BABEL_TRANSLATION_DIRECTORIES"] = BABEL_TRANSLATION_DIRECTORIES
 
 
 def get_locale() -> str | None:
-    print(request.accept_languages)
     return request.accept_languages.best_match(app.config["LANGUAGES"].keys())
 
 
@@ -78,13 +76,14 @@ from . import search  # noqa
 from . import upload_data  # noqa
 from .utils.entry import have_hidden  # noqa
 
+
 app.jinja_env.globals.update(
     have_hidden=have_hidden,
     has_permition=auth.role_has_permission,
     labels_types=LABELS,
     labels_rev=LABELS[::-1],
     labels_array=json.dumps([label_values[0].replace(" ", "_") for label_values in LABELS]),
-    has_backend=not (LEARNER_URL in [None, ""] or LEARNER_KEY in [None, ""]),
+    has_learner=HAS_LEARNER,
     version=VERSION,
     has_help=HELP_URL is not None,
 )

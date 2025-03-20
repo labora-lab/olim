@@ -1,13 +1,14 @@
 # Portuguese (Brazil) translations for OLIM.
 # Copyright (C) 2025 OLIM
 # This file is distributed under the same license as the  project.
-# Nano Gennari <me@nngn.net>, 2025, Felipe Adeildo <felipe.adeildo@proton.me>, 2023.
+# Nano Gennari <me@nngn.net>, 2025, Felipe Adeildo
+# <felipe.adeildo@proton.me>, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2024-07-05 00:59+0000\n"
+"POT-Creation-Date: 2025-03-20 21:16+0000\n"
 "PO-Revision-Date: 2025-03-20 20:21+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: pt_BR\n"
@@ -18,42 +19,63 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: olim/active_learning.py:61
+#: olim/active_learning.py:87
 #, python-brace-format
 msgid "Active learning for {label_name} sucessfully created"
 msgstr "Aprendizado ativo para {label_name} criado com sucesso"
 
-#: olim/active_learning.py:71 olim/active_learning.py:131
+#: olim/active_learning.py:97
 msgid "Label not found."
 msgstr "Rótulo não encontrado."
 
-#: olim/active_learning.py:91
+#: olim/active_learning.py:118
 #, python-brace-format
 msgid "Added value \"{value}\" for entry {entry_id}."
 msgstr "Valor \"{value}\" adicionado para a entrada {entry_id}."
 
-#: olim/active_learning.py:98
+#: olim/active_learning.py:125
 #, python-brace-format
 msgid "Error adding value \"{value}\" for entry {entry_id}."
 msgstr "Erro ao adicionar valor \"{value}\" para a entrada {entry_id}."
 
-#: olim/active_learning.py:105
+#: olim/active_learning.py:132
 #, python-brace-format
 msgid "Error adding value \"{value}\" for entry {entry_id}. Got key error."
-msgstr "Erro ao adicionar valor \"{value}\" para a entrada {entry_id}. Chave não encontrada."
+msgstr ""
+"Erro ao adicionar valor \"{value}\" para a entrada {entry_id}. Chave não "
+"encontrada."
 
-#: olim/active_learning.py:157
+#: olim/active_learning.py:153
+#, python-brace-format
+msgid ""
+"Failed to enter active learner for label {label_name}, please check "
+"learner connection."
+msgstr "Falha ao acessar o aprendizado ativo para o rótulo {label_name}, verifique a conexão com o learner."
+
+#: olim/active_learning.py:165
 msgid "Labels successfully synced."
 msgstr "Rótulos sincronizados com sucesso."
 
-#: olim/active_learning.py:159
+#: olim/active_learning.py:167
 msgid "Error syncing labels."
 msgstr "Erro ao sincronizar rótulos."
 
-#: olim/active_learning.py:206
+#: olim/active_learning.py:171
 #, python-brace-format
-msgid "Error exporting predictions: {error}"
+msgid "Failed to sync label {label_name}, please check learner connection."
+msgstr "Falha ao sincronizar o rótulo {label_name}, verifique a conexão com o learner."
+
+#: olim/active_learning.py:221
+#, fuzzy, python-brace-format
+msgid "Error exporting predictions: {}"
 msgstr "Erro ao exportar previsões: {error}"
+
+#: olim/active_learning.py:225
+#, python-brace-format
+msgid ""
+"Failed to export predictions for label {label_name}, please check learner"
+" connection."
+msgstr "Falha ao exportar previsões para o rótulo {label_name}, verifique a conexão com o learner."
 
 #: olim/auth.py:42 olim/auth.py:44
 msgid "Incorrect Username and/or Password!"
@@ -79,8 +101,9 @@ msgid ""
 "services, please wait for a few minutes, contact admin if problem "
 "persists."
 msgstr ""
-"Servidor Elasticsearch indisponível: {error}. Se você acabou de iniciar os serviços, "
-"aguarde alguns minutos. Se o problema persistir, contate o administrador."
+"Servidor Elasticsearch indisponível: {error}. Se você acabou de iniciar "
+"os serviços, aguarde alguns minutos. Se o problema persistir, contate o "
+"administrador."
 
 #: olim/auth.py:150
 #, python-brace-format
@@ -227,27 +250,28 @@ msgid ""
 "Error sending ticket. Please try again later or check your HELP_URL "
 "environment variable."
 msgstr ""
-"Erro ao enviar ticket. Tente novamente mais tarde ou verifique a variável de ambiente HELP_URL."
+"Erro ao enviar ticket. Tente novamente mais tarde ou verifique a variável"
+" de ambiente HELP_URL."
 
 #: olim/issue.py:48
 msgid "Ticket sent. Thank you very much."
 msgstr "Ticket enviado. Muito obrigado."
 
-#: olim/labels.py:53
+#: olim/labels.py:52
 #, python-brace-format
 msgid "Label {label_name} successfully created"
 msgstr "Rótulo {label_name} criado com sucesso"
 
-#: olim/labels.py:80
+#: olim/labels.py:85
 #, python-brace-format
 msgid "Label {label_name} sucessfully deleted"
 msgstr "Rótulo {label_name} excluído com sucesso"
 
-#: olim/labels.py:90 olim/labels.py:111 olim/labels.py:130
+#: olim/labels.py:95 olim/labels.py:116 olim/labels.py:135
 msgid "Label not found"
 msgstr "Rótulo não encontrado"
 
-#: olim/labels.py:144
+#: olim/labels.py:149
 msgid "Label não encontrada."
 msgstr "Rótulo não encontrado."
 
@@ -353,6 +377,7 @@ msgid "Actions"
 msgstr "Ações"
 
 #: olim/templates/al-list.html:51 olim/templates/labels.html:58
+#: olim/templates/labels.html:64
 msgid "Open active learling queue"
 msgstr "Abrir fila de aprendizado ativo"
 
@@ -366,7 +391,7 @@ msgstr "OLIM - Rotulador Aberto para Aprendizado de Máquina Iterativo"
 
 #: olim/templates/base.html:26 olim/templates/entry.html:43
 #: olim/templates/labels.html:2 olim/templates/labels.html:6
-#: olim/templates/queue.html:2
+#: olim/templates/labels.html:66 olim/templates/queue.html:2
 msgid "Labels"
 msgstr "Rótulos"
 
@@ -528,8 +553,8 @@ msgid ""
 "We will get back to you as soon as possible. Some metadata will be sent "
 "together to help us understand."
 msgstr ""
-"Entraremos em contato o mais breve possível. Alguns metadados serão enviados "
-"para nos ajudar a entender."
+"Entraremos em contato o mais breve possível. Alguns metadados serão "
+"enviados para nos ajudar a entender."
 
 #: olim/templates/help.html:19
 msgid "Your e-mail"
@@ -615,13 +640,9 @@ msgid "Total Labeled Entries"
 msgstr "Total de Entradas Rotuladas"
 
 #: olim/templates/label-settings.html:32
-msgid ""
-"Removing this label does not remove the labels made with it. If it is "
-"recreated, the labels will be restored. For new labels, create a new "
-"label with a new name."
-msgstr ""
-"Remover este rótulo não exclui os rótulos feitos com ele. Se for recriado, "
-"os rótulos serão restaurados. Para novos rótulos, crie um novo com um nome diferente."
+#, python-brace-format
+msgid "This permanent! Are you sure that you want to delete label {label_name}?"
+msgstr "Esta ação é permanente! Tem certeza que deseja excluir o rótulo {label_name}?"
 
 #: olim/templates/label-settings.html:35
 msgid "Remove Label"
@@ -672,11 +693,11 @@ msgstr "Configurações"
 msgid "Learn"
 msgstr "Aprender"
 
-#: olim/templates/labels.html:75
+#: olim/templates/labels.html:81
 msgid "Upload of Labelling File"
 msgstr "Upload de Arquivo de Rotulação"
 
-#: olim/templates/labels.html:87
+#: olim/templates/labels.html:93
 msgid "Upload"
 msgstr "Carregar"
 
@@ -779,7 +800,8 @@ msgid ""
 "OLIM only supports one upload task at a time, to upload another file "
 "please come back later."
 msgstr ""
-"OLIM suporta apenas um upload por vez. Para enviar outro arquivo, retorne mais tarde."
+"OLIM suporta apenas um upload por vez. Para enviar outro arquivo, retorne"
+" mais tarde."
 
 #: olim/templates/upload-data.html:21
 msgid "Data Format"
@@ -798,7 +820,8 @@ msgid ""
 "                provide the correct column names during the upload."
 msgstr ""
 "Use esta opção se seu CSV contém textos independentes. Especifique quais\n"
-"                colunas equivalem a <strong>text</strong> e <strong>text_id</strong>.\n"
+"                colunas equivalem a <strong>text</strong> e "
+"<strong>text_id</strong>.\n"
 "                Forneça os nomes corretos das colunas durante o upload."
 
 #: olim/templates/upload-data.html:30
@@ -813,9 +836,12 @@ msgid ""
 "sure that the columns are exactly as\n"
 "                mentioned to ensure correct data upload."
 msgstr ""
-"Use esta opção se seu CSV possui as colunas: <strong>patient_id, text_id,\n"
-"                    visitation_id, text_type, text, date</strong>. As colunas devem\n"
-"                ser exatamente como mencionado para garantir o upload correto."
+"Use esta opção se seu CSV possui as colunas: <strong>patient_id, text_id,"
+"\n"
+"                    visitation_id, text_type, text, date</strong>. As "
+"colunas devem\n"
+"                ser exatamente como mencionado para garantir o upload "
+"correto."
 
 #: olim/templates/upload-data.html:33
 msgid ""

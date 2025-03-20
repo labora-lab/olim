@@ -2,11 +2,11 @@ import json
 import time
 
 import pandas as pd
-import requests
 from flask import Response, flash, redirect, render_template, request, session
 from flask_babel import _
 
 from . import app, db, entry_types, settings
+from .active_learning import new_al
 from .database import del_label, get_label, get_labeled, get_labels, new_label
 from .functions import store_queue
 from .utils.label import label_upload
@@ -41,18 +41,17 @@ def labels() -> ...:
 @app.route("/labels/new", methods=["POST"])
 def create_label() -> ...:
     label_name = request.form.get("label")
-    data = {
-        "app_key": settings.LEARNER_KEY,
-        "user_id": session["user_id"],
-        "label": label_name,
-        "values": [label for label, *_ in settings.LABELS],
-    }
-    res = requests.put(f"{settings.LEARNER_URL}/al/new-label", json=json.dumps(data)).json()
-    label = new_label(label_name, session["user_id"], al_id=res["label_id"])
+    label = new_label(label_name, session["user_id"])
     flash(
         _("Label {label_name} successfully created").format(label_name=label.name),
         category="success",
     )
+    print(settings.HAS_LEARNER)
+    if settings.HAS_LEARNER:
+        try:
+            new_al(label)
+        except Exception as e:
+            print(f"Failed to create al for label {label.name}: {e}")
     return redirect("/labels")
 
 
