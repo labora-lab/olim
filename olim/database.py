@@ -218,7 +218,7 @@ def insert_user(username: str, hashed_password: str, role: str, creator: int, **
     return user
 
 
-def update_user_password(identification: int, new_password: str, by: str = "id") -> User:
+def update_user_password(identification: int | str, new_password: str, by: str = "id") -> User:
     """
     Updates a user's password.
     """
@@ -226,6 +226,23 @@ def update_user_password(identification: int, new_password: str, by: str = "id")
     if user is None:
         raise Exception("User not found")
     user.password = generate_password_hash(new_password)
+    db.session.commit()
+    return user
+
+
+def update_user(identification: int | str, by: str = "id", **parameters) -> User:
+    """Update user data
+
+    Args:
+        identification (int): User identification
+        by (str): User column to identify user
+        **parameters: Values to be updated
+    """
+    user = get_user(identification, by)
+    if user is None:
+        raise Exception("User not found")
+    for key, value in parameters.items():
+        setattr(user, key, value)
     db.session.commit()
     return user
 

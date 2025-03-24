@@ -5,11 +5,13 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from . import app, settings
 from .database import (
+    User,
     check_db_initialized,
     get_user,
     get_users,
     init_db,
     insert_user,
+    update_user,
     update_user_password,
 )
 
@@ -147,7 +149,7 @@ def check_backend() -> ...:
     ):
         flash(
             _(
-                "{requested_url} needs a backend connection, see https://gitlab.com/nanogennari/olim-backend."
+                "{requested_url} needs a OLIM-learner connection, see https://gitlab.com/nanogennari/olim-learner."
             ).format(requested_url=request.url),
             category="error",
         )
@@ -271,26 +273,48 @@ def security_edit_password(
     flash(_("Password sucessfully updated!"), category="success")
 
 
-@app.route("/edit-password", methods=("POST", "GET"))
-def edit_password() -> ...:
-    to_change_user_id = (
-        request.args.get("user_id") or session_user["id"]
-        if (session_user := session.get("user"))
-        else None
-    )
+def get_user_obj(user_id: int | None) -> tuple[int | None, User | None]:
+    user_id = user_id or session["user"]["id"]
 
-    if to_change_user_id is None:
-        abort(403)
+    if (user_id is None) or (session["user"]["role"] != "admin" and session["user_id"] != user_id):
+        return None, None
 
-    to_change_user = get_user(to_change_user_id, by="id")
+    user = get_user(user_id, by="id")
+
+    return user_id, user
+
+
+@app.route("/user", methods=["GET"])
+@app.route("/user/<int:user_id>", methods=["GET"])
+def user_settings(user_id: int | None = None) -> ...:
+    __, user = get_user_obj(user_id)
+
+    if user is None:
+        flash(
+            _("You do not have permission to change user id {user_id} settings.").format(
+                user_id=user_id
+            ),
+            category="error",
+        )
+        return redirect(url_for("user_settings"))
+
+    return render_template("account-settings.html", user=user, languages=settings.LANGUAGES)
+
+
+@app.route("/user/<int:user_id>/set/password", methods=["POST"])
+def edit_password(user_id: int | None = None) -> ...:
+    to_change_user_id, to_change_user = get_user_obj(user_id)
     changer_user = session.get("user")
 
-    if changer_user is None:
-        abort(404)
+    if to_change_user is None:
+        flash(
+            _(
+                "You do not have permission to change password for user id {user_id} settings."
+            ).format(user_id=user_id),
+            category="error",
+        )
+        return redirect(url_for("user_settings"))
 
-    # verify if user is non-admin and id that it wants to change
-    if changer_user["role"] != "admin" and int(to_change_user_id) != changer_user["id"]:
-        abort(403)
     if request.method == "POST":
         old_password = request.form.get("old_password")
         new_password = request.form.get("new_password")
@@ -299,4 +323,42 @@ def edit_password() -> ...:
             to_change_user, changer_user, old_password, new_password, new_password_check
         )
 
-    return render_template("edit-password.html", user=to_change_user)
+    return redirect(url_for("user_settings", user_id=to_change_user_id))
+
+
+@app.route("/user/<int:user_id>/set/language", methods=["POST"])
+def edit_language(user_id: int | None = None) -> ...:
+    to_change_user_id, to_change_user = get_user_obj(user_id)
+
+    if to_change_user is None:
+        flash(
+            _(
+                "You do not have permission to change language for user id {user_id} settings."
+            ).format(user_id=user_id),
+            category="error",
+        )
+        return redirect(url_for("user_settings"))
+
+    if request.method == "POST":
+        language = request.form.get("language")
+        if language == "":
+            language = None
+        to_change_user.language = language
+        user = update_user(to_change_user_id, language=language)
+        if user is not None:
+            # Update user on session for babel to use the correct language
+            session["user"] = user.__dict__
+            if user.language is not None:
+                flash(
+                    _("Changed language for {user_name} to {language}!").format(
+                        user_name=user.name, language=settings.LANGUAGES[user.language]
+                    ),
+                    category="success",
+                )
+            else:
+                flash(
+                    _("Changed language for {user_name} to Automatic!").format(user_name=user.name),
+                    category="success",
+                )
+
+    return redirect(url_for("user_settings", user_id=to_change_user_id))
