@@ -69,6 +69,7 @@ class Label(db.Model, CreationControl):
     id: Mapped[int] = db.mapped_column(primary_key=True)
     name: Mapped[str] = db.mapped_column(db.String, nullable=False)
     al_key: Mapped[str] = db.mapped_column(nullable=True)
+    priority: Mapped[float] = db.mapped_column(default=1.0, nullable=False)
 
     # Relations
     entries: Mapped[list["LabelEntry"]] = db.relationship(back_populates="label")

@@ -18,6 +18,10 @@ COPY . /app
 WORKDIR /app
 RUN uv sync --frozen
 
+# Add entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Set random secret key
@@ -25,5 +29,6 @@ RUN export SECRET_KEY=`python -c 'import secrets; print(secrets.token_hex())'`
 # Compile babel translations
 RUN uv run pybabel compile -d olim/translations
 
+ENTRYPOINT ["/entrypoint.sh"]
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
 CMD ["uv", "run", "gunicorn", "--timeout", "120", "--reload", "--bind", "0.0.0.0:42000", "olim:app"]
