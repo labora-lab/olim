@@ -2,7 +2,7 @@ import json
 import os
 from datetime import timedelta
 
-from flask import Flask, request
+from flask import Flask, request, session
 from flask_babel import Babel
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
@@ -53,7 +53,12 @@ app.config["BABEL_TRANSLATION_DIRECTORIES"] = BABEL_TRANSLATION_DIRECTORIES
 
 
 def get_locale() -> str | None:
-    return request.accept_languages.best_match(app.config["LANGUAGES"].keys())
+    if "user" not in session:
+        return request.accept_languages.best_match(app.config["LANGUAGES"].keys())
+    if session["user"]["language"]:
+        return session["user"]["language"]
+    else:
+        return request.accept_languages.best_match(app.config["LANGUAGES"].keys())
 
 
 babel = Babel(app, locale_selector=get_locale)

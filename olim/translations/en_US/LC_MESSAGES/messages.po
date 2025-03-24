@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2025-03-20 21:16+0000\n"
+"POT-Creation-Date: 2025-03-24 22:43+0000\n"
 "PO-Revision-Date: 2025-03-20 20:21+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: en_US\n"
@@ -19,31 +19,39 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: olim/active_learning.py:87
+#: olim/active_learning.py:88
 #, python-brace-format
 msgid "Active learning for {label_name} sucessfully created"
 msgstr "Active learning for {label_name} sucessfully created"
 
-#: olim/active_learning.py:97
+#: olim/active_learning.py:98
 msgid "Label not found."
 msgstr "Label not found."
 
-#: olim/active_learning.py:118
+#: olim/active_learning.py:107
+msgid ""
+"WARNING: Error syncing labels, models might not been trained on complete "
+"dataset!"
+msgstr ""
+"WARNING: Error syncing labels, models might not been trained on complete "
+"dataset!"
+
+#: olim/active_learning.py:130
 #, python-brace-format
 msgid "Added value \"{value}\" for entry {entry_id}."
 msgstr "Added value \"{value}\" for entry {entry_id}."
 
-#: olim/active_learning.py:125
+#: olim/active_learning.py:137
 #, python-brace-format
 msgid "Error adding value \"{value}\" for entry {entry_id}."
 msgstr "Error adding value \"{value}\" for entry {entry_id}."
 
-#: olim/active_learning.py:132
+#: olim/active_learning.py:144
 #, python-brace-format
 msgid "Error adding value \"{value}\" for entry {entry_id}. Got key error."
 msgstr "Error adding value \"{value}\" for entry {entry_id}. Got key error."
 
-#: olim/active_learning.py:153
+#: olim/active_learning.py:167
 #, python-brace-format
 msgid ""
 "Failed to enter active learner for label {label_name}, please check "
@@ -52,25 +60,25 @@ msgstr ""
 "Failed to enter active learner for label {label_name}, please check "
 "learner connection."
 
-#: olim/active_learning.py:165
+#: olim/active_learning.py:183
 msgid "Labels successfully synced."
 msgstr "Labels successfully synced."
 
-#: olim/active_learning.py:167
+#: olim/active_learning.py:185
 msgid "Error syncing labels."
 msgstr "Error syncing labels."
 
-#: olim/active_learning.py:171
+#: olim/active_learning.py:190
 #, python-brace-format
 msgid "Failed to sync label {label_name}, please check learner connection."
 msgstr ""
 
-#: olim/active_learning.py:221
+#: olim/active_learning.py:243
 #, fuzzy, python-brace-format
-msgid "Error exporting predictions: {}"
+msgid "Error exporting predictions: {error}"
 msgstr "Error exporting predictions: {error}"
 
-#: olim/active_learning.py:225
+#: olim/active_learning.py:250
 #, python-brace-format
 msgid ""
 "Failed to export predictions for label {label_name}, please check learner"
@@ -79,24 +87,24 @@ msgstr ""
 "Failed to export predictions for label {label_name}, please check learner"
 " connection."
 
-#: olim/auth.py:42 olim/auth.py:44
+#: olim/auth.py:44 olim/auth.py:46
 msgid "Incorrect Username and/or Password!"
 msgstr "Incorrect Username and/or Password!"
 
-#: olim/auth.py:88 olim/auth.py:92
+#: olim/auth.py:90 olim/auth.py:94
 msgid "You are not logged"
 msgstr "You are not logged"
 
-#: olim/auth.py:100
+#: olim/auth.py:102
 msgid "Your login has expired"
 msgstr "Your login has expired"
 
-#: olim/auth.py:111
+#: olim/auth.py:113
 #, python-brace-format
 msgid "You do not have permission to access {requested_url}."
 msgstr "You do not have permission to access {requested_url}."
 
-#: olim/auth.py:133
+#: olim/auth.py:135
 #, python-brace-format
 msgid ""
 "Elasticsearch server is unavailable: {error}.If you just started the "
@@ -107,60 +115,93 @@ msgstr ""
 "services, please wait for a few minutes, contact admin if problem "
 "persists."
 
-#: olim/auth.py:150
-#, python-brace-format
+#: olim/auth.py:152
+#, fuzzy, python-brace-format
 msgid ""
-"{requested_url} needs a backend connection, see "
-"https://gitlab.com/nanogennari/olim-backend."
+"{requested_url} needs a OLIM-learner connection, see "
+"https://gitlab.com/nanogennari/olim-learner."
 msgstr ""
 "{requested_url} needs a backend connection, see "
 "https://gitlab.com/nanogennari/olim-backend."
 
-#: olim/auth.py:174
+#: olim/auth.py:176
 msgid "Initial configuration already done!"
 msgstr "Initial configuration already done!"
 
-#: olim/auth.py:187 olim/auth.py:214
+#: olim/auth.py:189 olim/auth.py:216
 msgid "Passwords do not match"
 msgstr "Passwords do not match"
 
-#: olim/auth.py:191
+#: olim/auth.py:193
 msgid "Database initialized!"
 msgstr "Database initialized!"
 
-#: olim/auth.py:195 olim/auth.py:224
+#: olim/auth.py:197 olim/auth.py:226
 #, python-brace-format
 msgid "User {username} sucessfully registered!"
 msgstr "User {username} sucessfully registered!"
 
-#: olim/auth.py:229
+#: olim/auth.py:231
 #, python-brace-format
 msgid "User {username} already exists!"
 msgstr "User {username} already exists!"
 
-#: olim/auth.py:245
+#: olim/auth.py:247
 msgid "Please enter a new password!"
 msgstr "Please enter a new password!"
 
-#: olim/auth.py:249
+#: olim/auth.py:251
 msgid "Please enter a new on both fields!"
 msgstr "Please enter a new on both fields!"
 
-#: olim/auth.py:253
+#: olim/auth.py:255
 msgid "Passwords do not match!"
 msgstr "Passwords do not match!"
 
-#: olim/auth.py:258
+#: olim/auth.py:260
 msgid "Please enter your old password!"
 msgstr "Please enter your old password!"
 
-#: olim/auth.py:265
+#: olim/auth.py:267
 msgid "Incorrect old password!"
 msgstr "Incorrect old password!"
 
-#: olim/auth.py:271
+#: olim/auth.py:273
 msgid "Password sucessfully updated!"
 msgstr "Password sucessfully updated!"
+
+#: olim/auth.py:293
+#, fuzzy, python-brace-format
+msgid "You do not have permission to change user id {user_id} settings."
+msgstr "You do not have permission to change user id {user_id} settings."
+
+#: olim/auth.py:305
+#, fuzzy, python-brace-format
+msgid ""
+"You do not have permission to change password for user id {user_id} "
+"settings."
+msgstr ""
+"You do not have permission to change password for user id {user_id} "
+"settings"
+
+#: olim/auth.py:323
+#, fuzzy, python-brace-format
+msgid ""
+"You do not have permission to change language for user id {user_id} "
+"settings."
+msgstr ""
+"You do not have permission to change language for user id {user_id} "
+"settings."
+
+#: olim/auth.py:336
+#, python-brace-format
+msgid "Changed language for {user_name} to {language}!"
+msgstr "Changed language for {user_name} to {language}!"
+
+#: olim/auth.py:338
+#, python-brace-format
+msgid "Changed language for {user_name} to Automatic!"
+msgstr "Changed language for {user_name} to Automatic!"
 
 #: olim/commands.py:26 olim/entry_types/patient/commands.py:45
 #: olim/entry_types/patient/commands.py:69
@@ -259,21 +300,21 @@ msgstr ""
 msgid "Ticket sent. Thank you very much."
 msgstr "Ticket sent. Thank you very much."
 
-#: olim/labels.py:52
+#: olim/labels.py:46
 #, python-brace-format
 msgid "Label {label_name} successfully created"
 msgstr "Label {label_name} successfully created"
 
-#: olim/labels.py:85
+#: olim/labels.py:79
 #, python-brace-format
 msgid "Label {label_name} sucessfully deleted"
 msgstr "Label {label_name} sucessfully deleted"
 
-#: olim/labels.py:95 olim/labels.py:116 olim/labels.py:135
+#: olim/labels.py:89 olim/labels.py:110 olim/labels.py:129
 msgid "Label not found"
 msgstr "Label not found"
 
-#: olim/labels.py:149
+#: olim/labels.py:143
 msgid "Label não encontrada."
 msgstr "Label não encontrada."
 
@@ -341,6 +382,55 @@ msgstr "Text {text_id} removed from list of hiddens"
 #, python-brace-format
 msgid "Invalid date \"{date}\"."
 msgstr "Invalid date \"{date}\"."
+
+#: olim/templates/account-settings.html:2
+msgid "account_settings_2"
+msgstr "Account Settings"
+
+#: olim/templates/account-settings.html:7
+msgid "account_settings_3"
+msgstr "Account Settings"
+
+#: olim/templates/account-settings.html:15
+msgid "Interface language"
+msgstr "Interface language"
+
+#: olim/templates/account-settings.html:19
+msgid "Automatic"
+msgstr "Automatic"
+
+#: olim/templates/account-settings.html:28
+msgid "Save Language"
+msgstr "Save Language"
+
+#: olim/templates/account-settings.html:41
+msgid "Change password"
+msgstr "Change Password"
+
+#: olim/templates/account-settings.html:45
+msgid "Old Password"
+msgstr "Old Password"
+
+#: olim/templates/account-settings.html:50
+#: olim/templates/account-settings.html:54 olim/templates/init-config.html:22
+#: olim/templates/init-config.html:26 olim/templates/users.html:50
+#: olim/templates/users.html:54
+msgid "New Password"
+msgstr "New Password"
+
+#: olim/templates/account-settings.html:58 olim/templates/init-config.html:30
+#: olim/templates/users.html:58
+msgid "Confirm Password"
+msgstr "Confirm Password"
+
+#: olim/templates/account-settings.html:63 olim/templates/init-config.html:35
+#: olim/templates/users.html:63
+msgid "Generate Random Password"
+msgstr "Generate Random Password"
+
+#: olim/templates/account-settings.html:68 olim/templates/users.html:27
+msgid "Change Password"
+msgstr "Change Password"
 
 #: olim/templates/al-entry.html:2
 msgid "Active Learning - "
@@ -417,10 +507,9 @@ msgstr "Hidden texts"
 msgid "Users"
 msgstr "Users"
 
-#: olim/templates/base.html:44 olim/templates/edit-password.html:35
-#: olim/templates/users.html:27
-msgid "Change Password"
-msgstr "Change Password"
+#: olim/templates/base.html:44
+msgid "account_settings_1"
+msgstr "Account Settings"
 
 #: olim/templates/base.html:47 olim/templates/upload-data.html:2
 msgid "Upload Data"
@@ -467,35 +556,6 @@ msgstr "Error"
 #: olim/templates/base.html:155
 msgid "Report a problem with this page"
 msgstr "Report a problem with this page"
-
-#: olim/templates/edit-password.html:2
-msgid "Edit Password"
-msgstr "Edit Password"
-
-#: olim/templates/edit-password.html:7
-#, python-brace-format
-msgid "Change Password of {username}"
-msgstr "Change Password of {username}"
-
-#: olim/templates/edit-password.html:13
-msgid "Old Password"
-msgstr "Old Password"
-
-#: olim/templates/edit-password.html:18 olim/templates/edit-password.html:22
-#: olim/templates/init-config.html:22 olim/templates/init-config.html:26
-#: olim/templates/users.html:50 olim/templates/users.html:54
-msgid "New Password"
-msgstr "New Password"
-
-#: olim/templates/edit-password.html:26 olim/templates/init-config.html:30
-#: olim/templates/users.html:58
-msgid "Confirm Password"
-msgstr "Confirm Password"
-
-#: olim/templates/edit-password.html:30 olim/templates/init-config.html:35
-#: olim/templates/users.html:63
-msgid "Generate Random Password"
-msgstr "Generate Random Password"
 
 #: olim/templates/entry.html:2
 msgid "Entry "
@@ -937,3 +997,4 @@ msgstr "Do you want to continue?"
 #: olim/templates/entry_types/patient.html:75
 msgid "Unhide"
 msgstr "Unhide"
+
