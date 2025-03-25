@@ -4,7 +4,7 @@ from time import sleep
 import numpy as np
 import pandas as pd
 import requests
-from flask import Response, flash, redirect, render_template, request, session
+from flask import Response, flash, redirect, render_template, request, session, url_for
 from flask_babel import _
 from icecream import ic
 
@@ -38,18 +38,15 @@ def sync_al(label: Label) -> dict:
         "label": {
             "label_name": label.name,
             "label_id": label.al_key,
-            "entries": {entry.entry_id: entry.value for entry in label.entries},
+            "entries": {entry.entry.entry_id: entry.value for entry in label.entries},
         },
     }
 
     res = requests.put(f"{settings.LEARNER_URL}/al/sync-label", json=json.dumps(data))
-    ic(res.json())
-    al_key = res.json()["al_key"]
-
-    # TODO update label al_key
-    print(al_key)
-    label.al_key = al_key
-    db.session.commit()
+    if res.status_code == 200:
+        al_key = res.json()["al_key"]
+        label.al_key = al_key
+        db.session.commit()
 
     return res
 
@@ -99,16 +96,21 @@ def catch_al(label_id: int) -> ...:
         return redirect("/al")
 
     try:
-        res = sync_al(label)
-
-        if res.status_code != 200:
-            flash(
-                _(
-                    "WARNING: Error syncing labels, models might not been trained on"
-                    " complete dataset!"
-                ),
-                category="warning",
-            )
+        # Only try to sync when entrering AL
+        if request.method == "GET":
+            res = sync_al(label)
+            if res.status_code != 200:
+                if "message" in res.json():
+                    message = res.json()["message"]
+                else:
+                    message = ""
+                flash(
+                    _(
+                        "WARNING: Error syncing labels, models might not been trained on"
+                        " complete dataset: {message}"
+                    ).format(message=message),
+                    category="warning",
+                )
 
         # Assign label value if given
         if request.method == "POST":
@@ -120,56 +122,70 @@ def catch_al(label_id: int) -> ...:
                 "entry_id": request.form["entry_id"],
                 "value": value_str,
             }
-            res = requests.put(f"{settings.LEARNER_URL}/al/add-value", data_req).json()
-            try:
-                if res["entry_id"] == data_req["entry_id"]:
-                    add_entry_label(
-                        label_id, request.form["entry_id"], session["user_id"], value_str
-                    )
-                    flash(
-                        _('Added value "{value}" for entry {entry_id}.').format(
-                            value=value_str, entry_id=request.form["entry_id"]
-                        ),
-                        category="success",
-                    )
+            ic(data_req)
+            res = requests.put(f"{settings.LEARNER_URL}/al/add-value", data_req)
+            if res.status_code != 200:
+                if "message" in res.json():
+                    message = res.json()["message"]
                 else:
-                    flash(
-                        _('Error adding value "{value}" for entry {entry_id}.').format(
-                            value=value_str, entry_id=request.form["entry_id"]
-                        ),
-                        category="error",
-                    )
-            except KeyError:
+                    message = ""
                 flash(
-                    _('Error adding value "{value}" for entry {entry_id}. Got key error.').format(
-                        value=value_str, entry_id=request.form["entry_id"]
+                    _("Error setting value {entry_value} to entry {entry_id}: {message}").format(
+                        entry_value=value_str, entry_id=request.form["entry_id"], message=message
                     ),
                     category="error",
                 )
+            else:
+                res = res.json()
 
+            add_entry_label(label_id, request.form["entry_id"], session["user_id"], value_str)
+            flash(
+                _(f'Added value "{value_str}" for entry {request.form["entry_id"]}.').format(
+                    label_name=label.name
+                ),
+                category="success",
+            )
         data_req = {
             "app_key": settings.LEARNER_KEY,
             "user_id": session["user_id"],
             "label_id": label.al_key,
         }
-        res = requests.put(f"{settings.LEARNER_URL}/al/req-entry", data_req).json()
+        res = requests.put(f"{settings.LEARNER_URL}/al/req-entry", data_req)
+        if res.status_code != 200:
+            if "message" in res.json():
+                message = res.json()["message"]
+            else:
+                message = ""
+            flash(
+                _("Error getting next entry for label {label_name}}: {message}").format(
+                    label_name=label.name, message=message
+                ),
+                category="error",
+            )
+            return redirect(url_for("labels"))
+        else:
+            res = res.json()
+
         data = {
             "label": label,
             "highlight": get_highlights(),
             "valid_entry": True,
-            "messages": res["messages"],
         }
+        if "messages" in res:
+            data["messages"] = res["messages"]
+        else:
+            data["messages"] = ""
         data = render_entry(res["entry_id"], data)
         return render_template("al-entry.html", **data)
     except requests.exceptions.ConnectionError:
         flash(
             _(
-                "Failed to enter active learner for label {label_name}, please check"
-                " learner connection."
+                "Failed to enter active learner for label {label_name}, please check learner"
+                " connection."
             ).format(label_name=label.name),
             category="error",
         )
-        return redirect("/labels")
+        return redirect(url_for("labels"))
 
 
 @app.route("/al/<int:label_id>/sync", methods=["GET", "POST"])

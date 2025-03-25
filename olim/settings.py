@@ -1,7 +1,7 @@
 import os
 from typing import ClassVar
 
-VERSION = "0.1.1"
+VERSION = "0.1.dev"
 """Version of the application"""
 
 ES_INDEX = "patients-texts"
