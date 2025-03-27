@@ -1,8 +1,8 @@
-"""Add priority column to labels table
+"""Added labels.priority column
 
-Revision ID: b607167a4dcb
-Revises: 714e414e5b06
-Create Date: 2025-03-24 20:45:32.058246
+Revision ID: f2a646872d44
+Revises: e8eca55db06c
+Create Date: 2025-03-27 19:41:28.214426
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b607167a4dcb'
-down_revision = '714e414e5b06'
+revision = 'f2a646872d44'
+down_revision = 'e8eca55db06c'
 branch_labels = None
 depends_on = None
 

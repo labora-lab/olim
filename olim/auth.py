@@ -6,7 +6,6 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from . import app, settings
 from .database import (
     User,
-    check_db_initialized,
     get_user,
     get_users,
     init_db,
@@ -78,7 +77,7 @@ def get_user_role(user_id: str | None = None) -> str:
 @app.before_request
 def check_permission() -> ...:
     """Check user permission before each request"""
-    if not check_db_initialized():
+    if not get_user(1):
         if role_has_permission(role="guest"):
             return None
         else:
@@ -120,7 +119,7 @@ def check_permission() -> ...:
 
 @app.before_request
 def check_elasticsearch() -> ...:
-    if check_db_initialized() and not role_has_permission(role="guest"):
+    if get_user(1) and not role_has_permission(role="guest"):
         es = es = Elasticsearch([settings.ES_SERVER])
         try:
             # Attempt to ping the Elasticsearch server
@@ -172,7 +171,7 @@ def role_has_permission(endpoint=None, role=None) -> bool:
 
 @app.route("/init-config", methods=("POST", "GET"))
 def init_config() -> ...:
-    if check_db_initialized():
+    if get_user(1):
         flash(_("Initial configuration already done!"), category="warning")
     if (
         request.method == "POST"

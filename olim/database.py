@@ -2,6 +2,7 @@ import random
 import string
 from datetime import datetime
 
+from flask_migrate import stamp
 from sqlalchemy import ScalarResult, Select, inspect
 from sqlalchemy.orm import Mapped, declared_attr
 from werkzeug.security import generate_password_hash
@@ -285,6 +286,7 @@ def init_db(
     """Initializes the database."""
     print("Initializing database...")
     db.create_all()
+    
     if not get_user(admin_user, "username"):
         print("Creatting administrator user.")
         if admin_passwd is None:
@@ -308,16 +310,3 @@ def init_db(
         user.created_by = user.id
         db.session.commit()
     print("Database initialized.")
-
-
-def check_db_initialized() -> bool:
-    """
-    Checks if the database has been initialized by verifying the presence of tables.
-
-    Returns:
-        bool: True if there are any tables in the database, False otherwise.
-    """
-    engine = db.engine
-    inspector = inspect(engine)
-    table_names = inspector.get_table_names()
-    return len(table_names) > 0
