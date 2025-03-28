@@ -2,8 +2,7 @@ import random
 import string
 from datetime import datetime
 
-from flask_migrate import stamp
-from sqlalchemy import ScalarResult, Select, inspect
+from sqlalchemy import ScalarResult, Select
 from sqlalchemy.orm import Mapped, declared_attr
 from werkzeug.security import generate_password_hash
 
@@ -286,7 +285,7 @@ def init_db(
     """Initializes the database."""
     print("Initializing database...")
     db.create_all()
-    
+
     if not get_user(admin_user, "username"):
         print("Creatting administrator user.")
         if admin_passwd is None:
