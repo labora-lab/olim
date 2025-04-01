@@ -45,7 +45,7 @@ pages:
   <<: *ci_setup
   stage: deploy
   script:
-  - uv run mkdocs build --strict --verbose
+  - uv run mkdocs build --strict --verbose --site-dir public
   artifacts:
     paths:
     - public
