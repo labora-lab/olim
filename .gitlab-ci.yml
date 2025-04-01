@@ -1,6 +1,7 @@
 stages:
   - check
-  # - test
+  - test
+  - deploy
 
 cache:
   key: $CI_COMMIT_REF_SLUG
@@ -11,32 +12,45 @@ cache:
 
 variables:
   UV_VERSION: "0.6.6"
-  VIRTUAL_ENV: ".venv"
-  PATH: "${VIRTUAL_ENV}/bin:${PATH}"
+  PYTHON_VERSION: "3.13"
+  BASE_LAYER: "bookworm-slim"
 
 .ci_template: &ci_setup
-  image: python:3.13-slim-bookworm
+  image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
   before_script:
-    - apt-get update && apt-get install -y make curl
-    # Install UV once per pipeline
-    - if ! command -v uv >/dev/null; then
-        curl -L "https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/uv-$(uname -s)-$(uname -m).tar.gz" | tar -xz &&
-        mv uv /usr/local/bin/uv &&
-        chmod +x /usr/local/bin/uv;
-      fi
-    # Create venv only if not cached
-    - if [ ! -d ".venv" ]; then python -m venv .venv; fi
+    - apt update && apt install -y build-essential
+    - make install
 
 code_checks:
   <<: *ci_setup
   stage: check
   script:
-    - make install  # Uses UV if available from cache
-    - make install-hooks
-    - make pre-commit
+    - make check
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == "main"
+
+pages_test:
+  <<: *ci_setup
+  stage: test
+  script:
+  - uv run mkdocs build --strict --verbose --site-dir test
+  artifacts:
+    paths:
+    - test
+  rules:
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+
+pages:
+  <<: *ci_setup
+  stage: deploy
+  script:
+  - uv run mkdocs build --strict --verbose --site-dir public
+  artifacts:
+    paths:
+    - public
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
 
 # unit_tests:
 #   <<: *ci_setup
