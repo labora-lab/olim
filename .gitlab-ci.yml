@@ -16,7 +16,7 @@ variables:
   PATH: "${VIRTUAL_ENV}/bin:${PATH}"
 
 .ci_template: &ci_setup
-  image: python3.13
+  image: python:3.13-bookworm
   before_script:
     - apt-get update && apt-get install -y make curl
     # Install UV once per pipeline
