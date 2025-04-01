@@ -13,7 +13,6 @@ cache:
 variables:
   UV_VERSION: "0.6.6"
   VIRTUAL_ENV: ".venv"
-  PATH: "${VIRTUAL_ENV}/bin:${PATH}"
 
 .ci_template: &ci_setup
   image: python:3.13-bookworm
@@ -27,6 +26,7 @@ variables:
       fi
     # Create venv only if not cached
     - if [ ! -d ".venv" ]; then python -m venv .venv; fi
+    - export "PATH=${VIRTUAL_ENV}/bin:${PATH}"
 
 code_checks:
   <<: *ci_setup
