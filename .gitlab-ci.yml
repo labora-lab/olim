@@ -40,6 +40,7 @@ code_checks:
     - if: $CI_COMMIT_BRANCH == "main"
 
 pages_test:
+  <<: *ci_setup
   stage: test
   script:
   - uv run mkdocs build --strict --verbose --site-dir test
@@ -50,6 +51,7 @@ pages_test:
     - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
 
 pages:
+  <<: *ci_setup
   stage: deploy
   script:
   - uv run mkdocs build --strict --verbose
