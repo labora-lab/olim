@@ -18,6 +18,7 @@ variables:
 .ci_template: &ci_setup
   image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
   before_script:
+    - apt update && apt install -y build-essential
     - make install
 
 code_checks:
