@@ -1,57 +1,39 @@
-# OLIM
-### Open Labeller for Iterative Machine learning
+# Welcome to OLIM!
 
-OLIM is a simple labelling interface aimed to be used by personal without data science specific knowledge. Currently OLIM supports the labelling of patients from medical texts relative to that patient. In future versions we expect to expand the possibilities of the data shape.
+OLIM (Open Labeller for Iterative Machine learning) is a user-friendly labeling interface designed for individuals **without prior data science knowledge**.  
+Its primary use case is to assist in **labeling patient-related data** extracted from medical texts. Future versions aim to support a wider range of data formats and domains.
 
-## Requirements
+## 🚀 What Can OLIM Do?
 
-To run the Docker version you must have Docker Compose installed, the latest versions of Docker shoud have everything nedded.
+- Easily label text data related to patients.
+- Designed for medical professionals and annotators.
+- Offers an **iterative machine learning** workflow to improve label efficiency over time.
 
-To run the standalone version see `requirements.txt` for the needed Python packages and the elasticsearch documentation on how to install your own server.
+## 🛠 Requirements
 
-## Instalation
+!!! tip "Choose your installation method"
+    You can run OLIM using Docker or as a standalone Python application.
 
-1. Clone the repository:
+### 📦 Docker Version
 
-    `git clone https://gitlab.com/nanogennari/olim.git`
+To use OLIM with Docker:
 
-2. Enter the directory:
+- Make sure you have **Docker Compose** installed.  
+  Most recent Docker distributions already include it.
 
-    `cd olim`
+!!! note
+    For most users, the Docker version is the simplest way to get started.
 
-3. Copy your data to the `data/data.csv` (see the [`data`](./data) folder on details on how to format it)
+### 🐍 Standalone Python Version
 
-4. Build and start the containers:
+If you prefer to run OLIM outside Docker:
 
-    `docker compose up -d`
+- Check the `requirements.txt` file for the necessary Python packages.
+- You'll also need to install and configure your own **Elasticsearch server**.  
+  See the [Elasticsearch documentation](https://www.elastic.co/guide/en/elasticsearch/reference/current/index.html) for help.
 
-5. Wait for two minutes for the elasticsearch server to fully start.
+## 📚 Next Steps
 
-6. Initialize OLIM database:
+If you’re ready to get started:
 
-    `docker compose exec olim python -m flask --app olim init-db`
-
-7. Upload your data:
-
-    * Simple text data:
-
-        `docker compose exec olim python -m flask --app olim upload single_text data/data.csv [text_id_column] [text_column]`
-
-    * Patient sheet data:
-
-        `docker compose exec olim python -m flask --app olim upload patient data/data.csv`
-
-    If you want to use the sample data run instead:
-
-
-
-    * Simple text data:
-
-        `docker compose exec olim python -m flask --app olim upload single_text /app/data/sample_data.csv text_id text`
-
-    * Patient sheet data:
-
-        `docker compose exec olim python -m flask --app olim upload patient /app/data/sample_data.csv`
-
-8. Access the labeler on `http://localhost:42000`
-
+👉 Head over to the [Getting Started](getting_started/installation.md) section to begin your installation.

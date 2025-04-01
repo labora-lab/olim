@@ -1,17 +1,19 @@
-site_name: OLIM (Open Labeller for Iterative Machine learning)
-site_url: https://gitlab.com/nanogennari/olim
+site_name: OLIM - Open Labeller for Iterative Machine learning
+site_url: https://nanogennari.gitlab.io/olim
 repo_name: nanogennari/olim
 repo_url: https://gitlab.com/nanogennari/olim
 theme:
   name: material
   icon:
-    logo: material/book
-  language: pt-BR
+    logo: material/notebook
+    repo: fontawesome/brands/gitlab
+  language: en
   features:
-    - navigation.tabs
+    - navigation.expand
     - content.tabs.link
     - content.code.copy
-    - navigation.top
+    - toc.integrate
+    - navigation.footer
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -28,10 +30,12 @@ theme:
 
 plugins:
   - search
-  - mkdocstrings
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: ["."]
 
 extra_javascript:
-  - js/mathjax.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 
@@ -61,3 +65,16 @@ markdown_extensions:
   - pymdownx.tasklist:
       custom_checkbox: true
 
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting_started/installation.md
+      - Usage: getting_started/usage.md
+  - Tutorials:
+      - Data Formatting: tutorials/data_formatting.md
+      - Labeling: tutorials/labeling.md
+  - Wiki:
+      - Active Learning: wiki/active_learning.md
+  - API Reference:
+      - Labels: api_reference/labels.md
+      - Active Learning: api_reference/active_learning.md
