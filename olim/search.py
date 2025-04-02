@@ -53,7 +53,7 @@ def search() -> str:
             if hasattr(module, "search"):
                 data += module.search(
                     must_terms=must_terms,
-                    must_phrases=must_terms,
+                    must_phrases=must_phrases,
                     not_must_terms=not_must_terms,
                     not_must_phrases=not_must_phrases,
                     number=number,
