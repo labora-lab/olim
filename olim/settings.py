@@ -63,11 +63,15 @@ class LabelTypes:
     ]
 
 
-labels = os.getenv("LABELS", "LabelTypes.SIM_NAO_NS")
+labels = os.getenv("LABELS", "LabelTypes.YES_NO")
+if "LABELS_TYPES" in labels:
+    labels = labels.replace("LABELS_TYPES", "LabelTypes")
+    print("WARNING: LABELS_TYPES is deprecated, replace it with LabelTypes!")
 try:
     LABELS = eval(labels)
-except TypeError:
-    LABELS = LabelTypes.SIM_NAO_NS
+except (TypeError, NameError):
+    print(f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!")
+    LABELS = LabelTypes.YES_NO
 
 """List of endpoints that need a setup backend."""
 NEED_LEARNER = [

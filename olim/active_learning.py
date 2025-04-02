@@ -251,7 +251,7 @@ def export_label(label_id: int) -> ...:
                 mimetype="text/csv",
                 headers={
                     "Content-disposition": "attachment; "
-                    "filename={label.name}-{alpha}-predictions.csv"
+                    f"filename={label.name}-{alpha}-predictions.csv"
                 },
             )
         else:
