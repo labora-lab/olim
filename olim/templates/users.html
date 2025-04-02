@@ -22,7 +22,7 @@
                             <td>{{ user.username }}</td>
                             <td>{{ user.role }}</td>
                             <td>
-                                <a href="{{ url_for('edit_password', user_id=user.id) }}"
+                                <a href="{{ url_for('user_settings', user_id=user.id) }}"
                                     class="btn waves-effect waves-light tooltipped"
                                     data-tooltip="{{ _('Change Password') }}">
                                     <i class="material-icons">edit</i>

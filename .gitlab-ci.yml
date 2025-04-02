@@ -1,0 +1,66 @@
+stages:
+  - check
+  - test
+  - deploy
+
+cache:
+  key: $CI_COMMIT_REF_SLUG
+  paths:
+    - .venv/
+    - .cache/uv/
+  policy: pull-push
+
+variables:
+  UV_VERSION: "0.6.6"
+  PYTHON_VERSION: "3.13"
+  BASE_LAYER: "bookworm-slim"
+
+.ci_template: &ci_setup
+  image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
+  before_script:
+    - apt update && apt install -y build-essential
+    - make install
+
+code_checks:
+  <<: *ci_setup
+  stage: check
+  script:
+    - make check
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+pages_test:
+  <<: *ci_setup
+  stage: test
+  script:
+  - uv run mkdocs build --strict --verbose --site-dir test
+  artifacts:
+    paths:
+    - test
+  rules:
+    - if: $CI_COMMIT_REF_NAME != $CI_DEFAULT_BRANCH
+
+pages:
+  <<: *ci_setup
+  stage: deploy
+  script:
+  - uv run mkdocs build --strict --verbose --site-dir public
+  artifacts:
+    paths:
+    - public
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+
+# unit_tests:
+#   <<: *ci_setup
+#   stage: test
+#   script:
+#     - make install  # Reuses cached dependencies
+#     - make test
+#   cache:
+#     policy: pull  # Only pull existing cache, don't push changes
+#   needs: ["code_checks"]
+#   rules:
+#     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+#     - if: $CI_COMMIT_BRANCH == "main"

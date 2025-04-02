@@ -5,7 +5,9 @@ flask_session==0.5.0
 flask_sqlalchemy==3.0.3
 flask_babel==4.0.0
 Flask-Migrate
-numpy==1.24.2
+mkdocs-material==9.5.50
+mkdocstrings-python==1.13.0
+numpy==2.1.0
 pandas==2.0.2
 tqdm==4.65.0
 Werkzeug==2.2.3

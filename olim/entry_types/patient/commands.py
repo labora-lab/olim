@@ -1,11 +1,13 @@
-from...functions import get_es_conn, es_update, now_ISO
-from . import ES_INDEX, ES_TO_HIDE_INDEX
 from flask_babel import _
 
-def update_hidden(txt_id, entry_id, hide):
+from ...utils.es import es_update, get_es_conn, now_iso
+from .constants import ES_INDEX, ES_TO_HIDE_INDEX
+
+
+def update_hidden(txt_id, entry_id, hide) -> dict:
     body = {
         "script": {
-            "source": "def targets = ctx._source.texts.findAll(texts -> texts.text_id == params.text_id); for(text in targets) { text.is_hidden = params.is_hidden }",
+            "source": "def targets = ctx._source.texts.findAll(texts -> texts.text_id == params.text_id); for(text in targets) { text.is_hidden = params.is_hidden }",  # noqa: E501
             "params": {"text_id": txt_id, "is_hidden": hide},
         }
     }
@@ -13,37 +15,37 @@ def update_hidden(txt_id, entry_id, hide):
     return es_update(id=entry_id, body=body, refresh=True, index=ES_INDEX)
 
 
-def remove_from_hidden(text_id):
+def remove_from_hidden(text_id) -> dict:
     client = get_es_conn()
     query = {"query": {"bool": {"must": [{"match": {"text_id": text_id}}]}}}
     return client.delete_by_query(index=ES_TO_HIDE_INDEX, body=query, refresh=True)
 
 
-def add_text_to_hide(text, text_id, entry_id):
+def add_text_to_hide(text, text_id, entry_id) -> dict:
     label_doc = {
         "text": text,
         "text_id": text_id,
         "entry_id": entry_id,
-        "date": now_ISO(),
+        "date": now_iso(),
     }
 
     client = get_es_conn()
     return client.index(index=ES_TO_HIDE_INDEX, document=label_doc)
 
 
-def hide_one(**args):
+def hide_one(**args) -> dict:
     txt_id = args.get("txt_id", None)
     entry_id = int(args.get("entry_id", None))
 
     try:
         update_hidden(txt_id, entry_id, True)
-    except:
+    except Exception:
         return {
             "type": "error",
             "text": _("Failed writing to database"),
         }
 
-    if txt_id == None:
+    if txt_id is None:
         return {
             "type": "error",
             "text": _("No ID passed"),
@@ -55,19 +57,19 @@ def hide_one(**args):
         }
 
 
-def show(**args):
+def show(**args) -> dict:
     txt_id = args.get("txt_id", None)
     entry_id = int(args.get("entry_id", None))
 
     try:
         update_hidden(txt_id, entry_id, False)
-    except:
+    except Exception:
         return {
             "type": "error",
             "text": _("Failed writing to database"),
         }
 
-    if txt_id == None:
+    if txt_id is None:
         return {
             "type": "error",
             "text": _("No ID passed"),
@@ -79,23 +81,25 @@ def show(**args):
         }
 
 
-def hide_all(**args):
+def hide_all(**args) -> dict:
     entry_id = args.get("entry_id", None)
     text = args.get("text", None)
     text_id = args.get("text_id", None)
 
     try:
         add_text_to_hide(text, text_id, entry_id)
-    except:
+    except Exception:
         return {
             "type": "error",
             "text": _("Failed writing to database"),
         }
 
-    if entry_id == None or text == None or text_id == None:
+    if any(param is None for param in (entry_id, text, text_id)):
         return {
             "type": "error",
-            "text": _("Missing data: {entry_id}, {text_id}, {text}").format(entry_id=entry_id, text_id=text_id, text=text),
+            "text": _("Missing data: {entry_id}, {text_id}, {text}").format(
+                entry_id=entry_id, text_id=text_id, text=text
+            ),
         }
     else:
         return {
@@ -104,18 +108,18 @@ def hide_all(**args):
         }
 
 
-def remove_hidden(**args):
+def remove_hidden(**args) -> dict:
     text_id = args.get("text_id", None)
 
     try:
         remove_from_hidden(text_id)
-    except:
+    except Exception:
         return {
             "type": "error",
             "text": _("Failed writing to database"),
         }
 
-    if text_id == None:
+    if text_id is None:
         return {
             "type": "error",
             "text": _("Missing data: text_id"),

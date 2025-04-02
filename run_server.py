@@ -1,16 +1,18 @@
-import olim
-import re
 import argparse
+import re
+
+import olim
+
+REGEX_IP = re.compile("^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}$")
 
 
-def ip(arg_value):
-    REGEX_IP = re.compile("^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}$")
+def ip(arg_value) -> str:
     if not REGEX_IP.match(arg_value):
         raise argparse.ArgumentTypeError(f"Invalid IP '{arg_value}'")
     return arg_value
 
 
-def port(arg_value):
+def port(arg_value) -> int:
     if int(arg_value) > 65535 or int(arg_value) < 0:
         raise argparse.ArgumentTypeError(f"Invalid port '{arg_value}'")
     return int(arg_value)
@@ -35,9 +37,7 @@ parser.add_argument(
     default=5000,
     help="port for the server to listen.",
 )
-parser.add_argument(
-    "-D", "--debug", action="store_true", help="Start server in debug mode"
-)
+parser.add_argument("-D", "--debug", action="store_true", help="Start server in debug mode")
 args = parser.parse_args()
 
 olim.app.run(host=args.host, port=args.port, debug=args.debug)

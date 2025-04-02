@@ -1,0 +1,83 @@
+site_name: OLIM - Open Labeller for Iterative Machine learning
+site_url: https://nanogennari.gitlab.io/olim
+repo_name: nanogennari/olim
+repo_url: https://gitlab.com/nanogennari/olim
+theme:
+  name: material
+  icon:
+    logo: material/notebook
+    repo: fontawesome/brands/gitlab
+  language: en
+  features:
+    - navigation.expand
+    - content.tabs.link
+    - content.code.copy
+    - toc.integrate
+    - navigation.footer
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      toggle:
+        icon: material/brightness-7
+        name: Switch to light mode
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: ["."]
+
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.extra
+  - meta
+  - pymdownx.highlight:
+      anchor_linenums: true
+      auto_title: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.tilde
+  - admonition
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - def_list
+  - attr_list
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting_started/installation.md
+      - Usage: getting_started/usage.md
+  - Tutorials:
+      - Data Formatting: tutorials/data_formatting.md
+      - Labeling: tutorials/labeling.md
+  - Wiki:
+      - Active Learning: wiki/active_learning.md
+  - API Reference:
+      - Labels: api_reference/labels.md
+      - Active Learning: api_reference/active_learning.md

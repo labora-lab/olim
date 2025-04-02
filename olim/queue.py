@@ -1,21 +1,16 @@
-from . import app
-from .functions import (
-    parse_queue,
-    store_queue,
-    get_queue,
-    get_def_nentries,
-    get_all_queues,
-)
-from .database import random_entries
-from flask import request, render_template, flash, redirect, session
+from flask import flash, redirect, render_template, request, session
 from flask_babel import _
+
+from . import app
+from .database import random_entries
+from .functions import get_all_queues, get_def_nentries, get_queue, parse_queue, store_queue
 
 
 @app.route("/new-queue", methods=["POST", "GET"])
 @app.route("/new-queue/<queue_id>", methods=["GET"])
-def new_queue(queue_id=None):
+def new_queue(queue_id=None) -> ...:
     # If a we have a queue_id load that queue
-    if queue_id != None:
+    if queue_id is not None:
         queue = get_queue(queue_id)
         return render_template("queue.html", queue=queue, queue_hash=queue_id)
 
@@ -26,7 +21,7 @@ def new_queue(queue_id=None):
     if type == "random":
         try:
             # Try to parse the number and store it
-            number = int(request.form.get("number"))
+            number = int(request.form.get("number", ""))
             session["number_of_entries"] = number
             # Generate the queue
             queue = [entry.entry_id for entry in random_entries(number)]
@@ -43,6 +38,4 @@ def new_queue(queue_id=None):
         return redirect(f"/new-queue/{queue_id}")
     # If not render blank page
     else:
-        return render_template(
-            "queue.html", number=get_def_nentries(), queues=get_all_queues()
-        )
+        return render_template("queue.html", number=get_def_nentries(), queues=get_all_queues())

@@ -1,42 +1,34 @@
-from . import app, db, entry_types
-from .functions import store_queue, label_upload
-from .database import (
-    get_labels,
-    new_label,
-    del_label,
-    get_label,
-    get_labeled,
-)
-from .active_learning import new_al
-from flask import render_template, redirect, request, session, flash, Response
-from flask_babel import _
-import pandas as pd
-import time
 import json
-import requests
-from . import settings
-from icecream import ic
+import time
+
+import pandas as pd
+from flask import Response, flash, redirect, render_template, request, session
+from flask_babel import _
+
+from . import app, db, entry_types, settings
+from .active_learning import new_al
+from .database import del_label, get_label, get_labeled, get_labels, new_label
+from .functions import store_queue
+from .utils.label import label_upload
 
 
 @app.route("/", methods=["GET"])
 @app.route("/labels", methods=["GET"])
-def labels():
+def labels() -> ...:
     labels_values = {label.id: {} for label in get_labels()}
     possible_values = []
     for label in get_labels():
-        for l in label.entries:
-            if not l.is_deleted:
-                if l.value in labels_values[l.label_id]:
-                    labels_values[l.label_id][l.value] += 1
+        for entry in label.entries:
+            if not entry.is_deleted:
+                if entry.value in labels_values[label.id]:
+                    labels_values[label.id][entry.value] += 1
                 else:
-                    labels_values[l.label_id][l.value] = 1
-            if l.value not in possible_values:
-                possible_values.append(l.value)
+                    labels_values[label.id][entry.value] = 1
+            if entry.value not in possible_values:
+                possible_values.append(entry.value)
     possible_values.append("Total")
     for label_id in labels_values:
-        labels_values[label_id]["Total"] = sum(
-            [v for v in labels_values[label_id].values()]
-        )
+        labels_values[label_id]["Total"] = sum(labels_values[label_id].values())
     labels = get_labels()
     return render_template(
         "labels.html",
@@ -47,14 +39,8 @@ def labels():
 
 
 @app.route("/labels/new", methods=["POST"])
-def create_label():
+def create_label() -> ...:
     label_name = request.form.get("label")
-    data = {
-        "app_key": settings.LEARNER_KEY,
-        "user_id": session["user_id"],
-        "label": label_name,
-        "values": [l for l, *_ in settings.LABELS],
-    }
     label = new_label(label_name, session["user_id"])
     flash(
         _("Label {label_name} successfully created").format(label_name=label.name),
@@ -70,7 +56,7 @@ def create_label():
 
 
 @app.route("/labels/<int:label_id>/delete", methods=["GET"])
-def delete_label(label_id):
+def delete_label(label_id) -> ...:
     # TODO: Delete label from active
     label = get_label(label_id)
     # if label.al_key:
@@ -80,7 +66,7 @@ def delete_label(label_id):
     #         user_id=session["user_id"],
     #         label_id=label.al_key,
     #     )
-    #     res = requests.delete(f"{settings.LEARNER_URL}/al/delete-label", json=json.dumps(data)).json()
+    #     res = requests.delete(f"{settings.LEARNER_URL}/al/delete-label", json=json.dumps(data)).json() # noqa
     #
     #     if res["label_id"] != label.al_key:
     #         flash(
@@ -97,8 +83,11 @@ def delete_label(label_id):
 
 
 @app.route("/labels/<label_id>/csv")
-def extract_labels(label_id):
+def extract_labels(label_id) -> ...:
     label = get_label(label_id)
+    if label is None:
+        flash(_("Label not found"), category="error")
+        return redirect("/labels")
     label_str = label.name
     df = pd.read_sql(get_labeled(label_id), db.engine)
     dfs_entries = []
@@ -115,8 +104,11 @@ def extract_labels(label_id):
 
 
 @app.route("/labels/<label_id>/json")
-def extract_labels_json(label_id):
+def extract_labels_json(label_id) -> ...:
     label = get_label(label_id)
+    if label is None:
+        flash(_("Label not found"), category="error")
+        return redirect("/labels")
     label_str = label.name
     entries_values = {}
     for le in label.entries:
@@ -130,12 +122,14 @@ def extract_labels_json(label_id):
 
 
 @app.route("/labels/<int:label_id>/queue", methods=["GET"])
-def catch_queue(label_id):
+def catch_queue(label_id) -> ...:
     # Create a queue from label
+    label = get_label(label_id)
+    if label is None:
+        flash(_("Label not found"), category="error")
+        return redirect("/labels")
     queue = [
-        l.entry.entry_id
-        for l in get_label(label_id).entries
-        if not l.is_deleted and l.value != ""
+        label.entry.entry_id for label in label.entries if not label.is_deleted and label.value
     ]
     queue_hash = store_queue(queue)
     # Redirect to queue
@@ -143,7 +137,7 @@ def catch_queue(label_id):
 
 
 @app.route("/labels/<int:label_id>/settings", methods=["GET"])
-def label_settings(label_id):
+def label_settings(label_id) -> ...:
     label = get_label(label_id)
     if not label:
         flash(_("Label não encontrada."), category="error")
@@ -152,12 +146,12 @@ def label_settings(label_id):
 
 
 @app.route("/label-upload", methods=["POST"])
-def label_up():
+def label_up() -> ...:
     # Create a df from csv passed by POST
-    df = pd.read_csv(request.files["file"])
+    df = pd.read_csv(request.files["file"].stream)
 
     label_upload(df)
 
     # Wait 2 seconds for write operations to finish and redirect back to labels page
     time.sleep(2)
-    return redirect(f"../labels")
+    return redirect("../labels")

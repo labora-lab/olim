@@ -1,6 +1,18 @@
-FROM python:3.10-slim
+FROM python:3.13-slim-bookworm
 
 EXPOSE 42000
+
+# The installer requires curl (and certificates) to download the release archive
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+
+# Download the latest installer
+ADD https://astral.sh/uv/install.sh /uv-installer.sh
+
+# Run the installer then remove it
+RUN sh /uv-installer.sh && rm /uv-installer.sh
+
+# Ensure the installed binary is on the `PATH`
+ENV PATH="/root/.local/bin/:$PATH"
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -8,16 +20,22 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
-# Install pip requirements
-COPY requirements.txt .
-RUN python -m pip install -r requirements.txt
-
-WORKDIR /app
+# Copy the project into the image
 COPY . /app
 
-USER root
+# Sync the project into a new environment, using the frozen lockfile
+WORKDIR /app
+RUN uv sync --frozen
 
+# Add entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Set random secret key
 RUN export SECRET_KEY=`python -c 'import secrets; print(secrets.token_hex())'`
 
+ENTRYPOINT ["/entrypoint.sh"]
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-CMD ["gunicorn", "--timeout", "120", "--reload", "--bind", "0.0.0.0:42000", "olim:app"]
+CMD ["uv", "run", "gunicorn", "--timeout", "120", "--reload", "--bind", "0.0.0.0:42000", "olim:app"]

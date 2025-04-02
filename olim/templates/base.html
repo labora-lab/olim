@@ -40,8 +40,8 @@
             {% if has_permition('users') %}
             <li><a href="{{ url_for('users') }}">{{ _('Users') }}</a></li>
             {% endif %}
-            {% if has_permition('edit_password') %}
-            <li><a href="{{ url_for('edit_password') }}">{{ _('Change Password') }}</a></li>
+            {% if has_permition('user_settings') %}
+            <li><a href="{{ url_for('user_settings') }}">{{ _('account_settings_1') }}</a></li>
             {% endif %}
             {% if has_permition('upload_data') %}
             <li><a href="{{ url_for('upload_data') }}">{{_("Upload Data")}}</a></li>

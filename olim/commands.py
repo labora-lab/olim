@@ -1,36 +1,44 @@
-from . import app
-from . import entry_types
-from .functions import manage_label_in_session
-from .database import add_entry_label, get_label
-from flask import request, session
 import json
+
+from flask import request, session
 from flask_babel import _
 
-def add_label(**args):
+from . import app, entry_types
+from .database import add_entry_label, get_label
+from .functions import manage_label_in_session
+
+
+def add_label(**args) -> dict:
     entry_id = args.get("entry_id", None)
     label_id = args.get("label_id", None)
     value = args.get("value", "")
-    label = get_label(label_id).name
+    label_obj = get_label(label_id)
+    if label_obj is None:
+        raise Exception("Label not found")
+
+    label = label_obj.name
 
     try:
         add_entry_label(label_id, entry_id, session["user_id"], value)
-    except:
+    except Exception:
         return {
             "type": "error",
             "text": _("Failed writing to database"),
         }
 
     if value == "":
-        msg = _(f"Removed the label {label} for the entry {entry_id}")
+        msg = _("Removed the label {label} for the entry {entry_id}").format(
+            label=label, entry_id=entry_id
+        )
     else:
         msg = f"{label}: {value} for the entry {entry_id}"
 
-    if entry_id == None:
+    if entry_id is None:
         return {
             "type": "error",
             "text": _("No entry ID passed"),
         }
-    elif label == None:
+    elif label is None:
         return {
             "type": "error",
             "text": _("No label passed"),
@@ -42,20 +50,20 @@ def add_label(**args):
         }
 
 
-def manage_label(**args):
+def manage_label(**args) -> dict | None:
     str_label = args.get("label", None)
     label_id = args.get("label_id", None)
     mode = args.get("mode", "add")
 
-    if str_label == None or label_id == None:
+    if str_label is None or label_id is None:
         return {
             "type": "error",
             "text": _("Missing data: label"),
         }
 
     try:
-        manage_label_in_session(int(label_id), mode)
-    except:
+        manage_label_in_session(label_id, mode)
+    except Exception:
         return {
             "type": "error",
             "text": _("Error hidding label."),
@@ -74,16 +82,16 @@ def manage_label(**args):
         }
 
 
-def update_session(**args):
+def update_session(**args) -> dict:
     parameter = args.get("parameter", None)
     data = args.get("data", None)
 
-    if parameter == None:
+    if parameter is None:
         return {
             "type": "error",
             "text": _("Missing parameter"),
         }
-    if data == None:
+    if data is None:
         return {
             "type": "error",
             "text": _("Missing data"),
@@ -112,7 +120,8 @@ ERROR_NOT_FOUND = {"type": "error", "text": _("Command {command} not found")}
 
 
 @app.route("/commands")
-def commands():
+def commands() -> str:
+    response: dict
     if "cmd" in request.args:
         cmd = request.args["cmd"]
         if cmd in COMMANDS:

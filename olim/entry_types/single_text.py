@@ -1,40 +1,46 @@
-from ..functions import es_search, es_bulk_upload
-from flask import render_template
+from collections.abc import Generator
+
 import click
-from tqdm import tqdm
-from ..cli import upload
-from typing import List, Dict, Tuple
 import pandas as pd
+from flask import render_template
+from tqdm import tqdm
+
+from olim.utils.es import es_search
+
+from ..cli import upload
+from ..upload_utils import es_bulk_upload
 
 ES_INDEX = "single_text_entries"
 ENTRY_TYPE = "single_text"
 
 
-def render(entry_id, **pars):
+def render(entry_id, **pars) -> str:
     query = {"bool": {"must": [{"terms": {"_id": [entry_id]}}]}}
     res = es_search(query=query, index=ES_INDEX)["hits"]["hits"][0]
 
     return render_template("entry_types/single_text.html", res=res, **pars)
 
-def extract_texts(entry_id, **pars):
+
+def extract_texts(entry_id, **pars) -> pd.DataFrame:
     query = {"bool": {"must": [{"terms": {"_id": [entry_id]}}]}}
     res = es_search(query=query, index=ES_INDEX)["hits"]["hits"][0]
-    return pd.DataFrame({"entry_id": [entry_id], 'text': res['_source']['text']})
+    return pd.DataFrame({"entry_id": [entry_id], "text": res["_source"]["text"]})
+
 
 @click.command(
     ENTRY_TYPE,
     help="Upload data of the single_text type."
     "\n\n\tCSV_FILE\tPath to the CSV file to load data."
-    "\n\n\tID_COLUMN\tColumn name to use as id for the entries (must be unique with all other entries in OLIM)."
+    "\n\n\tID_COLUMN\tColumn name to use as id for the entries (must be unique with all other entries in OLIM)."  # noqa: E501
     "\n\n\tTEXT_COLUMN\tColumn name to use as the text.",
 )
 @click.argument("csv_file", type=click.Path(exists=True))
 @click.argument("id_column")
 @click.argument("text_column")
-def up_single_text(csv_file, id_column, text_column):
+def up_single_text(csv_file, id_column, text_column) -> None:
     mapping = {"properties": {"texts": {"type": "text"}}}
 
-    def doc_generator(df, index, id_column, text_column):
+    def doc_generator(df, index, id_column, text_column) -> Generator[dict]:
         for _, row in tqdm(df.iterrows(), total=len(df)):
             data = {
                 "_index": index,
@@ -61,12 +67,12 @@ upload.add_command(up_single_text)
 
 
 def search(
-    must_terms: List[str],
-    must_phrases: List[str],
-    not_must_terms: List[str],
-    not_must_phrases: List[str],
+    must_terms: list[str],
+    must_phrases: list[str],
+    not_must_terms: list[str],
+    not_must_phrases: list[str],
     number: int,
-) -> List[Dict]:
+) -> list[dict]:
     all_must = must_terms + must_phrases
     all_not = not_must_terms + not_must_phrases
     col_search = "text"
@@ -75,12 +81,10 @@ def search(
     es_query = {
         "bool": {
             "must": [
-                {"query_string": {"query": term, "fields": [col_search]}}
-                for term in all_must
+                {"query_string": {"query": term, "fields": [col_search]}} for term in all_must
             ],
             "must_not": [
-                {"query_string": {"query": term, "fields": [col_search]}}
-                for term in all_not
+                {"query_string": {"query": term, "fields": [col_search]}} for term in all_not
             ],
             "should": [],
         },

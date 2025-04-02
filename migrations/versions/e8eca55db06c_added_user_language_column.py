@@ -1,8 +1,8 @@
-"""Added language and active learning columns
+"""Added user.language and labels.al_key columns
 
-Revision ID: 714e414e5b06
-Revises: 
-Create Date: 2023-11-09 19:37:07.082954
+Revision ID: e8eca55db06c
+Revises: 7217cc881dbb
+Create Date: 2025-03-27 19:40:20.808608
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '714e414e5b06'
-down_revision = None
+revision = 'e8eca55db06c'
+down_revision = '7217cc881dbb'
 branch_labels = None
 depends_on = None
 
