@@ -61,7 +61,7 @@ install-dev:
 	@if command -v $(UV) >/dev/null 2>&1; then \
 		echo "Using uv to create and install dependencies in development environment..."; \
 		$(UV) venv .venv-dev; \
-		$(UV) sync --frozen --python .venv-dev/bin/python; \
+		VIRTUAL_ENV=.venv-dev $(UV) sync --frozen --active; \
 	else \
 		echo -e "\033[31mWARNING: uv not found!\033[0m"; \
 		echo -e "It's recommended to install uv: https://docs.astral.sh/uv/getting-started/installation/"; \
