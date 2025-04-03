@@ -26,7 +26,7 @@ services:
       - ES_SERVER=http://olim_es:9200
       - DEBUG=true
       - LEARNER_URL=http://olim-learner:42010
-      # Run `docker compose exec olim-learner poetry run flask --app api app-keys new data/sample_data.csv text_id text`
+      # Run `docker compose exec olim-learner uv run flask --app api app-keys new data/sample_data.csv text_id text`
       # on the learner directory to upload data to it and get the key
       - LEARNER_KEY=
       - LABELS=LabelTypes.YES_NO
@@ -36,6 +36,8 @@ services:
       - olim-es
       # Uncoment this network if you are running the learner on the same machine on Docker
       # - olim-learner_main
+    volumes:
+      - ./:/app
 
 volumes:
   data:
@@ -44,7 +46,7 @@ volumes:
 networks:
   olim-es:
     driver: bridge
-  # Uncoment this network if you are running the learner on the same machine on Docker 
+  # Uncoment this network if you are running the learner on the same machine on Docker
   # Be aware of the indentation "external: true" should be one level below "olim-learner_main"
   # olim-learner_main:
   #   external: true
