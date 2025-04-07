@@ -1,0 +1,17 @@
+# Virtual environments
+.venv-dev/
+__pycache__/
+*.pyc
+
+# Development files
+.git/
+.gitignore
+.gitlab-ci.yml
+.pytest_cache/
+.ruff_cache/
+tests/
+docs/
+
+# Editor settings
+.vscode/
+.idea/

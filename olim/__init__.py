@@ -5,9 +5,8 @@ from datetime import timedelta
 from flask import Flask, request, session
 from flask_babel import Babel
 from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
-
 from flask_session import Session
+from flask_sqlalchemy import SQLAlchemy
 
 from .settings import (
     BABEL_DEFAULT_LOCALE,
