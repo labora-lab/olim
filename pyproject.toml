@@ -30,6 +30,7 @@ dev = [
     "mkdocs-material>=9.6.11",
     "mkdocstrings-python>=1.16.8",
     "pre-commit>=4.1.0",
+    "pyright[nodejs]>=1.1.399",
     "ruff>=0.11.0",
 ]
 
@@ -90,3 +91,20 @@ indent-style = "space"
 line-ending = "auto"
 docstring-code-format = true
 
+[tool.pyright]
+include = ["olim"]
+exclude = ["**/__pycache__", "migrations"]
+reportMissingImports = true
+reportMissingTypeStubs = false
+pythonVersion = "3.13"
+pythonPlatform = "Linux"
+typeCheckingMode = "standard"
+reportUnknownMemberType = "none"
+reportCallIssue = "none"
+reportAttributeAccessIssue = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportMissingTypeArgument = "none"
+# useLibraryCodeForTypes = true
+venvPath = "."
+venv = ".venv-dev"

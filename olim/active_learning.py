@@ -7,6 +7,7 @@ import requests
 from flask import Response, flash, redirect, render_template, request, session, url_for
 from flask_babel import _
 from icecream import ic
+from requests.models import Response as HTTPResponse
 
 from . import app, db, settings
 from .database import Label, add_entry_label, get_label, get_labels, new_label
@@ -27,7 +28,7 @@ def new_al(label: Label) -> None:
     db.session.commit()
 
 
-def sync_al(label: Label) -> dict:
+def sync_al(label: Label) -> HTTPResponse:
     if not label.al_key:
         new_al(label)
         sleep(4.0)
@@ -191,6 +192,10 @@ def catch_al(label_id: int) -> ...:
 @app.route("/al/<int:label_id>/sync", methods=["GET", "POST"])
 def sync_label(label_id: int) -> ...:
     label = get_label(label_id)
+    if label is None:
+        # TODO: Add error message as below
+        # flash(_("Label not found."), category="error")
+        return redirect("/labels")
 
     try:
         res = sync_al(label)
@@ -214,6 +219,11 @@ def sync_label(label_id: int) -> ...:
 @app.route("/al/<int:label_id>/export", methods=["GET", "POST"])
 def export_label(label_id: int) -> ...:
     label = get_label(label_id)
+
+    if label is None:
+        # TODO: Add error message as below
+        # flash(_("Label not found."), category="error")
+        return redirect("/labels")
 
     try:
         data_req = {

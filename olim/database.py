@@ -34,7 +34,7 @@ class User(db.Model, CreationControl):
     username: Mapped[str] = db.mapped_column(unique=True, nullable=False)
     password: Mapped[str] = db.mapped_column(nullable=False)
     role: Mapped[str] = db.mapped_column(nullable=False)
-    language: Mapped[str] = db.mapped_column(nullable=True)
+    language: Mapped[str | None] = db.mapped_column(nullable=True)
 
 
 class LabelEntry(db.Model, CreationControl):

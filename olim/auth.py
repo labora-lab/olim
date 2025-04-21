@@ -180,10 +180,10 @@ def init_config() -> ...:
         and ("new_password" in request.form)
         and ("password_check" in request.form)
     ):
-        username = request.form.get("username")
-        password = request.form.get("new_password")
-        password_check = request.form.get("password_check")
-        name = request.form.get("name")
+        username = request.form["username"]
+        password = request.form["new_password"]
+        password_check = request.form["password_check"]
+        name = request.form["name"]
         if password != password_check:
             flash(_("Passwords do not match"), category="warning")
             return redirect("/")
@@ -272,21 +272,20 @@ def security_edit_password(
     flash(_("Password sucessfully updated!"), category="success")
 
 
-def get_user_obj(user_id: int | None) -> tuple[int | None, User | None]:
+def get_user_obj(user_id: int | None) -> User | None:
     user_id = user_id or session["user"]["id"]
 
     if (user_id is None) or (session["user"]["role"] != "admin" and session["user_id"] != user_id):
-        return None, None
+        return None
 
     user = get_user(user_id, by="id")
-
-    return user_id, user
+    return user
 
 
 @app.route("/user", methods=["GET"])
 @app.route("/user/<int:user_id>", methods=["GET"])
 def user_settings(user_id: int | None = None) -> ...:
-    __, user = get_user_obj(user_id)
+    user = get_user_obj(user_id)
 
     if user is None:
         flash(
@@ -302,7 +301,7 @@ def user_settings(user_id: int | None = None) -> ...:
 
 @app.route("/user/<int:user_id>/set/password", methods=["POST"])
 def edit_password(user_id: int | None = None) -> ...:
-    to_change_user_id, to_change_user = get_user_obj(user_id)
+    to_change_user = get_user_obj(user_id)
     changer_user = session.get("user")
 
     if to_change_user is None:
@@ -322,14 +321,14 @@ def edit_password(user_id: int | None = None) -> ...:
             to_change_user, changer_user, old_password, new_password, new_password_check
         )
 
-    return redirect(url_for("user_settings", user_id=to_change_user_id))
+    return redirect(url_for("user_settings", user_id=to_change_user.id))
 
 
 @app.route("/user/<int:user_id>/set/language", methods=["POST"])
 def edit_language(user_id: int | None = None) -> ...:
-    to_change_user_id, to_change_user = get_user_obj(user_id)
+    to_change_user = get_user_obj(user_id)
 
-    if to_change_user is None:
+    if to_change_user is None or to_change_user.language is None:
         flash(
             _(
                 "You do not have permission to change language for user id {user_id} settings."
@@ -339,11 +338,9 @@ def edit_language(user_id: int | None = None) -> ...:
         return redirect(url_for("user_settings"))
 
     if request.method == "POST":
-        language = request.form.get("language")
-        if language == "":
-            language = None
+        language = request.form.get("language") or None
         to_change_user.language = language
-        user = update_user(to_change_user_id, language=language)
+        user = update_user(to_change_user.id, language=language)
         if user is not None:
             # Update user on session for babel to use the correct language
             session["user"] = user.__dict__
@@ -360,4 +357,4 @@ def edit_language(user_id: int | None = None) -> ...:
                     category="success",
                 )
 
-    return redirect(url_for("user_settings", user_id=to_change_user_id))
+    return redirect(url_for("user_settings", user_id=to_change_user.id))

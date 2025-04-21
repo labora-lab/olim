@@ -1,10 +1,12 @@
 import os
 import tempfile
 import threading
+from collections.abc import Callable
 
 import click
 from flask import flash, redirect, render_template, request
 from flask_babel import _
+from werkzeug.datastructures import FileStorage
 
 from . import app
 from .entry_types.patient import up_patients
@@ -27,21 +29,21 @@ class UploadManager:
                     cls._instance = super().__new__(cls)
         return cls._instance
 
-    def get_task(self) -> bool | str:
+    def get_task(self) -> bool | str | None:
         with self._lock:
             if self._is_uploading:
                 return self._task_id
         return False
 
-    def get_error(self) -> str:
+    def get_error(self) -> str | None:
         with self._lock:
             return self._last_error
 
     def upload_data(
         self,
-        up_function: callable,
+        up_function: Callable,
         task_id: str,
-        csv_file: str | None = None,
+        csv_file: str | FileStorage | None = None,
         **parameters,
     ) -> bool:
         if self._is_uploading:
@@ -59,7 +61,8 @@ class UploadManager:
                 parameters["csv_file"] = csv_file
             else:
                 self._tmp_dir = tempfile.TemporaryDirectory()
-                temp_path = os.path.join(self._tmp_dir.name, csv_file.filename)
+                # FIXME: task_id is not unique, its being used as `filename`
+                temp_path = os.path.join(self._tmp_dir.name, task_id)
                 csv_file.save(temp_path)
                 parameters["csv_file"] = temp_path
 
@@ -72,7 +75,7 @@ class UploadManager:
         thread.start()
         return True
 
-    def _run_function_with_context(self, up_function: callable, parameters: ...) -> None:
+    def _run_function_with_context(self, up_function: click.Command, parameters: ...) -> None:
         try:
             with app.app_context():
                 with click.Context(up_function) as ctx:
@@ -119,7 +122,7 @@ def upload_data() -> ...:
                 flash(_("No file selected"), category="error")
                 return render_template("upload-data.html")
 
-            filename = datafile.filename
+            filename = datafile.filename or "upload_data"
             try:
                 if upload_type == "patient_sheet":
                     if not UploadManager().upload_data(
@@ -158,5 +161,6 @@ def upload_data() -> ...:
 
     um = UploadManager()
     if um.get_error():
-        flash(um.get_error(), category="error")
+        # TODO: translate error message or type the get_error correctly.
+        flash(um.get_error() or "An error occurred", category="error")
     return render_template("upload-data.html", up_task=um.get_task())

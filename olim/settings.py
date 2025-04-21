@@ -30,7 +30,7 @@ LEARNER_KEY = os.getenv("LEARNER_KEY", None)
 
 HAS_LEARNER = not (LEARNER_URL in [None, ""] or LEARNER_KEY in [None, ""])
 
-HELP_URL = os.getenv("HELP_URL", None)
+HELP_URL = os.getenv("HELP_URL", "")
 """URL to the API help page"""
 
 

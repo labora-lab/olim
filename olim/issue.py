@@ -18,16 +18,19 @@ def get_help() -> ...:
 
 @app.route("/help/send", methods=["POST"])
 def send_ticket() -> ...:
+    previous_url = request.form.get("url", "/")
     if request.method == "POST":
         email = request.form.get("email")
         subject = request.form.get("subject")
         message = request.form.get("message")
-        previous_url = request.form.get("url")
+        current_user = get_user(session["user_id"])
+        if current_user is None:
+            return
         data = {
             "app_key": settings.LEARNER_KEY,
             "user_id": session["user_id"],
-            "username": get_user(session["user_id"]).username,
-            "name": get_user(session["user_id"]).name,
+            "username": current_user.username,
+            "name": current_user.name,
             "subject": subject,
             "message": message,
             "email": email,

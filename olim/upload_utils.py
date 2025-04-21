@@ -71,10 +71,11 @@ def es_bulk_upload(
     n_batches = int(len(df) / batch_size)
     for i in tqdm(range(0, n_batches + 1)):
         if i == n_batches:
-            register_entries(df[id_column][i * batch_size :].tolist(), entry_type)
+            register_entries(df[id_column][i * batch_size :].tolist(), entry_type)  # type: ignore [pandas is weird]
         else:
             register_entries(
-                df[id_column][i * batch_size : (i + 1) * batch_size].tolist(), entry_type
+                df[id_column][i * batch_size : (i + 1) * batch_size].tolist(),  # type: ignore [pandas is weird]
+                entry_type,
             )
 
     print()
