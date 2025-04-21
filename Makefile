@@ -10,6 +10,7 @@ PYTEST_DEV := .venv-dev/bin/pytest
 RUFF_DOCKER := .venv/bin/ruff
 RUFF_DEV := .venv-dev/bin/ruff
 UV := uv
+CELERY := celery
 
 # Use dev environment by default for local development
 PYTHON := $(PYTHON_DEV)
@@ -31,6 +32,7 @@ help:
 	@echo "make check       - Run formatting and linting"
 	@echo "make analyze     - Analyze code import dependencies with ruff"
 	@echo "make clean       - Remove temporary files"
+	@echo "make worker      - Start celery worker (requires redis to be running)"
 
 
 install:
@@ -108,3 +110,7 @@ clean:
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
 	@echo "Note: Use 'git clean -fdx' to remove virtual environments"
+
+
+worker:
+	$(CELERY) -A olim.celery_app worker --loglevel=info
