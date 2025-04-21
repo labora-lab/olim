@@ -1,3 +1,11 @@
+x-app-base: &app-base
+  image: olim:latest
+  volumes:
+    - ./:/app
+  networks:
+    - olim-es
+  restart: unless-stopped
+
 services:
   es:
     container_name: olim_es
@@ -16,8 +24,8 @@ services:
       - olim-es
 
   olim:
+    <<: *app-base
     container_name: olim
-    image: olim
     build:
       context: .
       dockerfile: ./Dockerfile
@@ -32,13 +40,6 @@ services:
       - LEARNER_KEY=
       - LABELS=LabelTypes.YES_NO
       - HELP_URL=
-    restart: unless-stopped
-    networks:
-      - olim-es
-      # Uncoment this network if you are running the learner on the same machine on Docker
-      # - olim-learner_main
-    volumes:
-      - ./:/app
 
   redis:
     container_name: olim_redis
@@ -55,21 +56,14 @@ services:
       - olim-es
 
   worker:
+    <<: *app-base
     container_name: olim_worker
-    image: olim
-    build:
-      context: .
-      dockerfile: ./Dockerfile
     command: celery -A olim.celery_app worker --loglevel=info
     environment:
       - REDIS_HOST=olim_redis
-    volumes:
-      - ./:/app
     depends_on:
       - redis
       - es
-    networks:
-      - olim-es
 
 volumes:
   data:
@@ -78,7 +72,7 @@ volumes:
 networks:
   olim-es:
     driver: bridge
-  # Uncoment this network if you are running the learner on the same machine on Docker
-  # Be aware of the indentation "external: true" should be one level below "olim-learner_main"
-  # olim-learner_main:
-  #   external: true
+    # Uncoment this network if you are running the learner on the same machine on Docker
+    # Be aware of the indentation "external: true" should be one level below "olim-learner_main"
+    # olim-learner_main:
+    #   external: true
