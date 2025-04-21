@@ -670,12 +670,8 @@ dependencies = [
     { name = "flask-sqlalchemy" },
     { name = "gunicorn" },
     { name = "icecream" },
-    { name = "mkdocs" },
-    { name = "mkdocs-material" },
-    { name = "mkdocstrings-python" },
     { name = "numpy" },
     { name = "pandas" },
-    { name = "pre-commit" },
     { name = "python-dotenv" },
     { name = "requests" },
     { name = "tqdm" },
@@ -685,6 +681,9 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "isort" },
+    { name = "mkdocs" },
+    { name = "mkdocs-material" },
+    { name = "mkdocstrings-python" },
     { name = "pre-commit" },
     { name = "ruff" },
 ]
@@ -701,12 +700,8 @@ requires-dist = [
     { name = "flask-sqlalchemy", specifier = "==3.0.3" },
     { name = "gunicorn", specifier = "==21.2.0" },
     { name = "icecream", specifier = ">=2.1.4" },
-    { name = "mkdocs", specifier = ">=1.6.1" },
-    { name = "mkdocs-material", specifier = ">=9.6.11" },
-    { name = "mkdocstrings-python", specifier = ">=1.16.8" },
     { name = "numpy", specifier = ">=2.1.0" },
     { name = "pandas", specifier = "==2.2.3" },
-    { name = "pre-commit", specifier = ">=4.1.0" },
     { name = "python-dotenv", specifier = ">=1.1.0" },
     { name = "requests", specifier = "==2.31.0" },
     { name = "tqdm", specifier = "==4.65.0" },
@@ -716,6 +711,9 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "isort", specifier = ">=6.0.1" },
+    { name = "mkdocs", specifier = ">=1.6.1" },
+    { name = "mkdocs-material", specifier = ">=9.6.11" },
+    { name = "mkdocstrings-python", specifier = ">=1.16.8" },
     { name = "pre-commit", specifier = ">=4.1.0" },
     { name = "ruff", specifier = ">=0.11.0" },
 ]
