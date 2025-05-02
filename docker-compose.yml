@@ -40,6 +40,7 @@ services:
       - LEARNER_KEY=
       - LABELS=LabelTypes.YES_NO
       - HELP_URL=
+      - REDIS_HOST=olim_redis
 
   redis:
     container_name: olim_redis
