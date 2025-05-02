@@ -108,6 +108,7 @@ PERMISSIONS = {
         "create_al",
         "catch_al",
         "upload_data",
+        "check_task_status",
         "sync_label",
         "export_label",
         "get_help",

@@ -1,109 +1,290 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Upload Data') }}{% endblock %}
-{% block head %}
-{% if up_task %}
-<meta http-equiv="refresh" content="10">
-{% endif %}
-{% endblock %}
 
 {% block content %}
-{% if up_task %}
-<div class="col card s12">
-    <div class="card-content">
-        <span class="card-title">{{_("Processing {} upload").format(up_task)}}</span>
-        <p>{{_("OLIM only supports one upload task at a time, to upload another file please come back later.")}}</p>
-    </div>
-</div>
-{% else %}
-<form action="/upload-data" method="post" enctype="multipart/form-data">
-    <div class="collection with-header col s12">
-        <span class="colection-header">
-            <h5 class="center" style="font-weight: 300;">{{ _('Data Format') }}</h5>
-        </span>
-        <a href="#!" class="collection-item upload-option" data-value="simple_text">
-            <span class="title">{{ _('Text Format') }}</span>
-            <p>{{ _('Use this option if your CSV is composed of independent texts. You need to specify which
-                columns are equivalent to <strong>text</strong> and <strong>text_id</strong>. Make sure to
-                provide the correct column names during the upload.') }}</p>
-        </a>
-        <a href="#!" class="collection-item upload-option" data-value="patient_sheet">
-            <span class="title">{{ _('Patient Format') }}</span>
-            <p>{{ _('Use this option if your CSV file has the following columns: <strong>patient_id, text_id,
-                    visitation_id, text_type, text, date</strong>. Make sure that the columns are exactly as
-                mentioned to ensure correct data upload.') }} {% if has_learner %}</br><strong>{{_('This format is
-                    NOT COMPATIBLE with OLIM-learner!')}}</strong>{% endif %}</p>
-        </a>
-        <a href="#!" class="collection-item upload-option" data-value="sample_data">
-            <span class="title">{{ _('Sample data') }}</span>
-            <p>{{ _('Upload built in sample data in the Text format.') }}</p>
-        </a>
-    </div>
-    <div class="col card s12" id="file-selector">
+<div class="container">
+  <div class="row">
+    <!-- Active Tasks -->
+    <div class="col s12 m6">
+      <div class="card blue-grey lighten-5">
         <div class="card-content">
-            <span class="card-title center"> Data file</span>
-            <div class="file-field input-field">
-                <div class="btn">
-                    <span><i class="material-icons">folder_open</i></span>
-                    <input type="file" name="file">
+          <span class="card-title">{{ _('Active Tasks') }}</span>
+          <ul id="active-tasks-list" class="collection">
+            {% if active_tasks %} {% for task_id in active_tasks %}
+            <li class="collection-item">
+              <div class="valign-wrapper">
+                <div
+                  class="preloader-wrapper small active"
+                  style="margin-right: 10px"
+                >
+                  <div class="spinner-layer spinner-blue-only">
+                    <div class="circle-clipper left">
+                      <div class="circle"></div>
+                    </div>
+                    <div class="gap-patch"><div class="circle"></div></div>
+                    <div class="circle-clipper right">
+                      <div class="circle"></div>
+                    </div>
+                  </div>
                 </div>
-                <div class="file-path-wrapper">
-                    <input class="file-path validate" type="text" name="filename"
-                        placeholder="{{_('Select CSV file')}}">
-                </div>
-            </div>
-            <input type="hidden" name="upload_type" id="upload_type" value="simple_text">
-            <div id="additional-fields" class="input-field" style="display: block;">
-                <div class="input-field">
-                    <input id="text_id" name="text_id" type="text">
-                    <label for="text_id">{{ _('Column for Text ID') }}</label>
-                </div>
-                <div class="input-field">
-                    <input id="text" name="text" type="text">
-                    <label for="text">{{ _('Column for Text') }}</label>
-                </div>
-            </div>
+                <span>Task {{ task_id }} <em>({{ _('Running') }})</em></span>
+              </div>
+            </li>
+            {% endfor %} {% else %}
+            <li class="collection-item grey-text">
+              {{ _('No active tasks.') }}
+            </li>
+            {% endif %}
+          </ul>
         </div>
+      </div>
     </div>
-    <div class="input-field col s12">
-        <button class="btn btn-wide waves-effect waves-light btn-wide" type="submit">{{ _('Upload data') }}
-            <i class="material-icons right">file_upload</i>
-        </button>
+
+    <!-- Completed Tasks -->
+    <div class="col s12 m6">
+      <div class="card blue-grey lighten-5">
+        <div class="card-content">
+          <span class="card-title">{{ _('Completed Tasks') }}</span>
+          <ul id="completed-tasks-list" class="collapsible popout">
+            {% if completed_tasks %} {% for task_id, info in
+            completed_tasks.items() %}
+            <li>
+              <div
+                class="collapsible-header {{ 'green-text' if info.success else 'red-text' }}"
+              >
+                <i class="material-icons">
+                  {{ 'check_circle' if info.success else 'error' }}
+                </i>
+                Task {{ task_id }} — {{ _('Completed') if info.success else
+                _('Failed') }}
+              </div>
+              {% if info.errors %}
+              <div class="collapsible-body">
+                <strong>{{ _('Errors:') }}</strong>
+                <ul class="browser-default">
+                  {% for err in info.errors %}
+                  <li>{{ err }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+              {% endif %}
+            </li>
+            {% endfor %} {% else %}
+            <li>
+              <div class="collection-item grey-text">
+                {{ _('No completed tasks.') }}
+              </div>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
     </div>
-</form>
-{% endif %}
+  </div>
+
+  <!-- Upload Form -->
+  <div class="row">
+    <form
+      action="{{ url_for('upload_data') }}"
+      method="post"
+      enctype="multipart/form-data"
+      class="col s12"
+    >
+      <div class="card">
+        <div class="card-content">
+          <span class="card-title center">{{ _('Upload Data') }}</span>
+
+          <div class="collection with-header">
+            <div class="collection-header">
+              <h5 class="center" style="font-weight: 300">
+                {{ _('Data Format') }}
+              </h5>
+            </div>
+            <a
+              href="#!"
+              class="collection-item upload-option"
+              data-value="simple_text"
+            >
+              <span class="title">{{ _('Text Format') }}</span>
+              <p>
+                {{ _('Use this option if your CSV is composed of independent
+                texts. You need to specify which columns are equivalent to') }}
+                <strong>text</strong> {{ _('and') }} <strong>text_id</strong>.
+              </p>
+            </a>
+            <a
+              href="#!"
+              class="collection-item upload-option"
+              data-value="patient_sheet"
+            >
+              <span class="title">{{ _('Patient Format') }}</span>
+              <p>
+                {{ _('Use this option if your CSV file has the following
+                columns:') }}
+                <strong
+                  >patient_id, text_id, visitation_id, text_type, text,
+                  date</strong
+                >. {% if has_learner %} <br /><strong class="red-text"
+                  >{{ _('This format is NOT COMPATIBLE with OLIM-learner!')
+                  }}</strong
+                >
+                {% endif %}
+              </p>
+            </a>
+            <a
+              href="#!"
+              class="collection-item upload-option"
+              data-value="sample_data"
+            >
+              <span class="title">{{ _('Sample Data') }}</span>
+              <p>{{ _('Upload built-in sample data in Text format.') }}</p>
+            </a>
+          </div>
+
+          <div id="file-selector" class="card-panel">
+            <div class="file-field input-field">
+              <div class="btn">
+                <i class="material-icons">folder_open</i>
+                <input type="file" name="file" />
+              </div>
+              <div class="file-path-wrapper">
+                <input
+                  class="file-path validate"
+                  type="text"
+                  name="filename"
+                  placeholder="{{ _('Select CSV file') }}"
+                />
+              </div>
+            </div>
+
+            <input
+              type="hidden"
+              name="upload_type"
+              id="upload_type"
+              value="simple_text"
+            />
+            <div id="additional-fields">
+              <div class="input-field">
+                <input id="text_id" name="text_id" type="text" />
+                <label for="text_id">{{ _('Column for Text ID') }}</label>
+              </div>
+              <div class="input-field">
+                <input id="text" name="text" type="text" />
+                <label for="text">{{ _('Column for Text') }}</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-field center">
+            <button class="btn waves-effect waves-light" type="submit">
+              {{ _('Upload data') }}
+              <i class="material-icons right">file_upload</i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        M.AutoInit();
-        const options = document.querySelectorAll('.upload-option');
-        const uploadTypeInput = document.getElementById('upload_type');
-        const additionalFields = document.getElementById('additional-fields');
-        const fileFields = document.getElementById('file-selector');
+  document.addEventListener('DOMContentLoaded', function () {
+    M.AutoInit()
+    M.Collapsible.init(document.querySelectorAll('.collapsible'))
 
-        options.forEach(option => {
-            option.addEventListener('click', function () {
-                options.forEach(opt => opt.classList.remove('active'));
-                option.classList.add('active');
-                uploadTypeInput.value = option.getAttribute('data-value');
+    // Upload-option handler
+    const options = document.querySelectorAll('.upload-option')
+    const uploadType = document.getElementById('upload_type')
+    const addFields = document.getElementById('additional-fields')
+    const fileSelector = document.getElementById('file-selector')
 
-                if (uploadTypeInput.value === 'simple_text') {
-                    additionalFields.style.display = 'block';
-                } else {
-                    additionalFields.style.display = 'none';
-                }
+    options.forEach((opt) => {
+      opt.addEventListener('click', () => {
+        options.forEach((o) => o.classList.remove('active'))
+        opt.classList.add('active')
+        const val = opt.getAttribute('data-value')
+        uploadType.value = val
+        addFields.style.display = val === 'simple_text' ? 'block' : 'none'
+        fileSelector.style.display = val === 'sample_data' ? 'none' : 'block'
+      })
+    })
+    // Default
+    document
+      .querySelector('.upload-option[data-value="simple_text"]')
+      .classList.add('active')
 
-                if (uploadTypeInput.value === "sample_data") {
-                    fileFields.style.display = 'none';
-                } else {
-                    fileFields.style.display = 'block';
-                }
-            });
-        });
+    // Task-status polling
+    function updateUI(data) {
+      // Active
+      const at = document.getElementById('active-tasks-list')
+      at.innerHTML = data.active.length
+        ? data.active
+            .map(
+              (id) => `
+            <li class="collection-item">
+              <div class="valign-wrapper">
+                <div class="preloader-wrapper small active" style="margin-right:10px">
+                  <div class="spinner-layer spinner-blue-only">
+                    <div class="circle-clipper left"><div class="circle"></div></div>
+                    <div class="gap-patch"><div class="circle"></div></div>
+                    <div class="circle-clipper right"><div class="circle"></div></div>
+                  </div>
+                </div>
+                <span>Task ${id} (Running)</span>
+              </div>
+            </li>
+          `
+            )
+            .join('')
+        : '<li class="collection-item grey-text">{{ _("No active tasks.") }}</li>'
 
-        // Set default selection
-        document.querySelector('.upload-option[data-value="simple_text"]').classList.add('active');
-    });
+      // Completed
+      const ct = document.getElementById('completed-tasks-list')
+      ct.innerHTML = Object.entries(data.completed).length
+        ? Object.entries(data.completed)
+            .map(
+              ([id, info]) => `
+            <li>
+              <div class="collapsible-header ${
+                info.success ? 'green-text' : 'red-text'
+              }">
+                <i class="material-icons">${
+                  info.success ? 'check_circle' : 'error'
+                }</i>
+                Task ${id} — ${
+                info.success ? '{{ _("Completed") }}' : '{{ _("Failed") }}'
+              }
+              </div>
+              ${
+                info.errors?.length
+                  ? `
+                <div class="collapsible-body">
+                  <strong>{{ _("Errors:") }}</strong>
+                  <ul class="browser-default">
+                    ${info.errors.map((e) => `<li>${e}</li>`).join('')}
+                  </ul>
+                </div>`
+                  : ''
+              }
+            </li>
+          `
+            )
+            .join('')
+        : '<li><div class="collection-item grey-text">{{ _("No completed tasks.") }}</div></li>'
+      M.Collapsible.init(ct)
+    }
+
+    function fetchStatus() {
+      fetch('{{ url_for("check_task_status") }}')
+        .then((r) => r.json())
+        .then(updateUI)
+        .catch(console.error)
+    }
+
+    fetchStatus()
+    setInterval(fetchStatus, 5000)
+  })
 </script>
 {% endblock %}

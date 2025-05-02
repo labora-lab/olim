@@ -1,166 +1,97 @@
-import os
-import tempfile
-import threading
-from collections.abc import Callable
-
-import click
-from flask import flash, redirect, render_template, request
+from celery.result import AsyncResult
+from flask import flash, jsonify, redirect, render_template, request
 from flask_babel import _
-from werkzeug.datastructures import FileStorage
 
 from . import app
-from .entry_types.patient import up_patients
-from .entry_types.single_text import up_single_text
+from .tasks.upload_data import start_upload_chain
+
+ACTIVE_TASKS = set()
+COMPLETED_TASKS = {}
 
 
-# Singleton to manage upload tasks
-class UploadManager:
-    _instance = None
-    _lock = threading.Lock()
-    _task_id = None
-    _is_uploading = False
-    _last_error = None
-    _tmp_dir = None
+@app.route("/task-status")
+def check_task_status() -> ...:
+    """Check and return the status of all tracked tasks"""
+    status_updates = {}
 
-    def __new__(cls) -> "UploadManager":
-        if cls._instance is None:
-            with cls._lock:
-                if not cls._instance:
-                    cls._instance = super().__new__(cls)
-        return cls._instance
+    for task_id in list(ACTIVE_TASKS):
+        result = AsyncResult(task_id)
+        if result.ready():
+            ACTIVE_TASKS.remove(task_id)
+            task_result = (
+                result.result
+                if result.successful()
+                else {"success": False, "errors": [str(result.result)]}
+            )
+            success = task_result.get("success", False)
+            errors = task_result.get("errors", [])
 
-    def get_task(self) -> bool | str | None:
-        with self._lock:
-            if self._is_uploading:
-                return self._task_id
-        return False
+            COMPLETED_TASKS[task_id] = {"success": success, "errors": errors}
 
-    def get_error(self) -> str | None:
-        with self._lock:
-            return self._last_error
+    status_updates = {"active": list(ACTIVE_TASKS), "completed": COMPLETED_TASKS}
 
-    def upload_data(
-        self,
-        up_function: Callable,
-        task_id: str,
-        csv_file: str | FileStorage | None = None,
-        **parameters,
-    ) -> bool:
-        if self._is_uploading:
-            print("Another upload is already in progress. Upload request ignored.")
-            return False
-        # lock uploads
-        with self._lock:
-            self._is_uploading = True
-        self._task_id = task_id
-        self._last_error = None
-
-        # If we have it save csv file in a temporary folder
-        if csv_file:
-            if type(csv_file) is str:
-                parameters["csv_file"] = csv_file
-            else:
-                self._tmp_dir = tempfile.TemporaryDirectory()
-                # FIXME: task_id is not unique, its being used as `filename`
-                temp_path = os.path.join(self._tmp_dir.name, task_id)
-                csv_file.save(temp_path)
-                parameters["csv_file"] = temp_path
-
-        # Start a new thread to handle the upload function invocation
-        thread = threading.Thread(
-            target=self._run_function_with_context,
-            args=(up_function, parameters),
-            daemon=True,
-        )
-        thread.start()
-        return True
-
-    def _run_function_with_context(self, up_function: click.Command, parameters: ...) -> None:
-        try:
-            with app.app_context():
-                with click.Context(up_function) as ctx:
-                    ctx.invoke(up_function, **parameters)
-        except Exception as e:
-            with self._lock:
-                self._last_error = _("Error processing {task_id}: {error}").format(
-                    task_id=self._task_id, error=e
-                )
-        else:
-            self._last_error = None
-        finally:
-            # Release lock at the end
-            with self._lock:
-                self._is_uploading = False
-            self._task_id = None
-            if self._tmp_dir is not None:
-                self._tmp_dir.cleanup()
-                self._tmp_dir = None
+    return jsonify(status_updates)
 
 
 @app.route("/upload-data", methods=["GET", "POST"])
 def upload_data() -> ...:
+    """Handle file uploads using celery tasks"""
     if request.method == "POST":
         upload_type = request.form.get("upload_type")
+        if upload_type is None:
+            raise NotImplementedError
         datafile = request.files.get("file")
         text_id = request.form.get("text_id")
         text = request.form.get("text")
 
-        if upload_type == "sample_data":
-            if not UploadManager().upload_data(
-                up_single_text,
-                task_id="sample data",
-                csv_file="./data/sample_data.csv",
-                id_column="text_id",
-                text_column="text",
-            ):
-                flash(
-                    _("Can only process one data upload task at a time, try later"),
-                    category="warning",
+        try:
+            # Handle sample data upload
+            if upload_type == "sample_data":
+                result = start_upload_chain(
+                    upload_type=upload_type,
+                    file_data="./data/sample_data.csv",
                 )
-        else:
+                if result:
+                    ACTIVE_TASKS.add(result)
+                    return render_template(
+                        "upload-data.html",
+                        up_task=result,
+                        active_tasks=list(ACTIVE_TASKS),
+                        completed_tasks=COMPLETED_TASKS,
+                    )
+
+            # Validate file upload
             if not datafile:
                 flash(_("No file selected"), category="error")
                 return render_template("upload-data.html")
 
-            filename = datafile.filename or "upload_data"
-            try:
-                if upload_type == "patient_sheet":
-                    if not UploadManager().upload_data(
-                        up_patients, task_id=filename, csv_file=datafile
-                    ):
-                        flash(
-                            _("Can only process one data upload task at a time, try later"),
-                            category="warning",
-                        )
+            # Handle text format upload
+            if upload_type == "simple_text":
+                if not text_id or not text:
+                    flash(_("Missing text_id or text for text format upload"), category="error")
+                    return redirect(request.url)
 
-                elif upload_type == "simple_text":
-                    if not text_id or not text:
-                        flash(
-                            _("Missing text_id or text for text format upload"),
-                            category="error",
-                        )
-                        return redirect(request.url)
+            # Start celery task chain
+            task_id = start_upload_chain(
+                upload_type=upload_type,
+                file_data=datafile,
+                text_id=text_id,
+                text=text,
+            )
 
-                    if not UploadManager().upload_data(
-                        up_single_text,
-                        task_id=filename,
-                        csv_file=datafile,
-                        id_column=text_id,
-                        text_column=text,
-                    ):
-                        flash(
-                            _("Can only process one data upload task at a time, try later"),
-                            category="warning",
-                        )
-            except Exception as e:
-                flash(
-                    _("Error executing upload command: {error}").format(error=str(e)),
-                    category="error",
-                )
-                return redirect(request.url)
+            # Track new task
+            ACTIVE_TASKS.add(task_id)
+            return render_template(
+                "upload-data.html",
+                up_task=task_id,
+                active_tasks=list(ACTIVE_TASKS),
+                completed_tasks=COMPLETED_TASKS,
+            )
 
-    um = UploadManager()
-    if um.get_error():
-        # TODO: translate error message or type the get_error correctly.
-        flash(um.get_error() or "An error occurred", category="error")
-    return render_template("upload-data.html", up_task=um.get_task())
+        except Exception as e:
+            flash(_("Error starting upload task: {error}").format(error=str(e)), category="error")
+            return redirect(request.url)
+
+    return render_template(
+        "upload-data.html", active_tasks=list(ACTIVE_TASKS), completed_tasks=COMPLETED_TASKS
+    )
