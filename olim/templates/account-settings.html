@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}{{ _('account_settings_2') }}{% endblock %}
+{% block title %}{{ _('Account Settings') }}{% endblock %}
 {% block content %}
 <div class="container">
     <div class="row">
         <div class="col s12">
-            <h5>{{ _('account_settings_3') }}{% if session.role == 'admin' %} (User: {{user['name']}}){% endif%}
+            <h5>{{ _('Account Settings') }}{% if session.role == 'admin' %} (User: {{user['name']}}){% endif%}
             </h5>
         </div>
         <div class="row">
