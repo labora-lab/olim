@@ -3,12 +3,44 @@
 {% block menu %}{% endblock %}
 {% block menuicon %}{% endblock %}
 
+{% import "upload-macro.html" as upload %}
+
 {% block content %}
 <div class="row">
+    <!-- Progress Indicator Card -->
+    <div class="col s12 m8 offset-m2">
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title">{{ _('Initial setup') }}</span>
+                <div class="row">
+                    <div class="col s4 center-align">
+                        <span class="{% if step == 'add-user' %}blue-text text-darken-2{% else %}grey-text{% endif %}">
+                            {{ _('User creation') }}
+                        </span>
+                        <i class="material-icons grey-text text-lighten-1 right">chevron_right</i>
+                    </div>
+                    <div class="col s4 center-align">
+                        <span
+                            class="{% if step == 'add-project' %}blue-text text-darken-2{% else %}grey-text{% endif %}">
+                            {{ _('Project setup') }}
+                        </span>
+                        <i class="material-icons grey-text text-lighten-1 right">chevron_right</i>
+                    </div>
+                    <div class="col s4 center-align">
+                        <span class="{% if step == 'add-data' %}blue-text text-darken-2{% else %}grey-text{% endif %}">
+                            {{ _('Dataset upload') }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if step == "add-user" %}
     <div class="col s12 m8 offset-m2 card">
         <div class="card-content">
             <span class="card-title">{{ _('Create admin account') }}</span>
             <form method="POST" action="{{ url_for('init_config') }}">
+                <input id="step" type="hidden" name="step" value="{{step}}" />
                 <div class="input-field">
                     <input id="username" type="text" name="username" required>
                     <label for="username">{{ _('Username') }}</label>
@@ -35,11 +67,73 @@
                         {{ _('Generate Random Password') }}<i class="material-icons right">loop</i>
                     </button>
                 </div>
-                <button class="btn btn-wide waves-effect waves-light" type="submit" name="action">{{ _('Create') }}
+                <button class="btn btn-wide waves-effect waves-light" type="submit" name="action">{{ _('Create User') }}
                     <i class="material-icons right">add_box</i>
                 </button>
             </form>
         </div>
     </div>
+    {% elif step == "add-project" %}
+    <div class="col s12 m8 offset-m2 card">
+        <div class="card-content">
+            <span class="card-title">{{ _('Setup Project') }}</span>
+            <form method="POST" action="{{ url_for('init_config') }}">
+                <input id="step" type="hidden" name="step" value="{{step}}" />
+                <div class="input-field">
+                    <input id="name" type="text" name="name" required>
+                    <label for="name">{{ _('Project name') }}</label>
+                </div>
+                <h6>Project Labels</h6>
+                <div class="labels-container">
+                    <div class="label-group input-field">
+                        <input type="text" name="labels" class="label-input">
+                        <button type="button" class="btn waves-effect waves-light grey darken-2 remove-label">
+                            <i class="material-icons">indeterminate_check_box</i>
+                        </button>
+                        <label>{{ _('Label') }}</label>
+                    </div>
+                </div>
+                <div>
+                    <button class="btn btn-wide waves-effect waves-light grey darken-2 add-label" type="button">
+                        {{ _('More labels') }}
+                        <i class="material-icons right">add_box</i>
+                    </button>
+                </div>
+                <button class="btn btn-wide waves-effect waves-light" type="submit" name="action">
+                    {{ _('Create Project') }}
+                    <i class="material-icons right">add_box</i>
+                </button>
+            </form>
+        </div>
+    </div>
+    {% elif step == "add-data" %}
+    {{upload.upload_form(projects)}}
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if step == "add-project" %}
+<script>
+    $(document).ready(function () {
+        // Add label field
+        $('.add-label').click(function () {
+            const lastGroup = $('.label-group:last');
+            const newGroup = lastGroup.clone();
+            newGroup.find('input').val('');  // Clear input value
+            $('.labels-container').append(newGroup);
+        });
+
+        // Remove label field
+        $(document).on('click', '.remove-label', function () {
+            if ($('.label-group').length > 1) {  // Keep at least one field
+                $(this).closest('.label-group').remove();
+            }
+        });
+    });
+</script>
+{% endif %}
+{% if step == "add-data" %}
+{{ upload.upload_scripts() }}
+{% endif %}
 {% endblock %}

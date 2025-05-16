@@ -15,6 +15,7 @@ def upload_to_elasticsearch(
     self,
     upload_type: str,
     file_data: str | FileStorage,
+    dataset_id: int,
     text_id: str | None = None,
     text: str | None = None,
 ) -> dict:
@@ -34,13 +35,14 @@ def upload_to_elasticsearch(
 
         if upload_type == "patient_sheet":
             up_func = up_patients
-            params = {"csv_file": temp_path}
+            params = {"csv_file": temp_path, "dataset_id": dataset_id}
         elif upload_type == "simple_text":
             up_func = up_single_text
             params = {
                 "csv_file": temp_path,
                 "id_column": text_id,
                 "text_column": text,
+                "dataset_id": dataset_id,
             }
         elif upload_type == "sample_data":
             up_func = up_single_text
@@ -48,6 +50,7 @@ def upload_to_elasticsearch(
                 "csv_file": temp_path,
                 "id_column": "text_id",
                 "text_column": "text",
+                "dataset_id": dataset_id,
             }
         else:
             raise ValueError(f"Unknown upload type: {upload_type}")
@@ -91,6 +94,7 @@ def update_database(upload_result: dict) -> dict:
 def start_upload_chain(
     upload_type: str,
     file_data: str | FileStorage,
+    dataset_id: int,
     text_id: str | None = None,
     text: str | None = None,
 ) -> str:
@@ -99,6 +103,7 @@ def start_upload_chain(
     Returns the chain's task ID
     """
     result = (
-        upload_to_elasticsearch.s(upload_type, file_data, text_id, text) | update_database.s()
+        upload_to_elasticsearch.s(upload_type, file_data, dataset_id, text_id, text)
+        | update_database.s()
     )()
     return result.id

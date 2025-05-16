@@ -4,7 +4,7 @@
 <div class="container">
     <div class="row">
         <div class="col s12">
-            <h5>{{ _('account_settings_3') }}{% if session.user.role == 'admin' %} (User: {{user['name']}}){% endif%}
+            <h5>{{ _('account_settings_3') }}{% if session.role == 'admin' %} (User: {{user['name']}}){% endif%}
             </h5>
         </div>
         <div class="row">
@@ -15,10 +15,10 @@
                             <span class="card-title">{{ _('Interface language') }}</span>
                             <div class="input-field col s12">
                                 <select name="language">
-                                    <option value="" {% if not session.user.language %} selected{% endif %}>{{
+                                    <option value="" {% if not language %} selected{% endif %}>{{
                                         _("Automatic") }}</option>
                                     {% for cod, lang in languages.items() %}
-                                    <option value="{{cod}}" {% if session.user.language==cod %} selected{% endif %}>
+                                    <option value="{{cod}}" {% if session.language==cod %} selected{% endif %}>
                                         {{lang}}</option>
                                     {% endfor %}
                                 </select>
@@ -39,7 +39,7 @@
                     <div class="card-content row">
                         <form method="POST" action="{{ url_for('edit_password', user_id=user['id']) }}">
                             <span class="card-title">{{ _('Change password') }}</span>
-                            {% if session.user.role != 'admin' %}
+                            {% if session.role != 'admin' %}
                             <div class="input-field col s12">
                                 <input id="old_password" type="password" name="old_password" required>
                                 <label for="old_password">{{ _('Old Password') }}</label>

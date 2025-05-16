@@ -21,7 +21,8 @@ def add_label(**args) -> dict[str, str]:
 
     try:
         add_entry_label(label_id, entry_id, session["user_id"], value)
-    except Exception:
+    except Exception as e:
+        print(e)
         return {
             "type": "error",
             "text": _("Failed writing to database"),
@@ -64,7 +65,8 @@ def manage_label(**args) -> dict[str, str] | None:
 
     try:
         manage_label_in_session(label_id, mode)
-    except Exception:
+    except Exception as e:
+        print(e)
         return {
             "type": "error",
             "text": _("Error hidding label."),

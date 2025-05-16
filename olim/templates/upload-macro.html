@@ -1,0 +1,126 @@
+{% macro upload_form(projects=[]) %}
+<!-- Upload Form -->
+<div class="row">
+    <form action="{{ url_for('upload_data') }}" method="post" enctype="multipart/form-data" class="col s12">
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title center">{{ _('Upload Dataset') }}</span>
+                <div class="input-field">
+                    <input id="name" type="text" name="name">
+                    <label for="name">{{ _('Dataset name') }}</label>
+                </div>
+                <div class="input-field">
+                    <h6 style="margin-bottom: 15px;">{{ _('Link to Projects') }}</h6>
+                    {% for project in projects %}
+                    <p>
+                        <label>
+                            <input type="checkbox" name="projects" value="{{ project.id }}" class="filled-in" {% if
+                                projects|length==1 %}checked{% endif %}>
+                            <span>{{ project.name }}</span>
+                        </label>
+                    </p>
+                    {% endfor %}
+                    <h6 class="red-text darker-4" style="margin-bottom: 15px;">{{ _('WARNING: For now datasets can only
+                        be linked to projects during upload, make sure to link to the disired projects.') }}</h6>
+                </div>
+                <div class="collection with-header">
+                    <div class="collection-header">
+                        <h5 class="center" style="font-weight: 300">
+                            {{ _('Data Format') }}
+                        </h5>
+                    </div>
+                    <a href="#!" class="collection-item upload-option" data-value="simple_text">
+                        <span class="title">{{ _('Text Format') }}</span>
+                        <p>
+                            {{ _('Use this option if your CSV is composed of independent
+                            texts. You need to specify which columns are equivalent to') }}
+                            <strong>text</strong> {{ _('and') }} <strong>text_id</strong>.
+                        </p>
+                    </a>
+                    <!-- <a href="#!" class="collection-item upload-option" data-value="patient_sheet">
+                        <span class="title">{{ _('Patient Format') }}</span>
+                        <p>
+                            {{ _('Use this option if your CSV file has the following
+                            columns:') }}
+                            <strong>patient_id, text_id, visitation_id, text_type, text,
+                                date</strong>. {% if has_learner %} <br /><strong class="red-text">{{ _('This format is
+                                NOT COMPATIBLE with OLIM-learner!')
+                                }}</strong>
+                            {% endif %}
+                        </p>
+                    </a> -->
+                    <a href="#!" class="collection-item upload-option" data-value="sample_data">
+                        <span class="title">{{ _('Sample Data') }}</span>
+                        <p>{{ _('Upload built-in sample data in Text format.') }}</p>
+                    </a>
+                </div>
+
+                <div id="file-selector" class="card-panel">
+                    <div class="file-field input-field">
+                        <div class="btn">
+                            <i class="material-icons">folder_open</i>
+                            <input type="file" name="file" />
+                        </div>
+                        <div class="file-path-wrapper">
+                            <input class="file-path validate" type="text" name="filename"
+                                placeholder="{{ _('Select CSV file') }}" />
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="upload_type" id="upload_type" value="simple_text" />
+                    <div id="additional-fields">
+                        <div class="input-field">
+                            <input id="text_id" name="text_id" type="text" />
+                            <label for="text_id">{{ _('Column for Text ID') }}</label>
+                        </div>
+                        <div class="input-field">
+                            <input id="text" name="text" type="text" />
+                            <label for="text">{{ _('Column for Text') }}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-field center">
+                    <button class="btn waves-effect waves-light" type="submit">
+                        {{ _('Upload data') }}
+                        <i class="material-icons right">file_upload</i>
+                    </button>
+                </div>
+                <h6 class="teal-text darker-5" style="margin-bottom: 15px;">{{ _('During upload an active task
+                    might appear (or not, the display of tasks is still a little buggy), keep an eye on completed tasks
+                    it will show a green bar for a few minutes when the upload is completed.') }}</h6>
+            </div>
+        </div>
+    </form>
+</div>
+{% endmacro %}
+
+{% macro upload_scripts() %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        M.AutoInit()
+        M.Collapsible.init(document.querySelectorAll('.collapsible'))
+
+        // Upload-option handler
+        const options = document.querySelectorAll('.upload-option')
+        const uploadType = document.getElementById('upload_type')
+        const addFields = document.getElementById('additional-fields')
+        const fileSelector = document.getElementById('file-selector')
+
+        options.forEach((opt) => {
+            opt.addEventListener('click', () => {
+                options.forEach((o) => o.classList.remove('active'))
+                opt.classList.add('active')
+                const val = opt.getAttribute('data-value')
+                uploadType.value = val
+                addFields.style.display = val === 'simple_text' ? 'block' : 'none'
+                fileSelector.style.display = val === 'sample_data' ? 'none' : 'block'
+            })
+        })
+        // Default
+        document
+            .querySelector('.upload-option[data-value="simple_text"]')
+            .classList.add('active')
+    });
+</script>
+{% endmacro %}

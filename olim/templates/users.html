@@ -2,7 +2,7 @@
 {% block title %}{{ _('User Management') }}{% endblock %}
 {% block content %}
 <div class="row">
-    <div class="col {% if session.user.role == 'admin' %}s8{% else %}s12{% endif %}">
+    <div class="col {% if session.role == 'admin' %}s8{% else %}s12{% endif %}">
         <div class="card">
             <div class="card-content">
                 <span class="card-title">{{ _('User Management') }}</span>
@@ -35,7 +35,7 @@
             </div>
         </div>
     </div>
-    {% if session.user.role == 'admin' %}
+    {% if session.role == 'admin' %}
     <div class="col s4">
         <div class="card">
             <div class="card-content">

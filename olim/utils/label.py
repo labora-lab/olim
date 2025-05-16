@@ -1,11 +1,12 @@
 import pandas as pd
-from flask import session
+from flask import session, flash
+from flask_babel import _
 from tqdm import tqdm
 
-from ..database import add_entry_label, get_labels, new_label
+from ..database import add_entry_label, get_dataset, get_labels, get_entry, new_label
 
 
-def label_upload(df, user_id=None) -> None:
+def label_upload(df, user_id: int | None=None, project_id: int | None=None, dataset_id: int | None=None) -> None:
     """Upload label data from a dataframe
 
     Args:
@@ -13,6 +14,7 @@ def label_upload(df, user_id=None) -> None:
         user_id: User ID to register labels as, defaults to current session user
     """
     user_id = user_id or session["user_id"]
+    project_id = project_id or session["project_id"]
     # Parse dates and sort by them
     df["created"] = pd.to_datetime(df["created"])
     df = df.sort_values(by="created")
@@ -21,13 +23,20 @@ def label_upload(df, user_id=None) -> None:
     group = df.groupby(["entry_id", "label", "value", "created"]).any().index
 
     # Get a list of existing labels and respective ids
-    labels = {L.name: L.id for L in get_labels()}
+    labels = {L.name: L.id for L in get_labels(project_id=project_id)}
 
     # Store labels
-    for entry_id, label, value, created in tqdm(group):
+    for entry_id, label_name, value, created in tqdm(group):
+        # Get entry within selected dataset
+        entry = get_entry((dataset_id, str(entry_id)))
+        if not entry:
+            dataset = get_dataset(dataset_id) # type: ignore
+            flash(_("Entry id: {entry_id} not found on dataset {dataset.name}"))
+            continue
+
         # If the label doesnt exist create it
-        if label not in labels:
-            label_creation_result = new_label(label, user_id)
-            labels[label_creation_result.name] = label_creation_result.id
+        if label_name not in labels:
+            label = new_label(label_name, user_id, project_id)
+            labels[label_name] = label.id
         # Add the label to the entry
-        add_entry_label(labels[label], entry_id, user_id, value, created=created)
+        add_entry_label(labels[label_name], entry.id, user_id, value, created=created)

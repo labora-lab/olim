@@ -104,6 +104,24 @@
     cursor: pointer;
 }
 
+.label-group {
+    position: relative;
+    margin: 15px 0;
+}
+
+.remove-label {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    height: 36px;
+    width: 36px;
+    padding: 0;
+}
+
+.add-label {
+    margin-bottom: 20px;
+}
+
 #toast-container {
     top: auto !important;
     right: auto !important;

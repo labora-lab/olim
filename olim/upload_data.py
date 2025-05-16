@@ -1,9 +1,10 @@
 from celery.result import AsyncResult
-from flask import flash, jsonify, redirect, render_template, request
+from flask import flash, jsonify, redirect, render_template, request, session
 from flask_babel import _
 
 from . import app
 from .tasks.upload_data import start_upload_chain
+from .database import new_dataset, link_dataset_to_project
 
 ACTIVE_TASKS = set()
 COMPLETED_TASKS = {}
@@ -43,55 +44,61 @@ def upload_data() -> ...:
         datafile = request.files.get("file")
         text_id = request.form.get("text_id")
         text = request.form.get("text")
+        dataset_name = request.form.get("name")
+        projects = [int(p) for p in request.form.getlist("projects")]
 
-        try:
-            # Handle sample data upload
-            if upload_type == "sample_data":
-                result = start_upload_chain(
-                    upload_type=upload_type,
-                    file_data="./data/sample_data.csv",
-                )
-                if result:
-                    ACTIVE_TASKS.add(result)
-                    return render_template(
-                        "upload-data.html",
-                        up_task=result,
-                        active_tasks=list(ACTIVE_TASKS),
-                        completed_tasks=COMPLETED_TASKS,
+        dataset = new_dataset(dataset_name, session["user_id"])
+
+        for project_id in projects:
+            link_dataset_to_project(dataset.id, project_id, session["user_id"])
+
+        #try:
+        # Handle sample data upload
+        if upload_type == "sample_data":
+            task_params = {
+                "upload_type": upload_type,
+                "file_data": "./data/sample_data.csv",
+                "dataset_id": dataset.id,
+            }
+        else:
+            # Handle other types of upload
+            if upload_type == "simple_text":
+                if not text_id or not text:
+                    flash(
+                        _("Missing text_id or text for text format upload"),
+                        category="error",
                     )
+                    return redirect(request.url)
 
             # Validate file upload
             if not datafile:
                 flash(_("No file selected"), category="error")
-                return render_template("upload-data.html")
+                return redirect(request.url)
 
-            # Handle text format upload
-            if upload_type == "simple_text":
-                if not text_id or not text:
-                    flash(_("Missing text_id or text for text format upload"), category="error")
-                    return redirect(request.url)
+            task_params = {
+                "upload_type": upload_type,
+                "file_data": datafile,
+                "text_id": text_id,
+                "text": text,
+                "dataset_id": dataset.id,
+            }
 
-            # Start celery task chain
-            task_id = start_upload_chain(
-                upload_type=upload_type,
-                file_data=datafile,
-                text_id=text_id,
-                text=text,
-            )
-
-            # Track new task
-            ACTIVE_TASKS.add(task_id)
-            return render_template(
-                "upload-data.html",
-                up_task=task_id,
-                active_tasks=list(ACTIVE_TASKS),
-                completed_tasks=COMPLETED_TASKS,
-            )
-
+        # Start celery task chain
+        try:
+            task_id = start_upload_chain(**task_params)
         except Exception as e:
-            flash(_("Error starting upload task: {error}").format(error=str(e)), category="error")
+            flash(
+                _("Error starting upload task: {error}").format(error=str(e)),
+                category="error",
+            )
             return redirect(request.url)
+        if task_id:
+            ACTIVE_TASKS.add(task_id)
+            return redirect(request.url) # This fix a small bug in initial setup (nano)
+
 
     return render_template(
-        "upload-data.html", active_tasks=list(ACTIVE_TASKS), completed_tasks=COMPLETED_TASKS
+        "upload-data.html",
+        active_tasks=list(ACTIVE_TASKS),
+        completed_tasks=COMPLETED_TASKS,
     )

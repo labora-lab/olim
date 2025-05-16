@@ -177,10 +177,6 @@ function update_hidden_counts() {
     })
 }
 
-function delete_label(id) {
-    window.location.href = "/labels/" + id + "/delete";
-}
-
 //// Search form functions
 // Clear a date field
 function clear_date(id) {

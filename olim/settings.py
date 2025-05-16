@@ -1,7 +1,8 @@
 import os
+from datetime import timedelta
 from typing import ClassVar
 
-VERSION = "0.1.4"
+VERSION = "0.2.0-dev"
 """Version of the application"""
 
 ES_INDEX = "patients-texts"
@@ -22,8 +23,18 @@ debug = debug or "false"
 DEBUG = debug.lower() == "true"
 SECRET_KEY = os.getenv("SECRET_KEY", "6DUUwdKqwkaXPvjqCS4y")
 
-DB_PATH = os.path.join(os.getcwd(), "database.sqlite")
-"""Database Sqlite3 path"""
+DB_HOST = os.getenv("DB_HOST")
+DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_PORT = os.getenv("DB_PORT", "5432")
+
+SESSION_TYPE = "sqlalchemy"
+SESSION_PERMANENT = True
+SESSION_USE_SIGNER = False
+PERMANENT_SESSION_LIFETIME = timedelta(days=30)
+
+QUEUES_PATH = "./queues"
 
 LEARNER_URL = os.getenv("LEARNER_URL", None)
 LEARNER_KEY = os.getenv("LEARNER_KEY", None)
@@ -70,7 +81,9 @@ if "LABELS_TYPES" in labels:
 try:
     LABELS = eval(labels)
 except (TypeError, NameError):
-    print(f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!")
+    print(
+        f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!"
+    )
     LABELS = LabelTypes.YES_NO
 
 """List of endpoints that need a setup backend."""
@@ -85,6 +98,7 @@ PERMISSIONS = {
     "admin": [
         "static",
         "login",
+        "init_config",
         "users",
         "commands",
         "hidden",
@@ -96,9 +110,8 @@ PERMISSIONS = {
         "label_settings",
         "label_up",
         "entry",
-        "new_queue",
+        "queue",
         "catch_queue",
-        "/",
         "search",
         "user_settings",
         "edit_password",
@@ -113,6 +126,11 @@ PERMISSIONS = {
         "export_label",
         "get_help",
         "send_ticket",
+        "projects",
+        "delete_project",
+        "create_project",
+        "redirect_to_project",
+        "print_session",
     ],
     "user": [
         "static",
@@ -123,9 +141,8 @@ PERMISSIONS = {
         "create_label",
         "delete_label",
         "entry",
-        "new_queue",
+        "queue",
         "catch_queue",
-        "/",
         "search",
         "user_settings",
         "edit_password",
@@ -137,8 +154,10 @@ PERMISSIONS = {
         "export_label",
         "get_help",
         "send_ticket",
+        "projects",
+        "redirect_to_project",
     ],
-    "guest": ["static", "login", "init_config"],
+    "guest": ["static", "login"],
 }
 """Mapping of permissions to routes that can be accessed by roles"""
 

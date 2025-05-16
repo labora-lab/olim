@@ -9,21 +9,26 @@ from olim.utils.es import es_search
 
 from ..cli import upload
 from ..upload_utils import es_bulk_upload
+from ..database import new_dataset
 
-ES_INDEX = "single_text_entries"
+ES_INDEX = "single_text_{dataset_id}"
 ENTRY_TYPE = "single_text"
 
 
-def render(entry_id, **pars) -> str:
+def render(entry_id: str, dataset_id: int, **pars) -> str:
     query = {"bool": {"must": [{"terms": {"_id": [entry_id]}}]}}
-    res = es_search(query=query, index=ES_INDEX)["hits"]["hits"][0]
+    res = es_search(query=query, index=ES_INDEX.format(dataset_id=dataset_id))["hits"][
+        "hits"
+    ][0]
 
     return render_template("entry_types/single_text.html", res=res, **pars)
 
 
-def extract_texts(entry_id, **pars) -> pd.DataFrame:
+def extract_texts(entry_id: str, dataset_id: int, **pars) -> pd.DataFrame:
     query = {"bool": {"must": [{"terms": {"_id": [entry_id]}}]}}
-    res = es_search(query=query, index=ES_INDEX)["hits"]["hits"][0]
+    res = es_search(query=query, index=ES_INDEX.format(dataset_id=dataset_id))["hits"][
+        "hits"
+    ][0]
     return pd.DataFrame({"entry_id": [entry_id], "text": res["_source"]["text"]})
 
 
@@ -37,7 +42,8 @@ def extract_texts(entry_id, **pars) -> pd.DataFrame:
 @click.argument("csv_file", type=click.Path(exists=True))
 @click.argument("id_column")
 @click.argument("text_column")
-def up_single_text(csv_file, id_column, text_column) -> None:
+@click.argument("dataset_id")
+def up_single_text(csv_file, id_column, text_column, dataset_id) -> None:
     mapping = {"properties": {"texts": {"type": "text"}}}
 
     def doc_generator(df, index, id_column, text_column) -> Generator[dict]:
@@ -56,7 +62,8 @@ def up_single_text(csv_file, id_column, text_column) -> None:
         csv_file,
         id_column,
         text_column,
-        ES_INDEX,
+        ES_INDEX.format(dataset_id=dataset_id),
+        dataset_id,
         mapping,
         doc_generator,
         ENTRY_TYPE,
@@ -72,6 +79,7 @@ def search(
     not_must_terms: list[str],
     not_must_phrases: list[str],
     number: int,
+    dataset_id: int,
 ) -> list[dict]:
     all_must = must_terms + must_phrases
     all_not = not_must_terms + not_must_phrases
@@ -81,17 +89,21 @@ def search(
     es_query = {
         "bool": {
             "must": [
-                {"query_string": {"query": term, "fields": [col_search]}} for term in all_must
+                {"query_string": {"query": term, "fields": [col_search]}}
+                for term in all_must
             ],
             "must_not": [
-                {"query_string": {"query": term, "fields": [col_search]}} for term in all_not
+                {"query_string": {"query": term, "fields": [col_search]}}
+                for term in all_not
             ],
             "should": [],
         },
     }
 
     # Runs query
-    results = es_search(query=es_query, size=number, index=ES_INDEX)["hits"]["hits"]
+    results = es_search(
+        query=es_query, size=number, index=ES_INDEX.format(dataset_id=dataset_id)
+    )["hits"]["hits"]
 
     # Aggregates results
     patients = []

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}{{ _('Entry ') }}{{ entry_id }}{% endblock %}
+{% block title %}{{ _('Entry ') }}{{ entry.entry_id }}{% endblock %}
 {% block content %}
 <div class="row">
     <div class="col {% if valid_entry %}s9{% else %}s12{% endif %}">
         <div class="card">
             <div class="card-content row tight-bottom">
                 <div class="input-field col m7 s12">
-                    <input id="id" name="id" type="text" class="validate" value="{{entry_id}}">
+                    <input id="id" name="id" type="text" class="validate" value="{{entry.entry_id}}">
                     <label for="id">{{ _('Entry ID') }}</label>
                 </div>
                 <div class="input-field col m5 s12" style="height:55px;">
@@ -18,18 +18,19 @@
                 {% if queue_id %}
                 <div class="col s4" style="height:50px;">
                     <a class="waves-effect waves-light btn btn-wide{% if queue_pos == 1 %} disabled{% endif %}"
-                        href="/queue/{{queue_id}}/{{queue_pos-1}}">
+                        href="{{url_for('entry', project_id=project_id, queue_id=queue_id, queue_pos=queue_pos-1)}}">
                         <i class="material-icons left">arrow_back</i>{{ _('Previous') }}
                     </a>
                 </div>
                 <div class="col s4" style="height:50px;">
-                    <a class="waves-effect waves-light btn btn-wide" href="/new-queue/{{queue_id}}" target="_blank">
+                    <a class="waves-effect waves-light btn btn-wide"
+                        href="{{url_for('queue', project_id=project_id, queue_id=queue_id)}}" target="_blank">
                         {{ queue_pos }}/{{ queue_len }}
                     </a>
                 </div>
                 <div class="col s4" style="height:50px;">
                     <a class="waves-effect waves-light btn btn-wide{% if queue_pos == queue_len %} disabled{% endif %}"
-                        href="/queue/{{queue_id}}/{{queue_pos+1}}">
+                        href="{{url_for('entry', project_id=project_id, queue_id=queue_id, queue_pos=queue_pos+1)}}">
                         <i class="material-icons right">arrow_forward</i>{{ _('Next') }}
                     </a>
                 </div>
@@ -89,6 +90,7 @@
                         <i class="material-icons right">remove_red_eye</i>
                     </button>
                 </div>
+                {% if entry.type == "patient" %}
                 <div class="input-field col s12 tight-top">
                     <button class="btn waves-effect waves-light btn-wide" onclick='expand_all(true)'>
                         {{ _('Expand all') }}
@@ -101,6 +103,7 @@
                         <i class="material-icons right">remove</i>
                     </button>
                 </div>
+                {% endif %}
                 <div class="input-field col s12 chips tight-top" id="highlights">
                     <input style="width: max-content !important;">
                 </div>

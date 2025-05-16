@@ -5,14 +5,23 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from . import app, settings
 from .database import (
+    new_project,
+    new_label,
     User,
+    load_session,
+    save_session,
+    get_datasets,
     get_user,
     get_users,
+    get_project,
+    get_projects,
+    get_setup_step,
     init_db,
     insert_user,
     update_user,
     update_user_password,
 )
+from .functions import check_is_setup
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -30,6 +39,8 @@ def login() -> ...:
     Return:
         The rendered login.html template.
     """
+    if not check_is_setup():
+        return redirect(url_for("init_config"))
     redirect_url = request.args.get("redirect", "/")
     user_id = session["user_id"] if session.get("user_id") != "guest" else None
     if user_id is not None:
@@ -44,7 +55,7 @@ def login() -> ...:
         elif not verify_password(password, user.password):
             flash(_("Incorrect Username and/or Password!"), category="error")
         else:
-            login_user(user)
+            login_user(user.id)
             # flash("You have successfully logged in!", category="success")
             return redirect(redirect_url)
     return render_template("login.html", redirect=redirect_url)
@@ -53,16 +64,19 @@ def login() -> ...:
 @app.route("/logout")
 def logout() -> ...:
     session.clear()
-    return redirect("/")
+    return redirect("/login")
 
 
 def verify_password(password, hashed_password) -> bool:
     return check_password_hash(hashed_password, password)
 
 
-def login_user(user) -> None:
-    session["user_id"] = user.id
-    session["user"] = user.__dict__
+def login_user(user_id: int) -> None:
+    session.update(load_session(user_id))
+    session["user_id"] = user_id
+    user = get_user(user_id)
+    session["language"] = user.language  # type: ignore
+    session["role"] = user.role  # type: ignore
 
 
 def get_user_role(user_id: str | None = None) -> str:
@@ -77,31 +91,36 @@ def get_user_role(user_id: str | None = None) -> str:
 @app.before_request
 def check_permission() -> ...:
     """Check user permission before each request"""
-    if not get_user(1):
-        if role_has_permission(role="guest"):
-            return None
-        else:
-            return render_template("init-config.html")
+    # Aways allow static/guest routes
+    if role_has_permission(role="guest"):
+        return None
 
+    # Check server setup
+    step = get_setup_step()
+    # If we are setting up and don't have user aways allow access
+    if request.endpoint == "init_config" and step == "add-user":
+        return None
+    # If we are not set up redirect to init config
+    if not check_is_setup() and request.endpoint != "init_config":
+        if not (step == "add-data" and request.endpoint == "upload_data"):
+            return redirect(url_for("init_config"))
+
+    # Check user
     current_user_id = session.get("user_id")
     if current_user_id is None:  # the first request to the app
         set_guest_user()  # set user_id to 'guest' in session
-        flash(_("You are not logged"), category="warning")
-        return redirect(url_for("login") + f"?redirect={request.path}")
+        current_user_id = "guest"
 
+    # Redirect guest to login page if they are trying to access resticted endpoint
     if current_user_id == "guest" and not role_has_permission(role="guest"):
-        flash(_("You are not logged"), category="warning")
+        if request.path != "/":
+            flash(_("You are not logged"), category="warning")
         return redirect(url_for("login") + f"?redirect={request.path}")
 
     if current_user_id != "guest":
         user = get_user(current_user_id, by="id")
         if user is None:
-            flash(
-                _(
-                    "Your login has expired",
-                ),
-                category="warning",
-            )
+            flash(_("Your login has expired"), category="warning")
             set_guest_user()
             return redirect(url_for("login") + f"?redirect={request.path}")
         if not role_has_permission(role=user.role):
@@ -119,12 +138,12 @@ def check_permission() -> ...:
 
 @app.before_request
 def check_elasticsearch() -> ...:
-    if get_user(1) and not role_has_permission(role="guest"):
+    if check_is_setup() and not role_has_permission(role="guest"):
         es = es = Elasticsearch([settings.ES_SERVER])
         try:
             # Attempt to ping the Elasticsearch server
             if es.ping():
-                return  # Elasticsearch is available, proceed with the request
+                return None  # Elasticsearch is available, proceed with the request
             else:
                 raise Exception("Elasticsearch server is not responding")
 
@@ -155,6 +174,34 @@ def check_backend() -> ...:
         return redirect("/")
 
 
+@app.before_request  # type: ignore
+def add_projects() -> ...:
+    if check_is_setup():
+        if "project_id" not in session:
+            session["project_id"] = get_projects()[0].id
+        app.jinja_env.globals.update(
+            projects=list(get_projects()),
+            project_id=session["project_id"],
+            project_name=get_project(session["project_id"]).name,  # type: ignore
+        )
+
+
+@app.teardown_request
+def save_database_session(exc=None):
+    """Persist Flask session changes to database."""
+    if "user_id" in session:
+        if type(session["user_id"]) is int:
+            # Only save if session was modified
+            if session.modified:
+                save_session(session["user_id"], dict(session))
+
+
+# @app.context_processor
+# def inject_session_vars():
+#     """Make session data available in templates."""
+#     return dict(session=session)
+
+
 def set_guest_user() -> None:
     """Set user_id to 'guest' in session"""
     session["user_id"] = "guest"
@@ -171,22 +218,26 @@ def role_has_permission(endpoint=None, role=None) -> bool:
 
 @app.route("/init-config", methods=("POST", "GET"))
 def init_config() -> ...:
-    if get_user(1):
+    if not get_setup_step():
         flash(_("Initial configuration already done!"), category="warning")
-    if (
-        request.method == "POST"
-        and ("username" in request.form)
-        and ("name" in request.form)
-        and ("new_password" in request.form)
-        and ("password_check" in request.form)
-    ):
+        return redirect("/")
+    if request.method == "POST" and request.form["step"] == "add-user":
         username = request.form["username"]
         password = request.form["new_password"]
         password_check = request.form["password_check"]
         name = request.form["name"]
         if password != password_check:
             flash(_("Passwords do not match"), category="warning")
-            return redirect("/")
+            return render_template("init-config.html", step=get_setup_step())
+        if len(name) == 0:
+            flash(_("Name can't be empty."), category="warning")
+            return render_template("init-config.html", step=get_setup_step())
+        if len(username) == 0:
+            flash(_("Username can't be empty."), category="warning")
+            return render_template("init-config.html", step=get_setup_step())
+        if len(password) < 8:
+            flash(_("Minimum password lenght is 8."), category="warning")
+            return render_template("init-config.html", step=get_setup_step())
         init_db(admin_user=username, admin_passwd=password, admin_name=name)
         flash(
             _("Database initialized!").format(username=username),
@@ -196,15 +247,53 @@ def init_config() -> ...:
             _("User {username} sucessfully registered!").format(username=username),
             category="success",
         )
-        login_user(get_user(username, by="username"))
-        return redirect(url_for("upload_data"))
-    return redirect("/")
+        user = get_user(username, by="username")
+        if user is not None:
+            login_user(user.id)
+        else:
+            raise ValueError("Error initializing database.")
+    if request.method == "POST" and request.form["step"] == "add-project":
+        name = request.form["name"]
+        labels = [
+            label.strip() for label in request.form.getlist("labels") if label.strip()
+        ]
+        if len(name) == 0:
+            flash(_("Project name can't be empty."), category="warning")
+            return render_template("init-config.html", step=get_setup_step())
+        user_id = session["user_id"]
+        project = new_project(name, user_id)
+        flash(
+            _("Project {project_name} successfully created!").format(project_name=name),
+            category="success",
+        )
+        if not project:
+            flash(_("Falied creating project."), category="error")
+            return render_template("init-config.html", step=get_setup_step())
+        for label in labels:
+            if new_label(label, user_id, project.id):
+                flash(
+                    _("Label {label_name} successfully created!").format(
+                        label_name=label
+                    ),
+                    category="success",
+                )
+            else:
+                flash(
+                    _("Falied creating label {label_name}.".format(label_name=label)),
+                    category="warning",
+                )
+        session["project_id"] = project.id
+    if get_setup_step() == "add-data":
+        return render_template(
+            "init-config.html", step=get_setup_step(), projects=list(get_projects())
+        )
+    return render_template("init-config.html", step=get_setup_step())
 
 
 @app.route("/users", methods=("POST", "GET"))
 def users() -> ...:
     if request.method == "POST":
-        if session["user"]["role"] != "admin":
+        if session["role"] != "admin":
             abort(403)
         username = request.form.get("username", default="")
         password = request.form.get("new_password", default="")
@@ -247,7 +336,9 @@ def security_edit_password(
         return
 
     if new_password_check is None:
-        flash(_("Please enter a new on both fields!"), category="error")  # no new password
+        flash(
+            _("Please enter a new on both fields!"), category="error"
+        )  # no new password
         return
 
     if new_password != new_password_check:
@@ -263,7 +354,9 @@ def security_edit_password(
     if changer_user["role"] != "admin" and not verify_password(
         old_password, changer_user["password"]
     ):
-        flash(_("Incorrect old password!"), category="error")  # old password is incorrect
+        flash(
+            _("Incorrect old password!"), category="error"
+        )  # old password is incorrect
         return
 
     update_user_password(
@@ -273,9 +366,11 @@ def security_edit_password(
 
 
 def get_user_obj(user_id: int | None) -> User | None:
-    user_id = user_id or session["user"]["id"]
+    user_id = user_id or session["user_id"]
 
-    if (user_id is None) or (session["user"]["role"] != "admin" and session["user_id"] != user_id):
+    if (user_id is None) or (
+        session["role"] != "admin" and session["user_id"] != user_id
+    ):
         return None
 
     user = get_user(user_id, by="id")
@@ -289,14 +384,16 @@ def user_settings(user_id: int | None = None) -> ...:
 
     if user is None:
         flash(
-            _("You do not have permission to change user id {user_id} settings.").format(
-                user_id=user_id
-            ),
+            _(
+                "You do not have permission to change user id {user_id} settings."
+            ).format(user_id=user_id),
             category="error",
         )
         return redirect(url_for("user_settings"))
 
-    return render_template("account-settings.html", user=user, languages=settings.LANGUAGES)
+    return render_template(
+        "account-settings.html", user=user, languages=settings.LANGUAGES
+    )
 
 
 @app.route("/user/<int:user_id>/set/password", methods=["POST"])
@@ -328,10 +425,10 @@ def edit_password(user_id: int | None = None) -> ...:
 def edit_language(user_id: int | None = None) -> ...:
     to_change_user = get_user_obj(user_id)
 
-    if to_change_user is None or to_change_user.language is None:
+    if to_change_user is None:
         flash(
             _(
-                "You do not have permission to change language for user id {user_id} settings."
+                "You have no permission to change language for user id {user_id} settings."
             ).format(user_id=user_id),
             category="error",
         )
@@ -343,7 +440,7 @@ def edit_language(user_id: int | None = None) -> ...:
         user = update_user(to_change_user.id, language=language)
         if user is not None:
             # Update user on session for babel to use the correct language
-            session["user"] = user.__dict__
+            session["language"] = language
             if user.language is not None:
                 flash(
                     _("Changed language for {user_name} to {language}!").format(
@@ -353,8 +450,15 @@ def edit_language(user_id: int | None = None) -> ...:
                 )
             else:
                 flash(
-                    _("Changed language for {user_name} to Automatic!").format(user_name=user.name),
+                    _("Changed language for {user_name} to Automatic!").format(
+                        user_name=user.name
+                    ),
                     category="success",
                 )
 
     return redirect(url_for("user_settings", user_id=to_change_user.id))
+
+
+@app.route("/print_session")
+def print_session() -> ...:
+    return render_template("base.html", content=dict(session))

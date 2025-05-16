@@ -1,0 +1,64 @@
+<!-- templates/projects.html -->
+{% extends "base.html" %}
+{% block title %}{{ _('Projects') }}{% endblock %}
+
+{% block content %}
+<div class="col s12">
+    <h4 class="center">{{ _('Projects') }}</h4>
+</div>
+
+<div class="row">
+    <!-- New Project Form -->
+    <form action="{{ url_for('create_project') }}" method="post">
+        <div class="input-field col s11">
+            <input id="new_project" type="text" name="name" required>
+            <label for="new_project">{{ _('New Project Name') }}</label>
+        </div>
+        <div class="input-field col s1 center">
+            <button class="btn waves-effect waves-light btn-narrow">
+                <i class="material-icons right">add</i>
+            </button>
+        </div>
+    </form>
+
+    <!-- Projects List -->
+    <div class="col card s12">
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ _('Project Name') }}</th>
+                    <th class="center">{{ _('Total Labels') }}</th>
+                    <!-- <th class="center">{{ _('Labeled Entries') }}</th> -->
+                    <th class="center">{{ _('Creator') }}</th>
+                    <th class="center">{{ _('Actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for project in projects %}
+                <tr>
+                    <td>{{ project.name }}</td>
+                    <td class="center">{{ stats[project.id].total_labels }}</td>
+                    <!-- <td class="center">{{ stats[project.id].labeled_entries }}</td> -->
+                    <td class="center">{{ project.creator.username }}</td>
+                    <td class="center">
+                        <a href="{{ url_for('labels', project_id=project.id) }}" class="btn waves-effect waves-light">
+                            {{ _('Open') }}
+                        </a>
+                        {% if has_permition('delete_project') and projects|length > 1 %}
+                        <a href="#" class="btn waves-effect waves-light red darken-4"
+                            onclick="show_warnning('{{ _('This permanent! Are you sure that you want to delete project {project_name}?').format(project_name=project.name) }}','window.location.href = \'{{ url_for('delete_project', project_id=project.id) }}\'');">
+                            {{ _('Delete') }}
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="center">{{ _('No projects found') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

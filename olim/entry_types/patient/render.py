@@ -125,7 +125,7 @@ def get_date(name: str) -> tuple[str, datetime | None]:
     return date, date_obj
 
 
-def render(entry_id: int, **pars) -> str:
+def render(entry_id: str, **pars) -> str:
     """Renders a patient view.
 
     Args:
