@@ -21,6 +21,7 @@ from .database import (
     update_user_password,
 )
 from .functions import check_is_setup
+from .settings import CHUNK_SIZE
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -101,11 +102,15 @@ def check_permission() -> ...:
         return None
     # If we are not set up redirect to init config
     if not check_is_setup() and request.endpoint != "init_config":
-        if not (step == "add-data" and request.endpoint == "upload_data"):
+        if not (
+            step == "add-data"
+            and request.endpoint in ["upload_data", "handle_large_upload", "finalize_upload"]
+        ):
             return redirect(url_for("init_config"))
 
     # Check user
     current_user_id = session.get("user_id")
+
     if current_user_id is None:  # the first request to the app
         set_guest_user()  # set user_id to 'guest' in session
         current_user_id = "guest"
@@ -280,7 +285,10 @@ def init_config() -> ...:
         session["project_id"] = project.id
     if get_setup_step() == "add-data":
         return render_template(
-            "init-config.html", step=get_setup_step(), projects=list(get_projects())
+            "init-config.html",
+            step=get_setup_step(),
+            projects=list(get_projects()),
+            CHUNK_SIZE=CHUNK_SIZE,
         )
     return render_template("init-config.html", step=get_setup_step())
 

@@ -39,7 +39,7 @@
                     <td>{{ project.name }}</td>
                     <td class="center">{{ stats[project.id].total_labels }}</td>
                     <!-- <td class="center">{{ stats[project.id].labeled_entries }}</td> -->
-                    <td class="center">{{ project.creator.username }}</td>
+                    <td class="center">{{ project.creator.name }}</td>
                     <td class="center">
                         <a href="{{ url_for('labels', project_id=project.id) }}" class="btn waves-effect waves-light">
                             {{ _('Open') }}

@@ -35,7 +35,8 @@ def label_upload(
             dataset = get_dataset(dataset_id)  # type: ignore (¬_¬)
             flash(
                 _("Entry id: {entry_id} not found on dataset {dataset_name}").format(
-                    entry_id=entry_id, dataset_name=dataset.name # type: ignore (¬_¬)
+                    entry_id=entry_id,
+                    dataset_name=dataset.name,  # type: ignore (¬_¬)
                 )
             )
             continue

@@ -36,6 +36,11 @@ PERMANENT_SESSION_LIFETIME = timedelta(days=30)
 
 QUEUES_PATH = "./queues"
 
+UPLOAD_FOLDER = "/app/uploads/"
+CHUNK_SIZE = 5 * 1024 * 1024
+ALLOWED_EXTENSIONS = {"csv", "tsv"}
+MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024  # 10GB
+
 LEARNER_URL = os.getenv("LEARNER_URL", None)
 LEARNER_KEY = os.getenv("LEARNER_KEY", None)
 
@@ -129,6 +134,8 @@ PERMISSIONS = {
         "create_project",
         "redirect_to_project",
         "print_session",
+        "handle_large_upload",
+        "finalize_upload",
     ],
     "user": [
         "static",

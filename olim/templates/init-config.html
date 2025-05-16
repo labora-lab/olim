@@ -134,6 +134,6 @@
 </script>
 {% endif %}
 {% if step == "add-data" %}
-{{ upload.upload_scripts() }}
+{{ upload.upload_scripts(CHUNK_SIZE) }}
 {% endif %}
 {% endblock %}

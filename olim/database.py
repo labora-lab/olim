@@ -1,9 +1,10 @@
 import random
 import string
+from collections import defaultdict
 from datetime import datetime
 
 from flask import session
-from sqlalchemy import ScalarResult, Select
+from sqlalchemy import ScalarResult, Select, func
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import Mapped, declared_attr
 from werkzeug.security import generate_password_hash
@@ -612,6 +613,51 @@ def get_dataset(idt: int | str, by: str = "id") -> Dataset | None:
         Dataset object if found, None otherwise
     """
     return get_by(Dataset, by, idt, True)
+
+
+def get_dataset_stats() -> dict[int, dict]:
+    """Get statistics for all datasets including entry counts and associated projects.
+
+    Returns:
+        dict: {
+            dataset_id: {
+                'entry_count': int,
+                'projects': list[name: str]
+            }
+        }
+    """
+    # Get base dataset query
+    base_query = (
+        db.select(
+            Dataset.id,
+            Dataset.name,
+            func.count(Entry.id).label("entry_count"),
+            Project.id.label("project_id"),
+            Project.name.label("project_name"),
+        )
+        .outerjoin(Entry, Dataset.id == Entry.dataset_id)
+        .outerjoin(ProjectDataset, Dataset.id == ProjectDataset.dataset_id)
+        .outerjoin(Project, ProjectDataset.project_id == Project.id)
+        .filter(
+            Dataset.is_deleted == False,  # noqa
+            ProjectDataset.is_deleted == False,  # noqa
+        )
+        .group_by(Dataset.id, Project.id)
+    )
+
+    results = db.session.execute(base_query).all()
+
+    # Organize results
+    stats = defaultdict(lambda: {"entry_count": 0, "projects": []})
+
+    for row in results:
+        dataset_id = row.id
+        stats[dataset_id]["entry_count"] = row.entry_count
+
+        if row.project_id:  # Only add projects with valid associations
+            stats[dataset_id]["projects"].append(row.project_name)
+
+    return dict(stats)
 
 
 # endregion

@@ -56,18 +56,28 @@
                 </div>
 
                 <div id="file-selector" class="card-panel">
-                    <div class="file-field input-field">
-                        <div class="btn">
-                            <i class="material-icons">folder_open</i>
-                            <input type="file" name="file" />
+                    <div id="upload-container">
+                        <div class="file-field input-field">
+                            <div class="btn">
+                                <span>{{ _('Select File') }}</span>
+                                <input type="file" id="large-file-input" name="file">
+                            </div>
+                            <div class="file-path-wrapper">
+                                <input class="file-path" type="text" name="filename"
+                                    placeholder="{{ _('Select file to upload') }}">
+                            </div>
                         </div>
-                        <div class="file-path-wrapper">
-                            <input class="file-path validate" type="text" name="filename"
-                                placeholder="{{ _('Select CSV file') }}" />
+
+                        <div class="progress" style="display: none;">
+                            <div class="determinate" style="width: 0%"></div>
                         </div>
+
+                        <div id="upload-status" class="grey-text"></div>
                     </div>
 
-                    <input type="hidden" name="upload_type" id="upload_type" value="simple_text" />
+                    <input type="hidden" name="filename" id="filename" value="">
+                    <input type="hidden" name="file_id" id="file_id" value="">
+                    <input type="hidden" name="upload_type" id="upload_type" value="simple_text">
                     <div id="additional-fields">
                         <div class="input-field">
                             <input id="text_id" name="text_id" type="text" />
@@ -79,23 +89,23 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="input-field center">
+                <h6 class="teal-text darker-5" style="margin-bottom: 15px;">{{ _('During upload an active task
+                    might appear (or not, the display of tasks is still a little buggy), keep an eye on completed
+                    tasks
+                    it will show a green bar for a few minutes when the upload is completed.') }}</h6>
+                <div class="input-field center" id="send_btn">
                     <button class="btn waves-effect waves-light" type="submit">
                         {{ _('Upload data') }}
                         <i class="material-icons right">file_upload</i>
                     </button>
                 </div>
-                <h6 class="teal-text darker-5" style="margin-bottom: 15px;">{{ _('During upload an active task
-                    might appear (or not, the display of tasks is still a little buggy), keep an eye on completed tasks
-                    it will show a green bar for a few minutes when the upload is completed.') }}</h6>
             </div>
         </div>
     </form>
 </div>
 {% endmacro %}
 
-{% macro upload_scripts() %}
+{% macro upload_scripts(CHUNK_SIZE) %}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         M.AutoInit()
@@ -121,6 +131,71 @@
         document
             .querySelector('.upload-option[data-value="simple_text"]')
             .classList.add('active')
+    });
+    const CHUNK_SIZE = {{ CHUNK_SIZE }};
+
+    document.getElementById('large-file-input').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const progress = document.querySelector('.progress');
+        const progressBar = progress.querySelector('.determinate');
+        const status = document.getElementById('upload-status');
+
+        progress.style.display = 'block';
+        status.textContent = '{{ _("Preparing upload...") }}';
+
+        try {
+            const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+            const fileId = Math.random().toString(36).substring(2, 15);
+
+            for (let chunkNumber = 0; chunkNumber < totalChunks; chunkNumber++) {
+                const chunk = file.slice(chunkNumber * CHUNK_SIZE, (chunkNumber + 1) * CHUNK_SIZE);
+
+                const percent = Math.round((chunkNumber / totalChunks) * 100);
+                progressBar.style.width = `${percent}%`;
+                status.textContent = `{{ _("Uploading...") }} ${percent}%`;
+
+                const formData = new FormData();
+                formData.append('file', chunk);
+                formData.append('chunkNumber', chunkNumber);
+                formData.append('totalChunks', totalChunks);
+                formData.append('fileId', fileId);
+                formData.append('fileName', file.name);
+
+                const response = await fetch('/upload/large-file', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Project-ID': '{{ project_id }}'
+                    }
+                });
+
+                if (!response.ok) throw new Error('Upload failed');
+            }
+
+            progressBar.style.width = '100%';
+            status.textContent = '{{ _("Upload complete! Processing file...") }}';
+
+            // Finalize upload
+            const finalResponse = await fetch(`/upload/finalize/${fileId}?filename=${file.name}`, {
+                headers: {
+                    'X-Project-ID': '{{ project_id }}'
+                }
+            });
+
+            if (!finalResponse.ok) throw new Error('Finalization failed');
+
+            document.getElementById('filename').value = file.name;
+            document.getElementById('file_id').value = fileId;
+
+            status.textContent = '{{ _("File uploaded successfully!") }}';
+            setTimeout(() => progress.style.display = 'none', 2000);
+
+        } catch (error) {
+            progressBar.style.backgroundColor = 'red';
+            status.textContent = `{{ _("Upload failed:") }} ${error.message}`;
+        }
     });
 </script>
 {% endmacro %}

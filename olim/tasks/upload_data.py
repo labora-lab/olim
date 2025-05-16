@@ -1,8 +1,6 @@
-import os
-import tempfile
+from pathlib import Path
 
 import click
-from werkzeug.datastructures import FileStorage
 
 from .. import app as flask_app
 from ..celery_app import app
@@ -14,7 +12,7 @@ from ..entry_types.single_text import up_single_text
 def upload_to_elasticsearch(
     self,
     upload_type: str,
-    file_data: str | FileStorage,
+    filename: str | Path,
     dataset_id: int,
     text_id: str | None = None,
     text: str | None = None,
@@ -23,23 +21,15 @@ def upload_to_elasticsearch(
     Handle file upload to Elasticsearch
     """
     temp_dir = None
-    temp_path = None
 
     try:
-        temp_dir = tempfile.TemporaryDirectory()
-        if isinstance(file_data, str):
-            temp_path = file_data
-        else:
-            temp_path = os.path.join(temp_dir.name, self.request.id)
-            file_data.save(temp_path)
-
         if upload_type == "patient_sheet":
             up_func = up_patients
-            params = {"csv_file": temp_path, "dataset_id": dataset_id}
+            params = {"csv_file": filename, "dataset_id": dataset_id}
         elif upload_type == "simple_text":
             up_func = up_single_text
             params = {
-                "csv_file": temp_path,
+                "csv_file": filename,
                 "id_column": text_id,
                 "text_column": text,
                 "dataset_id": dataset_id,
@@ -47,7 +37,7 @@ def upload_to_elasticsearch(
         elif upload_type == "sample_data":
             up_func = up_single_text
             params = {
-                "csv_file": temp_path,
+                "csv_file": filename,
                 "id_column": "text_id",
                 "text_column": "text",
                 "dataset_id": dataset_id,
@@ -61,7 +51,7 @@ def upload_to_elasticsearch(
 
         return {
             "success": True,
-            "temp_path": temp_path,
+            "filename": filename,
             "temp_dir": temp_dir.name if temp_dir else None,
             "errors": None,
         }
@@ -69,7 +59,7 @@ def upload_to_elasticsearch(
     except Exception as e:
         return {
             "success": False,
-            "temp_path": temp_path,
+            "filename": filename,
             "temp_dir": temp_dir.name if temp_dir else None,
             "errors": [str(e)],
         }
@@ -93,7 +83,7 @@ def update_database(upload_result: dict) -> dict:
 
 def start_upload_chain(
     upload_type: str,
-    file_data: str | FileStorage,
+    filename: str,
     dataset_id: int,
     text_id: str | None = None,
     text: str | None = None,
@@ -103,7 +93,7 @@ def start_upload_chain(
     Returns the chain's task ID
     """
     result = (
-        upload_to_elasticsearch.s(upload_type, file_data, dataset_id, text_id, text)
+        upload_to_elasticsearch.s(upload_type, filename, dataset_id, text_id, text)
         | update_database.s()
     )()
     return result.id

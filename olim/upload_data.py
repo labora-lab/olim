@@ -1,9 +1,12 @@
+from pathlib import Path
+
 from celery.result import AsyncResult
 from flask import flash, jsonify, redirect, render_template, request, session
 from flask_babel import _
 
 from . import app
-from .database import link_dataset_to_project, new_dataset
+from .database import get_dataset_stats, get_datasets, link_dataset_to_project, new_dataset
+from .settings import ALLOWED_EXTENSIONS, CHUNK_SIZE, MAX_FILE_SIZE, UPLOAD_FOLDER
 from .tasks.upload_data import start_upload_chain
 
 ACTIVE_TASKS = set()
@@ -34,6 +37,65 @@ def check_task_status() -> ...:
     return jsonify(status_updates)
 
 
+def ensure_dir(path) -> None:
+    Path(path).mkdir(parents=True, exist_ok=True)
+
+
+@app.route("/upload/large-file", methods=["POST"])
+def handle_large_upload() -> ...:
+    # Get chunk metadata
+    chunk_number = int(request.form["chunkNumber"])
+    total_chunks = int(request.form["totalChunks"])
+    file_id = request.form["fileId"]
+    file_name = request.form["fileName"]
+
+    # Validate input
+    if not all([file_id, file_name]):
+        return jsonify(error="Invalid request"), 400
+
+    # Security checks
+    if "." in file_name and file_name.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS:
+        return jsonify(error="Invalid file type"), 400
+
+    if total_chunks * CHUNK_SIZE > MAX_FILE_SIZE:
+        return jsonify(error="File too large"), 413
+
+    # Save chunk
+    chunk = request.files["file"]
+    chunk_dir = Path(UPLOAD_FOLDER) / file_id
+    ensure_dir(chunk_dir)
+
+    chunk_path = chunk_dir / f"{chunk_number:04d}"
+    chunk.save(chunk_path)
+
+    return jsonify(success=True)
+
+
+@app.route("/upload/finalize/<file_id>", methods=["GET"])
+def finalize_upload(file_id) -> ...:
+    try:
+        # Reconstruct file
+        chunk_dir = Path(UPLOAD_FOLDER) / file_id
+        chunks = sorted(chunk_dir.glob("*"))
+
+        if not chunks:
+            return jsonify(error="No chunks found"), 400
+
+        original_name = request.args.get("filename")
+        final_path = Path(UPLOAD_FOLDER) / f"{file_id}_{original_name}"
+
+        with open(final_path, "wb") as output:
+            for chunk in chunks:
+                with open(chunk, "rb") as f:
+                    output.write(f.read())
+                chunk.unlink()
+
+        return jsonify(success=True, path=str(final_path))
+
+    except Exception as e:
+        return jsonify(error=str(e)), 500
+
+
 @app.route("/upload-data", methods=["GET", "POST"])
 def upload_data() -> ...:
     """Handle file uploads using celery tasks"""
@@ -41,11 +103,17 @@ def upload_data() -> ...:
         upload_type = request.form.get("upload_type")
         if upload_type is None:
             raise NotImplementedError
-        datafile = request.files.get("file")
         text_id = request.form.get("text_id")
         text = request.form.get("text")
         dataset_name = request.form.get("name")
         projects = [int(p) for p in request.form.getlist("projects")]
+        filename = request.form.get("filename")
+        file_id = request.form.get("file_id")
+
+        if not filename and upload_type != "sample_data":
+            flash(_("Error uploading file."), category="error")
+            return redirect(request.url)
+        filename = str(Path(UPLOAD_FOLDER) / f"{file_id}_{filename}")
 
         dataset = new_dataset(dataset_name, session["user_id"])
 
@@ -57,7 +125,7 @@ def upload_data() -> ...:
         if upload_type == "sample_data":
             task_params = {
                 "upload_type": upload_type,
-                "file_data": "./data/sample_data.csv",
+                "filename": "./data/sample_data.csv",
                 "dataset_id": dataset.id,
             }
         else:
@@ -71,13 +139,13 @@ def upload_data() -> ...:
                     return redirect(request.url)
 
             # Validate file upload
-            if not datafile:
+            if not filename:
                 flash(_("No file selected"), category="error")
                 return redirect(request.url)
 
             task_params = {
                 "upload_type": upload_type,
-                "file_data": datafile,
+                "filename": filename,
                 "text_id": text_id,
                 "text": text,
                 "dataset_id": dataset.id,
@@ -100,4 +168,7 @@ def upload_data() -> ...:
         "upload-data.html",
         active_tasks=list(ACTIVE_TASKS),
         completed_tasks=COMPLETED_TASKS,
+        CHUNK_SIZE=CHUNK_SIZE,
+        datasets=get_datasets(non_empty=True),
+        stats=get_dataset_stats(),
     )

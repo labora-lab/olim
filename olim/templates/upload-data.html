@@ -82,11 +82,38 @@
   </div>
 
   {{upload.upload_form(projects=projects)}}
+
+  <div class="col card s12">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ _('Dataset Name') }}</th>
+          <th class="center">{{ _('Total Enties') }}</th>
+          <th class="center">{{ _('Projects') }}</th>
+          <th class="center">{{ _('Creator') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dataset in datasets %}
+        <tr>
+          <td>{{ dataset.name }}</td>
+          <td class="center">{{ stats[dataset.id]['entry_count'] }}</td>
+          <td class="center">{{ ", ".join(stats[dataset.id]['projects']) }}</td>
+          <td class="center">{{ dataset.creator.name }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="center">{{ _('No datasets found') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-{{ upload.upload_scripts() }}
+{{ upload.upload_scripts(CHUNK_SIZE) }}
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     // Task-status polling
