@@ -21,11 +21,11 @@ from .functions import (
     render_entry,
 )
 from .utils.entry import get_all_hidden
-from .utils.queues import get_all_queues, get_queue, parse_queue, store_queue
+from .utils.queues import get_all_queues, get_queue, store_queue
 
 
 @app.route("/")
-def redirect_to_project():
+def redirect_to_project() -> ...:
     project_id = session.get("project_id")
     project_id = project_id or get_projects()[0].id
     session["project_id"] = project_id
@@ -37,7 +37,7 @@ def update_session_project(project_id: int) -> ...:
         project = get_project(project_id)
         if project is None:
             flash(
-                _("Invalid project ID: {project_id}!".format(project_id=project_id)),
+                _(f"Invalid project ID: {project_id}!"),
                 category="warning",
             )
             return redirect("/")
@@ -226,9 +226,9 @@ def search(project_id: int) -> ...:
         df_results = pd.DataFrame(data)
         df_results["dataset_id"] = dataset_ids
         df_results = df_results[df_results["match_count"] > 0]
-        df_results = df_results.sort_values(
-            by="score", ascending=False, ignore_index=True
-        ).iloc[:number]
+        df_results = df_results.sort_values(by="score", ascending=False, ignore_index=True).iloc[
+            :number
+        ]
         data = df_results.to_dict("records")
         extra_data: dict = {
             "Include": must_terms + must_phrases,
@@ -296,8 +296,7 @@ def queue(project_id: int, queue_id: str | None = None) -> ...:
             session["number_of_entries"] = number
             # Generate the queue
             queue = [
-                (entry.dataset_id, entry.entry_id)
-                for entry in random_entries(number, project_id)
+                (entry.dataset_id, entry.entry_id) for entry in random_entries(number, project_id)
             ]
         except ValueError:
             flash(_("Invalid number of entries"), category="error")
@@ -325,7 +324,7 @@ def queue(project_id: int, queue_id: str | None = None) -> ...:
 # region General projects management routes
 # --------------------------------
 @app.route("/projects")
-def projects():
+def projects() -> ...:
     """Project management dashboard"""
     projects = get_projects()
     stats = {}
@@ -338,7 +337,7 @@ def projects():
 
 
 @app.route("/projects/new", methods=["POST"])
-def create_project():
+def create_project() -> ...:
     """Create new project"""
     project_name = request.form.get("name")
     if project_name:
@@ -348,7 +347,7 @@ def create_project():
 
 
 @app.route("/projects/<int:project_id>/delete", methods=["GET"])
-def delete_project(project_id):
+def delete_project(project_id) -> ...:
     """Delete a project"""
     project = get_project(project_id)
     if project:

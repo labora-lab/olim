@@ -1,12 +1,14 @@
 import pandas as pd
-from flask import session, flash
+from flask import flash, session
 from flask_babel import _
 from tqdm import tqdm
 
-from ..database import add_entry_label, get_dataset, get_labels, get_entry, new_label
+from ..database import add_entry_label, get_dataset, get_entry, get_labels, new_label
 
 
-def label_upload(df, user_id: int | None=None, project_id: int | None=None, dataset_id: int | None=None) -> None:
+def label_upload(
+    df, user_id: int | None = None, project_id: int | None = None, dataset_id: int | None = None
+) -> None:
     """Upload label data from a dataframe
 
     Args:
@@ -30,8 +32,12 @@ def label_upload(df, user_id: int | None=None, project_id: int | None=None, data
         # Get entry within selected dataset
         entry = get_entry((dataset_id, str(entry_id)))
         if not entry:
-            dataset = get_dataset(dataset_id) # type: ignore
-            flash(_("Entry id: {entry_id} not found on dataset {dataset.name}"))
+            dataset = get_dataset(dataset_id)  # type: ignore (¬_¬)
+            flash(
+                _("Entry id: {entry_id} not found on dataset {dataset_name}").format(
+                    entry_id=entry_id, dataset_name=dataset.name # type: ignore (¬_¬)
+                )
+            )
             continue
 
         # If the label doesnt exist create it

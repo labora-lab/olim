@@ -7,10 +7,18 @@ from flask_babel import _
 
 from . import app, db, entry_types, settings
 from .active_learning import new_al
-from .database import del_label, is_dataset_linked, get_dataset, get_datasets, get_label, get_labeled, get_labels, new_label
-from .utils.queues import store_queue
+from .database import (
+    del_label,
+    get_dataset,
+    get_datasets,
+    get_label,
+    get_labeled,
+    get_labels,
+    new_label,
+)
 from .project import update_session_project
 from .utils.label import label_upload
+from .utils.queues import store_queue
 
 
 @app.route("/<int:project_id>", methods=["GET"])
@@ -185,7 +193,7 @@ def catch_queue(label_id: int) -> ...:
     ]
     queue_id = store_queue(queue, project_id)
     # Redirect to queue
-    return redirect(url_for('entry', project_id=project_id, queue_id=queue_id))
+    return redirect(url_for("entry", project_id=project_id, queue_id=queue_id))
 
 
 @app.route("/labels/<int:label_id>/settings", methods=["GET"])
@@ -214,15 +222,15 @@ def label_up(project_id: int) -> ...:
         return res
 
     # Get selected dataset from form
-    dataset_id = request.form.get('dataset_id')
+    dataset_id = request.form.get("dataset_id")
     if not dataset_id:
-        flash(_('Dataset selection required'), category='warning')
+        flash(_("Dataset selection required"), category="warning")
         return redirect(url_for("labels", project_id=project_id))
 
     # Verify dataset exists
     dataset = get_dataset(dataset_id)
     if not dataset:
-        flash(_('Invalid dataset selection'), category='warning')
+        flash(_("Invalid dataset selection"), category="warning")
         return redirect(url_for("labels", project_id=project_id))
 
     # Create a df from csv passed by POST

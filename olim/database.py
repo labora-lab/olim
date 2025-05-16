@@ -3,10 +3,9 @@ import string
 from datetime import datetime
 
 from flask import session
-import flask_session.sessions
 from sqlalchemy import ScalarResult, Select
-from sqlalchemy.orm import Mapped, declared_attr
 from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.orm import Mapped, declared_attr
 from werkzeug.security import generate_password_hash
 
 from . import db
@@ -39,12 +38,8 @@ class ProjectDataset(db.Model, CreationControl):
     __tablename__ = "project_datasets"
 
     # Composite primary key
-    project_id: Mapped[int] = db.mapped_column(
-        db.ForeignKey("projects.id"), primary_key=True
-    )
-    dataset_id: Mapped[int] = db.mapped_column(
-        db.ForeignKey("datasets.id"), primary_key=True
-    )
+    project_id: Mapped[int] = db.mapped_column(db.ForeignKey("projects.id"), primary_key=True)
+    dataset_id: Mapped[int] = db.mapped_column(db.ForeignKey("datasets.id"), primary_key=True)
 
     # Relationships
     project: Mapped["Project"] = db.relationship(back_populates="project_datasets")
@@ -59,9 +54,7 @@ class Dataset(db.Model, CreationControl):
     name: Mapped[str] = db.mapped_column(nullable=False)
 
     # Relationships
-    project_datasets: Mapped[list["ProjectDataset"]] = db.relationship(
-        back_populates="dataset"
-    )
+    project_datasets: Mapped[list["ProjectDataset"]] = db.relationship(back_populates="dataset")
     entries: Mapped[list["Entry"]] = db.relationship(back_populates="dataset")
 
     # Association proxy to projects through project_datasets relationship
@@ -80,9 +73,7 @@ class Project(db.Model, CreationControl):
     name: Mapped[str] = db.mapped_column(nullable=False)
 
     # Relationships
-    project_datasets: Mapped[list["ProjectDataset"]] = db.relationship(
-        back_populates="project"
-    )
+    project_datasets: Mapped[list["ProjectDataset"]] = db.relationship(back_populates="project")
     labels: Mapped[list["Label"]] = db.relationship(back_populates="project")
 
     # Association proxy to datasets through project_datasets relationship
@@ -124,17 +115,13 @@ class LabelEntry(db.Model, CreationControl):
 
 class Entry(db.Model):
     __tablename__ = "entries"
-    __table_args__ = (
-        db.UniqueConstraint("entry_id", "dataset_id", name="uq_entry_id_dataset"),
-    )
+    __table_args__ = (db.UniqueConstraint("entry_id", "dataset_id", name="uq_entry_id_dataset"),)
 
     # Columns
     id: Mapped[int] = db.mapped_column(primary_key=True, autoincrement=True)
     entry_id: Mapped[str] = db.mapped_column(nullable=False)
     type: Mapped[str] = db.mapped_column(nullable=False)
-    dataset_id: Mapped[int] = db.mapped_column(
-        db.ForeignKey("datasets.id"), nullable=False
-    )
+    dataset_id: Mapped[int] = db.mapped_column(db.ForeignKey("datasets.id"), nullable=False)
 
     # Relationships
     labels: Mapped[list["LabelEntry"]] = db.relationship(back_populates="entry")
@@ -149,9 +136,7 @@ class Label(db.Model, CreationControl):
     name: Mapped[str] = db.mapped_column(nullable=False)
     al_key: Mapped[str] = db.mapped_column(nullable=True)
     priority: Mapped[float] = db.mapped_column(default=1.0, nullable=False)
-    project_id: Mapped[int] = db.mapped_column(
-        db.ForeignKey("projects.id"), nullable=False
-    )
+    project_id: Mapped[int] = db.mapped_column(db.ForeignKey("projects.id"), nullable=False)
 
     # Relationships
     entries: Mapped[list["LabelEntry"]] = db.relationship(
@@ -166,14 +151,14 @@ class CeleryTaskStatus(db.TypeDecorator):
     impl = db.String(20)
     cache_ok = True
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(length=20)
 
     @property
-    def python_type(self):
+    def python_type(self) -> type:
         return str
 
-    def process_bind_param(self, value, dialect):
+    def process_bind_param(self, value: str, _) -> str:
         valid_states = {"PENDING", "STARTED", "RETRY", "SUCCESS", "FAILURE", "REVOKED"}
         if value not in valid_states:
             raise ValueError(f"Invalid task state: {value}")
@@ -190,11 +175,10 @@ class CeleryTask(db.Model, CreationControl):
 
     # Core task information
     id: Mapped[str] = db.mapped_column(
-        db.String(36), primary_key=True  # Celery task UUID
+        db.String(36),
+        primary_key=True,  # Celery task UUID
     )
-    status: Mapped[str] = db.mapped_column(
-        CeleryTaskStatus(), nullable=False, default="PENDING"
-    )
+    status: Mapped[str] = db.mapped_column(CeleryTaskStatus(), nullable=False, default="PENDING")
     task_name: Mapped[str] = db.mapped_column(db.String(128), nullable=False)
 
     # Task arguments and results
@@ -211,18 +195,16 @@ class CeleryTask(db.Model, CreationControl):
     date_completed: Mapped[datetime | None] = db.mapped_column(nullable=True)
 
     # Relationships
-    created_by: Mapped[int] = db.mapped_column(
-        db.ForeignKey("users.id"), nullable=False
-    )
+    created_by: Mapped[int] = db.mapped_column(db.ForeignKey("users.id"), nullable=False)
     user: Mapped["User"] = db.relationship()
 
-    def update_status(self, status: str):
+    def update_status(self, status: str) -> None:
         """Update task status with timestamp handling"""
-        valid_transitions = {
-            "PENDING": {"STARTED", "REVOKED"},
-            "STARTED": {"SUCCESS", "FAILURE", "RETRY", "REVOKED"},
-            "RETRY": {"STARTED", "FAILURE", "REVOKED"},
-        }
+        # valid_transitions = {
+        #     "PENDING": {"STARTED", "REVOKED"},
+        #     "STARTED": {"SUCCESS", "FAILURE", "RETRY", "REVOKED"},
+        #     "RETRY": {"STARTED", "FAILURE", "REVOKED"},
+        # }
 
         if self.status == status:
             return
@@ -236,8 +218,13 @@ class CeleryTask(db.Model, CreationControl):
 
     @classmethod
     def create_task(
-        cls, task_id: str, task_name: str, user_id: int, args=None, kwargs=None
-    ):
+        cls,
+        task_id: str,
+        task_name: str,
+        user_id: int,
+        args=None,
+        kwargs=None,
+    ) -> "CeleryTask":
         """Helper to create a new task record"""
         return cls(
             id=task_id,
@@ -248,7 +235,7 @@ class CeleryTask(db.Model, CreationControl):
             created_by=user_id,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<CeleryTask {self.id} [{self.status}]>"
 
 
@@ -277,7 +264,7 @@ def get_setup_step() -> str | None:
     Returns:
         String representing current setup step or None if setup is complete
     """
-    if not "is_setup" in session:
+    if "is_setup" not in session:
         session["is_setup"] = False
     if not session["is_setup"]:
         if not db.session.execute(db.select(User.id)).scalar():
@@ -309,9 +296,7 @@ def get_by(table: ..., col: str, idt: int | str, filter_deleted=True) -> ...:
     if filter_deleted:
         filter_params["is_deleted"] = False
     try:
-        return db.session.execute(
-            db.select(table).filter_by(**filter_params)
-        ).scalar_one()
+        return db.session.execute(db.select(table).filter_by(**filter_params)).scalar_one()
     except db.orm.exc.NoResultFound:
         return None
 
@@ -376,9 +361,7 @@ def get_users() -> list[User]:
     ).scalars()
 
 
-def insert_user(
-    username: str, hashed_password: str, role: str, creator: int, **kwargs
-) -> User:
+def insert_user(username: str, hashed_password: str, role: str, creator: int, **kwargs) -> User:
     """Create new user account.
 
     Args:
@@ -591,9 +574,7 @@ def new_dataset(dataset_name, user_id) -> Dataset:
     return dataset
 
 
-def get_datasets(
-    project_id: int | None = None, non_empty: bool = False
-) -> list[Dataset]:
+def get_datasets(project_id: int | None = None, non_empty: bool = False) -> list[Dataset]:
     """Retrieve datasets with optional project filtering and non-empty check.
 
     Args:
@@ -610,7 +591,7 @@ def get_datasets(
         query = (
             query.join(ProjectDataset)
             .filter(ProjectDataset.project_id == project_id)
-            .filter(ProjectDataset.is_deleted == False)
+            .filter(ProjectDataset.is_deleted == False)  # noqa
         )
 
     # Filter out empty datasets if requested
@@ -618,6 +599,7 @@ def get_datasets(
         query = query.where(db.exists().where(Entry.dataset_id == Dataset.id))
 
     return db.session.execute(query.order_by(Dataset.name)).scalars()
+
 
 def get_dataset(idt: int | str, by: str = "id") -> Dataset | None:
     """Retrieve a dataset by specified criteria.
@@ -631,14 +613,13 @@ def get_dataset(idt: int | str, by: str = "id") -> Dataset | None:
     """
     return get_by(Dataset, by, idt, True)
 
+
 # endregion
 
 
 # region Dataset-Project Relations
 # ------------------------------
-def link_dataset_to_project(
-    dataset_id: int, project_id: int, user_id: int
-) -> ProjectDataset:
+def link_dataset_to_project(dataset_id: int, project_id: int, user_id: int) -> ProjectDataset:
     """Associate a dataset with one or more projects.
 
     Args:
@@ -703,9 +684,7 @@ def get_projects_for_dataset(dataset_id: int) -> list[Project]:
     return db.session.execute(
         db.select(Project)
         .join(ProjectDataset)
-        .filter(
-            ProjectDataset.dataset_id == dataset_id, ProjectDataset.is_deleted == False
-        )
+        .filter(ProjectDataset.dataset_id == dataset_id, ProjectDataset.is_deleted == False)  # noqa
     ).scalars()
 
 
@@ -721,9 +700,7 @@ def get_datasets_for_project(project_id: int) -> list[Dataset]:
     return db.session.execute(
         db.select(Dataset)
         .join(ProjectDataset)
-        .filter(
-            ProjectDataset.project_id == project_id, ProjectDataset.is_deleted == False
-        )
+        .filter(ProjectDataset.project_id == project_id, ProjectDataset.is_deleted == False)  # noqa
     ).scalars()
 
 
@@ -733,9 +710,7 @@ def get_all_dataset_relations() -> list[ProjectDataset]:
     Returns:
         List of ProjectDataset objects
     """
-    return db.session.execute(
-        db.select(ProjectDataset).filter_by(is_deleted=False)
-    ).scalars()
+    return db.session.execute(db.select(ProjectDataset).filter_by(is_deleted=False)).scalars()
 
 
 def is_dataset_linked(dataset_id: int, project_id: int) -> bool:
@@ -901,17 +876,13 @@ def random_entries(number: int, project_id: int | None = None) -> list[Entry]:
             base_query.join(Dataset)
             .join(ProjectDataset)
             .filter(ProjectDataset.project_id == project_id)
-            .filter(ProjectDataset.is_deleted == False)
+            .filter(ProjectDataset.is_deleted == False)  # noqa
         )
 
-    return db.session.execute(
-        base_query.order_by(db.func.random()).limit(number)
-    ).scalars()
+    return db.session.execute(base_query.order_by(db.func.random()).limit(number)).scalars()
 
 
-def register_entries(
-    entries_ids: list[str], entries_type: str, dataset_id: int
-) -> None:
+def register_entries(entries_ids: list[str], entries_type: str, dataset_id: int) -> None:
     """Bulk register new data entries.
 
     Args:
@@ -919,8 +890,7 @@ def register_entries(
         entries_type: Classification type for entries
     """
     entries = [
-        Entry(entry_id=str(eid), type=entries_type, dataset_id=dataset_id)
-        for eid in entries_ids
+        Entry(entry_id=str(eid), type=entries_type, dataset_id=dataset_id) for eid in entries_ids
     ]
     db.session.add_all(entries)
     db.session.commit()
@@ -931,9 +901,7 @@ def register_entries(
 
 # region Label-Entry Association
 # -----------------------------
-def add_entry_label(
-    label_id, entry_uid, user_id, value, created=None
-) -> LabelEntry | None:
+def add_entry_label(label_id, entry_uid, user_id, value, created=None) -> LabelEntry | None:
     """Apply label to data entry.
 
     Args:

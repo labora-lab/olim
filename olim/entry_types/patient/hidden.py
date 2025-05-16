@@ -15,6 +15,4 @@ def get_all_hidden(*_, **__) -> list[dict]:
         index=ES_TO_HIDE_INDEX,
         query={"match_all": {}},
         size=10000,
-    )[
-        "hits"
-    ]["hits"]
+    )["hits"]["hits"]

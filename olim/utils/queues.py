@@ -32,13 +32,7 @@ def parse_queue(text: str) -> list[str]:
         List[str]: Queue list
     """
     # TODO: Rewrite this to deal with dataset_id
-    return (
-        text.replace(";", " ")
-        .replace(",", " ")
-        .replace("\n", " ")
-        .replace("\r\n", " ")
-        .split()
-    )
+    return text.replace(";", " ").replace(",", " ").replace("\n", " ").replace("\r\n", " ").split()
 
 
 def store_queue(
@@ -81,7 +75,7 @@ def get_queue(queue_id: str, project_id) -> list[tuple[int, str]]:
         list[tuple[int, str]]: Queue list
     """
     queue_file = get_queue_path(queue_id, project_id)
-    with open(queue_file, "r") as f:
+    with open(queue_file) as f:
         queue = json.load(f)
     if queue["highlight"] is not None:
         session["highlight"] = queue["highlight"]
@@ -94,13 +88,11 @@ def get_all_queues(project_id) -> list[dict]:
     for queue_file in queue_dir.iterdir():
         if queue_file.name.startswith("queue_") and queue_file.name.endswith(".json"):
             try:
-                with open(queue_file, "r") as f:
+                with open(queue_file) as f:
                     queue = json.load(f)
-            except Exception as e:
+            except Exception:
                 flash(
-                    _("Failed to read queue file {queue_file}.").format(
-                        queue_file=queue_file
-                    ),
+                    _("Failed to read queue file {queue_file}.").format(queue_file=queue_file),
                     category="error",
                 )
                 queue = None
@@ -109,8 +101,8 @@ def get_all_queues(project_id) -> list[dict]:
                     queue_length=queue["lenght"]
                 )
                 if queue["highlight"]:
-                    queue["frontend_text"] += " - " + _(
-                        "Highlight: {highlight}"
-                    ).format(highlight=", ".join(h for h in queue["highlight"]))
+                    queue["frontend_text"] += " - " + _("Highlight: {highlight}").format(
+                        highlight=", ".join(h for h in queue["highlight"])
+                    )
                 queues.append(queue)
     return queues

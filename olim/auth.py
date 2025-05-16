@@ -5,19 +5,18 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from . import app, settings
 from .database import (
-    new_project,
-    new_label,
     User,
-    load_session,
-    save_session,
-    get_datasets,
-    get_user,
-    get_users,
     get_project,
     get_projects,
     get_setup_step,
+    get_user,
+    get_users,
     init_db,
     insert_user,
+    load_session,
+    new_label,
+    new_project,
+    save_session,
     update_user,
     update_user_password,
 )
@@ -187,7 +186,7 @@ def add_projects() -> ...:
 
 
 @app.teardown_request
-def save_database_session(exc=None):
+def save_database_session(exc=None) -> None:
     """Persist Flask session changes to database."""
     if "user_id" in session:
         if type(session["user_id"]) is int:
@@ -254,9 +253,7 @@ def init_config() -> ...:
             raise ValueError("Error initializing database.")
     if request.method == "POST" and request.form["step"] == "add-project":
         name = request.form["name"]
-        labels = [
-            label.strip() for label in request.form.getlist("labels") if label.strip()
-        ]
+        labels = [label.strip() for label in request.form.getlist("labels") if label.strip()]
         if len(name) == 0:
             flash(_("Project name can't be empty."), category="warning")
             return render_template("init-config.html", step=get_setup_step())
@@ -272,14 +269,12 @@ def init_config() -> ...:
         for label in labels:
             if new_label(label, user_id, project.id):
                 flash(
-                    _("Label {label_name} successfully created!").format(
-                        label_name=label
-                    ),
+                    _("Label {label_name} successfully created!").format(label_name=label),
                     category="success",
                 )
             else:
                 flash(
-                    _("Falied creating label {label_name}.".format(label_name=label)),
+                    _(f"Falied creating label {label}."),
                     category="warning",
                 )
         session["project_id"] = project.id
@@ -336,9 +331,7 @@ def security_edit_password(
         return
 
     if new_password_check is None:
-        flash(
-            _("Please enter a new on both fields!"), category="error"
-        )  # no new password
+        flash(_("Please enter a new on both fields!"), category="error")  # no new password
         return
 
     if new_password != new_password_check:
@@ -354,9 +347,7 @@ def security_edit_password(
     if changer_user["role"] != "admin" and not verify_password(
         old_password, changer_user["password"]
     ):
-        flash(
-            _("Incorrect old password!"), category="error"
-        )  # old password is incorrect
+        flash(_("Incorrect old password!"), category="error")  # old password is incorrect
         return
 
     update_user_password(
@@ -368,9 +359,7 @@ def security_edit_password(
 def get_user_obj(user_id: int | None) -> User | None:
     user_id = user_id or session["user_id"]
 
-    if (user_id is None) or (
-        session["role"] != "admin" and session["user_id"] != user_id
-    ):
+    if (user_id is None) or (session["role"] != "admin" and session["user_id"] != user_id):
         return None
 
     user = get_user(user_id, by="id")
@@ -384,16 +373,14 @@ def user_settings(user_id: int | None = None) -> ...:
 
     if user is None:
         flash(
-            _(
-                "You do not have permission to change user id {user_id} settings."
-            ).format(user_id=user_id),
+            _("You do not have permission to change user id {user_id} settings.").format(
+                user_id=user_id
+            ),
             category="error",
         )
         return redirect(url_for("user_settings"))
 
-    return render_template(
-        "account-settings.html", user=user, languages=settings.LANGUAGES
-    )
+    return render_template("account-settings.html", user=user, languages=settings.LANGUAGES)
 
 
 @app.route("/user/<int:user_id>/set/password", methods=["POST"])
@@ -427,9 +414,9 @@ def edit_language(user_id: int | None = None) -> ...:
 
     if to_change_user is None:
         flash(
-            _(
-                "You have no permission to change language for user id {user_id} settings."
-            ).format(user_id=user_id),
+            _("You have no permission to change language for user id {user_id} settings.").format(
+                user_id=user_id
+            ),
             category="error",
         )
         return redirect(url_for("user_settings"))
@@ -450,9 +437,7 @@ def edit_language(user_id: int | None = None) -> ...:
                 )
             else:
                 flash(
-                    _("Changed language for {user_name} to Automatic!").format(
-                        user_name=user.name
-                    ),
+                    _("Changed language for {user_name} to Automatic!").format(user_name=user.name),
                     category="success",
                 )
 

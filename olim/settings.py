@@ -81,9 +81,7 @@ if "LABELS_TYPES" in labels:
 try:
     LABELS = eval(labels)
 except (TypeError, NameError):
-    print(
-        f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!"
-    )
+    print(f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!")
     LABELS = LabelTypes.YES_NO
 
 """List of endpoints that need a setup backend."""

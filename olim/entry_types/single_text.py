@@ -9,7 +9,6 @@ from olim.utils.es import es_search
 
 from ..cli import upload
 from ..upload_utils import es_bulk_upload
-from ..database import new_dataset
 
 ES_INDEX = "single_text_{dataset_id}"
 ENTRY_TYPE = "single_text"
@@ -17,18 +16,14 @@ ENTRY_TYPE = "single_text"
 
 def render(entry_id: str, dataset_id: int, **pars) -> str:
     query = {"bool": {"must": [{"terms": {"_id": [entry_id]}}]}}
-    res = es_search(query=query, index=ES_INDEX.format(dataset_id=dataset_id))["hits"][
-        "hits"
-    ][0]
+    res = es_search(query=query, index=ES_INDEX.format(dataset_id=dataset_id))["hits"]["hits"][0]
 
     return render_template("entry_types/single_text.html", res=res, **pars)
 
 
 def extract_texts(entry_id: str, dataset_id: int, **pars) -> pd.DataFrame:
     query = {"bool": {"must": [{"terms": {"_id": [entry_id]}}]}}
-    res = es_search(query=query, index=ES_INDEX.format(dataset_id=dataset_id))["hits"][
-        "hits"
-    ][0]
+    res = es_search(query=query, index=ES_INDEX.format(dataset_id=dataset_id))["hits"]["hits"][0]
     return pd.DataFrame({"entry_id": [entry_id], "text": res["_source"]["text"]})
 
 
@@ -89,21 +84,19 @@ def search(
     es_query = {
         "bool": {
             "must": [
-                {"query_string": {"query": term, "fields": [col_search]}}
-                for term in all_must
+                {"query_string": {"query": term, "fields": [col_search]}} for term in all_must
             ],
             "must_not": [
-                {"query_string": {"query": term, "fields": [col_search]}}
-                for term in all_not
+                {"query_string": {"query": term, "fields": [col_search]}} for term in all_not
             ],
             "should": [],
         },
     }
 
     # Runs query
-    results = es_search(
-        query=es_query, size=number, index=ES_INDEX.format(dataset_id=dataset_id)
-    )["hits"]["hits"]
+    results = es_search(query=es_query, size=number, index=ES_INDEX.format(dataset_id=dataset_id))[
+        "hits"
+    ]["hits"]
 
     # Aggregates results
     patients = []

@@ -1,31 +1,30 @@
 import json
-import os
 
 from flask import Flask, request, session
 from flask_babel import Babel
 from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
 from flask_session import Session
-from werkzeug.middleware.profiler import ProfilerMiddleware
+from flask_sqlalchemy import SQLAlchemy
 
+# from werkzeug.middleware.profiler import ProfilerMiddleware
 from .settings import (
     BABEL_DEFAULT_LOCALE,
     BABEL_TRANSLATION_DIRECTORIES,
-    DEBUG,
     DB_HOST,
     DB_NAME,
     DB_PASSWORD,
     DB_PORT,
     DB_USER,
+    DEBUG,
     HAS_LEARNER,
     HELP_URL,
     LABELS,
     LANGUAGES,
-    SECRET_KEY,
-    SESSION_TYPE,
-    SESSION_PERMANENT,
-    SESSION_USE_SIGNER,
     PERMANENT_SESSION_LIFETIME,
+    SECRET_KEY,
+    SESSION_PERMANENT,
+    SESSION_TYPE,
+    SESSION_USE_SIGNER,
     VERSION,
 )
 
@@ -75,8 +74,12 @@ def get_locale() -> str | None:
 
 babel = Babel(app, locale_selector=get_locale)
 
-# Profiling
-# app.wsgi_app = ProfilerMiddleware(app.wsgi_app, profile_dir="profiles", restrictions=("olim", ".py"))
+# # Profiling
+# app.wsgi_app = ProfilerMiddleware(
+#     app.wsgi_app,
+#     profile_dir="profiles",
+#     restrictions=("olim", ".py"),
+# )
 
 # with app.app_context():
 #     db.create_all()
@@ -98,9 +101,7 @@ app.jinja_env.globals.update(
     has_permition=auth.role_has_permission,
     labels_types=LABELS,
     labels_rev=LABELS[::-1],
-    labels_array=json.dumps(
-        [label_values[0].replace(" ", "_") for label_values in LABELS]
-    ),
+    labels_array=json.dumps([label_values[0].replace(" ", "_") for label_values in LABELS]),
     has_learner=HAS_LEARNER,
     version=VERSION,
     has_help=HELP_URL is not None,

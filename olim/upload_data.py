@@ -3,8 +3,8 @@ from flask import flash, jsonify, redirect, render_template, request, session
 from flask_babel import _
 
 from . import app
+from .database import link_dataset_to_project, new_dataset
 from .tasks.upload_data import start_upload_chain
-from .database import new_dataset, link_dataset_to_project
 
 ACTIVE_TASKS = set()
 COMPLETED_TASKS = {}
@@ -52,7 +52,7 @@ def upload_data() -> ...:
         for project_id in projects:
             link_dataset_to_project(dataset.id, project_id, session["user_id"])
 
-        #try:
+        # try:
         # Handle sample data upload
         if upload_type == "sample_data":
             task_params = {
@@ -94,8 +94,7 @@ def upload_data() -> ...:
             return redirect(request.url)
         if task_id:
             ACTIVE_TASKS.add(task_id)
-            return redirect(request.url) # This fix a small bug in initial setup (nano)
-
+            return redirect(request.url)  # This fix a small bug in initial setup (nano)
 
     return render_template(
         "upload-data.html",
