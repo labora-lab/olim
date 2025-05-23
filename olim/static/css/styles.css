@@ -122,6 +122,16 @@
     margin-bottom: 20px;
 }
 
+.task {
+    padding: 0px 20px;
+    border-top: 1px;
+    border-left: 0px;
+    border-right: 0px;
+    border-bottom: 1px;
+    border-style: solid;
+    border-color: gray;
+}
+
 #toast-container {
     top: auto !important;
     right: auto !important;

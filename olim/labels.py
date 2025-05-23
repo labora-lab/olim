@@ -67,12 +67,11 @@ def create_label(project_id: int) -> ...:
         _("Label {label_name} successfully created").format(label_name=label.name),
         category="success",
     )
-    print(settings.HAS_LEARNER)
-    if settings.HAS_LEARNER:
-        try:
-            new_al(label)
-        except Exception as e:
-            print(f"Failed to create al for label {label.name}: {e}")
+
+    try:
+        new_al(label)
+    except Exception as e:
+        print(f"Failed to create al for label {label.name}: {e}")
     return redirect(url_for("labels", project_id=project_id))
 
 

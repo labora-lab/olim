@@ -18,6 +18,8 @@ ES_SERVER = os.getenv("ES_SERVER")
 if ES_SERVER == "":
     ES_SERVER = "http://localhost:9200/"
 
+LEARNER_URL = os.getenv("LEARNER_URL")
+
 debug = os.getenv("DEBUG")
 debug = debug or "false"
 DEBUG = debug.lower() == "true"
@@ -41,10 +43,12 @@ CHUNK_SIZE = 5 * 1024 * 1024
 ALLOWED_EXTENSIONS = {"csv", "tsv"}
 MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024  # 10GB
 
-LEARNER_URL = os.getenv("LEARNER_URL", None)
-LEARNER_KEY = os.getenv("LEARNER_KEY", None)
+WORK_FOLDER = os.getenv("WORK_FOLDER", "/app/work")
 
-HAS_LEARNER = not (LEARNER_URL in [None, ""] or LEARNER_KEY in [None, ""])
+RANDOM_SEED = os.getenv("RANDOM_SEED", None)
+
+if RANDOM_SEED is not None:
+    RANDOM_SEED = int(RANDOM_SEED)
 
 HELP_URL = os.getenv("HELP_URL", "")
 """URL to the API help page"""

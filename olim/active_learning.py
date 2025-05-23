@@ -10,13 +10,13 @@ from icecream import ic
 from requests.models import Response as HTTPResponse
 
 from . import app, db, settings
-from .database import Label, add_entry_label, get_label, get_labels, new_label
+from .database import Label, add_entry_label, get_label, get_labels, new_label, get_entry
 from .functions import get_highlights, render_entry
 
 
 def new_al(label: Label) -> None:
     data = {
-        "app_key": settings.LEARNER_KEY,
+        "app_key": label.project.datasets[0].learner_key,
         "user_id": session["user_id"],
         "label": label.name,
         "values": [label_value for label_value, *_ in settings.LABELS],
@@ -33,7 +33,7 @@ def sync_al(label: Label) -> HTTPResponse:
         new_al(label)
         sleep(4.0)
     data = {
-        "app_key": settings.LEARNER_KEY,
+        "app_key": label.project.datasets[0].learner_key,
         "user_id": session["user_id"],
         "values": [label_value for label_value, *_ in settings.LABELS],
         "label": {
@@ -50,43 +50,6 @@ def sync_al(label: Label) -> HTTPResponse:
         db.session.commit()
 
     return res
-
-
-@app.route("/al", methods=["GET"])
-def active_learning() -> ...:
-    labels_values = {label.id: {} for label in get_labels()}
-    possible_values = []
-    for label in get_labels():
-        for entry in label.entries:
-            if not entry.is_deleted:
-                if entry.value in labels_values[label.id]:
-                    labels_values[label.id][entry.value] += 1
-                else:
-                    labels_values[label.id][entry.value] = 1
-            if entry.value not in possible_values:
-                possible_values.append(entry.value)
-    possible_values.append("Total")
-    for label_id in labels_values:
-        labels_values[label_id]["Total"] = sum(labels_values[label_id].values())
-    labels = get_labels()
-    return render_template(
-        "al-list.html",
-        labels=labels,
-        values=labels_values,
-        possible_values=possible_values,
-    )
-
-
-@app.route("/al/new", methods=["POST"])
-def create_al() -> ...:
-    label = new_label(request.form.get("label"), session["user_id"])
-    new_al(label)
-
-    flash(
-        _("Active learning for {label_name} sucessfully created").format(label_name=label.name),
-        category="success",
-    )
-    return redirect("/al")
 
 
 @app.route("/al/<int:label_id>", methods=["GET", "POST"])
@@ -116,14 +79,14 @@ def catch_al(label_id: int) -> ...:
         # Assign label value if given
         if request.method == "POST":
             value_str = settings.LABELS[-1 - int(request.form["value"])][0]
+            entry = get_entry(request.form["entry_id"], by="id")
             data_req = {
-                "app_key": settings.LEARNER_KEY,
+                "app_key":label.project.datasets[0].learner_key,
                 "user_id": session["user_id"],
                 "label_id": label.al_key,
-                "entry_id": request.form["entry_id"],
+                "entry_id": entry.entry_id,
                 "value": value_str,
             }
-            ic(data_req)
             res = requests.put(f"{settings.LEARNER_URL}/al/add-value", data_req)
             if res.status_code != 200:
                 if "message" in res.json():
@@ -147,7 +110,7 @@ def catch_al(label_id: int) -> ...:
                 category="success",
             )
         data_req = {
-            "app_key": settings.LEARNER_KEY,
+            "app_key": label.project.datasets[0].learner_key,
             "user_id": session["user_id"],
             "label_id": label.al_key,
         }
@@ -176,7 +139,7 @@ def catch_al(label_id: int) -> ...:
             data["messages"] = res["messages"]
         else:
             data["messages"] = ""
-        data = render_entry(res["entry_id"], data)
+        data = render_entry(res["entry_id"], label.project.datasets[0].id, data)
         return render_template("al-entry.html", **data)
     except requests.exceptions.ConnectionError:
         flash(
@@ -188,32 +151,6 @@ def catch_al(label_id: int) -> ...:
         )
         return redirect(url_for("labels"))
 
-
-@app.route("/al/<int:label_id>/sync", methods=["GET", "POST"])
-def sync_label(label_id: int) -> ...:
-    label = get_label(label_id)
-    if label is None:
-        # TODO: Add error message as below
-        # flash(_("Label not found."), category="error")
-        return redirect("/labels")
-
-    try:
-        res = sync_al(label)
-
-        if res.status_code == 200:
-            flash(_("Labels successfully synced."), category="success")
-        else:
-            flash(_("Error syncing labels."), category="error")
-
-        return redirect("/labels")
-    except requests.exceptions.ConnectionError:
-        flash(
-            _("Failed to sync label {label_name}, please check learner connection.").format(
-                label_name=label.name
-            ),
-            category="error",
-        )
-        return redirect(f"/labels/{label_id}/settings")
 
 
 @app.route("/al/<int:label_id>/export", methods=["GET", "POST"])
@@ -227,7 +164,7 @@ def export_label(label_id: int) -> ...:
 
     try:
         data_req = {
-            "app_key": settings.LEARNER_KEY,
+            "app_key": label.project.datasets[0].learner_key,
             "user_id": session["user_id"],
             "label_id": label.al_key,
         }

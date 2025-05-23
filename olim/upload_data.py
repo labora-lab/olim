@@ -5,36 +5,17 @@ from flask import flash, jsonify, redirect, render_template, request, session
 from flask_babel import _
 
 from . import app
-from .database import get_dataset_stats, get_datasets, link_dataset_to_project, new_dataset
+from .database import get_dataset_stats, get_datasets, link_dataset_to_project, new_dataset, register_task, monitor_celery_tasks
 from .settings import ALLOWED_EXTENSIONS, CHUNK_SIZE, MAX_FILE_SIZE, UPLOAD_FOLDER
 from .tasks.upload_data import start_upload_chain
 
-ACTIVE_TASKS = set()
-COMPLETED_TASKS = {}
 
 
-@app.route("/task-status")
+@app.route("/task-list")
 def check_task_status() -> ...:
     """Check and return the status of all tracked tasks"""
-    status_updates = {}
 
-    for task_id in list(ACTIVE_TASKS):
-        result = AsyncResult(task_id)
-        if result.ready():
-            ACTIVE_TASKS.remove(task_id)
-            task_result = (
-                result.result
-                if result.successful()
-                else {"success": False, "errors": [str(result.result)]}
-            )
-            success = task_result.get("success", False)
-            errors = task_result.get("errors", [])
-
-            COMPLETED_TASKS[task_id] = {"success": success, "errors": errors}
-
-    status_updates = {"active": list(ACTIVE_TASKS), "completed": COMPLETED_TASKS}
-
-    return jsonify(status_updates)
+    return render_template("task-list.html")
 
 
 def ensure_dir(path) -> None:
@@ -106,6 +87,7 @@ def upload_data() -> ...:
         text_id = request.form.get("text_id")
         text = request.form.get("text")
         dataset_name = request.form.get("name")
+        learner_key = request.form.get("learner_key")
         projects = [int(p) for p in request.form.getlist("projects")]
         filename = request.form.get("filename")
         file_id = request.form.get("file_id")
@@ -115,7 +97,7 @@ def upload_data() -> ...:
             return redirect(request.url)
         filename = str(Path(UPLOAD_FOLDER) / f"{file_id}_{filename}")
 
-        dataset = new_dataset(dataset_name, session["user_id"])
+        dataset = new_dataset(dataset_name, session["user_id"], learner_key)
 
         for project_id in projects:
             link_dataset_to_project(dataset.id, project_id, session["user_id"])
@@ -161,13 +143,16 @@ def upload_data() -> ...:
             )
             return redirect(request.url)
         if task_id:
-            ACTIVE_TASKS.add(task_id)
+            register_task(
+                task_id=task_id,
+                task_name=_("Processing dataset {dataset_name}.").format(dataset_name=dataset_name),
+                user_id=session["user_id"],
+                kwargs=task_params,
+            )
             return redirect(request.url)  # This fix a small bug in initial setup (nano)
 
     return render_template(
         "upload-data.html",
-        active_tasks=list(ACTIVE_TASKS),
-        completed_tasks=COMPLETED_TASKS,
         CHUNK_SIZE=CHUNK_SIZE,
         datasets=get_datasets(non_empty=True),
         stats=get_dataset_stats(),

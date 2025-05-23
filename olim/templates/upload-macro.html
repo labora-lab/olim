@@ -10,6 +10,10 @@
                     <label for="name">{{ _('Dataset name') }}</label>
                 </div>
                 <div class="input-field">
+                    <input id="learner_key" type="text" name="learner_key" required>
+                    <label for="learner_key">{{ _('Learner Key') }}</label>
+                </div>
+                <div class="input-field">
                     <h6 style="margin-bottom: 15px;">{{ _('Link to Projects') }}</h6>
                     {% for project in projects %}
                     <p>
@@ -20,8 +24,9 @@
                         </label>
                     </p>
                     {% endfor %}
-                    <h6 class="red-text darker-4" style="margin-bottom: 15px;">{{ _('WARNING: For now datasets can only
-                        be linked to projects during upload, make sure to link to the disired projects.') }}</h6>
+                    <h6 class="red-text darker-4 center" style="margin-bottom: 15px;">{{ _('WARNING: For now datasets
+                        can only
+                        be linked to projects during upload, make sure to link to the disered projects.') }}</h6>
                 </div>
                 <div class="collection with-header">
                     <div class="collection-header">
@@ -89,10 +94,9 @@
                         </div>
                     </div>
                 </div>
-                <h6 class="teal-text darker-5" style="margin-bottom: 15px;">{{ _('During upload an active task
-                    might appear (or not, the display of tasks is still a little buggy), keep an eye on completed
-                    tasks
-                    it will show a green bar for a few minutes when the upload is completed.') }}</h6>
+                <h6 class="teal-text darker-5 center" style="margin-bottom: 15px;">{{ _('After upload keep eye on the
+                    tasks on
+                    the menu for the dataset processing.') }}</h6>
                 <div class="input-field center" id="send_btn">
                     <button class="btn waves-effect waves-light" type="submit">
                         {{ _('Upload data') }}

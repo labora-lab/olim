@@ -6,182 +6,38 @@
 {% block content %}
 <div class="container">
   <div class="row">
-    <!-- Active Tasks -->
-    <div class="col s12 m6">
-      <div class="card blue-grey lighten-5">
-        <div class="card-content">
-          <span class="card-title">{{ _('Active Tasks') }}</span>
-          <ul id="active-tasks-list" class="collection">
-            {% if active_tasks %} {% for task_id in active_tasks %}
-            <li class="collection-item">
-              <div class="valign-wrapper">
-                <div class="preloader-wrapper small active" style="margin-right: 10px">
-                  <div class="spinner-layer spinner-blue-only">
-                    <div class="circle-clipper left">
-                      <div class="circle"></div>
-                    </div>
-                    <div class="gap-patch">
-                      <div class="circle"></div>
-                    </div>
-                    <div class="circle-clipper right">
-                      <div class="circle"></div>
-                    </div>
-                  </div>
-                </div>
-                <span>Task {{ task_id }} <em>({{ _('Running') }})</em></span>
-              </div>
-            </li>
-            {% endfor %} {% else %}
-            <li class="collection-item grey-text">
-              {{ _('No active tasks.') }}
-            </li>
-            {% endif %}
-          </ul>
-        </div>
-      </div>
-    </div>
 
-    <!-- Completed Tasks -->
-    <div class="col s12 m6">
-      <div class="card blue-grey lighten-5">
-        <div class="card-content">
-          <span class="card-title">{{ _('Completed Tasks') }}</span>
-          <ul id="completed-tasks-list" class="collapsible popout">
-            {% if completed_tasks %} {% for task_id, info in
-            completed_tasks.items() %}
-            <li>
-              <div class="collapsible-header {{ 'green-text' if info.success else 'red-text' }}">
-                <i class="material-icons">
-                  {{ 'check_circle' if info.success else 'error' }}
-                </i>
-                Task {{ task_id }} — {{ _('Completed') if info.success else
-                _('Failed') }}
-              </div>
-              {% if info.errors %}
-              <div class="collapsible-body">
-                <strong>{{ _('Errors:') }}</strong>
-                <ul class="browser-default">
-                  {% for err in info.errors %}
-                  <li>{{ err }}</li>
-                  {% endfor %}
-                </ul>
-              </div>
-              {% endif %}
-            </li>
-            {% endfor %} {% else %}
-            <li>
-              <div class="collection-item grey-text">
-                {{ _('No completed tasks.') }}
-              </div>
-            </li>
-            {% endif %}
-          </ul>
-        </div>
-      </div>
+    {{upload.upload_form(projects=projects)}}
+
+    <div class="col card s12">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ _('Dataset Name') }}</th>
+            <th class="center">{{ _('Total Enties') }}</th>
+            <th class="center">{{ _('Projects') }}</th>
+            <th class="center">{{ _('Creator') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for dataset in datasets %}
+          <tr>
+            <td>{{ dataset.name }}</td>
+            <td class="center">{{ stats[dataset.id]['entry_count'] }}</td>
+            <td class="center">{{ ", ".join(stats[dataset.id]['projects']) }}</td>
+            <td class="center">{{ dataset.creator.name }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="center">{{ _('No datasets found') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
+  {% endblock %}
 
-  {{upload.upload_form(projects=projects)}}
-
-  <div class="col card s12">
-    <table>
-      <thead>
-        <tr>
-          <th>{{ _('Dataset Name') }}</th>
-          <th class="center">{{ _('Total Enties') }}</th>
-          <th class="center">{{ _('Projects') }}</th>
-          <th class="center">{{ _('Creator') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for dataset in datasets %}
-        <tr>
-          <td>{{ dataset.name }}</td>
-          <td class="center">{{ stats[dataset.id]['entry_count'] }}</td>
-          <td class="center">{{ ", ".join(stats[dataset.id]['projects']) }}</td>
-          <td class="center">{{ dataset.creator.name }}</td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="5" class="center">{{ _('No datasets found') }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-{% endblock %}
-
-{% block scripts %}
-{{ upload.upload_scripts(CHUNK_SIZE) }}
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // Task-status polling
-    function updateUI(data) {
-      // Active
-      const at = document.getElementById('active-tasks-list')
-      at.innerHTML = data.active.length
-        ? data.active
-          .map(
-            (id) => `
-            <li class="collection-item">
-              <div class="valign-wrapper">
-                <div class="preloader-wrapper small active" style="margin-right:10px">
-                  <div class="spinner-layer spinner-blue-only">
-                    <div class="circle-clipper left"><div class="circle"></div></div>
-                    <div class="gap-patch"><div class="circle"></div></div>
-                    <div class="circle-clipper right"><div class="circle"></div></div>
-                  </div>
-                </div>
-                <span>Task ${id} (Running)</span>
-              </div>
-            </li>
-          `
-          )
-          .join('')
-        : '<li class="collection-item grey-text">{{ _("No active tasks.") }}</li>'
-
-      // Completed
-      const ct = document.getElementById('completed-tasks-list')
-      ct.innerHTML = Object.entries(data.completed).length
-        ? Object.entries(data.completed)
-          .map(
-            ([id, info]) => `
-            <li>
-              <div class="collapsible-header ${info.success ? 'green-text' : 'red-text'
-              }">
-                <i class="material-icons">${info.success ? 'check_circle' : 'error'
-              }</i>
-                Task ${id} — ${info.success ? '{{ _("Completed") }}' : '{{ _("Failed") }}'
-              }
-              </div>
-              ${info.errors?.length
-                ? `
-                <div class="collapsible-body">
-                  <strong>{{ _("Errors:") }}</strong>
-                  <ul class="browser-default">
-                    ${info.errors.map((e) => `<li>${e}</li>`).join('')}
-                  </ul>
-                </div>`
-                : ''
-              }
-            </li>
-          `
-          )
-          .join('')
-        : '<li><div class="collection-item grey-text">{{ _("No completed tasks.") }}</div></li>'
-      M.Collapsible.init(ct)
-    }
-
-    function fetchStatus() {
-      fetch('{{ url_for("check_task_status") }}')
-        .then((r) => r.json())
-        .then(updateUI)
-        .catch(console.error)
-    }
-
-    fetchStatus()
-    setInterval(fetchStatus, 5000)
-  })
-</script>
-{% endblock %}
+  {% block scripts %}
+  {{ upload.upload_scripts(CHUNK_SIZE) }}
+  {% endblock %}

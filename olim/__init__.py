@@ -16,7 +16,7 @@ from .settings import (
     DB_PORT,
     DB_USER,
     DEBUG,
-    HAS_LEARNER,
+    LEARNER_URL,
     HELP_URL,
     LABELS,
     LANGUAGES,
@@ -102,7 +102,7 @@ app.jinja_env.globals.update(
     labels_types=LABELS,
     labels_rev=LABELS[::-1],
     labels_array=json.dumps([label_values[0].replace(" ", "_") for label_values in LABELS]),
-    has_learner=HAS_LEARNER,
+    has_learner=LEARNER_URL,
     version=VERSION,
     has_help=HELP_URL is not None,
 )

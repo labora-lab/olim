@@ -54,7 +54,8 @@
                         </a>
                         {% endif %}
                         {% if has_learner %}
-                        <a class="btn waves-effect waves-light tooltipped" href="#"
+                        <a class="btn waves-effect waves-light tooltipped"
+                            href="{{ url_for('catch_al', label_id=label.id) }}"
                             data-tooltip="{{ _('Open active learling queue') }}">
                             <i class="material-icons right">send</i>
                             {{ _('Learn') }}

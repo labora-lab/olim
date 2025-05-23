@@ -6,6 +6,7 @@ x-app-base: &app-base
     # - ./data:/app/data
   networks:
     - olim-es
+    - olim-learner_main
   depends_on:
     - db
   restart: unless-stopped
@@ -20,9 +21,9 @@ x-app-env: &app-env
   DEBUG: "${DEBUG:-false}"
   ES_SERVER: "http://olim_es:9200"
   LEARNER_URL: "http://olim-learner:42010"
-  LEARNER_KEY: ""
+  WORK_FOLDER: /app/work
   LABELS: "LabelTypes.YES_NO"
-  HELP_URL: ""
+  HELP_URL: "${HELP_URL}"
   REDIS_HOST: "olim_redis"
 
 services:
@@ -114,3 +115,5 @@ volumes:
 networks:
   olim-es:
     driver: bridge
+  olim-learner_main:
+    external: true

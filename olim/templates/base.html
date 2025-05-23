@@ -72,6 +72,12 @@
             {% else %}
             <li><a href="{{ url_for('logout') }}">{{ _('Logout') }}</a></li>
             {% endif %}
+            <li style="padding: 10px 20px;">
+                <h5>{{_('Tasks')}}</h5>
+            </li>
+            <li id="task-list">
+                {% include "task-list.html"%}
+            </li>
         </ul>
         {% endblock %}
         <nav>
@@ -202,8 +208,19 @@
     <script type="text/javascript" src="{{url_for('static', filename='js/materialize.min.js')}}"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/scripts.js')}}"></script>
     <script type="text/javascript">
-        $(document).ready(function () {
+        document.addEventListener('DOMContentLoaded', function () {
             $('.sidenav').sidenav();
+
+            function refreshTaskList() {
+                $.get('{{url_for("check_task_status")}}', function (data) {
+                    $('#task-list').html(data);
+                })
+                    .fail(function () {
+                        $('#task-list').html('{{_("Error loading tasks")}}');
+                    });
+            }
+            // Optional: Auto-refresh every 30 seconds
+            setInterval(refreshTaskList, 10000);
         });
         LABELS = {{ labels_array | safe }}
     </script>

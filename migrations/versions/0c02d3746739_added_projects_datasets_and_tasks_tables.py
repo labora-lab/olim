@@ -57,6 +57,7 @@ def upgrade():
         "datasets",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
+        sa.Column("learner_key", sa.String(), nullable=True),
         sa.Column("created", sa.DateTime(), nullable=False),
         sa.Column("created_by", sa.Integer(), nullable=False),
         sa.Column("is_deleted", sa.Boolean(), nullable=False),

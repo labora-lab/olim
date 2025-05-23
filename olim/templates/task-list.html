@@ -1,0 +1,25 @@
+<ul class="collection">
+    {% if active_tasks %}
+    {% for task in active_tasks %}
+    <li class="collection-item grey-text darker-4">
+        <span>{{ task['name'] }} <em>({{ _('Running') }})</em></span>
+    </li>
+    {% endfor %}
+    {% endif %}
+    {% if completed_tasks %}
+    {% for task in completed_tasks[:20] %}
+    <li class="collection-item{{'tooltipped' if task.error else ''}}  {{ 'green-text' if task['status'] == 'SUCCESS' else 'red-text' }}"
+        {% if task.error %} data-tooltip="{{';'.join(task.error)}}" {% endif %}>
+        <i class="material-icons right">
+            {{ 'check_circle' if task['status'] == "SUCCESS" else 'error' }}
+        </i> {{ task.name }} — {{ _('Completed') if task['status'] == "SUCCESS" else
+        _('Failed') }}
+    </li>
+    {% endfor %}
+    {% endif %}
+    {% if not (active_tasks or completed_tasks) %}
+    <li class="collection-item grey-text darker-4">
+        {{ _('No tasks.') }}
+    </li>
+    {% endif %}
+</ul>

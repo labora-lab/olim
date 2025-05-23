@@ -13,6 +13,7 @@ from .database import (
     get_users,
     init_db,
     insert_user,
+    monitor_celery_tasks,
     load_session,
     new_label,
     new_project,
@@ -140,35 +141,33 @@ def check_permission() -> ...:
                 return redirect("/")
 
 
-@app.before_request
-def check_elasticsearch() -> ...:
-    if check_is_setup() and not role_has_permission(role="guest"):
-        es = es = Elasticsearch([settings.ES_SERVER])
-        try:
-            # Attempt to ping the Elasticsearch server
-            if es.ping():
-                return None  # Elasticsearch is available, proceed with the request
-            else:
-                raise Exception("Elasticsearch server is not responding")
+# @app.before_request
+# def check_elasticsearch() -> ...:
+#     if check_is_setup() and not role_has_permission(role="guest"):
+#         es = es = Elasticsearch([settings.ES_SERVER])
+#         try:
+#             # Attempt to ping the Elasticsearch server
+#             if es.ping():
+#                 return None  # Elasticsearch is available, proceed with the request
+#             else:
+#                 raise Exception("Elasticsearch server is not responding")
 
-        except Exception as e:
-            flash(
-                _(
-                    "Elasticsearch server is unavailable: {error}."
-                    "If you just started the services, please wait for "
-                    "a few minutes, contact admin if problem persists."
-                ).format(error=str(e)),
-                category="error",
-            )
-            # Render base.html immediately and stop further processing of this request
-            return render_template("base.html")
+#         except Exception as e:
+#             flash(
+#                 _(
+#                     "Elasticsearch server is unavailable: {error}."
+#                     "If you just started the services, please wait for "
+#                     "a few minutes, contact admin if problem persists."
+#                 ).format(error=str(e)),
+#                 category="error",
+#             )
+#             # Render base.html immediately and stop further processing of this request
+#             return render_template("base.html")
 
 
 @app.before_request
 def check_backend() -> ...:
-    if request.endpoint in settings.NEED_LEARNER and (
-        settings.LEARNER_KEY is None or settings.LEARNER_URL is None
-    ):
+    if request.endpoint in settings.NEED_LEARNER and settings.LEARNER_URL is None:
         flash(
             _(
                 "{requested_url} needs a OLIM-learner connection, see https://gitlab.com/nanogennari/olim-learner."
@@ -187,6 +186,15 @@ def add_projects() -> ...:
             projects=list(get_projects()),
             project_id=session["project_id"],
             project_name=get_project(session["project_id"]).name,  # type: ignore
+        )
+
+@app.before_request  # type: ignore
+def add_tasks() -> ...:
+    if check_is_setup():
+        tasks = monitor_celery_tasks()
+        app.jinja_env.globals.update(
+            active_tasks=tasks["active"],
+            completed_tasks=tasks["completed"],
         )
 
 
