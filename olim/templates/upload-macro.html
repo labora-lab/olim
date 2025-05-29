@@ -10,10 +10,6 @@
                     <label for="name">{{ _('Dataset name') }}</label>
                 </div>
                 <div class="input-field">
-                    <input id="learner_key" type="text" name="learner_key" required>
-                    <label for="learner_key">{{ _('Learner Key') }}</label>
-                </div>
-                <div class="input-field">
                     <h6 style="margin-bottom: 15px;">{{ _('Link to Projects') }}</h6>
                     {% for project in projects %}
                     <p>
@@ -34,7 +30,7 @@
                             {{ _('Data Format') }}
                         </h5>
                     </div>
-                    <a href="#!" class="collection-item upload-option" data-value="simple_text">
+                    <a href="#!" class="collection-item upload-option" data-value="single_text">
                         <span class="title">{{ _('Text Format') }}</span>
                         <p>
                             {{ _('Use this option if your CSV is composed of independent
@@ -82,15 +78,15 @@
 
                     <input type="hidden" name="filename" id="filename" value="">
                     <input type="hidden" name="file_id" id="file_id" value="">
-                    <input type="hidden" name="upload_type" id="upload_type" value="simple_text">
+                    <input type="hidden" name="upload_type" id="upload_type" value="single_text">
                     <div id="additional-fields">
                         <div class="input-field">
-                            <input id="text_id" name="text_id" type="text" />
-                            <label for="text_id">{{ _('Column for Text ID') }}</label>
+                            <input id="id_column" name="id_column" type="text" />
+                            <label for="id_column">{{ _('Column for Text ID') }}</label>
                         </div>
                         <div class="input-field">
-                            <input id="text" name="text" type="text" />
-                            <label for="text">{{ _('Column for Text') }}</label>
+                            <input id="text_column" name="text_column" type="text" />
+                            <label for="text_column">{{ _('Column for Text') }}</label>
                         </div>
                     </div>
                 </div>
@@ -127,13 +123,13 @@
                 opt.classList.add('active')
                 const val = opt.getAttribute('data-value')
                 uploadType.value = val
-                addFields.style.display = val === 'simple_text' ? 'block' : 'none'
+                addFields.style.display = val === 'single_text' ? 'block' : 'none'
                 fileSelector.style.display = val === 'sample_data' ? 'none' : 'block'
             })
         })
         // Default
         document
-            .querySelector('.upload-option[data-value="simple_text"]')
+            .querySelector('.upload-option[data-value="single_text"]')
             .classList.add('active')
     });
     const CHUNK_SIZE = {{ CHUNK_SIZE }};

@@ -4,13 +4,13 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import TypedDict
 
+from celery.result import AsyncResult
 from flask import session
 from sqlalchemy import ScalarResult, Select, func
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import Mapped, declared_attr
-from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.security import generate_password_hash
-from celery.result import AsyncResult
 
 from . import db
 
@@ -142,6 +142,10 @@ class Label(db.Model, CreationControl):
     al_key: Mapped[str] = db.mapped_column(nullable=True)
     priority: Mapped[float] = db.mapped_column(default=1.0, nullable=False)
     project_id: Mapped[int] = db.mapped_column(db.ForeignKey("projects.id"), nullable=False)
+
+    metrics: Mapped[dict] = db.mapped_column(db.JSON, nullable=True)
+    cache: Mapped[dict] = db.mapped_column(db.JSON, nullable=True)
+    training_counter: Mapped[int] = db.mapped_column(db.Integer, default=0)
 
     # Relationships
     entries: Mapped[list["LabelEntry"]] = db.relationship(
@@ -1026,8 +1030,9 @@ def get_labeled(label_id) -> Select:
 
 # region CeleryTask management
 # -----------------------------
-def register_task(task_id: str, task_name: str, user_id: int,
-                args: dict | None = None, kwargs: dict | None = None) -> CeleryTask:
+def register_task(
+    task_id: str, task_name: str, user_id: int, args: dict | None = None, kwargs: dict | None = None
+) -> CeleryTask:
     """Register a new Celery task in the database.
 
     Args:
@@ -1043,11 +1048,7 @@ def register_task(task_id: str, task_name: str, user_id: int,
     try:
         # Create and save the task record
         task = CeleryTask.create_task(
-            task_id=task_id,
-            task_name=task_name,
-            user_id=user_id,
-            args=args,
-            kwargs=kwargs
+            task_id=task_id, task_name=task_name, user_id=user_id, args=args, kwargs=kwargs
         )
 
         db.session.add(task)
@@ -1056,7 +1057,7 @@ def register_task(task_id: str, task_name: str, user_id: int,
 
     except SQLAlchemyError as e:
         db.session.rollback()
-        print(f"Failed to register task {task_id}: {str(e)}")
+        print(f"Failed to register task {task_id}: {e!s}")
         raise
 
 
@@ -1065,6 +1066,7 @@ class TaskStatus(TypedDict):
     name: str
     status: str
     error: str | None
+
 
 def monitor_celery_tasks() -> dict[str, list[TaskStatus]]:
     """
@@ -1075,7 +1077,7 @@ def monitor_celery_tasks() -> dict[str, list[TaskStatus]]:
     """
     # Get all active/waiting tasks from database
     active_tasks = CeleryTask.query.filter(
-        CeleryTask.is_deleted == False # noqa
+        CeleryTask.is_deleted == False  # noqa
     ).all()
 
     pending = []
@@ -1102,25 +1104,24 @@ def monitor_celery_tasks() -> dict[str, list[TaskStatus]]:
                     db.session.commit()
                 except Exception as e:
                     db.session.rollback()
-                    print(f"Error updating task {task.id}: {str(e)}")
+                    print(f"Error updating task {task.id}: {e!s}")
                     continue
 
         # Categorize based on updated status
         if task.status in {"SUCCESS", "FAILURE", "REVOKED"}:
             if (datetime.now() - task.date_completed) <= timedelta(hours=24):
-                completed.append({
-                    "id": task.id,
-                    "name": task.task_name,
-                    "error": task.error,
-                    "status": task.status
-                })
+                completed.append(
+                    {
+                        "id": task.id,
+                        "name": task.task_name,
+                        "error": task.error,
+                        "status": task.status,
+                    }
+                )
         else:
-            pending.append({
-                "id": task.id,
-                "name": task.task_name,
-                "status": task.status
-            })
-    completed = completed[:min(10,len(completed))]
+            pending.append({"id": task.id, "name": task.task_name, "status": task.status})
+    completed = completed[: min(10, len(completed))]
     return {"active": pending, "completed": completed}
+
 
 # endregion

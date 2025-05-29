@@ -132,6 +132,9 @@ def entry(
             "hidden_labels": hidden_labels,
         }
     )
+
+    print(data)
+
     return render_template("entry.html", **data)
 
 

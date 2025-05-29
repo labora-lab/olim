@@ -12,7 +12,7 @@ from ..settings import QUEUES_PATH
 
 
 def get_queue_path(queue_id: str | None = None, project_id: int | None = None) -> Path:
-    queue_path = Path(QUEUES_PATH) / str(project_id)
+    queue_path = QUEUES_PATH / str(project_id)
 
     queue_path.mkdir(parents=True, exist_ok=True)
 

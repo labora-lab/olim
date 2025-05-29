@@ -5,8 +5,7 @@ import pandas as pd
 from flask import Response, flash, redirect, render_template, request, session, url_for
 from flask_babel import _
 
-from . import app, db, entry_types, settings
-from .active_learning import new_al
+from . import app, db, entry_types
 from .database import (
     del_label,
     get_dataset,
@@ -68,10 +67,6 @@ def create_label(project_id: int) -> ...:
         category="success",
     )
 
-    try:
-        new_al(label)
-    except Exception as e:
-        print(f"Failed to create al for label {label.name}: {e}")
     return redirect(url_for("labels", project_id=project_id))
 
 

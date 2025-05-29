@@ -1,11 +1,12 @@
 import os
 from datetime import timedelta
+from pathlib import Path
 from typing import ClassVar
 
 VERSION = "0.2.0-dev"
 """Version of the application"""
 
-ES_INDEX = "patients-texts"
+ES_INDEX = "dataset-{dataset_id}"
 """Elasticserach index to load patient data"""
 
 ES_LABEL_INDEX = "labels"
@@ -17,8 +18,6 @@ ES_TO_HIDE_INDEX = "hidden-texts"
 ES_SERVER = os.getenv("ES_SERVER")
 if ES_SERVER == "":
     ES_SERVER = "http://localhost:9200/"
-
-LEARNER_URL = os.getenv("LEARNER_URL")
 
 debug = os.getenv("DEBUG")
 debug = debug or "false"
@@ -36,14 +35,16 @@ SESSION_PERMANENT = True
 SESSION_USE_SIGNER = False
 PERMANENT_SESSION_LIFETIME = timedelta(days=30)
 
-QUEUES_PATH = "./queues"
+QUEUES_PATH = Path("/app/queues")
 
-UPLOAD_FOLDER = "/app/uploads/"
+UPLOAD_PATH = Path("/app/uploads/")
 CHUNK_SIZE = 5 * 1024 * 1024
 ALLOWED_EXTENSIONS = {"csv", "tsv"}
 MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024  # 10GB
 
-WORK_FOLDER = os.getenv("WORK_FOLDER", "/app/work")
+UPLOAD_BATCH_SIZE = 1000
+
+WORK_PATH = Path(os.getenv("WORK_FOLDER", "/app/work"))
 
 RANDOM_SEED = os.getenv("RANDOM_SEED", None)
 

@@ -1,16 +1,13 @@
 from collections.abc import Generator
+from typing import Any
 
-import click
 import pandas as pd
 from flask import render_template
 from tqdm import tqdm
 
+from olim.settings import ES_INDEX
 from olim.utils.es import es_search
 
-from ..cli import upload
-from ..upload_utils import es_bulk_upload
-
-ES_INDEX = "single_text_{dataset_id}"
 ENTRY_TYPE = "single_text"
 
 
@@ -27,45 +24,82 @@ def extract_texts(entry_id: str, dataset_id: int, **pars) -> pd.DataFrame:
     return pd.DataFrame({"entry_id": [entry_id], "text": res["_source"]["text"]})
 
 
-@click.command(
-    ENTRY_TYPE,
-    help="Upload data of the single_text type."
-    "\n\n\tCSV_FILE\tPath to the CSV file to load data."
-    "\n\n\tID_COLUMN\tColumn name to use as id for the entries (must be unique with all other entries in OLIM)."  # noqa: E501
-    "\n\n\tTEXT_COLUMN\tColumn name to use as the text.",
-)
-@click.argument("csv_file", type=click.Path(exists=True))
-@click.argument("id_column")
-@click.argument("text_column")
-@click.argument("dataset_id")
-def up_single_text(csv_file, id_column, text_column, dataset_id) -> None:
-    mapping = {"properties": {"texts": {"type": "text"}}}
+def generate_upload_batches(
+    filename: str,
+    id_column: str,
+    text_column: str,
+    batch_size: int = 1000,
+    **__,
+) -> Generator[list[dict[str, Any]]]:
+    """Generate batches of records with structured metadata
 
-    def doc_generator(df, index, id_column, text_column) -> Generator[dict]:
-        for _, row in tqdm(df.iterrows(), total=len(df)):
-            data = {
-                "_index": index,
-                "_id": f"{row[id_column]}",
-                "_source": {"text": row[text_column]},
+    Yields batches in the format:
+    [
+        {
+            "id": "entry_123",
+            "text": "Text content here",
+            "metadata": {
+                "date": "2023-01-01",
+                "source": "clinical notes",
+                ...
             }
-            for col in row.index:
-                if col != text_column:
-                    data["_source"][col] = row[col]
-            yield data
+        },
+        ...
+    ]
+    """
+    # Read in chunks
+    for chunk in tqdm(pd.read_csv(filename, chunksize=batch_size)):
+        # Clean chunk
+        chunk = chunk.drop_duplicates(subset=[id_column])
+        chunk = chunk.fillna(-1)
 
-    es_bulk_upload(
-        csv_file,
-        id_column,
-        text_column,
-        ES_INDEX.format(dataset_id=dataset_id),
-        dataset_id,
-        mapping,
-        doc_generator,
-        ENTRY_TYPE,
-    )
+        try:
+            if "date" in chunk:
+                chunk["date"] = pd.to_datetime(chunk["date"], format="mixed")
+        except Exception as e:
+            print(f"Failed to convert column dates to datetime: {e!s}")
 
+        # Convert to records
+        records = chunk.to_dict("records")
+        batch_entries = []
+        seen_ids = set()
 
-upload.add_command(up_single_text)
+        for record in records:
+            # Skip duplicates
+            record_id = record.get(id_column)
+            if not record_id or record_id in seen_ids:
+                print(f"Duplicated data on dataset id: {record_id}")
+                continue
+            seen_ids.add(record_id)
+
+            # Extract text content
+            text_content = record.get(text_column, "")
+
+            # Create metadata from other columns
+            metadata = {}
+            for key, value in record.items():
+                # Skip id/text columns and empty values
+                if key in [id_column, text_column]:
+                    continue
+                if pd.isna(value) or value == "" or value == -1:
+                    continue
+
+                # # Convert pandas types to native
+                # if pd.api.types.is_datetime64_any_dtype(value):
+                #     value = value.to_pydatetime()
+                # elif pd.api.types.is_timedelta64_dtype(value):
+                #     value = value.to_pytimedelta()
+                # elif pd.api.types.is_float_dtype(value) and value.is_integer():
+                #     value = int(value)
+
+                metadata[key] = value
+
+            # Create structured entry
+            batch_entries.append(
+                {"id": str(record_id), "text": str(text_content), "metadata": metadata}
+            )
+
+        yield batch_entries
 
 
 def search(

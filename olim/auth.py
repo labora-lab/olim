@@ -1,4 +1,3 @@
-from elasticsearch import Elasticsearch
 from flask import abort, flash, redirect, render_template, request, session, url_for
 from flask_babel import _
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -13,8 +12,8 @@ from .database import (
     get_users,
     init_db,
     insert_user,
-    monitor_celery_tasks,
     load_session,
+    monitor_celery_tasks,
     new_label,
     new_project,
     save_session,
@@ -82,6 +81,8 @@ def login_user(user_id: int) -> None:
 
 def get_user_role(user_id: str | None = None) -> str:
     user_id = user_id or session.get("user_id")
+    if user_id == "guest":
+        return "guest"
     user = get_user(user_id, by="id") if user_id is not None else None
     if user is None:
         return "guest"
@@ -167,6 +168,7 @@ def check_permission() -> ...:
 
 @app.before_request
 def check_backend() -> ...:
+    return None
     if request.endpoint in settings.NEED_LEARNER and settings.LEARNER_URL is None:
         flash(
             _(
@@ -187,6 +189,7 @@ def add_projects() -> ...:
             project_id=session["project_id"],
             project_name=get_project(session["project_id"]).name,  # type: ignore
         )
+
 
 @app.before_request  # type: ignore
 def add_tasks() -> ...:

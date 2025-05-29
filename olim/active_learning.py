@@ -1,31 +1,18 @@
 import json
 from time import sleep
 
-import numpy as np
-import pandas as pd
 import requests
-from flask import Response, flash, redirect, render_template, request, session, url_for
+from flask import flash, redirect, render_template, request, session, url_for
 from flask_babel import _
-from icecream import ic
 from requests.models import Response as HTTPResponse
 
 from . import app, db, settings
-from .database import Label, add_entry_label, get_label, get_labels, new_label, get_entry
+from .database import Label, add_entry_label, get_entry, get_label
 from .functions import get_highlights, render_entry
 
 
 def new_al(label: Label) -> None:
-    data = {
-        "app_key": label.project.datasets[0].learner_key,
-        "user_id": session["user_id"],
-        "label": label.name,
-        "values": [label_value for label_value, *_ in settings.LABELS],
-    }
-    res = requests.put(f"{settings.LEARNER_URL}/al/new-label", json=json.dumps(data)).json()
-
-    print(res["label_id"])
-    label.al_key = res["label_id"]
-    db.session.commit()
+    return None
 
 
 def sync_al(label: Label) -> HTTPResponse:
@@ -81,10 +68,10 @@ def catch_al(label_id: int) -> ...:
             value_str = settings.LABELS[-1 - int(request.form["value"])][0]
             entry = get_entry(request.form["entry_id"], by="id")
             data_req = {
-                "app_key":label.project.datasets[0].learner_key,
+                "app_key": label.project.datasets[0].learner_key,
                 "user_id": session["user_id"],
                 "label_id": label.al_key,
-                "entry_id": entry.entry_id,
+                "entry_id": entry.entry_id,  # type: ignore
                 "value": value_str,
             }
             res = requests.put(f"{settings.LEARNER_URL}/al/add-value", data_req)
@@ -152,67 +139,67 @@ def catch_al(label_id: int) -> ...:
         return redirect(url_for("labels"))
 
 
-
 @app.route("/al/<int:label_id>/export", methods=["GET", "POST"])
 def export_label(label_id: int) -> ...:
-    label = get_label(label_id)
+    return redirect("/")
+    # label = get_label(label_id)
 
-    if label is None:
-        # TODO: Add error message as below
-        # flash(_("Label not found."), category="error")
-        return redirect("/labels")
+    # if label is None:
+    #     # TODO: Add error message as below
+    #     # flash(_("Label not found."), category="error")
+    #     return redirect("/labels")
 
-    try:
-        data_req = {
-            "app_key": label.project.datasets[0].learner_key,
-            "user_id": session["user_id"],
-            "label_id": label.al_key,
-        }
+    # try:
+    #     data_req = {
+    #         "app_key": label.project.datasets[0].learner_key,
+    #         "user_id": session["user_id"],
+    #         "label_id": label.al_key,
+    #     }
 
-        if request.method == "POST":
-            # get alpha from request and add to data_req
-            alpha = request.form["alpha"]
-        else:
-            alpha = 0.95
+    #     if request.method == "POST":
+    #         # get alpha from request and add to data_req
+    #         alpha = request.form["alpha"]
+    #     else:
+    #         alpha = 0.95
 
-        data_req["alpha"] = alpha
+    #     data_req["alpha"] = alpha
 
-        ic(data_req)
+    #     ic(data_req)
 
-        res = requests.put(
-            f"{settings.LEARNER_URL}/al/export-predictions",
-            json=json.dumps(data_req),
-        ).json()
+    #     res = requests.put(
+    #         f"{settings.LEARNER_URL}/al/export-predictions",
+    #         json=json.dumps(data_req),
+    #     ).json()
 
-        if res["status"] == "success":
-            preds = res["predictions"]
-            preds_values = [pred[0] if len(pred) == 1 else np.nan for pred in preds.values()]
-            preds_ids = list(preds.keys())
-            pred_df = pd.DataFrame({"entry_id": preds_ids, "value": preds_values})
+    #     if res["status"] == "success":
+    #         preds = res["predictions"]
+    #         preds_values = [pred[0] if len(pred) == 1 else np.nan for pred in preds.values()]
+    #         preds_ids = list(preds.keys())
+    #         pred_df = pd.DataFrame({"entry_id": preds_ids, "value": preds_values})
 
-            ic(pred_df)
+    #         ic(pred_df)
 
-            # download json res["predictions"] as csv
-            return Response(
-                pred_df.to_csv(index=False),
-                mimetype="text/csv",
-                headers={
-                    "Content-disposition": "attachment; "
-                    f"filename={label.name}-{alpha}-predictions.csv"
-                },
-            )
-        else:
-            flash(
-                _("Error exporting predictions: {error}").format(error=res["error"]),
-                category="error",
-            )
-            return redirect("/labels")
-    except requests.exceptions.ConnectionError:
-        flash(
-            _(
-                "Failed to export predictions for label {label_name}, "
-                "please check learner connection."
-            ).format(label_name=label.name),
-            category="error",
-        )
-        return redirect(f"/labels/{label_id}/settings")
+    #         # download json res["predictions"] as csv
+    #         return Response(
+    #             pred_df.to_csv(index=False),
+    #             mimetype="text/csv",
+    #             headers={
+    #                 "Content-disposition": "attachment; "
+    #                 f"filename={label.name}-{alpha}-predictions.csv"
+    #             },
+    #         )
+    #     else:
+    #         flash(
+    #             _("Error exporting predictions: {error}").format(error=res["error"]),
+    #             category="error",
+    #         )
+    #         return redirect("/labels")
+    # except requests.exceptions.ConnectionError:
+    #     flash(
+    #         _(
+    #             "Failed to export predictions for label {label_name}, "
+    #             "please check learner connection."
+    #         ).format(label_name=label.name),
+    #         category="error",
+    #     )
+    #     return redirect(f"/labels/{label_id}/settings")
