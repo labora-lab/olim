@@ -4,13 +4,7 @@ from flask import flash, jsonify, redirect, render_template, request, session, u
 from flask_babel import _
 
 from . import app
-from .database import (
-    get_dataset_stats,
-    get_datasets,
-    link_dataset_to_project,
-    new_dataset,
-    register_task,
-)
+from .database import get_dataset_stats, get_datasets, link_dataset_to_project, new_dataset
 from .functions import check_is_setup
 from .settings import ALLOWED_EXTENSIONS, CHUNK_SIZE, MAX_FILE_SIZE, UPLOAD_PATH
 from .tasks.upload_data import start_upload_chain
@@ -170,16 +164,12 @@ def upload_data() -> ...:
 
         # Start upload task chain
         try:
-            task_id = start_upload_chain(
-                upload_type=upload_type, upload_params=upload_params, dataset_id=dataset.id
-            )
-
-            # Register task for tracking
-            register_task(
-                task_id=task_id,
-                task_name=_("Processing dataset {dataset_name}").format(dataset_name=dataset_name),
+            start_upload_chain(
+                upload_type=upload_type,
+                upload_params=upload_params,
+                dataset_id=dataset.id,
                 user_id=session["user_id"],
-                kwargs={"upload_type": upload_type, "dataset_id": dataset.id},
+                track_progress=True,
             )
 
             flash(_("Document processing started successfully"), "success")
