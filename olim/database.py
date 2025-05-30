@@ -7,7 +7,6 @@ from typing import TypedDict
 from celery.result import AsyncResult
 from flask import session
 from sqlalchemy import ScalarResult, Select, func
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import Mapped, declared_attr
 from werkzeug.security import generate_password_hash
@@ -1029,36 +1028,6 @@ def get_labeled(label_id) -> Select:
 
 
 # region CeleryTask management
-# -----------------------------
-def register_task(
-    task_id: str, task_name: str, user_id: int, args: dict | None = None, kwargs: dict | None = None
-) -> CeleryTask:
-    """Register a new Celery task in the database.
-
-    Args:
-        task_id: Celery-generated task UUID
-        task_name: Name of the task function
-        user_id: ID of user initiating the task
-        args: Positional arguments passed to the task
-        kwargs: Keyword arguments passed to the task
-
-    Returns:
-        CeleryTask: The created task record
-    """
-    try:
-        # Create and save the task record
-        task = CeleryTask.create_task(
-            task_id=task_id, task_name=task_name, user_id=user_id, args=args, kwargs=kwargs
-        )
-
-        db.session.add(task)
-        db.session.commit()
-        return task
-
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        print(f"Failed to register task {task_id}: {e!s}")
-        raise
 
 
 class TaskStatus(TypedDict):
