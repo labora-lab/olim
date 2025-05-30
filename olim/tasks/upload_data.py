@@ -13,11 +13,7 @@ from ..utils.es import create_index, get_es_conn
 
 @app.task(bind=True, name="upload.process_batch")
 def process_batch(
-    self,
-    batch_data: list[dict],
-    dataset_id: int,
-    entry_type: str,
-    index_name: str,
+    self, batch_data: list[dict], dataset_id: int, entry_type: str, index_name: str, **kwargs
 ) -> dict:
     """Process a batch of data through the entire pipeline"""
     try:
@@ -151,6 +147,7 @@ def upload_dataset(
     upload_type: str,
     upload_params: dict[str, Any],
     dataset_id: int,
+    **kwargs,
 ) -> dict:
     """Orchestrate dataset upload in batches without full memory load
 
@@ -225,11 +222,15 @@ def start_upload_chain(
     upload_type: str,
     upload_params: dict[str, Any],
     dataset_id: int,
+    user_id: int,
+    track_progress: bool = True,
 ) -> str:
-    """Start the upload task chain"""
+    """Start the upload task chain with automatic tracking"""
     task = upload_dataset.delay(
         upload_type=upload_type,
         upload_params=upload_params,
         dataset_id=dataset_id,
+        user_id=user_id,
+        track_progress=track_progress,
     )
     return task.id
