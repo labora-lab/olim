@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from flask import flash, jsonify, redirect, render_template, request, session
+from flask import flash, jsonify, redirect, render_template, request, session, url_for
 from flask_babel import _
 
 from . import app
@@ -11,6 +11,7 @@ from .database import (
     new_dataset,
     register_task,
 )
+from .functions import check_is_setup
 from .settings import ALLOWED_EXTENSIONS, CHUNK_SIZE, MAX_FILE_SIZE, UPLOAD_PATH
 from .tasks.upload_data import start_upload_chain
 
@@ -94,6 +95,10 @@ def upload_data() -> ...:
         GET: Rendered upload-data.html template
         POST: Redirect to same page with flash messages or error handling
     """
+    # If not setup and GET we need to go back to init-config
+    if request.method == "GET" and not check_is_setup():
+        return redirect(url_for("init_config"))
+
     if request.method == "POST":
         # Extract form data
         upload_type = request.form.get("upload_type")
@@ -105,11 +110,17 @@ def upload_data() -> ...:
         # Validate required fields
         if not upload_type:
             flash(_("Upload type is required"), "error")
-            return redirect(request.url)
+            if not check_is_setup():
+                return redirect(url_for("init_config"))
+            else:
+                return redirect(request.url)
 
         if not dataset_name:
             flash(_("Dataset name is required"), "error")
-            return redirect(request.url)
+            if not check_is_setup():
+                return redirect(url_for("init_config"))
+            else:
+                return redirect(request.url)
 
         # Create new dataset
         try:
@@ -120,7 +131,10 @@ def upload_data() -> ...:
                 link_dataset_to_project(dataset.id, int(project_id), session["user_id"])
         except Exception as e:
             flash(_("Error creating dataset: {error}").format(error=str(e)), "error")
-            return redirect(request.url)
+            if not check_is_setup():
+                return redirect(url_for("init_config"))
+            else:
+                return redirect(request.url)
 
         # Prepare upload parameters
         upload_params = {
