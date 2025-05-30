@@ -3,8 +3,9 @@ import json
 from flask import Flask, request, session
 from flask_babel import Babel
 from flask_migrate import Migrate
-from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+
+from flask_session import Session
 
 # from werkzeug.middleware.profiler import ProfilerMiddleware
 from .settings import (
