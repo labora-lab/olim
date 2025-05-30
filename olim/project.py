@@ -133,8 +133,6 @@ def entry(
         }
     )
 
-    print(data)
-
     return render_template("entry.html", **data)
 
 

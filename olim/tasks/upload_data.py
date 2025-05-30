@@ -8,7 +8,7 @@ from .. import app as flask_app, entry_types
 from ..celery_app import app
 from ..database import register_entries
 from ..settings import ES_INDEX, ES_SERVER, UPLOAD_BATCH_SIZE, WORK_PATH
-from ..utils.es import get_es_conn
+from ..utils.es import create_index, get_es_conn
 
 
 @app.task(bind=True, name="upload.process_batch")
@@ -78,8 +78,6 @@ def upload_to_elasticsearch(
             timeout=120,
             max_retries=20,
         )
-
-        print(index)
 
         # Generator for bulk upload
         def doc_generator() -> Generator[dict]:
@@ -164,42 +162,28 @@ def upload_dataset(
             - entry_type: Type of entries ('text' or 'patient')
         dataset_id: ID of dataset to associate with
     """
-    # try:
-    # Create Elasticsearch index
-    index_name = ES_INDEX.format(dataset_id=dataset_id)
-    mapping = {"properties": {"text": {"type": "text"}}}
-
-    es = get_es_conn(
-        hosts=ES_SERVER,
-        request_timeout=1000,
-        read_timeout=1000,
-        timeout=1000,
-        max_retries=20,
-    )
-
     try:
-        es.indices.create(index=index_name, mappings=mapping)
-    except Exception:
-        pass  # Index already exists
+        # Create Elasticsearch index
+        index_name = ES_INDEX.format(dataset_id=dataset_id)
+        create_index(index_name)
 
-    # Create batch generator
-    if not hasattr(entry_types, upload_type):
-        raise ValueError(f"Invalid upload type: {upload_type}")
-    type_module = getattr(entry_types, upload_type)
-    if not hasattr(type_module, "generate_upload_batches"):
-        raise NotImplementedError(
-            f"Upload type {upload_type} doesn't contain upload batches generation function."
+        # Create batch generator
+        if not hasattr(entry_types, upload_type):
+            raise ValueError(f"Invalid upload type: {upload_type}")
+        type_module = getattr(entry_types, upload_type)
+        if not hasattr(type_module, "generate_upload_batches"):
+            raise NotImplementedError(
+                f"Upload type {upload_type} doesn't contain upload batches generation function."
+            )
+        batch_generator = type_module.generate_upload_batches(
+            batch_size=UPLOAD_BATCH_SIZE,
+            **upload_params,
         )
-    batch_generator = type_module.generate_upload_batches(
-        batch_size=UPLOAD_BATCH_SIZE,
-        **upload_params,
-    )
 
-    # Process batches sequentially
-    total_records = 0
-    batch_count = 0
-    processed_batches = []
-    try:
+        # Process batches sequentially
+        total_records = 0
+        batch_count = 0
+        processed_batches = []
         for batch in batch_generator:
             batch_count += 1
             total_records += len(batch)

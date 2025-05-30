@@ -84,14 +84,6 @@ def generate_upload_batches(
                 if pd.isna(value) or value == "" or value == -1:
                     continue
 
-                # # Convert pandas types to native
-                # if pd.api.types.is_datetime64_any_dtype(value):
-                #     value = value.to_pydatetime()
-                # elif pd.api.types.is_timedelta64_dtype(value):
-                #     value = value.to_pytimedelta()
-                # elif pd.api.types.is_float_dtype(value) and value.is_integer():
-                #     value = int(value)
-
                 metadata[key] = value
 
             # Create structured entry
@@ -111,28 +103,37 @@ def search(
     dataset_id: int,
 ) -> list[dict]:
     all_must = must_terms + must_phrases
-    all_not = not_must_terms + not_must_phrases
     col_search = "text"
 
-    # Create query
-    es_query = {
-        "bool": {
-            "must": [
-                {"query_string": {"query": term, "fields": [col_search]}} for term in all_must
-            ],
-            "must_not": [
-                {"query_string": {"query": term, "fields": [col_search]}} for term in all_not
-            ],
-            "should": [],
-        },
-    }
+    # Build OR conditions for must clauses
+    should_clauses = [
+        *[{"match": {col_search: term}} for term in must_terms],
+        *[{"match_phrase": {col_search: phrase}} for phrase in must_phrases],
+    ]
 
-    # Runs query
+    # Build AND conditions for must_not clauses
+    must_not_clauses = [
+        *[{"match": {col_search: term}} for term in not_must_terms],
+        *[{"match_phrase": {col_search: phrase}} for phrase in not_must_phrases],
+    ]
+
+    # Create query with OR logic for must and AND for must_not
+    es_query = {"bool": {"must_not": must_not_clauses}}
+
+    if should_clauses:
+        # OR logic: at least one should clause must match
+        es_query["bool"]["should"] = should_clauses
+        es_query["bool"]["minimum_should_match"] = 1  # type: ignore
+    else:
+        # If no must conditions, match all documents that don't match must_not
+        es_query["bool"]["must"] = [{"match_all": {}}]
+
+    # Execute query
     results = es_search(query=es_query, size=number, index=ES_INDEX.format(dataset_id=dataset_id))[
         "hits"
     ]["hits"]
 
-    # Aggregates results
+    # Process results (unchanged from original)
     patients = []
     for patient in results:
         text = patient["_source"]["text"]

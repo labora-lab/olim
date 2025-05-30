@@ -144,6 +144,7 @@ def upload_data() -> ...:
 
         # Handle sample data specially
         if upload_type == "sample_data":
+            upload_type = "single_text"
             upload_params.update(
                 {
                     "filename": "./data/sample_data.csv",
