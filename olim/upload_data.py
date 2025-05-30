@@ -151,6 +151,7 @@ def upload_data() -> ...:
                     "text_column": "text",
                 }
             )
+            upload_type = "single_text"
         else:
             # Validate file upload for non-sample data
             if not filename or not file_id:
