@@ -174,3 +174,5 @@ test*
 flask_session/
 instance/
 queues/
+work/
+uploads/

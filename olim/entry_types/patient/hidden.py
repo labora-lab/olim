@@ -9,7 +9,7 @@ def have_hidden() -> bool:
     return False
 
 
-def get_all_hidden() -> list[dict]:
+def get_all_hidden(*_, **__) -> list[dict]:
     client = get_es_conn()
     return client.search(
         index=ES_TO_HIDE_INDEX,

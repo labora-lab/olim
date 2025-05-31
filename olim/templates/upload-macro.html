@@ -1,0 +1,201 @@
+{% macro upload_form(projects=[]) %}
+<!-- Upload Form -->
+<div class="row">
+    <form action="{{ url_for('upload_data') }}" method="post" enctype="multipart/form-data" class="col s12">
+        <div class="card">
+            <div class="card-content">
+                <span class="card-title center">{{ _('Upload Dataset') }}</span>
+                <div class="input-field">
+                    <input id="name" type="text" name="name">
+                    <label for="name">{{ _('Dataset name') }}</label>
+                </div>
+                <div class="input-field">
+                    <h6 style="margin-bottom: 15px;">{{ _('Link to Projects') }}</h6>
+                    {% for project in projects %}
+                    <p>
+                        <label>
+                            <input type="checkbox" name="projects" value="{{ project.id }}" class="filled-in" {% if
+                                projects|length==1 %}checked{% endif %}>
+                            <span>{{ project.name }}</span>
+                        </label>
+                    </p>
+                    {% endfor %}
+                    <h6 class="red-text darker-4 center" style="margin-bottom: 15px;">{{ _('WARNING: For now datasets
+                        can only
+                        be linked to projects during upload, make sure to link to the disered projects.') }}</h6>
+                </div>
+                <div class="collection with-header">
+                    <div class="collection-header">
+                        <h5 class="center" style="font-weight: 300">
+                            {{ _('Data Format') }}
+                        </h5>
+                    </div>
+                    <a href="#!" class="collection-item upload-option" data-value="single_text">
+                        <span class="title">{{ _('Text Format') }}</span>
+                        <p>
+                            {{ _('Use this option if your CSV is composed of independent
+                            texts. You need to specify which columns are equivalent to') }}
+                            <strong>text</strong> {{ _('and') }} <strong>text_id</strong>.
+                        </p>
+                    </a>
+                    <!-- <a href="#!" class="collection-item upload-option" data-value="patient_sheet">
+                        <span class="title">{{ _('Patient Format') }}</span>
+                        <p>
+                            {{ _('Use this option if your CSV file has the following
+                            columns:') }}
+                            <strong>patient_id, text_id, visitation_id, text_type, text,
+                                date</strong>. {% if has_learner %} <br /><strong class="red-text">{{ _('This format is
+                                NOT COMPATIBLE with OLIM-learner!')
+                                }}</strong>
+                            {% endif %}
+                        </p>
+                    </a> -->
+                    <a href="#!" class="collection-item upload-option" data-value="sample_data">
+                        <span class="title">{{ _('Sample Data') }}</span>
+                        <p>{{ _('Upload built-in sample data in Text format.') }}</p>
+                    </a>
+                </div>
+
+                <div id="file-selector" class="card-panel">
+                    <div id="upload-container">
+                        <div class="file-field input-field">
+                            <div class="btn">
+                                <span>{{ _('Select File') }}</span>
+                                <input type="file" id="large-file-input" name="file">
+                            </div>
+                            <div class="file-path-wrapper">
+                                <input class="file-path" type="text" name="filename"
+                                    placeholder="{{ _('Select file to upload') }}">
+                            </div>
+                        </div>
+
+                        <div class="progress" style="display: none;">
+                            <div class="determinate" style="width: 0%"></div>
+                        </div>
+
+                        <div id="upload-status" class="grey-text"></div>
+                    </div>
+
+                    <input type="hidden" name="filename" id="filename" value="">
+                    <input type="hidden" name="file_id" id="file_id" value="">
+                    <input type="hidden" name="upload_type" id="upload_type" value="single_text">
+                    <div id="additional-fields">
+                        <div class="input-field">
+                            <input id="id_column" name="id_column" type="text" />
+                            <label for="id_column">{{ _('Column for Text ID') }}</label>
+                        </div>
+                        <div class="input-field">
+                            <input id="text_column" name="text_column" type="text" />
+                            <label for="text_column">{{ _('Column for Text') }}</label>
+                        </div>
+                    </div>
+                </div>
+                <h6 class="teal-text darker-5 center" style="margin-bottom: 15px;">{{ _('After upload keep eye on the
+                    tasks on
+                    the menu for the dataset processing.') }}</h6>
+                <div class="input-field center" id="send_btn">
+                    <button class="btn waves-effect waves-light" type="submit">
+                        {{ _('Upload data') }}
+                        <i class="material-icons right">file_upload</i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endmacro %}
+
+{% macro upload_scripts(CHUNK_SIZE) %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        M.AutoInit()
+        M.Collapsible.init(document.querySelectorAll('.collapsible'))
+
+        // Upload-option handler
+        const options = document.querySelectorAll('.upload-option')
+        const uploadType = document.getElementById('upload_type')
+        const addFields = document.getElementById('additional-fields')
+        const fileSelector = document.getElementById('file-selector')
+
+        options.forEach((opt) => {
+            opt.addEventListener('click', () => {
+                options.forEach((o) => o.classList.remove('active'))
+                opt.classList.add('active')
+                const val = opt.getAttribute('data-value')
+                uploadType.value = val
+                addFields.style.display = val === 'single_text' ? 'block' : 'none'
+                fileSelector.style.display = val === 'sample_data' ? 'none' : 'block'
+            })
+        })
+        // Default
+        document
+            .querySelector('.upload-option[data-value="single_text"]')
+            .classList.add('active')
+    });
+    const CHUNK_SIZE = {{ CHUNK_SIZE }};
+
+    document.getElementById('large-file-input').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const progress = document.querySelector('.progress');
+        const progressBar = progress.querySelector('.determinate');
+        const status = document.getElementById('upload-status');
+
+        progress.style.display = 'block';
+        status.textContent = '{{ _("Preparing upload...") }}';
+
+        try {
+            const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+            const fileId = Math.random().toString(36).substring(2, 15);
+
+            for (let chunkNumber = 0; chunkNumber < totalChunks; chunkNumber++) {
+                const chunk = file.slice(chunkNumber * CHUNK_SIZE, (chunkNumber + 1) * CHUNK_SIZE);
+
+                const percent = Math.round((chunkNumber / totalChunks) * 100);
+                progressBar.style.width = `${percent}%`;
+                status.textContent = `{{ _("Uploading...") }} ${percent}%`;
+
+                const formData = new FormData();
+                formData.append('file', chunk);
+                formData.append('chunkNumber', chunkNumber);
+                formData.append('totalChunks', totalChunks);
+                formData.append('fileId', fileId);
+                formData.append('fileName', file.name);
+
+                const response = await fetch('/upload/large-file', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Project-ID': '{{ project_id }}'
+                    }
+                });
+
+                if (!response.ok) throw new Error('Upload failed');
+            }
+
+            progressBar.style.width = '100%';
+            status.textContent = '{{ _("Upload complete! Processing file...") }}';
+
+            // Finalize upload
+            const finalResponse = await fetch(`/upload/finalize/${fileId}?filename=${file.name}`, {
+                headers: {
+                    'X-Project-ID': '{{ project_id }}'
+                }
+            });
+
+            if (!finalResponse.ok) throw new Error('Finalization failed');
+
+            document.getElementById('filename').value = file.name;
+            document.getElementById('file_id').value = fileId;
+
+            status.textContent = '{{ _("File uploaded successfully!") }}';
+            setTimeout(() => progress.style.display = 'none', 2000);
+
+        } catch (error) {
+            progressBar.style.backgroundColor = 'red';
+            status.textContent = `{{ _("Upload failed:") }} ${error.message}`;
+        }
+    });
+</script>
+{% endmacro %}

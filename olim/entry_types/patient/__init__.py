@@ -4,7 +4,8 @@ from .extract import extract_texts
 from .hidden import get_all_hidden, have_hidden
 from .render import render
 from .search import search
-from .upload import up_patients
+
+# from .upload import up_patients
 
 __all__ = [
     "COMMANDS",
@@ -16,5 +17,5 @@ __all__ = [
     "have_hidden",
     "render",
     "search",
-    "up_patients",
+    # "up_patients",
 ]

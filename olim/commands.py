@@ -8,11 +8,12 @@ from .database import add_entry_label, get_label
 from .functions import manage_label_in_session
 
 
-def add_label(**args) -> dict:
-    entry_id = args.get("entry_id", None)
-    label_id = args.get("label_id", None)
+def add_label(**args) -> dict[str, str]:
+    entry_id = args.get("entry_id")
+    label_id = args.get("label_id")
     value = args.get("value", "")
-    label_obj = get_label(label_id)
+    # TODO: handle the typecheck correctly
+    label_obj = get_label(label_id)  # type: ignore [label_id as str | Unknown is safe]
     if label_obj is None:
         raise Exception("Label not found")
 
@@ -20,7 +21,8 @@ def add_label(**args) -> dict:
 
     try:
         add_entry_label(label_id, entry_id, session["user_id"], value)
-    except Exception:
+    except Exception as e:
+        print(e)
         return {
             "type": "error",
             "text": _("Failed writing to database"),
@@ -50,7 +52,7 @@ def add_label(**args) -> dict:
         }
 
 
-def manage_label(**args) -> dict | None:
+def manage_label(**args) -> dict[str, str] | None:
     str_label = args.get("label", None)
     label_id = args.get("label_id", None)
     mode = args.get("mode", "add")
@@ -63,7 +65,8 @@ def manage_label(**args) -> dict | None:
 
     try:
         manage_label_in_session(label_id, mode)
-    except Exception:
+    except Exception as e:
+        print(e)
         return {
             "type": "error",
             "text": _("Error hidding label."),
@@ -82,7 +85,7 @@ def manage_label(**args) -> dict | None:
         }
 
 
-def update_session(**args) -> dict:
+def update_session(**args) -> dict[str, str]:
     parameter = args.get("parameter", None)
     data = args.get("data", None)
 
@@ -121,7 +124,6 @@ ERROR_NOT_FOUND = {"type": "error", "text": _("Command {command} not found")}
 
 @app.route("/commands")
 def commands() -> str:
-    response: dict
     if "cmd" in request.args:
         cmd = request.args["cmd"]
         if cmd in COMMANDS:
@@ -133,10 +135,12 @@ def commands() -> str:
     else:
         cmd = None
         response = ERROR_NO_CMD
-    response["cmd"] = cmd
-    response["request"] = request.args
+    response["cmd"] = cmd  # type: ignore [response is a generic dict]
+    response["request"] = request.args  # type: ignore [response is a generic dict]
     if "callback" not in response and "callback" in request.args:
         response["callback"] = request.args["callback"]
     if "fail_callback" not in response and "fail_callback" in request.args:
         response["fail_callback"] = request.args["fail_callback"]
+
+    # TODO: json.dumps is the correct serializer for API?
     return json.dumps(response)
