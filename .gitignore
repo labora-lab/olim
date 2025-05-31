@@ -125,6 +125,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv-dev
 env/
 venv/
 ENV/
@@ -173,3 +174,5 @@ test*
 flask_session/
 instance/
 queues/
+work/
+uploads/

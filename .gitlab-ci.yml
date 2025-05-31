@@ -7,6 +7,7 @@ cache:
   key: $CI_COMMIT_REF_SLUG
   paths:
     - .venv/
+    - .venv-dev/
     - .cache/uv/
   policy: pull-push
 
@@ -18,8 +19,8 @@ variables:
 .ci_template: &ci_setup
   image: ghcr.io/astral-sh/uv:$UV_VERSION-python$PYTHON_VERSION-$BASE_LAYER
   before_script:
-    - apt update && apt install -y build-essential
-    - make install
+    - apt update && apt install -y build-essential openssl libpq-dev
+    - make install-dev
 
 code_checks:
   <<: *ci_setup

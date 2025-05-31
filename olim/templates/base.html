@@ -22,26 +22,47 @@
     <header>
         {% block menu %}
         <ul id="slide-out" class="sidenav">
+            {% if has_permition('redirect_to_project') %}
+            <ul id="projects-dropdown-2" class="dropdown-content" style="margin-top: 40px;">
+                {% for project in projects %}
+                <li><a href="/{{ project.id }}">{{ project.name }}</a></li>
+                {% endfor %}
+            </ul>
+            <li>
+                <a class="dropdown-trigger" href="#" data-target="projects-dropdown-2">
+                    <i class="material-icons">arrow_drop_down</i> {{project_name}}
+                </a>
+            </li>
+            <li style="padding: 10px 20px;">
+                <h5>{{_('Project: {project_name}'.format(project_name=project_name))}}</h5>
+            </li>
             {% if has_permition('labels') %}
-            <li><a href="{{ url_for('labels') }}">{{ _('Labels') }}</a></li>
+            <li><a href="{{ url_for('labels', project_id = project_id) }}">{{ _('Labels') }}</a></li>
             {% endif %}
             {% if has_permition('search') %}
-            <li><a href="{{ url_for('search') }}">{{ _('Search') }}</a></li>
+            <li><a href="{{ url_for('search', project_id = project_id) }}">{{ _('Search') }}</a></li>
             {% endif %}
-            {% if has_permition('entry') %}
-            <li><a href="{{ url_for('entry') }}">{{ _('Open Entries') }}</a></li>
-            {% endif %}
-            {% if has_permition('new_queue') %}
-            <li><a href="{{ url_for('new_queue') }}">{{ _('Queues') }}</a></li>
+            <!-- {% if has_permition('entry') %}
+            <li><a href="{{ url_for('entry', project_id = project_id) }}">{{ _('Open Entries') }}</a></li>
+            {% endif %} -->
+            {% if has_permition('queue') %}
+            <li><a href="{{ url_for('queue', project_id = project_id) }}">{{ _('Queues') }}</a></li>
             {% endif %}
             {% if have_hidden() and has_permition('hidden') %}
-            <li><a href="{{ url_for('hidden') }}">{{ _('Hidden texts') }}</a></li>
+            <li><a href="{{ url_for('hidden', project_id = project_id) }}">{{ _('Hidden texts') }}</a></li>
             {% endif %}
+            {% endif %}
+            <li style="padding: 10px 20px;">
+                <h5>{{_('Settings')}}</h5>
+            </li>
             {% if has_permition('users') %}
             <li><a href="{{ url_for('users') }}">{{ _('Users') }}</a></li>
             {% endif %}
             {% if has_permition('user_settings') %}
             <li><a href="{{ url_for('user_settings') }}">{{ _('account_settings_1') }}</a></li>
+            {% endif %}
+            {% if has_permition('projects') %}
+            <li><a href="{{ url_for('projects') }}">{{_("Manage Projects")}}</a></li>
             {% endif %}
             {% if has_permition('upload_data') %}
             <li><a href="{{ url_for('upload_data') }}">{{_("Upload Data")}}</a></li>
@@ -51,18 +72,40 @@
             {% else %}
             <li><a href="{{ url_for('logout') }}">{{ _('Logout') }}</a></li>
             {% endif %}
+            <li style="padding: 10px 20px;">
+                <h5>{{_('Tasks')}}</h5>
+            </li>
+            <li id="task-list">
+                {% include "task-list.html"%}
+            </li>
         </ul>
         {% endblock %}
         <nav>
             <div class="nav-wrapper cyan darken-4">
-                <span class="brand-logo left tooltipped center"
-                    data-tooltip="{{ _('Open Labeller for Iterative Machine learning') }}">
-                    OLIM
-                </span>
+                <div class="center">
+                    <span class="brand-logo tooltipped" style="margin: 0 -40px;"
+                        data-tooltip="{{ _('Open Labeller for Iterative Machine learning') }}">
+                        OLIM
+                    </span>
+                </div>
                 {% block menuicon %}
+                {% if has_permition('redirect_to_project') %}
                 <div class="nav-mobile left">
                     <span data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></span>
                 </div>
+                <ul id="projects-dropdown" class="dropdown-content" style="margin-top: 40px;">
+                    {% for project in projects %}
+                    <li><a href="/{{ project.id }}">{{ project.name }}</a></li>
+                    {% endfor %}
+                </ul>
+                <div class="left hide-on-med-and-down">
+                    <a class="btn waves-effect waves-light teal darken-2 dropdown-trigger"
+                        data-target="projects-dropdown">
+                        <i class="material-icons left" style="margin: -15px 0 0 -10px;">arrow_drop_down</i>
+                        {{project_name}}
+                    </a>
+                </div>
+                {% endif %}
                 {% endblock %}
             </div>
         </nav>
@@ -141,7 +184,7 @@
     </div>
     <main>
         <div class="container" style="margin-top: 20px;">
-            {% block content %}{% endblock %}
+            {% block content %}{{content}}{% endblock %}
         </div>
     </main>
     <footer class="page-footer cyan darken-3">
@@ -165,8 +208,19 @@
     <script type="text/javascript" src="{{url_for('static', filename='js/materialize.min.js')}}"></script>
     <script type="text/javascript" src="{{url_for('static', filename='js/scripts.js')}}"></script>
     <script type="text/javascript">
-        $(document).ready(function () {
+        document.addEventListener('DOMContentLoaded', function () {
             $('.sidenav').sidenav();
+
+            function refreshTaskList() {
+                $.get('{{url_for("check_task_status")}}', function (data) {
+                    $('#task-list').html(data);
+                })
+                    .fail(function () {
+                        $('#task-list').html('{{_("Error loading tasks")}}');
+                    });
+            }
+            // Optional: Auto-refresh every 30 seconds
+            setInterval(refreshTaskList, 10000);
         });
         LABELS = {{ labels_array | safe }}
     </script>

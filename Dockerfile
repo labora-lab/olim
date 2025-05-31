@@ -3,16 +3,10 @@ FROM python:3.13-slim-bookworm
 EXPOSE 42000
 
 # The installer requires curl (and certificates) to download the release archive
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates build-essential openssl libpq-dev
 
-# Download the latest installer
-ADD https://astral.sh/uv/install.sh /uv-installer.sh
-
-# Run the installer then remove it
-RUN sh /uv-installer.sh && rm /uv-installer.sh
-
-# Ensure the installed binary is on the `PATH`
-ENV PATH="/root/.local/bin/:$PATH"
+# Install UV
+RUN pip install uv
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -38,4 +32,4 @@ RUN export SECRET_KEY=`python -c 'import secrets; print(secrets.token_hex())'`
 
 ENTRYPOINT ["/entrypoint.sh"]
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-CMD ["uv", "run", "gunicorn", "--timeout", "120", "--reload", "--bind", "0.0.0.0:42000", "olim:app"]
+CMD ["uv", "run", "gunicorn", "-w", "4", "--timeout", "60", "--reload", "--bind", "0.0.0.0:42000", "olim:app"]

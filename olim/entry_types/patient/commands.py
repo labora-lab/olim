@@ -35,8 +35,11 @@ def add_text_to_hide(text, text_id, entry_id) -> dict:
 
 def hide_one(**args) -> dict:
     txt_id = args.get("txt_id", None)
-    entry_id = int(args.get("entry_id", None))
-
+    try:
+        entry_id = int(args.get("entry_id"))  # type: ignore [fé]
+    except ValueError as e:
+        # TODO: flash error message
+        raise Exception("Invalid entry ID") from e
     try:
         update_hidden(txt_id, entry_id, True)
     except Exception:
@@ -59,7 +62,11 @@ def hide_one(**args) -> dict:
 
 def show(**args) -> dict:
     txt_id = args.get("txt_id", None)
-    entry_id = int(args.get("entry_id", None))
+    try:
+        entry_id = int(args.get("entry_id"))  # type: ignore [fé]
+    except ValueError as e:
+        # TODO: flash error message
+        raise Exception("Invalid entry ID") from e
 
     try:
         update_hidden(txt_id, entry_id, False)

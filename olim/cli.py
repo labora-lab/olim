@@ -4,8 +4,8 @@ from getpass import getpass
 import click
 import pandas as pd
 
-from . import app, db
-from .database import get_entry, get_labels, get_user, get_users, init_db, update_user_password
+from . import app
+from .database import get_labels, get_user, get_users, init_db, update_user_password
 from .utils.label import label_upload
 
 
@@ -84,20 +84,20 @@ users.add_command(users_ls)
 users.add_command(change_passwd)
 
 
-@app.cli.group("upload", help="Data upload related commands.")
-def upload() -> None:
-    # check if db is initialized
-    try:
-        get_entry(1)
-    except db.exc.OperationalError:
-        print("Failed to access OLIM database.")
-        opt = ""
-        while opt.lower().strip() not in ["y", "n", "yes", "no"]:
-            opt = input("Do you want to run init-db now? ([y]/n) ")
-            if opt.strip() == "":
-                opt = "y"
-        if opt.lower().strip()[0] == "y":
-            init_db()
-        else:
-            print()
-            sys.exit("Can't proceed!")
+# @app.cli.group("upload", help="Data upload related commands.")
+# def upload() -> None:
+#     # check if db is initialized
+#     try:
+#         get_entry(1)
+#     except db.exc.OperationalError:
+#         print("Failed to access OLIM database.")
+#         opt = ""
+#         while opt.lower().strip() not in ["y", "n", "yes", "no"]:
+#             opt = input("Do you want to run init-db now? ([y]/n) ")
+#             if opt.strip() == "":
+#                 opt = "y"
+#         if opt.lower().strip()[0] == "y":
+#             init_db()
+#         else:
+#             print()
+#             sys.exit("Can't proceed!")

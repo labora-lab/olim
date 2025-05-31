@@ -1,6 +1,6 @@
 # Portuguese (Brazil) translations for OLIM.
 # Copyright (C) 2025 OLIM
-# This file is distributed under the same license as the  project.
+# This file is distributed under the same license as the OLIM project.
 # Nano Gennari <me@nngn.net>, 2025, Felipe Adeildo
 # <felipe.adeildo@proton.me>, 2023.
 #
@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2025-03-24 22:43+0000\n"
-"PO-Revision-Date: 2025-03-20 20:21+0000\n"
+"POT-Creation-Date: 2025-05-31 17:01+0000\n"
+"PO-Revision-Date: 2025-05-16 01:02+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: pt_BR\n"
 "Language-Team: pt_BR <me@nngn.net>\n"
@@ -19,96 +19,81 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: olim/active_learning.py:88
-#, python-brace-format
-msgid "Active learning for {label_name} sucessfully created"
-msgstr "Aprendizado ativo para {label_name} criado com sucesso"
-
-#: olim/active_learning.py:98
+#: olim/active_learning.py:30 olim/active_learning.py:140
+#: olim/active_learning.py:180
 msgid "Label not found."
 msgstr "Rótulo não encontrado."
 
-#: olim/active_learning.py:107
-msgid ""
-"WARNING: Error syncing labels, models might not been trained on complete "
-"dataset!"
-msgstr ""
-"AVISO: Erro sincronizando rótulos, os modelos podem estar sendo treinados"
-" em base incompleta!"
-
-#: olim/active_learning.py:130
+#: olim/active_learning.py:37
 #, python-brace-format
-msgid "Added value \"{value}\" for entry {entry_id}."
-msgstr "Valor \"{value}\" adicionado para a entrada {entry_id}."
+msgid "Creating Active Learning for {label_name}"
+msgstr "Criando Aprendizado Ativo para {label_name}"
 
-#: olim/active_learning.py:137
-#, python-brace-format
-msgid "Error adding value \"{value}\" for entry {entry_id}."
-msgstr "Erro ao adicionar valor \"{value}\" para a entrada {entry_id}."
-
-#: olim/active_learning.py:144
-#, python-brace-format
-msgid "Error adding value \"{value}\" for entry {entry_id}. Got key error."
-msgstr ""
-"Erro ao adicionar valor \"{value}\" para a entrada {entry_id}. Chave não "
-"encontrada."
-
-#: olim/active_learning.py:167
+#: olim/active_learning.py:49
 #, python-brace-format
 msgid ""
-"Failed to enter active learner for label {label_name}, please check "
-"learner connection."
+"Seting up Active Learning pipeline for label {label_name}, please wait a "
+"few minutes and try again."
 msgstr ""
-"Falha ao acessar o aprendizado ativo para o rótulo {label_name}, "
-"verifique a conexão com o learner."
+"Configurando pipeline de Aprendizado Ativo para o rótulo {label_name}, "
+"aguarde alguns minutos e tente novamente."
 
-#: olim/active_learning.py:183
-msgid "Labels successfully synced."
-msgstr "Rótulos sincronizados com sucesso."
-
-#: olim/active_learning.py:185
-msgid "Error syncing labels."
-msgstr "Erro ao sincronizar rótulos."
-
-#: olim/active_learning.py:190
+#: olim/active_learning.py:63
 #, python-brace-format
-msgid "Failed to sync label {label_name}, please check learner connection."
-msgstr ""
-"Falha ao sincronizar o rótulo {label_name}, verifique a conexão com o "
-"learner."
+msgid "Error on active learning for label {label_name} report to developers."
+msgstr "Erro no aprendizado ativo para o rótulo {label_name}, reporte aos desenvolvedores."
 
-#: olim/active_learning.py:243
-#, fuzzy, python-brace-format
+#: olim/active_learning.py:93
+#, python-brace-format
+msgid "Training for label {label_name}"
+msgstr "Treinando para o rótulo {label_name}"
+
+#: olim/active_learning.py:106
+msgid "entry_id"
+msgstr "ID da entrada"
+
+#: olim/active_learning.py:152
+#, python-brace-format
+msgid "Already processing export of predictions for label {label_name}"
+msgstr "Exportação de previsões para o rótulo {label_name} já em processamento"
+
+#: olim/active_learning.py:160
+#, python-brace-format
+msgid ""
+"Processing export of predictions for label {label_name}, please wait a "
+"few minutes."
+msgstr ""
+"Processando exportação de previsões para o rótulo {label_name}, aguarde "
+"alguns minutos."
+
+#: olim/active_learning.py:170
+#, python-brace-format
+msgid "Generationg predictions for {label_name}"
+msgstr "Gerando previsões para {label_name}"
+
+#: olim/active_learning.py:215
+#, python-brace-format
 msgid "Error exporting predictions: {error}"
 msgstr "Erro ao exportar previsões: {error}"
 
-#: olim/active_learning.py:250
-#, python-brace-format
-msgid ""
-"Failed to export predictions for label {label_name}, please check learner"
-" connection."
-msgstr ""
-"Falha ao exportar previsões para o rótulo {label_name}, verifique a "
-"conexão com o learner."
-
-#: olim/auth.py:44 olim/auth.py:46
+#: olim/auth.py:55 olim/auth.py:57
 msgid "Incorrect Username and/or Password!"
-msgstr "Usuário e/ou senha incorretos!"
+msgstr "Nome de usuário e/ou senha incorretos!"
 
-#: olim/auth.py:90 olim/auth.py:94
+#: olim/auth.py:124
 msgid "You are not logged"
 msgstr "Você não está logado"
 
-#: olim/auth.py:102
+#: olim/auth.py:130
 msgid "Your login has expired"
 msgstr "Seu login expirou"
 
-#: olim/auth.py:113
+#: olim/auth.py:138
 #, python-brace-format
 msgid "You do not have permission to access {requested_url}."
 msgstr "Você não tem permissão para acessar {requested_url}."
 
-#: olim/auth.py:135
+#: olim/auth.py:160
 #, python-brace-format
 msgid ""
 "Elasticsearch server is unavailable: {error}.If you just started the "
@@ -119,176 +104,175 @@ msgstr ""
 "os serviços, aguarde alguns minutos. Se o problema persistir, contate o "
 "administrador."
 
-#: olim/auth.py:152
-#, fuzzy, python-brace-format
-msgid ""
-"{requested_url} needs a OLIM-learner connection, see "
-"https://gitlab.com/nanogennari/olim-learner."
-msgstr ""
-"{requested_url} requer conexão com o backend. Consulte "
-"https://gitlab.com/nanogennari/olim-backend."
-
-#: olim/auth.py:176
+#: olim/auth.py:225
 msgid "Initial configuration already done!"
 msgstr "Configuração inicial já realizada!"
 
-#: olim/auth.py:189 olim/auth.py:216
+#: olim/auth.py:233 olim/auth.py:306
 msgid "Passwords do not match"
 msgstr "As senhas não coincidem"
 
-#: olim/auth.py:193
+#: olim/auth.py:236
+msgid "Name can't be empty."
+msgstr "O nome não pode estar vazio."
+
+#: olim/auth.py:239
+msgid "Username can't be empty."
+msgstr "O nome de usuário não pode estar vazio."
+
+#: olim/auth.py:242
+msgid "Minimum password lenght is 8."
+msgstr "O comprimento mínimo da senha é 8."
+
+#: olim/auth.py:246
 msgid "Database initialized!"
 msgstr "Banco de dados inicializado!"
 
-#: olim/auth.py:197 olim/auth.py:226
+#: olim/auth.py:250 olim/auth.py:316
 #, python-brace-format
 msgid "User {username} sucessfully registered!"
 msgstr "Usuário {username} registrado com sucesso!"
 
-#: olim/auth.py:231
+#: olim/auth.py:262
+msgid "Project name can't be empty."
+msgstr "O nome do projeto não pode estar vazio."
+
+#: olim/auth.py:267
+#, python-brace-format
+msgid "Project {project_name} successfully created!"
+msgstr "Projeto {project_name} criado com sucesso!"
+
+#: olim/auth.py:271
+msgid "Falied creating project."
+msgstr "Falha ao criar projeto."
+
+#: olim/auth.py:276
+#, python-brace-format
+msgid "Label {label_name} successfully created!"
+msgstr "Rótulo {label_name} criado com sucesso!"
+
+#: olim/auth.py:321
 #, python-brace-format
 msgid "User {username} already exists!"
 msgstr "Usuário {username} já existe!"
 
-#: olim/auth.py:247
+#: olim/auth.py:337
 msgid "Please enter a new password!"
 msgstr "Por favor, insira uma nova senha!"
 
-#: olim/auth.py:251
+#: olim/auth.py:341
 msgid "Please enter a new on both fields!"
 msgstr "Por favor, insira a nova senha em ambos os campos!"
 
-#: olim/auth.py:255
+#: olim/auth.py:345
 msgid "Passwords do not match!"
 msgstr "As senhas não coincidem!"
 
-#: olim/auth.py:260
+#: olim/auth.py:350
 msgid "Please enter your old password!"
 msgstr "Por favor, insira sua senha antiga!"
 
-#: olim/auth.py:267
+#: olim/auth.py:357
 msgid "Incorrect old password!"
 msgstr "Senha antiga incorreta!"
 
-#: olim/auth.py:273
+#: olim/auth.py:363
 msgid "Password sucessfully updated!"
 msgstr "Senha atualizada com sucesso!"
 
-#: olim/auth.py:293
-#, fuzzy, python-brace-format
+#: olim/auth.py:383
+#, python-brace-format
 msgid "You do not have permission to change user id {user_id} settings."
-msgstr "Você não tem permissão para acessar {requested_url}."
+msgstr "Você não tem permissão para alterar configurações do usuário ID {user_id}."
 
-#: olim/auth.py:305
-#, fuzzy, python-brace-format
+#: olim/auth.py:401
+#, python-brace-format
 msgid ""
 "You do not have permission to change password for user id {user_id} "
 "settings."
-msgstr "Você não tem permissão para acessar {requested_url}."
+msgstr "Você não tem permissão para alterar a senha do usuário ID {user_id}."
 
-#: olim/auth.py:323
-#, fuzzy, python-brace-format
-msgid ""
-"You do not have permission to change language for user id {user_id} "
-"settings."
-msgstr "Você não tem permissão para acessar {requested_url}."
+#: olim/auth.py:424
+#, python-brace-format
+msgid "You have no permission to change language for user id {user_id} settings."
+msgstr "Você não tem permissão para alterar o idioma do usuário ID {user_id}."
 
-#: olim/auth.py:336
+#: olim/auth.py:440
 #, python-brace-format
 msgid "Changed language for {user_name} to {language}!"
-msgstr "Mudado o idioma de {user_name} para {language}!"
+msgstr "Idioma alterado para {user_name} para {language}!"
 
-#: olim/auth.py:338
+#: olim/auth.py:447
 #, python-brace-format
 msgid "Changed language for {user_name} to Automatic!"
-msgstr "Mudado o idioma de {user_name} para Automático!"
+msgstr "Idioma alterado para {user_name} para Automático!"
 
-#: olim/commands.py:26 olim/entry_types/patient/commands.py:45
-#: olim/entry_types/patient/commands.py:69
-#: olim/entry_types/patient/commands.py:94
-#: olim/entry_types/patient/commands.py:119
+#: olim/commands.py:28 olim/entry_types/patient/commands.py:48
+#: olim/entry_types/patient/commands.py:76
+#: olim/entry_types/patient/commands.py:101
+#: olim/entry_types/patient/commands.py:126
 msgid "Failed writing to database"
 msgstr "Falha ao escrever no banco de dados"
 
-#: olim/commands.py:30
+#: olim/commands.py:32
 #, python-brace-format
 msgid "Removed the label {label} for the entry {entry_id}"
 msgstr "Rótulo {label} removido da entrada {entry_id}"
 
-#: olim/commands.py:39
+#: olim/commands.py:41
 msgid "No entry ID passed"
 msgstr "Nenhum ID de entrada fornecido"
 
-#: olim/commands.py:44
+#: olim/commands.py:46
 msgid "No label passed"
 msgstr "Nenhum rótulo fornecido"
 
-#: olim/commands.py:61
+#: olim/commands.py:63
 msgid "Missing data: label"
 msgstr "Dado faltando: rótulo"
 
-#: olim/commands.py:69
+#: olim/commands.py:72
 msgid "Error hidding label."
 msgstr "Erro ao ocultar rótulo."
 
-#: olim/commands.py:75
+#: olim/commands.py:78
 #, python-brace-format
 msgid "Label {label} hidden"
 msgstr "Rótulo {label} ocultado"
 
-#: olim/commands.py:81
+#: olim/commands.py:84
 #, python-brace-format
 msgid "Label {label} unhidden"
 msgstr "Rótulo {label} exibido novamente"
 
-#: olim/commands.py:92
+#: olim/commands.py:95
 msgid "Missing parameter"
 msgstr "Parâmetro faltando"
 
-#: olim/commands.py:97
+#: olim/commands.py:100
 msgid "Missing data"
 msgstr "Dados faltando"
 
-#: olim/commands.py:117
+#: olim/commands.py:120
 msgid "No command passed"
 msgstr "Nenhum comando fornecido"
 
-#: olim/commands.py:119
+#: olim/commands.py:122
 #, python-brace-format
 msgid "Command {command} not found"
 msgstr "Comando {command} não encontrado"
 
-#: olim/entry.py:37
-#, python-brace-format
-msgid "Queue {queue_id} not found"
-msgstr "Fila {queue_id} não encontrada"
-
-#: olim/functions.py:51
+#: olim/functions.py:57
 #, python-brace-format
 msgid "Error rendering entry {entry_id}!"
 msgstr "Erro ao renderizar entrada {entry_id}!"
 
-#: olim/functions.py:57
+#: olim/functions.py:63
 #, python-brace-format
 msgid "Entry {entry_id} not found"
 msgstr "Entrada {entry_id} não encontrada"
 
-#: olim/functions.py:128
-#, python-brace-format
-msgid "Failed to read queue file {queue_file}."
-msgstr "Falha ao ler arquivo de fila {queue_file}."
-
-#: olim/functions.py:133
-#, python-brace-format
-msgid "Entries: {queue_length}"
-msgstr "Entradas: {queue_length}"
-
-#: olim/functions.py:137
-#, python-brace-format
-msgid "Highlight: {highlight}"
-msgstr "Destaque: {highlight}"
-
-#: olim/issue.py:42
+#: olim/issue.py:45
 msgid ""
 "Error sending ticket. Please try again later or check your HELP_URL "
 "environment variable."
@@ -296,84 +280,120 @@ msgstr ""
 "Erro ao enviar ticket. Tente novamente mais tarde ou verifique a variável"
 " de ambiente HELP_URL."
 
-#: olim/issue.py:48
+#: olim/issue.py:51
 msgid "Ticket sent. Thank you very much."
 msgstr "Ticket enviado. Muito obrigado."
 
-#: olim/labels.py:46
+#: olim/labels.py:76
 #, python-brace-format
 msgid "Label {label_name} successfully created"
 msgstr "Rótulo {label_name} criado com sucesso"
 
-#: olim/labels.py:79
+#: olim/labels.py:87 olim/labels.py:107 olim/labels.py:139 olim/labels.py:166
+#: olim/labels.py:191
+#, python-brace-format
+msgid "Label id: {label_id} not found!"
+msgstr "ID de rótulo {label_id} não encontrado!"
+
+#: olim/labels.py:97
 #, python-brace-format
 msgid "Label {label_name} sucessfully deleted"
 msgstr "Rótulo {label_name} excluído com sucesso"
 
-#: olim/labels.py:89 olim/labels.py:110 olim/labels.py:129
+#: olim/labels.py:116 olim/labels.py:148 olim/labels.py:175 olim/labels.py:202
 msgid "Label not found"
 msgstr "Rótulo não encontrado"
 
-#: olim/labels.py:143
-msgid "Label não encontrada."
-msgstr "Rótulo não encontrado."
+#: olim/labels.py:217
+msgid "Dataset selection required"
+msgstr "Seleção de dataset necessária"
 
-#: olim/queue.py:29
+#: olim/labels.py:223
+msgid "Invalid dataset selection"
+msgstr "Seleção de dataset inválida"
+
+#: olim/project.py:119
+#, python-brace-format
+msgid "Queue {queue_id} not found"
+msgstr "Fila {queue_id} não encontrada"
+
+#: olim/project.py:303
 msgid "Invalid number of entries"
 msgstr "Número inválido de entradas"
 
-#: olim/upload_data.py:82
+#: olim/project.py:346
+msgid "Project created successfully"
+msgstr "Projeto criado com sucesso"
+
+#: olim/project.py:356
+msgid "Project deleted successfully"
+msgstr "Projeto excluído com sucesso"
+
+#: olim/upload_data.py:107
+msgid "Upload type is required"
+msgstr "Tipo de upload é obrigatório"
+
+#: olim/upload_data.py:114
+msgid "Dataset name is required"
+msgstr "Nome do dataset é obrigatório"
+
+#: olim/upload_data.py:128
 #, python-brace-format
-msgid "Error processing {task_id}: {error}"
-msgstr "Erro ao processar {task_id}: {error}"
-
-#: olim/upload_data.py:114 olim/upload_data.py:129 olim/upload_data.py:149
-msgid "Can only process one data upload task at a time, try later"
-msgstr "Apenas uma tarefa de upload pode ser processada por vez. Tente mais tarde."
-
-#: olim/upload_data.py:119
-msgid "No file selected"
-msgstr "Nenhum arquivo selecionado"
-
-#: olim/upload_data.py:136
-msgid "Missing text_id or text for text format upload"
-msgstr "Faltando text_id ou texto para upload no formato de texto"
+msgid "Error creating dataset: {error}"
+msgstr "Erro ao criar dataset: {error}"
 
 #: olim/upload_data.py:154
-#, python-brace-format
-msgid "Error executing upload command: {error}"
-msgstr "Erro ao executar comando de upload: {error}"
+msgid "File upload incomplete"
+msgstr "Upload de arquivo incompleto"
 
-#: olim/entry_types/patient/commands.py:51
-#: olim/entry_types/patient/commands.py:75
+#: olim/upload_data.py:163
+msgid "ID and Text columns are required"
+msgstr "Colunas ID e Texto são obrigatórias"
+
+#: olim/upload_data.py:170
+#, python-brace-format
+msgid "Uploading and processing file {filename}"
+msgstr "Enviando e processando arquivo {filename}"
+
+#: olim/upload_data.py:180
+msgid "Document processing started successfully"
+msgstr "Processamento de documento iniciado com sucesso"
+
+#: olim/upload_data.py:184
+#, python-brace-format
+msgid "Error starting upload: {error}"
+msgstr "Erro ao iniciar upload: {error}"
+
+#: olim/entry_types/patient/commands.py:54
+#: olim/entry_types/patient/commands.py:82
 msgid "No ID passed"
 msgstr "Nenhum ID fornecido"
 
-#: olim/entry_types/patient/commands.py:56
+#: olim/entry_types/patient/commands.py:59
 #, python-brace-format
 msgid "Text {text_id} hidden"
 msgstr "Texto {text_id} ocultado"
 
-#: olim/entry_types/patient/commands.py:80
+#: olim/entry_types/patient/commands.py:87
 #, python-brace-format
 msgid "Text {text_id} unhidden"
 msgstr "Texto {text_id} exibido novamente"
 
-#: olim/entry_types/patient/commands.py:100
+#: olim/entry_types/patient/commands.py:107
 #, python-brace-format
 msgid "Missing data: {entry_id}, {text_id}, {text}"
 msgstr "Dados faltando: {entry_id}, {text_id}, {text}"
 
-#: olim/entry_types/patient/commands.py:107
+#: olim/entry_types/patient/commands.py:114
 #, python-brace-format
 msgid "Will always hide text {text}"
 msgstr "Sempre ocultar texto {text}"
 
-#: olim/entry_types/patient/commands.py:125
+#: olim/entry_types/patient/commands.py:132
 msgid "Missing data: text_id"
 msgstr "Dado faltando: text_id"
 
-#: olim/entry_types/patient/commands.py:130
+#: olim/entry_types/patient/commands.py:137
 #, python-brace-format
 msgid "Text {text_id} removed from list of hiddens"
 msgstr "Texto {text_id} removido da lista de ocultos"
@@ -384,12 +404,9 @@ msgid "Invalid date \"{date}\"."
 msgstr "Data inválida \"{date}\"."
 
 #: olim/templates/account-settings.html:2
-msgid "account_settings_2"
-msgstr "Configurações de Usuário"
-
 #: olim/templates/account-settings.html:7
-msgid "account_settings_3"
-msgstr "Configurações de Usuário"
+msgid "Account Settings"
+msgstr "Configurações da Conta"
 
 #: olim/templates/account-settings.html:15
 msgid "Interface language"
@@ -405,32 +422,32 @@ msgstr "Salvar Idioma"
 
 #: olim/templates/account-settings.html:41
 msgid "Change password"
-msgstr "Alterar Senha"
+msgstr "Alterar senha"
 
 #: olim/templates/account-settings.html:45
 msgid "Old Password"
-msgstr "Senha Antiga"
+msgstr "Senha antiga"
 
 #: olim/templates/account-settings.html:50
-#: olim/templates/account-settings.html:54 olim/templates/init-config.html:22
-#: olim/templates/init-config.html:26 olim/templates/users.html:50
+#: olim/templates/account-settings.html:54 olim/templates/init-config.html:54
+#: olim/templates/init-config.html:58 olim/templates/users.html:50
 #: olim/templates/users.html:54
 msgid "New Password"
-msgstr "Nova Senha"
+msgstr "Nova senha"
 
-#: olim/templates/account-settings.html:58 olim/templates/init-config.html:30
+#: olim/templates/account-settings.html:58 olim/templates/init-config.html:62
 #: olim/templates/users.html:58
 msgid "Confirm Password"
-msgstr "Confirmar Senha"
+msgstr "Confirmar senha"
 
-#: olim/templates/account-settings.html:63 olim/templates/init-config.html:35
+#: olim/templates/account-settings.html:63 olim/templates/init-config.html:67
 #: olim/templates/users.html:63
 msgid "Generate Random Password"
-msgstr "Gerar Senha Aleatória"
+msgstr "Gerar senha aleatória"
 
 #: olim/templates/account-settings.html:68 olim/templates/users.html:27
 msgid "Change Password"
-msgstr "Alterar Senha"
+msgstr "Alterar senha"
 
 #: olim/templates/al-entry.html:2
 msgid "Active Learning - "
@@ -450,7 +467,8 @@ msgstr "Aprendizado Ativo"
 msgid "New Active Learning"
 msgstr "Novo Aprendizado Ativo"
 
-#: olim/templates/al-list.html:24 olim/templates/labels.html:24
+#: olim/templates/al-list.html:24 olim/templates/init-config.html:93
+#: olim/templates/labels.html:24
 msgid "Label"
 msgstr "Rótulo"
 
@@ -459,17 +477,17 @@ msgid "Total"
 msgstr "Total"
 
 #: olim/templates/al-list.html:29 olim/templates/label-settings.html:16
-#: olim/templates/labels.html:29
+#: olim/templates/labels.html:29 olim/templates/projects.html:32
+#: olim/templates/upload-data.html:19
 msgid "Creator"
 msgstr "Criador"
 
 #: olim/templates/al-list.html:32 olim/templates/labels.html:32
-#: olim/templates/users.html:15
+#: olim/templates/projects.html:33 olim/templates/users.html:15
 msgid "Actions"
 msgstr "Ações"
 
-#: olim/templates/al-list.html:51 olim/templates/labels.html:58
-#: olim/templates/labels.html:64
+#: olim/templates/al-list.html:51 olim/templates/labels.html:59
 msgid "Open active learling queue"
 msgstr "Abrir fila de aprendizado ativo"
 
@@ -477,85 +495,101 @@ msgstr "Abrir fila de aprendizado ativo"
 msgid "Enter"
 msgstr "Entrar"
 
-#: olim/templates/base.html:18 olim/templates/base.html:151
+#: olim/templates/base.html:18 olim/templates/base.html:194
 msgid "OLIM - Open Labeller for Iterative Machine learning"
 msgstr "OLIM - Rotulador Aberto para Aprendizado de Máquina Iterativo"
 
-#: olim/templates/base.html:26 olim/templates/entry.html:43
+#: olim/templates/base.html:40 olim/templates/entry.html:44
 #: olim/templates/labels.html:2 olim/templates/labels.html:6
-#: olim/templates/labels.html:66 olim/templates/queue.html:2
+#: olim/templates/queue.html:2
 msgid "Labels"
 msgstr "Rótulos"
 
-#: olim/templates/base.html:29 olim/templates/search.html:38
+#: olim/templates/base.html:43 olim/templates/search.html:39
 msgid "Search"
-msgstr "Buscar"
+msgstr "Busca"
 
-#: olim/templates/base.html:32
+#: olim/templates/base.html:46
 msgid "Open Entries"
 msgstr "Abrir Entradas"
 
-#: olim/templates/base.html:35
+#: olim/templates/base.html:49
 msgid "Queues"
 msgstr "Filas"
 
-#: olim/templates/base.html:38
+#: olim/templates/base.html:52
 msgid "Hidden texts"
-msgstr "Textos Ocultos"
+msgstr "Textos ocultos"
 
-#: olim/templates/base.html:41
+#: olim/templates/base.html:56 olim/templates/labels.html:52
+msgid "Settings"
+msgstr "Configurações"
+
+#: olim/templates/base.html:59
 msgid "Users"
 msgstr "Usuários"
 
-#: olim/templates/base.html:44
+#: olim/templates/base.html:62
 msgid "account_settings_1"
 msgstr "Configurações de Usuário"
 
-#: olim/templates/base.html:47 olim/templates/upload-data.html:2
+#: olim/templates/base.html:65
+msgid "Manage Projects"
+msgstr "Gerenciar Projetos"
+
+#: olim/templates/base.html:68 olim/templates/upload-data.html:2
 msgid "Upload Data"
 msgstr "Carregar Dados"
 
-#: olim/templates/base.html:50 olim/templates/login.html:2
+#: olim/templates/base.html:71 olim/templates/login.html:2
 #: olim/templates/login.html:7
 msgid "Login"
 msgstr "Login"
 
-#: olim/templates/base.html:52
+#: olim/templates/base.html:73
 msgid "Logout"
 msgstr "Sair"
 
-#: olim/templates/base.html:59
+#: olim/templates/base.html:76
+msgid "Tasks"
+msgstr "Tarefas"
+
+#: olim/templates/base.html:87
 msgid "Open Labeller for Iterative Machine learning"
 msgstr "Rotulador Aberto para Aprendizado de Máquina Iterativo"
 
-#: olim/templates/base.html:73 olim/templates/base.html:94
+#: olim/templates/base.html:116 olim/templates/base.html:137
 msgid "Warning"
 msgstr "Aviso"
 
-#: olim/templates/base.html:74
+#: olim/templates/base.html:117
 msgid "A buch of text"
 msgstr "Um monte de texto"
 
-#: olim/templates/base.html:77
+#: olim/templates/base.html:120
 msgid "Continue"
 msgstr "Continuar"
 
-#: olim/templates/base.html:78 olim/templates/base.html:89
-#: olim/templates/base.html:108 olim/templates/base.html:127
+#: olim/templates/base.html:121 olim/templates/base.html:132
+#: olim/templates/base.html:151 olim/templates/base.html:170
 msgid "Close"
 msgstr "Fechar"
 
-#: olim/templates/base.html:113
+#: olim/templates/base.html:156
 msgid "Success"
 msgstr "Sucesso"
 
-#: olim/templates/base.html:132
+#: olim/templates/base.html:175
 msgid "Error"
 msgstr "Erro"
 
-#: olim/templates/base.html:155
+#: olim/templates/base.html:198
 msgid "Report a problem with this page"
 msgstr "Reportar um problema nesta página"
+
+#: olim/templates/base.html:219
+msgid "Error loading tasks"
+msgstr "Erro ao carregar tarefas"
 
 #: olim/templates/entry.html:2
 msgid "Entry "
@@ -573,32 +607,32 @@ msgstr "Carregar Entrada"
 msgid "Previous"
 msgstr "Anterior"
 
-#: olim/templates/entry.html:33
+#: olim/templates/entry.html:34
 msgid "Next"
 msgstr "Próximo"
 
-#: olim/templates/entry.html:48 olim/templates/entry.html:57
-#: olim/templates/entry.html:66
+#: olim/templates/entry.html:49 olim/templates/entry.html:58
+#: olim/templates/entry.html:67
 msgid "Apply to all"
 msgstr "Aplicar a todos"
 
-#: olim/templates/entry.html:52 olim/templates/entry.html:62
+#: olim/templates/entry.html:53 olim/templates/entry.html:63
 msgid "Unapply to all"
 msgstr "Remover de todos"
 
-#: olim/templates/entry.html:82
+#: olim/templates/entry.html:83
 msgid "Show hidden"
 msgstr "Mostrar ocultos"
 
-#: olim/templates/entry.html:88
+#: olim/templates/entry.html:89
 msgid "Hide hidden"
 msgstr "Ocultar ocultos"
 
-#: olim/templates/entry.html:94
+#: olim/templates/entry.html:96
 msgid "Expand all"
 msgstr "Expandir tudo"
 
-#: olim/templates/entry.html:100
+#: olim/templates/entry.html:102
 msgid "Retract all"
 msgstr "Recolher tudo"
 
@@ -662,28 +696,60 @@ msgstr "Não há texto marcado como \"Ocultar todos como este\""
 msgid "Initial configuration"
 msgstr "Configuração inicial"
 
-#: olim/templates/init-config.html:10
+#: olim/templates/init-config.html:14
+msgid "Initial setup"
+msgstr "Configuração inicial"
+
+#: olim/templates/init-config.html:18
+msgid "User creation"
+msgstr "Criação de usuário"
+
+#: olim/templates/init-config.html:25
+msgid "Project setup"
+msgstr "Configuração de projeto"
+
+#: olim/templates/init-config.html:31
+msgid "Dataset upload"
+msgstr "Upload de dataset"
+
+#: olim/templates/init-config.html:41
 msgid "Create admin account"
 msgstr "Criar conta de administrador"
 
-#: olim/templates/init-config.html:14 olim/templates/label-settings.html:17
+#: olim/templates/init-config.html:46 olim/templates/label-settings.html:17
 #: olim/templates/login.html:11 olim/templates/users.html:13
 #: olim/templates/users.html:46
 msgid "Username"
 msgstr "Nome de usuário"
 
-#: olim/templates/init-config.html:18 olim/templates/users.html:12
+#: olim/templates/init-config.html:50 olim/templates/users.html:12
 #: olim/templates/users.html:68
 msgid "Name"
 msgstr "Nome"
 
-#: olim/templates/init-config.html:38
-msgid "Create"
-msgstr "Criar"
+#: olim/templates/init-config.html:70
+msgid "Create User"
+msgstr "Criar Usuário"
+
+#: olim/templates/init-config.html:79
+msgid "Setup Project"
+msgstr "Configurar Projeto"
+
+#: olim/templates/init-config.html:84
+msgid "Project name"
+msgstr "Nome do projeto"
+
+#: olim/templates/init-config.html:98
+msgid "More labels"
+msgstr "Mais rótulos"
+
+#: olim/templates/init-config.html:103
+msgid "Create Project"
+msgstr "Criar Projeto"
 
 #: olim/templates/label-settings.html:2 olim/templates/label-settings.html:8
 msgid "Label Settings"
-msgstr "Configurações do Rótulo"
+msgstr "Configurações de Rótulo"
 
 #: olim/templates/label-settings.html:20
 msgid "AL Key"
@@ -713,22 +779,22 @@ msgid "Remove Label"
 msgstr "Remover Rótulo"
 
 #: olim/templates/label-settings.html:40
-msgid "Synchronize Label"
-msgstr "Sincronizar Rótulo"
-
-#: olim/templates/label-settings.html:46
 msgid "Download Labeled Data"
 msgstr "Baixar Dados Rotulados"
 
-#: olim/templates/label-settings.html:52
-msgid "Export Predictions"
-msgstr "Exportar Previsões"
+#: olim/templates/label-settings.html:46
+msgid "Generate Predictions"
+msgstr "Gerar Previsões"
 
-#: olim/templates/label-settings.html:57 olim/templates/search.html:48
+#: olim/templates/label-settings.html:51 olim/templates/search.html:56
 msgid "Open Queue"
 msgstr "Abrir Fila"
 
-#: olim/templates/label-settings.html:64
+#: olim/templates/label-settings.html:78
+msgid "Download"
+msgstr "Baixar"
+
+#: olim/templates/label-settings.html:92
 msgid "Back"
 msgstr "Voltar"
 
@@ -749,19 +815,23 @@ msgstr "Desmarcar {label_str}"
 msgid "New Label"
 msgstr "Novo Rótulo"
 
-#: olim/templates/labels.html:52
-msgid "Settings"
-msgstr "Configurações"
-
-#: olim/templates/labels.html:60
+#: olim/templates/labels.html:61
 msgid "Learn"
 msgstr "Aprender"
 
-#: olim/templates/labels.html:81
+#: olim/templates/labels.html:76
 msgid "Upload of Labelling File"
 msgstr "Upload de Arquivo de Rotulação"
 
-#: olim/templates/labels.html:93
+#: olim/templates/labels.html:89
+msgid "Select Dataset"
+msgstr "Selecionar Dataset"
+
+#: olim/templates/labels.html:94
+msgid "Target Dataset"
+msgstr "Dataset Alvo"
+
+#: olim/templates/labels.html:97
 msgid "Upload"
 msgstr "Carregar"
 
@@ -773,172 +843,297 @@ msgstr "Senha"
 msgid "Sign In"
 msgstr "Entrar"
 
-#: olim/templates/queue.html:9
+#: olim/templates/projects.html:3 olim/templates/projects.html:7
+#: olim/templates/upload-data.html:18
+msgid "Projects"
+msgstr "Projetos"
+
+#: olim/templates/projects.html:15
+msgid "New Project's Name"
+msgstr "Novo Nome de Projeto"
+
+#: olim/templates/projects.html:29
+msgid "Project Name"
+msgstr "Nome do Projeto"
+
+#: olim/templates/projects.html:30
+msgid "Total Labels"
+msgstr "Total de Rótulos"
+
+#: olim/templates/projects.html:31
+msgid "Labeled Entries"
+msgstr "Entradas Rotuladas"
+
+#: olim/templates/projects.html:45 olim/templates/search.html:67
+msgid "Open"
+msgstr "Abrir"
+
+#: olim/templates/projects.html:49
+#, python-brace-format
+msgid ""
+"This permanent! Are you sure that you want to delete project "
+"{project_name}?"
+msgstr ""
+"Esta ação é permanente! Tem certeza que deseja excluir o projeto "
+"{project_name}?"
+
+#: olim/templates/projects.html:50
+msgid "Delete"
+msgstr "Excluir"
+
+#: olim/templates/projects.html:57
+msgid "No projects found"
+msgstr "Nenhum projeto encontrado"
+
+#: olim/templates/queue.html:10
 msgid "Go to Queue"
 msgstr "Ir para Fila"
 
-#: olim/templates/queue.html:12
+#: olim/templates/queue.html:13
 msgid "Entry"
 msgstr "Entrada"
 
-#: olim/templates/queue.html:23
+#: olim/templates/queue.html:25 olim/templates/search.html:86
 msgid "Random Generate"
 msgstr "Gerar Aleatoriamente"
 
-#: olim/templates/queue.html:28
+#: olim/templates/queue.html:30 olim/templates/search.html:91
 msgid "Number of entries"
 msgstr "Número de entradas"
 
-#: olim/templates/queue.html:32 olim/templates/queue.html:54
-msgid "Generate queue"
-msgstr "Gerar fila"
+#: olim/templates/queue.html:34 olim/templates/queue.html:57
+#: olim/templates/search.html:95
+msgid ""
+"Generate\n"
+"                            queue"
+msgstr ""
+"Gerar\n"
+"                            fila"
 
-#: olim/templates/queue.html:44
+#: olim/templates/queue.html:47
 msgid "Generate by IDs"
 msgstr "Gerar por IDs"
 
-#: olim/templates/queue.html:49
+#: olim/templates/queue.html:52
 msgid "Separated by comma, spaces, semicolon or line break"
 msgstr "Separados por vírgula, espaço, ponto-e-vírgula ou quebra de linha"
 
-#: olim/templates/queue.html:50
+#: olim/templates/queue.html:53
 msgid "IDs by Queue"
 msgstr "IDs por Fila"
 
-#: olim/templates/queue.html:65
+#: olim/templates/queue.html:69
 msgid "Generated Queues"
 msgstr "Filas Geradas"
 
-#: olim/templates/queue.html:69
+#: olim/templates/queue.html:74
 msgid "Open queue"
 msgstr "Abrir fila"
+
+#: olim/templates/queue.html:99
+msgid "No queues"
+msgstr "Nenhuma fila"
 
 #: olim/templates/search.html:2
 msgid "Patient Search"
 msgstr "Busca de Paciente"
 
-#: olim/templates/search.html:9
+#: olim/templates/search.html:10
 msgid "Inclusion of terms"
 msgstr "Inclusão de termos"
 
-#: olim/templates/search.html:17
+#: olim/templates/search.html:18
 msgid "Exclusion of terms"
 msgstr "Exclusão de termos"
 
-#: olim/templates/search.html:26 olim/templates/search.html:27
-msgid "Number of Patients"
-msgstr "Número de Pacientes"
+#: olim/templates/search.html:27 olim/templates/search.html:28
+msgid "Number of Entries"
+msgstr "Número de Entradas"
 
-#: olim/templates/search.html:32
+#: olim/templates/search.html:33
 msgid "Generate queue only"
 msgstr "Apenas gerar fila"
 
-#: olim/templates/search.html:56
-msgid "Open"
-msgstr "Abrir"
+#: olim/templates/search.html:51
+#, python-brace-format
+msgid "Found {number} results"
+msgstr "Encontrados {number} resultados"
 
-#: olim/templates/search.html:60
+#: olim/templates/search.html:71
 #, python-brace-format
 msgid "Occurences: {} - Score of Search: {}"
 msgstr "Ocorrências: {} - Pontuação da Busca: {}"
 
-#: olim/templates/search.html:69
+#: olim/templates/search.html:79
 msgid "No results for the search"
 msgstr "Nenhum resultado para a busca"
 
-#: olim/templates/search.html:88
+#: olim/templates/search.html:122
 msgid "Add terms(type and press ENTER)"
 msgstr "Adicionar termos (digite e pressione ENTER)"
 
-#: olim/templates/search.html:89
+#: olim/templates/search.html:123
 msgid "Add more terms(type and press ENTER)"
 msgstr "Adicionar mais termos (digite e pressione ENTER)"
 
-#: olim/templates/upload-data.html:13
-#, python-brace-format
-msgid "Processing {} upload"
-msgstr "Processando upload de {}"
+#: olim/templates/task-list.html:5
+msgid "Running"
+msgstr "Em execução"
 
-#: olim/templates/upload-data.html:14
+#: olim/templates/task-list.html:15
+msgid "Completed"
+msgstr "Concluído"
+
+#: olim/templates/task-list.html:16
+msgid "Failed"
+msgstr "Falhou"
+
+#: olim/templates/task-list.html:22
+#, fuzzy
+msgid "No tasks."
+msgstr "Nenhuma tarefa ativa."
+
+#: olim/templates/upload-data.html:16
+#, fuzzy
+msgid "Dataset Name"
+msgstr "Nome do dataset"
+
+#: olim/templates/upload-data.html:17
+#, fuzzy
+msgid "Total Enties"
+msgstr "Total de Entradas Rotuladas"
+
+#: olim/templates/upload-data.html:32
+#, fuzzy
+msgid "No datasets found"
+msgstr "Nenhum projeto encontrado"
+
+#: olim/templates/upload-macro.html:7
+msgid "Upload Dataset"
+msgstr "Carregar Dataset"
+
+#: olim/templates/upload-macro.html:10
+msgid "Dataset name"
+msgstr "Nome do dataset"
+
+#: olim/templates/upload-macro.html:13
+msgid "Link to Projects"
+msgstr "Link para Projetos"
+
+#: olim/templates/upload-macro.html:23
+#, fuzzy
 msgid ""
-"OLIM only supports one upload task at a time, to upload another file "
-"please come back later."
+"WARNING: For now datasets\n"
+"                        can only\n"
+"                        be linked to projects during upload, make sure to"
+" link to the disered projects."
 msgstr ""
-"OLIM suporta apenas um upload por vez. Para enviar outro arquivo, retorne"
-" mais tarde."
+"AVISO: Atualmente, datasets só podem\n"
+"                        ser vinculados a projetos durante o upload, "
+"certifique-se de vincular aos projetos desejados."
 
-#: olim/templates/upload-data.html:21
+#: olim/templates/upload-macro.html:30
 msgid "Data Format"
 msgstr "Formato de Dados"
 
-#: olim/templates/upload-data.html:24
+#: olim/templates/upload-macro.html:34
 msgid "Text Format"
 msgstr "Formato de Texto"
 
-#: olim/templates/upload-data.html:25
+#: olim/templates/upload-macro.html:36
 msgid ""
-"Use this option if your CSV is composed of independent texts. You need to"
-" specify which\n"
-"                columns are equivalent to <strong>text</strong> and "
-"<strong>text_id</strong>. Make sure to\n"
-"                provide the correct column names during the upload."
+"Use this option if your CSV is composed of independent\n"
+"                            texts. You need to specify which columns are "
+"equivalent to"
 msgstr ""
-"Use esta opção se seu CSV contém textos independentes. Especifique quais\n"
-"                colunas equivalem a <strong>text</strong> e "
-"<strong>text_id</strong>.\n"
-"                Forneça os nomes corretos das colunas durante o upload."
+"Use esta opção se seu CSV contém textos\n"
+"                            independentes. Você precisa especificar quais"
+" colunas equivalem a"
 
-#: olim/templates/upload-data.html:30
+#: olim/templates/upload-macro.html:38
+msgid "and"
+msgstr "e"
+
+#: olim/templates/upload-macro.html:42
 msgid "Patient Format"
 msgstr "Formato de Paciente"
 
-#: olim/templates/upload-data.html:31
+#: olim/templates/upload-macro.html:44
 msgid ""
-"Use this option if your CSV file has the following columns: "
-"<strong>patient_id, text_id,\n"
-"                    visitation_id, text_type, text, date</strong>. Make "
-"sure that the columns are exactly as\n"
-"                mentioned to ensure correct data upload."
+"Use this option if your CSV file has the following\n"
+"                            columns:"
 msgstr ""
-"Use esta opção se seu CSV possui as colunas: <strong>patient_id, text_id,"
-"\n"
-"                    visitation_id, text_type, text, date</strong>. As "
-"colunas devem\n"
-"                ser exatamente como mencionado para garantir o upload "
-"correto."
+"Use esta opção se seu arquivo CSV contém as\n"
+"                            seguintes colunas:"
 
-#: olim/templates/upload-data.html:33
+#: olim/templates/upload-macro.html:47
 msgid ""
 "This format is\n"
-"                    NOT COMPATIBLE with OLIM-learner!"
+"                                NOT COMPATIBLE with OLIM-learner!"
 msgstr ""
 "Este formato\n"
-"                    NÃO É COMPATÍVEL com o OLIM-learner!"
+"                                NÃO É COMPATÍVEL com o OLIM-learner!"
 
-#: olim/templates/upload-data.html:37
-msgid "Sample data"
-msgstr "Dados de exemplo"
+#: olim/templates/upload-macro.html:54
+msgid "Sample Data"
+msgstr "Dados de Exemplo"
 
-#: olim/templates/upload-data.html:38
-msgid "Upload built in sample data in the Text format."
+#: olim/templates/upload-macro.html:55
+msgid "Upload built-in sample data in Text format."
 msgstr "Carregar dados de exemplo internos no formato de texto."
 
-#: olim/templates/upload-data.html:51
-msgid "Select CSV file"
+#: olim/templates/upload-macro.html:63
+#, fuzzy
+msgid "Select File"
 msgstr "Selecionar arquivo CSV"
 
-#: olim/templates/upload-data.html:58
+#: olim/templates/upload-macro.html:68
+#, fuzzy
+msgid "Select file to upload"
+msgstr "Selecionar arquivo CSV"
+
+#: olim/templates/upload-macro.html:85
 msgid "Column for Text ID"
 msgstr "Coluna para Text ID"
 
-#: olim/templates/upload-data.html:62
+#: olim/templates/upload-macro.html:89
 msgid "Column for Text"
 msgstr "Coluna para Texto"
 
-#: olim/templates/upload-data.html:68
+#: olim/templates/upload-macro.html:93
+msgid ""
+"After upload keep eye on the\n"
+"                    tasks on\n"
+"                    the menu for the dataset processing."
+msgstr ""
+
+#: olim/templates/upload-macro.html:98
 msgid "Upload data"
 msgstr "Carregar dados"
 
+#: olim/templates/upload-macro.html:146
+msgid "Preparing upload..."
+msgstr ""
+
+#: olim/templates/upload-macro.html:157
+#, fuzzy
+msgid "Uploading..."
+msgstr "Carregar"
+
+#: olim/templates/upload-macro.html:178
+#, fuzzy
+msgid "Upload complete! Processing file..."
+msgstr "Upload de Arquivo de Rotulação"
+
+#: olim/templates/upload-macro.html:192
+#, fuzzy
+msgid "File uploaded successfully!"
+msgstr "Projeto criado com sucesso"
+
+#: olim/templates/upload-macro.html:197
+#, fuzzy
+msgid "Upload failed:"
+msgstr "Carregar dados"
 #: olim/templates/users.html:2 olim/templates/users.html:8
 msgid "User Management"
 msgstr "Gerenciamento de Usuários"
@@ -974,19 +1169,19 @@ msgstr "Aplicar Datas"
 
 #: olim/templates/entry_types/patient.html:42
 msgid "Hide all above"
-msgstr "Ocultar todos acima"
+msgstr "Ocultar todos os itens acima"
 
 #: olim/templates/entry_types/patient.html:46
 msgid "Hide all below"
-msgstr "Ocultar todos abaixo"
+msgstr "Ocultar todos os itens abaixo"
 
 #: olim/templates/entry_types/patient.html:65
 msgid "Hide this"
-msgstr "Ocultar este"
+msgstr "Ocultar este item"
 
 #: olim/templates/entry_types/patient.html:70
 msgid "Hide all like this"
-msgstr "Ocultar todos como este"
+msgstr "Ocultar todos os itens semelhantes"
 
 #: olim/templates/entry_types/patient.html:71
 msgid "This will hide all texts equal to"
@@ -1000,3 +1195,22 @@ msgstr "Deseja continuar?"
 msgid "Unhide"
 msgstr "Exibir novamente"
 
+#: olim/utils/label.py:37
+#, fuzzy, python-brace-format
+msgid "Entry id: {entry_id} not found on dataset {dataset_name}"
+msgstr "ID da entrada {entry_id} não foi encontrado no conjunto de dados {dataset_name}"
+
+#: olim/utils/queues.py:95
+#, python-brace-format
+msgid "Failed to read queue file {queue_file}."
+msgstr "Falha ao ler arquivo de fila {queue_file}."
+
+#: olim/utils/queues.py:100
+#, python-brace-format
+msgid "Entries: {queue_length}"
+msgstr "Entradas: {queue_length}"
+
+#: olim/utils/queues.py:104
+#, python-brace-format
+msgid "Highlight: {highlight}"
+msgstr "Destaque: {highlight}"

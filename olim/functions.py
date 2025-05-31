@@ -1,17 +1,23 @@
 ## Auxiliary functions
 # All functions here must have type hints and docstrings
-import hashlib
 import json
-import os
 from typing import Literal
 
-import pandas as pd
 from flask import flash, session
 from flask_babel import _
 
-from . import entry_types, queue_dir
+from . import entry_types
 from .database import get_entry
 from .utils.es import get_es_conn
+
+
+def check_is_setup() -> bool:
+    """Check if server is configured."""
+    if "is_setup" in session:
+        return session["is_setup"]
+    else:
+        session["is_setup"] = False
+        return False
 
 
 def get_highlights() -> list:
@@ -22,19 +28,19 @@ def get_highlights() -> list:
         return []
 
 
-def render_entry(entry_id: int | None, data: dict | None = None) -> dict:
+def render_entry(entry_id: str | None, dataset_id: int | None, data: dict | None = None) -> dict:
     if data is None:
         data = {}
-    if entry_id is not None:
-        entry = get_entry(entry_id)
+    if entry_id is not None and dataset_id is not None:
+        entry = get_entry((dataset_id, entry_id), "composite")
         if entry is not None:
             try:
                 e_type = getattr(entry_types, entry.type)
                 data.update(
                     {
-                        "entry_id": entry_id,
                         "entry_html": e_type.render(
                             entry_id,
+                            dataset_id,
                             highlight=get_highlights(),
                         ),
                         "entry": entry,
@@ -61,86 +67,6 @@ def render_entry(entry_id: int | None, data: dict | None = None) -> dict:
     return data
 
 
-def parse_queue(text: str) -> list[str]:
-    """Parse a queue input in to a queue list.
-
-    Args:
-        text (str): Queue input
-
-    Returns:
-        List[str]: Queue list
-    """
-    return text.replace(";", " ").replace(",", " ").replace("\n", " ").replace("\r\n", " ").split()
-
-
-def store_queue(
-    queue: list[str] | pd.Series, highlight: list[str] | None = None, **extra_data: dict
-) -> str:
-    """Stores a queue in a temporay file.
-
-    Args:
-        queue (iterable): Queue list
-
-    Returns:
-        str: Hash of the queue for access
-    """
-    queue = list(queue)
-    queue_id = hashlib.md5(json.dumps(queue).encode("utf-8")).hexdigest()
-    queue_data = {
-        "id": queue_id,
-        "queue": queue,
-        "highlight": highlight,
-        "exta_data": extra_data,
-        "lenght": len(queue),
-    }
-    queue_file = os.path.join(queue_dir, "queue_" + queue_id + ".json")
-    with open(queue_file, "w") as f:
-        json.dump(queue_data, f)
-    return queue_id
-
-
-def get_queue(queue_id: str) -> str:
-    """Load the id of a position in a queue
-
-    Args:
-        queue_hash (str): Hash of the queue for access
-
-    Returns:
-        str: Queue list
-    """
-    queue_file = os.path.join(queue_dir, "queue_" + queue_id + ".json")
-    with open(queue_file) as f:
-        queue = json.load(f)
-    if queue["highlight"] is not None:
-        session["highlight"] = queue["highlight"]
-    return queue["queue"]
-
-
-def get_all_queues() -> list[dict]:
-    queues = []
-    for queue_file in os.listdir(queue_dir):
-        if queue_file.startswith("queue_") and queue_file.endswith(".json"):
-            try:
-                with open(os.path.join(queue_dir, queue_file)) as f:
-                    queue = json.load(f)
-            except Exception:
-                flash(
-                    _("Failed to read queue file {queue_file}.").format(queue_file=queue_file),
-                    category="error",
-                )
-                queue = None
-            if queue is not None:
-                queue["frontend_text"] = _("Entries: {queue_length}").format(
-                    queue_length=queue["lenght"]
-                )
-                if queue["highlight"]:
-                    queue["frontend_text"] += " - " + _("Highlight: {highlight}").format(
-                        highlight=", ".join(h for h in queue["highlight"])
-                    )
-                queues.append(queue)
-    return queues
-
-
 def get_def_nentries() -> int:
     """Gets the number os entries for the session.
 
@@ -163,10 +89,10 @@ def manage_label_in_session(label: str, mode: Literal["add", "remove"] = "add") 
         session["hidden_labels"] = []
 
     if mode == "add":
-        session["hidden_labels"].append(label)
+        session["hidden_labels"].append(int(label))
     elif mode == "remove":
         try:
-            session["hidden_labels"].remove(label)
+            session["hidden_labels"].remove(int(label))
         except ValueError:
             pass
 
