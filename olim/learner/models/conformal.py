@@ -69,18 +69,18 @@ class ConformalPredictor(UncertantyPredictor):
         cal_probs_dicts = self.model.predict_proba(cal_unlabeled_data)
         cal_probs = np.zeros(len(cal_probs_dicts))
 
-        # # Calculate threshold for each label
-        # self.threshold = np.zeros(labels.shape)
-        # for i in labels:
-        #     for j in range(len(cal_probs)):
-        #         cal_probs[j] = cal_probs_dicts[j][i]
-        #     mask_label = cal_labels == i
-        #     scores = self._score(cal_probs[mask_label])
-        #     self.threshold[i] = np.quantile(
-        #         np.concatenate((scores, [BIG_N])), 1 - self.alpha
-        #     )
-
         # Calculate threshold for each label
+        self.cat_threshold = np.zeros(labels.shape)
+        for i in labels:
+            for j in range(len(cal_probs)):
+                cal_probs[j] = cal_probs_dicts[j][i]
+            mask_label = cal_labels == i
+            scores = self._score(cal_probs[mask_label])
+            self.cat_threshold[i] = np.quantile(
+                np.concatenate((scores, [BIG_N])), 1 - self.alpha
+            )
+
+        # Calculate threshold
         self.threshold = np.zeros(labels.shape)
         for j in range(len(cal_probs)):
             cal_probs[j] = cal_probs_dicts[j][cal_labels[j]]
@@ -116,14 +116,26 @@ class ConformalPredictor(UncertantyPredictor):
         probas = self.model.predict_proba(unlabelled_data)
         score = np.array(
             [
-                np.mean(
+                np.sum(
                     [
                         self._score(prob[i])
-                        for i, t in enumerate(self.threshold)
-                        if self._score(prob[i]) <= t
+                        for i in range(self.n_classes)
+                        if self._score(prob[i]) <= self.threshold
                     ]
                 )
                 for prob in probas
             ]
         )
+        # score = np.array(
+        #     [
+        #         np.mean(
+        #             [
+        #                 self._score(prob[i])
+        #                 for i, t in enumerate(self.threshold)
+        #                 if self._score(prob[i]) <= t
+        #             ]
+        #         )
+        #         for prob in probas
+        #     ]
+        # )
         return np.nan_to_num(score)

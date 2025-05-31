@@ -141,6 +141,8 @@ PERMISSIONS = {
         "print_session",
         "handle_large_upload",
         "finalize_upload",
+        "gen_predictions",
+        "get_predictions",
     ],
     "user": [
         "static",

@@ -1,6 +1,6 @@
 import os
 import warnings
-from datetime import datetime
+from datetime import UTC, datetime
 
 from celery import Celery
 from celery.app.task import Task
@@ -109,20 +109,29 @@ def task_prerun_handler(
             if existing_task:
                 # Update existing task status
                 existing_task.update_status("STARTED")
-                existing_task.date_started = datetime.utcnow()
+                existing_task.date_started = datetime.now(UTC)
             else:
                 # Create new task record
                 user_id = extract_user_id(kwargs or {})
 
+                if kwargs:
+                    description = kwargs.get("description", None)
+                else:
+                    description = None
+
+                if not description:
+                    description = sender.name if sender else "unknown_task"
+
                 task_record = CeleryTask.create_task(
                     task_id=task_id,  # type: ignore
                     task_name=sender.name if sender else "unknown_task",
+                    description=description,
                     user_id=user_id,
                     args=args,
                     kwargs=kwargs,
                 )
                 task_record.update_status("STARTED")
-                task_record.date_started = datetime.utcnow()
+                task_record.date_started = datetime.now(UTC)
 
                 db.session.add(task_record)
 
@@ -149,7 +158,7 @@ def task_postrun_handler(
             task_record = db.session.get(CeleryTask, task_id)
             if task_record:
                 # Update completion timestamp
-                task_record.date_completed = datetime.utcnow()
+                task_record.date_completed = datetime.now(UTC)
 
                 # Store result if available
                 if retval is not None:
@@ -162,29 +171,37 @@ def task_postrun_handler(
 
 
 @task_success.connect
-def task_success_handler(sender=None, task_id=None, result=None, **kwargs) -> None:
-    """Handler called when task completes successfully"""
-    # Extract kwargs from the task context if available
-    task_kwargs = getattr(sender.request, "kwargs", {}) if hasattr(sender, "request") else {}  # type: ignore [sender.request attr]
-
-    if not should_track_task(task_kwargs):
-        return
-
+def task_success_handler(sender=None, **kwargs) -> None:
+    """Handler called when task completes successfully.
+    Updates all STARTED tasks that have finished."""
     try:
         flask_app = get_flask_app()
         db = get_db()
         CeleryTask = get_celery_task_model()  # noqa: N806
 
         with flask_app.app_context():
-            task_record = db.session.get(CeleryTask, task_id)
-            if task_record:
-                task_record.update_status("SUCCESS")
-                if result is not None:
-                    task_record.result = result
-                db.session.commit()
+            # Query all tasks in 'STARTED' status
+            started_tasks = CeleryTask.query.filter_by(status="STARTED").all()
+
+            for task_record in started_tasks:
+                task_kwargs = getattr(task_record, "kwargs", {})
+                if not should_track_task(task_kwargs):
+                    continue  # Skip tasks that shouldn't be tracked
+
+                try:
+                    # Check task status via result backend
+                    async_result = AsyncResult(task_record.id)
+                    if async_result.ready():  # Task has finished
+                        if async_result.state == "SUCCESS":
+                            task_record.update_status("SUCCESS")
+                            task_record.result = async_result.result
+                except Exception as e:
+                    print(f"Error checking task {task_record.task_id}: {e}")
+
+            db.session.commit()  # Commit all updates at once
 
     except Exception as e:
-        print(f"Error in task_success_handler for task {task_id}: {e}")
+        print(f"Error in task_success_handler: {e}")
 
 
 @task_failure.connect
@@ -205,7 +222,9 @@ def task_failure_handler(sender=None, task_id=None, exception=None, einfo=None, 
             task_record = db.session.get(CeleryTask, task_id)
             if task_record:
                 task_record.update_status("FAILURE")
-                task_record.error = str(exception) if exception else "Unknown error"
+                task_record.error = (
+                    str(einfo) if einfo else ""
+                )  # if exception else "Unknown error" # TODO: get info from exception
                 task_record.traceback = str(einfo) if einfo else None
                 db.session.commit()
 

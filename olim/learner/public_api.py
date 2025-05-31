@@ -208,6 +208,7 @@ class ActiveLearningBackend:
         self.message("Done training")
 
         if not SKIP_AL:
+            self.message("Hanking for AL")
             if len(self.subsample_size) == 3:
                 ids = rng.integers(len(unlabelled), size=(self.subsample_size[-3]))
                 candidates_ids = unlabelled_ids[ids]
@@ -344,8 +345,8 @@ class ActiveLearningBackend:
         if not isinstance(labelling, Labelling):
             raise TypeError("`labelling` must be a `Labelling`")
 
-        # if check_given:
-        #     assert entry_id in self._given_nexts, "submitted an unexpected label"
+        if check_given:
+            assert entry_id in self._given_nexts, "submitted an unexpected label"
 
         if entry_id in self._dataset:
             if self._dataset[entry_id][1] == self._encode(labelling):

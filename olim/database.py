@@ -4,7 +4,6 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import TypedDict
 
-from celery.result import AsyncResult
 from flask import session
 from sqlalchemy import ScalarResult, Select, func
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -188,6 +187,7 @@ class CeleryTask(db.Model, CreationControl):
     )
     status: Mapped[str] = db.mapped_column(CeleryTaskStatus(), nullable=False, default="PENDING")
     task_name: Mapped[str] = db.mapped_column(db.String(128), nullable=False)
+    description: Mapped[str] = db.mapped_column(db.String(128), nullable=True)
 
     # Task arguments and results
     args: Mapped[dict | None] = db.mapped_column(db.JSON, nullable=True)
@@ -235,11 +235,13 @@ class CeleryTask(db.Model, CreationControl):
         user_id: int,
         args=None,
         kwargs=None,
+        description="",
     ) -> "CeleryTask":
         """Helper to create a new task record"""
         return cls(
             id=task_id,
             task_name=task_name,
+            description=description,
             status="PENDING",
             args=args,
             kwargs=kwargs,
@@ -1037,7 +1039,7 @@ class TaskStatus(TypedDict):
     error: str | None
 
 
-def get_celery_tasks() -> dict[str, list[TaskStatus]]:
+def get_celery_tasks(n=10) -> dict[str, list[TaskStatus]]:
     """
     Update task statuses and categorize into pending/completed tasks.
 
@@ -1059,15 +1061,21 @@ def get_celery_tasks() -> dict[str, list[TaskStatus]]:
                 completed.append(
                     {
                         "id": task.id,
-                        "name": task.task_name,
+                        "name": task.description if task.description else task.task_name,
                         "error": task.error,
                         "status": task.status,
                     }
                 )
         else:
-            pending.append({"id": task.id, "name": task.task_name, "status": task.status})
-    completed = completed[: min(10, len(completed))]
-    return {"active": pending, "completed": completed}
+            pending.append(
+                {
+                    "id": task.id,
+                    "name": task.description if task.description else task.task_name,
+                    "status": task.status,
+                }
+            )
+    completed = completed[: min(n, len(completed))]
+    return {"active": pending[::-1], "completed": completed[::-1]}
 
 
 # endregion

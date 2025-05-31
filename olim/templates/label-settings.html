@@ -40,10 +40,10 @@
                     {{ _('Download Labeled Data') }}
                 </a>
                 {% endif %}
-                {%if has_permition('export_label')%}
-                <a href="../../al/{{ label.id }}/export" class="btn-flat waves-effect green-text">
-                    <i class="material-icons left">file_download</i>
-                    {{ _('Export Predictions') }}
+                {%if has_permition('gen_predictions')%}
+                <a href="{{url_for('gen_predictions', label_id=label.id)}}" class="btn-flat waves-effect green-text">
+                    <i class="material-icons left">autorenew</i>
+                    {{ _('Generate Predictions') }}
                 </a>
                 {% endif %}
                 {%if has_permition('catch_queue')%}
@@ -54,7 +54,40 @@
             </div>
         </div>
     </div>
-    <div>{{label.__dict__}}</div>
+    {% if export_tasks %}
+    <div class="card hoverable">
+        <div class="card-content">
+            <span class="card-title">Exported predictions</span>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Created</th>
+                        <th>Status</th>
+                        <th>Download</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in export_tasks %}
+                    <tr>
+                        <td>{{task.created}}</td>
+                        <td>{{task.status}}</td>
+                        <td>
+                            {% if task.status == "SUCCESS" %}
+                            <a class="btn waves-effect waves-light tooltipped"
+                                href="{{url_for('get_predictions', label_id=label.id, task_id=task.id)}}"
+                                data-tooltip="{{_('Download')}}">
+                                <i class="material-icons">file_download</i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
     <div class="row center-align">
         <a class="btn waves-effect waves-light" href="../..">{{ _('Back') }}</a>
     </div>

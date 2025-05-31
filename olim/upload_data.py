@@ -4,10 +4,11 @@ from flask import flash, jsonify, redirect, render_template, request, session, u
 from flask_babel import _
 
 from . import app
+from .celery_app import launch_task_with_tracking
 from .database import get_dataset_stats, get_datasets, link_dataset_to_project, new_dataset
 from .functions import check_is_setup
 from .settings import ALLOWED_EXTENSIONS, CHUNK_SIZE, MAX_FILE_SIZE, UPLOAD_PATH
-from .tasks.upload_data import start_upload_chain
+from .tasks.upload_data import upload_dataset
 
 
 @app.route("/task-list")
@@ -164,7 +165,11 @@ def upload_data() -> ...:
 
         # Start upload task chain
         try:
-            start_upload_chain(
+            launch_task_with_tracking(
+                upload_dataset,
+                description=_("Uploading and processing file {filename}").format(
+                    filename=upload_params.get("filename", "").split("/")[-1]
+                ),
                 upload_type=upload_type,
                 upload_params=upload_params,
                 dataset_id=dataset.id,

@@ -8,6 +8,7 @@ from flask_babel import _
 from . import app, db, entry_types
 from .celery_app import launch_task_with_tracking
 from .database import (
+    CeleryTask,
     del_label,
     get_dataset,
     get_datasets,
@@ -66,8 +67,8 @@ def create_label(project_id: int) -> ...:
     label = new_label(label_name, session["user_id"], project_id)
     launch_task_with_tracking(
         create_label_al,
-        project_id = project_id,
-        label_id = label.id,
+        project_id=project_id,
+        label_id=label.id,
         user_id=session["user_id"],
         track_progress=True,
     )
@@ -191,6 +192,8 @@ def label_settings(label_id: int) -> ...:
         return redirect("/")
     project_id = label.project_id
 
+    export_tasks = CeleryTask.query.filter_by(task_name="learner.export_predictions").all()[::-1]
+
     # Check project_id
     res = update_session_project(project_id)
     if res is not None:
@@ -198,7 +201,7 @@ def label_settings(label_id: int) -> ...:
     if label is None:
         flash(_("Label not found"), category="error")
         return redirect(url_for("labels", project_id=project_id))
-    return render_template("label-settings.html", label=label)
+    return render_template("label-settings.html", label=label, export_tasks=export_tasks)
 
 
 @app.route("/<int:project_id>/label-upload", methods=["POST"])

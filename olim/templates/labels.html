@@ -53,22 +53,13 @@
                             <i class="material-icons">settings</i>
                         </a>
                         {% endif %}
-                        {% if label.al_key %}
+                        {% if label.al_key != "setup" %}
                         <a class="btn waves-effect waves-light tooltipped"
                             href="{{ url_for('catch_al', label_id=label.id) }}"
                             data-tooltip="{{ _('Open active learling queue') }}">
                             <i class="material-icons right">send</i>
                             {{ _('Learn') }}
                         </a>
-                        {% else %}
-                        {% if values[label.id]["Total"] > 0 %}
-                        <a class="btn waves-effect waves-light tooltipped"
-                            href="{{url_for('catch_queue', label_id=label.id)}}"
-                            data-tooltip="{{ _('Open active learling queue') }}">
-                            <i class="material-icons right">assignment</i>
-                            {{ _('Labels') }}
-                        </a>
-                        {% endif %}
                         {% endif %}
                     </td>
                     {% endif %}

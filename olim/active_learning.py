@@ -1,13 +1,22 @@
 import json
 
-from flask import flash, redirect, render_template, request, session, url_for
+import numpy as np
+import pandas as pd
+from celery.result import AsyncResult
+from flask import Response, flash, redirect, render_template, request, session, url_for
 from flask_babel import _
 
 from . import app, db, settings
 from .celery_app import launch_task_with_tracking
-from .database import Label, add_entry_label, get_entry, get_label
+from .database import CeleryTask, Label, add_entry_label, get_datasets, get_entry, get_label
 from .functions import get_highlights, render_entry
-from .tasks.active_learning import COMPOSITE_ID, add_label_value, create_label_al, train_model
+from .tasks.active_learning import (
+    COMPOSITE_ID,
+    add_label_value,
+    create_label_al,
+    export_predictions,
+    train_model,
+)
 
 
 def new_al(label: Label) -> None:
@@ -19,24 +28,30 @@ def catch_al(label_id: int) -> ...:
     label = get_label(label_id)
     if not label:
         flash(_("Label not found."), category="error")
-        return redirect("/al")
+        return redirect("/")
 
     # Create learner if it doen't exists
     if label.al_key is None:
-            launch_task_with_tracking(
-                create_label_al,
-                project_id = label.project_id,
-                label_id = label.id,
-                user_id=session["user_id"],
-                track_progress=True,
-            )
-            label.al_key = "setup"
-            db.session.commit()
-            flash(_("Seting up active learn pipeline for label {label_name}, "
-                    "please wait a few minutes and try again.").format(
-                        label_name=label.name
-                    ), category="warning")
-            return redirect(url_for("labels"))
+        launch_task_with_tracking(
+            create_label_al,
+            description=_("Creating Active Learning for {label_name}").format(
+                label_name=label.name
+            ),
+            project_id=label.project_id,
+            label_id=label.id,
+            user_id=session["user_id"],
+            track_progress=True,
+        )
+        label.al_key = "setup"
+        db.session.commit()
+        flash(
+            _(
+                "Seting up Active Learning pipeline for label {label_name}, "
+                "please wait a few minutes and try again."
+            ).format(label_name=label.name),
+            category="warning",
+        )
+        return redirect(url_for("labels", project_id=label.project_id))
 
     # Assign label value if given
     if request.method == "POST":
@@ -44,37 +59,40 @@ def catch_al(label_id: int) -> ...:
         entry_id = request.form["entry_id"]
         entry = get_entry(request.form["entry_id"], by="id")
         if entry is None:
-            flash(_("Error on active learning for label {label_name} report to developers.").format(
-                        label_name=label.name), category="error")
+            flash(
+                _("Error on active learning for label {label_name} report to developers.").format(
+                    label_name=label.name
+                ),
+                category="error",
+            )
             return redirect("/")
 
         add_entry_label(label_id, entry.id, session["user_id"], value_str)
         launch_task_with_tracking(
             add_label_value,
-            project_id = label.project_id,
-            label_id = label.id,
-            dataset_id = entry.dataset_id,
-            entry_id = entry.entry_id,
-            value = value_str,
+            project_id=label.project_id,
+            label_id=label.id,
+            dataset_id=entry.dataset_id,
+            entry_id=entry.entry_id,
+            value=value_str,
             user_id=session["user_id"],
             track_progress=False,
         )
 
         # Drop labeled entry from AL cache
-        cache = json.loads(label.cache) # type: ignore
-        comp_id = COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id= entry.entry_id)
+        cache = json.loads(label.cache)  # type: ignore
+        comp_id = COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id)
         if comp_id in cache:
-            cache.remove(
-                COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id= entry.entry_id)
-            )
+            cache.remove(COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id))
             label.cache = json.dumps(cache)
 
         # Check train
         if label.training_counter == 4:
             launch_task_with_tracking(
                 train_model,
-                project_id = label.project_id,
-                label_id = label.id,
+                description=_("Training for label {label_name}").format(label_name=label.name),
+                project_id=label.project_id,
+                label_id=label.id,
                 user_id=session["user_id"],
                 track_progress=True,
             )
@@ -91,79 +109,110 @@ def catch_al(label_id: int) -> ...:
             category="success",
         )
 
-
     data = {
         "label": label,
         "highlight": get_highlights(),
         "valid_entry": True,
-        "messages": json.loads(label.metrics), # type: ignore
+        "messages": json.loads(label.metrics),  # type: ignore
     }
-    dataset_id, entry_id = eval(json.loads(label.cache)[0]) # type: ignore
+    while True:
+        dataset_id, entry_id = eval(json.loads(label.cache)[0])  # type: ignore
+        entry = get_entry((dataset_id, str(entry_id)), "composite")
+        if label in [el.label for el in entry.labels]:
+            print(f"Skipping {dataset_id}, {entry_id}")
+            cache = json.loads(label.cache)  # type: ignore
+            comp_id = COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id)
+            if comp_id in cache:
+                cache.remove(
+                    COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id)
+                )
+                label.cache = json.dumps(cache)
+        else:
+            break
     data = render_entry(str(entry_id), int(dataset_id), data)
     return render_template("al-entry.html", **data)
 
 
-@app.route("/al/<int:label_id>/export", methods=["GET", "POST"])
-def export_label(label_id: int) -> ...:
-    return redirect("/")
-    # label = get_label(label_id)
+@app.route("/al/<int:label_id>/gen_predictions", methods=["GET"])
+def gen_predictions(label_id: int) -> ...:
+    label = get_label(label_id)
+    if not label:
+        flash(_("Label not found."), category="error")
+        return redirect("/")
 
-    # if label is None:
-    #     # TODO: Add error message as below
-    #     # flash(_("Label not found."), category="error")
-    #     return redirect("/labels")
+    tasks = CeleryTask.query.filter_by(task_name="learner.export_predictions").all()
+    pending_tasks = [
+        task.id
+        for task in tasks
+        if task.kwargs["label_id"] == label_id and task.status in ["PENDING", "STARTED"]
+    ]
 
-    # try:
-    #     data_req = {
-    #         "app_key": label.project.datasets[0].learner_key,
-    #         "user_id": session["user_id"],
-    #         "label_id": label.al_key,
-    #     }
+    if any(pending_tasks):
+        flash(
+            _("Already processing export of predictions for label {label_name}").format(
+                label_name=label.name
+            ),
+            category="warning",
+        )
+    else:
+        flash(
+            _(
+                "Processing export of predictions for label {label_name}, "
+                "please wait a few minutes."
+            ).format(label_name=label.name),
+            category="success",
+        )
+        launch_task_with_tracking(
+            export_predictions,
+            project_id=label.project_id,
+            label_id=label.id,
+            user_id=session["user_id"],
+            description=_("Generationg predictions for {label_name}").format(label_name=label.name),
+            track_progress=True,
+        )
+    return redirect(url_for("label_settings", label_id=label_id))
 
-    #     if request.method == "POST":
-    #         # get alpha from request and add to data_req
-    #         alpha = request.form["alpha"]
-    #     else:
-    #         alpha = 0.95
 
-    #     data_req["alpha"] = alpha
+@app.route("/al/<int:label_id>/predictions/<task_id>", methods=["GET", "POST"])
+def get_predictions(label_id: int, task_id: str) -> ...:
+    label = get_label(label_id)
+    if not label:
+        flash(_("Label not found."), category="error")
+        return redirect("/")
 
-    #     ic(data_req)
+    res = AsyncResult(task_id)
 
-    #     res = requests.put(
-    #         f"{settings.LEARNER_URL}/al/export-predictions",
-    #         json=json.dumps(data_req),
-    #     ).json()
+    dataset_names = {}
+    for dataset in get_datasets():
+        if dataset.id not in dataset_names:
+            dataset_names[dataset.id] = dataset.name
 
-    #     if res["status"] == "success":
-    #         preds = res["predictions"]
-    #         preds_values = [pred[0] if len(pred) == 1 else np.nan for pred in preds.values()]
-    #         preds_ids = list(preds.keys())
-    #         pred_df = pd.DataFrame({"entry_id": preds_ids, "value": preds_values})
+    if res.ready():
+        preds = res.result["predictions"]  # type: ignore
+        preds_values = [pred[0] if len(pred) == 1 else np.nan for pred in preds.values()]
+        preds_ids = [eval(i)[1] for i in preds.keys()]
+        dataset_ids = [eval(i)[0] for i in preds.keys()]
+        dataset_names = [dataset_names[i] for i in dataset_ids]
+        pred_df = pd.DataFrame(
+            {
+                "entry_id": preds_ids,
+                "dataset_id": dataset_ids,
+                "dataset_name": dataset_names,
+                "value": preds_values,
+            }
+        )
 
-    #         ic(pred_df)
-
-    #         # download json res["predictions"] as csv
-    #         return Response(
-    #             pred_df.to_csv(index=False),
-    #             mimetype="text/csv",
-    #             headers={
-    #                 "Content-disposition": "attachment; "
-    #                 f"filename={label.name}-{alpha}-predictions.csv"
-    #             },
-    #         )
-    #     else:
-    #         flash(
-    #             _("Error exporting predictions: {error}").format(error=res["error"]),
-    #             category="error",
-    #         )
-    #         return redirect("/labels")
-    # except requests.exceptions.ConnectionError:
-    #     flash(
-    #         _(
-    #             "Failed to export predictions for label {label_name}, "
-    #             "please check learner connection."
-    #         ).format(label_name=label.name),
-    #         category="error",
-    #     )
-    #     return redirect(f"/labels/{label_id}/settings")
+        # download json res["predictions"] as csv
+        return Response(
+            pred_df.to_csv(index=False),
+            mimetype="text/csv",
+            headers={
+                "Content-disposition": f"attachment; filename={label.name}-0.95-predictions.csv"
+            },
+        )
+    else:
+        flash(
+            _("Error exporting predictions: {error}").format(error=res["error"]),
+            category="error",
+        )
+        return redirect(url_for("label_settings", label_id=label_id))

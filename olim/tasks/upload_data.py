@@ -185,21 +185,3 @@ def upload_dataset(
         "batches_processed": batch_count,
         "batch_results": processed_batches,
     }
-
-
-def start_upload_chain(
-    upload_type: str,
-    upload_params: dict[str, Any],
-    dataset_id: int,
-    user_id: int,
-    track_progress: bool = True,
-) -> str:
-    """Start the upload task chain with automatic tracking"""
-    task = upload_dataset.delay(
-        upload_type=upload_type,
-        upload_params=upload_params,
-        dataset_id=dataset_id,
-        user_id=user_id,
-        track_progress=track_progress,
-    )
-    return task.id
