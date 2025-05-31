@@ -32,4 +32,4 @@ RUN export SECRET_KEY=`python -c 'import secrets; print(secrets.token_hex())'`
 
 ENTRYPOINT ["/entrypoint.sh"]
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
-CMD ["uv", "run", "gunicorn", "-w", "4", "--timeout", "120", "--reload", "--bind", "0.0.0.0:42000", "olim:app"]
+CMD ["uv", "run", "gunicorn", "-w", "4", "--timeout", "60", "--reload", "--bind", "0.0.0.0:42000", "olim:app"]

@@ -6,6 +6,7 @@ from flask import Response, flash, redirect, render_template, request, session, 
 from flask_babel import _
 
 from . import app, db, entry_types
+from .celery_app import launch_task_with_tracking
 from .database import (
     del_label,
     get_dataset,
@@ -16,6 +17,7 @@ from .database import (
     new_label,
 )
 from .project import update_session_project
+from .tasks.active_learning import create_label_al
 from .utils.label import label_upload
 from .utils.queues import store_queue
 
@@ -62,6 +64,13 @@ def create_label(project_id: int) -> ...:
 
     label_name = request.form.get("label")
     label = new_label(label_name, session["user_id"], project_id)
+    launch_task_with_tracking(
+        create_label_al,
+        project_id = project_id,
+        label_id = label.id,
+        user_id=session["user_id"],
+        track_progress=True,
+    )
     flash(
         _("Label {label_name} successfully created").format(label_name=label.name),
         category="success",
@@ -82,22 +91,6 @@ def delete_label(label_id: int) -> ...:
     if res is not None:
         return res
 
-    # TODO: Delete label from active
-    # if label.al_key:
-    #     # Delete label from active
-    #     data = dict(
-    #         app_key=settings.LEARNER_KEY,
-    #         user_id=session["user_id"],
-    #         label_id=label.al_key,
-    #     )
-    #     res = requests.delete(f"{settings.LEARNER_URL}/al/delete-label", json=json.dumps(data)).json() # noqa
-    #
-    #     if res["label_id"] != label.al_key:
-    #         flash(
-    #             _("Error deleting label {label_name} from active").format(label_name=label.name),
-    #             category="error",
-    #         )
-    #         return redirect("/labels")
     label = del_label(label_id, session["user_id"])
     flash(
         _("Label {label_name} sucessfully deleted").format(label_name=label.name),

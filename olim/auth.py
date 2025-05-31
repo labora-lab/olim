@@ -1,3 +1,4 @@
+from elasticsearch import Elasticsearch
 from flask import abort, flash, redirect, render_template, request, session, url_for
 from flask_babel import _
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -5,6 +6,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from . import app, settings
 from .database import (
     User,
+    get_celery_tasks,
     get_project,
     get_projects,
     get_setup_step,
@@ -13,7 +15,6 @@ from .database import (
     init_db,
     insert_user,
     load_session,
-    monitor_celery_tasks,
     new_label,
     new_project,
     save_session,
@@ -142,41 +143,28 @@ def check_permission() -> ...:
                 return redirect("/")
 
 
-# @app.before_request
-# def check_elasticsearch() -> ...:
-#     if check_is_setup() and not role_has_permission(role="guest"):
-#         es = es = Elasticsearch([settings.ES_SERVER])
-#         try:
-#             # Attempt to ping the Elasticsearch server
-#             if es.ping():
-#                 return None  # Elasticsearch is available, proceed with the request
-#             else:
-#                 raise Exception("Elasticsearch server is not responding")
-
-#         except Exception as e:
-#             flash(
-#                 _(
-#                     "Elasticsearch server is unavailable: {error}."
-#                     "If you just started the services, please wait for "
-#                     "a few minutes, contact admin if problem persists."
-#                 ).format(error=str(e)),
-#                 category="error",
-#             )
-#             # Render base.html immediately and stop further processing of this request
-#             return render_template("base.html")
-
-
 @app.before_request
-def check_backend() -> ...:
-    return None
-    if request.endpoint in settings.NEED_LEARNER and settings.LEARNER_URL is None:
-        flash(
-            _(
-                "{requested_url} needs a OLIM-learner connection, see https://gitlab.com/nanogennari/olim-learner."
-            ).format(requested_url=request.url),
-            category="error",
-        )
-        return redirect("/")
+def check_elasticsearch() -> ...:
+    if check_is_setup() and not role_has_permission(role="guest"):
+        es = Elasticsearch([settings.ES_SERVER])
+        try:
+            # Attempt to ping the Elasticsearch server
+            if es.ping():
+                return None  # Elasticsearch is available, proceed with the request
+            else:
+                raise Exception("Elasticsearch server is not responding")
+
+        except Exception as e:
+            flash(
+                _(
+                    "Elasticsearch server is unavailable: {error}."
+                    "If you just started the services, please wait for "
+                    "a few minutes, contact admin if problem persists."
+                ).format(error=str(e)),
+                category="error",
+            )
+            # Render base.html immediately and stop further processing of this request
+            return render_template("base.html")
 
 
 @app.before_request  # type: ignore
@@ -194,7 +182,7 @@ def add_projects() -> ...:
 @app.before_request  # type: ignore
 def add_tasks() -> ...:
     if check_is_setup():
-        tasks = monitor_celery_tasks()
+        tasks = get_celery_tasks()
         app.jinja_env.globals.update(
             active_tasks=tasks["active"],
             completed_tasks=tasks["completed"],

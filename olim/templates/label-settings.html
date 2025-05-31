@@ -34,12 +34,6 @@
                     <i class="material-icons left">remove_circle_outline</i>
                     {{ _('Remove Label') }}
                 </a>
-                {%if has_permition('sync_label')%}
-                <a href="../../al/{{ label.id }}/sync" class="btn-flat waves-effect blue-text">
-                    <i class="material-icons left">sync</i>
-                    {{ _('Synchronize Label') }}
-                </a>
-                {% endif %}
                 {%if has_permition('extract_labels')%}
                 <a href="{{url_for('extract_labels', label_id=label.id)}}" class="btn-flat waves-effect green-text">
                     <i class="material-icons left">file_download</i>
@@ -60,6 +54,7 @@
             </div>
         </div>
     </div>
+    <div>{{label.__dict__}}</div>
     <div class="row center-align">
         <a class="btn waves-effect waves-light" href="../..">{{ _('Back') }}</a>
     </div>

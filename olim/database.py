@@ -1037,7 +1037,7 @@ class TaskStatus(TypedDict):
     error: str | None
 
 
-def monitor_celery_tasks() -> dict[str, list[TaskStatus]]:
+def get_celery_tasks() -> dict[str, list[TaskStatus]]:
     """
     Update task statuses and categorize into pending/completed tasks.
 
@@ -1053,29 +1053,6 @@ def monitor_celery_tasks() -> dict[str, list[TaskStatus]]:
     completed = []
 
     for task in active_tasks:
-        # Get current state from Celery
-        result = AsyncResult(task.id)
-        current_status = result.state
-
-        # Update status if changed
-        if not (result.state == "PENDING" and task.status == "SUCCESS"):
-            if task.status != current_status:
-                try:
-                    task.update_status(current_status)
-
-                    # Update additional info
-                    if current_status == "FAILURE":
-                        task.error = str(result.result)
-                        task.traceback = result.traceback
-                    elif current_status == "SUCCESS":
-                        task.result = result.result
-
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    print(f"Error updating task {task.id}: {e!s}")
-                    continue
-
         # Categorize based on updated status
         if task.status in {"SUCCESS", "FAILURE", "REVOKED"}:
             if (datetime.now() - task.date_completed) <= timedelta(hours=24):

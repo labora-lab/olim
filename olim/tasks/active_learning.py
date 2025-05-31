@@ -1,217 +1,272 @@
-# import json
-# from datetime import datetime
-# from typing import Any
+import json
+import os  # Added for lock handling
+import time  # Added for lock handling
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Any
 
-# from .. import app as flask_app
-# from ..celery_app import app
-# from ..database import CeleryTask, Label, db
+import numpy as np
+from numpy.random import default_rng
+
+from .. import app as flask_app, settings
+from ..celery_app import app
+from ..database import db, get_label, get_project
+from ..learner import ActiveLearningBackend
+
+COMPOSITE_ID = "({dataset_id},{entry_id})"
+learners_cache = {}
+
+# ====== LOCK HANDLING MECHANISM ======
+class LockTimeoutError(Exception):
+    """Exception raised when lock acquisition times out."""
+    pass
+
+def acquire_lock(lock_path: Path, timeout: int = 121) -> None:
+    """Acquire a lock file with timeout and stale lock detection."""
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        if lock_path.exists():
+            print(f"Waiting for lock: {lock_path}")
+            try:
+                # Check for stale lock (process no longer running)
+                with open(lock_path) as f:
+                    pid = int(f.read().strip())
+                try:
+                    os.kill(pid, 0)  # Check if process exists
+                except (ProcessLookupError, PermissionError):
+                    lock_path.unlink()  # Remove stale lock
+            except (OSError, ValueError, FileNotFoundError):
+                pass  # Lock invalid or already removed
+        try:
+            # Attempt to create lock file
+            fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            with os.fdopen(fd, 'w') as f:
+                f.write(f"{os.getpid()}\n")
+            return
+        except FileExistsError:
+            time.sleep(5)  # Wait before retrying
+    raise LockTimeoutError(f"Could not acquire lock after {timeout} seconds: {lock_path}")
+
+def release_lock(lock_path: Path) -> None:
+    """Release lock by deleting lock file."""
+    try:
+        lock_path.unlink()
+    except FileNotFoundError:
+        pass  # Lock already removed
+
+@contextmanager  # Add this decorator
+def learner_lock(learner_path: Path) -> ...:
+    """Context manager for learner locking."""
+    lock_file = learner_path / "learner.lock"
+    try:
+        acquire_lock(lock_file)
+        yield
+    finally:
+        release_lock(lock_file)
+# ====== END LOCK HANDLING ======
+
+def get_rng() -> np.random.Generator:
+    if settings.RANDOM_SEED is None:
+        seed = int(time.time())
+    else:
+        seed = settings.RANDOM_SEED
+    print(f"Created generator using seed: {seed}")
+    return default_rng(seed=seed)
+
+def get_label_path(project_id: int, label_id: int, check: bool = True) -> Path | None:
+    work_path = settings.WORK_PATH / f"project_{project_id}" / f"label_{label_id}"
+    if not work_path.is_dir() and check:
+        return None
+    work_path.mkdir(parents=True, exist_ok=True)
+    return work_path.absolute()
+
+def get_data(project_id: int) -> dict[str, str]:
+    with flask_app.app_context():
+        project = get_project(project_id)
+        if project is None:
+            raise RuntimeError(f"Error loading project {project_id}.")
+
+        data = {}
+        dataset_dir = settings.WORK_PATH / "datasets"
+        dataset = None
+        try:
+            for dataset in project.datasets:
+                with open(dataset_dir / f"{dataset.id}.jsonl") as f:
+                    for line in f.readlines():
+                        line_data = json.loads(line)
+                        data[
+                            COMPOSITE_ID.format(dataset_id=project_id, entry_id=line_data["id"])
+                        ] = line_data["text"]
+        except Exception as e:
+            if dataset:
+                print(f"Failed loading dataset {dataset.id}: {e}")
+            raise
+        return data
 
 
-# class LearnerInterface:
-#     """Celery task interface for learner operations"""
+def get_label_values(label_id: int) -> dict[str, str]:
+    with flask_app.app_context():
+        label = get_label(label_id)
+        if label is None:
+            raise RuntimeError(f"Failed to load label {label_id}")
 
-#     @staticmethod
-#     def _update_label_metrics(label_id: int, metrics: dict[str, Any],
-#                             cache: dict[str, Any] = None) -> None:
-#         """Helper to update label metrics and cache"""
-#         with flask_app.app_context():
-#             label = db.session.get(Label, label_id)
-#             if not label:
-#                 raise ValueError(f"Label {label_id} not found")
+        # TODO: Handle multiple values for same label? Check order?
+        values = {}
+        for entrylabel in label.entries:
+            if not entrylabel.deleted:
+                values[
+                    COMPOSITE_ID.format(
+                        dataset_id=entrylabel.entry.dataset_id, entry_id=entrylabel.entry.entry_id
+                    )
+                ] = entrylabel.value
 
-#             if metrics:
-#                 label.metrics = json.dumps(metrics)
-#             if cache:
-#                 label.cache = json.dumps(cache)
+    return values
 
-#             db.session.commit()
+def instanciate_al(project_id, label_id) -> ActiveLearningBackend:
+    data = get_data(project_id)
+    learner_path = get_label_path(project_id, label_id, check=False)
+    print(f"Instanciating learner for Project {project_id},  Label {label_id}")
+    with flask_app.app_context():
+        values = get_label_values(label_id)
+    labels = [label[0] for label in settings.LABELS]
+    learner = ActiveLearningBackend(
+        original_dataset=data, # type: ignore
+        labels=labels,
+        initial_labelled_dataset=values, # type: ignore
+        save_path=learner_path,
+        rng=get_rng(),
+    )
+    print(f"Storing learner for Project {project_id},  Label {label_id}")
+    learner.save()
+    learners_cache[label_id] = learner
+    return learner
 
-#     @app.task(bind=True, name="learner.create_label")  # type: ignore
-#     def create_label(self, values: list[str], label_id: int) -> dict[str, Any]:
-#         """Create new active learning label"""
-#         try:
-#             with flask_app.app_context():
-#                 label = db.session.get(Label, label_id)
-#                 if not label:
-#                     raise ValueError(f"Label {label_id} not found")
 
-#                 # Initialize learner (implementation specific)
-#                 learner = flask_app.extensions['learner'].create_learner(
-#                     label.project.datasets[0].id,
-#                     values
-#                 )
+def get_learner(project_id: int, label_id: int) -> ActiveLearningBackend:
+    if label_id in learners_cache:
+        return learners_cache[label_id]
+    else:
+        data = get_data(project_id)
+        print(f"Learner for Project {project_id},  Label {label_id} not on cache, loading.")
+        learner_path = get_label_path(project_id, label_id)
+        if learner_path is None:
+            return instanciate_al(project_id, label_id)
+        learner = ActiveLearningBackend.load(
+            learner_path, data, rng=get_rng() # type: ignore
+        )
+        learners_cache[label_id] = learner
+        return learner
 
-#                 # Store the learner key
-#                 label.al_key = learner.label_id
-#                 db.session.commit()
 
-#                 # Register task using Celery's task ID
-#                 CeleryTask.create_task(
-#                     task_id=self.request.id,
-#                     task_name=self.name,
-#                     user_id=self.request.get('user_id', 0),
-#                     kwargs={"label_id": label_id}
-#                 )
+def update_label(label_id: int, **to_update) -> None:
+    """Helper to update label metrics and cache"""
+    with flask_app.app_context():
+        # Get label
+        label = get_label(label_id)
+        if not label:
+            raise ValueError(f"Label {label_id} not found")
 
-#                 return {"success": True, "errors": None}
+        for col, value in to_update.items():
+            if col in ['metrics', 'cache']:
+                value = json.dumps(value)
+            setattr(label, col, value)
 
-#         except Exception as e:
-#             self.retry(exc=e, countdown=60, max_retries=3)
-#             return {"success": False, "errors": [str(e)]}
 
-#     @app.task(bind=True, name="learner.train_model")  # type: ignore
-#     def train_model(self, label_id: int) -> dict[str, Any]:
-#         """Train model and store results in label"""
-#         try:
-#             with flask_app.app_context():
-#                 label = db.session.get(Label, label_id)
-#                 if not label or not label.al_key:
-#                     raise ValueError("Label or learner not initialized")
+        db.session.commit()
 
-#                 learner = flask_app.extensions['learner'].get_learner(
-#                     label.project.datasets[0].id,
-#                     label.al_key
-#                 )
+@app.task(bind=True, name="learner.create_label_al")
+def create_label_al(
+    self,
+    project_id: int,
+    label_id: int,
+    **__,
+) -> dict[str, Any]:
+    """Create new active learning for label"""
+    learner_path = get_label_path(project_id, label_id, check=False)
+    with learner_lock(learner_path): # type: ignore
+        learner = instanciate_al(project_id, label_id)
 
-#                 # Train and get metrics
-#                 learner._train()
-#                 metrics = {
-#                     "last_trained": datetime.utcnow().isoformat(),
-#                     "performance": learner.get_performance_metrics(),
-#                     "subsample_size": len(learner._cached_subsample)
-#                 }
+        update_label(label_id, metrics=[], cache=learner._cached_subsample, al_key=str(label_id))
 
-#                 # Update label with metrics and cache
-#                 self._update_label_metrics(
-#                     label_id,
-#                     metrics=metrics,
-#                     cache={"subsample": learner._cached_subsample}
-#                 )
+        # Fix to avoid old control
+        learner._given_nexts = learner._cached_subsample
 
-#                 # Register task
-#                 CeleryTask.create_task(
-#                     task_id=self.request.id,
-#                     task_name=self.name,
-#                     user_id=self.request.get('user_id', 0),
-#                     kwargs={"label_id": label_id}
-#                 )
+        learner.save()
+    return {"success": True, "errors": None}
 
-#                 return {"success": True, "metrics": metrics}
+@app.task(bind=True, name="learner.train_model")
+def train_model(
+    self,
+    project_id: int,
+    label_id: int,
+    **__,
+) -> dict[str, Any]:
+    """Train model and store results in label"""
+    learner_path = get_label_path(project_id, label_id)
+    with learner_lock(learner_path): # type: ignore
+        # Get learner
+        learner = get_learner(project_id, label_id)
 
-#         except Exception as e:
-#             self.retry(exc=e, countdown=120, max_retries=3)
-#             return {"success": False, "errors": [str(e)]}
+        # Load and subimmit cached entries # TODO: Get this from db kill add_label_value task
+        learner_path = get_label_path(project_id, label_id, check=False)
+        subs_file = learner_path / "submissions.jsonl" # type: ignore
+        with open(subs_file) as f:
+            submissions = []
+            for line in f.readlines():
+                submissions.append(json.loads(line))
+        subs_file.unlink()
+        for subm in submissions:
+            learner.submit_labelling(subm['id'], subm['value'])
 
-#     @app.task(bind=True, name="learner.add_label_value")  # type: ignore
-#     def add_label_value(self, label_id: int, entry_id: str, value: str) -> dict[str, Any]:
-#         """Submit a labeled value and update metrics"""
-#         try:
-#             with flask_app.app_context():
-#                 label = db.session.get(Label, label_id)
-#                 if not label or not label.al_key:
-#                     raise ValueError("Label or learner not initialized")
+        # Train and get metrics
+        learner._train()
+        metrics = learner.metrics_strs
 
-#                 learner = flask_app.extensions['learner'].get_learner(
-#                     label.project.datasets[0].id,
-#                     label.al_key
-#                 )
-#                 learner.submit_labelling(entry_id, value)
+        # Update label with metrics and cache
+        update_label(
+            label_id, metrics=metrics, cache=learner._cached_subsample # type: ignore
+        )
 
-#                 # Update metrics
-#                 metrics = {
-#                     "last_update": datetime.utcnow().isoformat(),
-#                     "total_labels": len(label.entries) + 1
-#                 }
-#                 self._update_label_metrics(label_id, metrics=metrics)
+        # Fix to avoid old control
+        learner._given_nexts = learner._cached_subsample
 
-#                 # Register task
-#                 CeleryTask.create_task(
-#                     task_id=self.request.id,
-#                     task_name=self.name,
-#                     user_id=self.request.get('user_id', 0),
-#                     kwargs={
-#                         "label_id": label_id,
-#                         "entry_id": entry_id
-#                     }
-#                 )
+        learner.save()
+    return {"success": True, "metrics": metrics}
 
-#                 return {"success": True}
+@app.task(bind=True, name="learner.add_label_value")
+def add_label_value(
+    self,
+    project_id: int,
+    label_id: int,
+    dataset_id: int,
+    entry_id: str,
+    value: str,
+    **__,
+) -> dict[str, Any]:
+    """Submit a labeled value and update metrics"""
+    learner_path = get_label_path(project_id, label_id, check=False)
+    with open(learner_path / "submissions.jsonl", "a") as f: # type: ignore
+        f.write(json.dumps({
+            "id": COMPOSITE_ID.format(dataset_id=dataset_id, entry_id=entry_id),
+            "value": value,
+        }) + "\n")
+    return {"success": True}
 
-#         except Exception as e:
-#             self.retry(exc=e, countdown=30, max_retries=5)
-#             return {"success": False, "errors": [str(e)]}
 
-#     @app.task(bind=True, name="learner.sync_label")  # type: ignore
-#     def sync_label(self, label_id: int) -> dict[str, Any]:
-#         """Synchronize label state and update metrics"""
-#         try:
-#             with flask_app.app_context():
-#                 label = db.session.get(Label, label_id)
-#                 if not label or not label.al_key:
-#                     raise ValueError("Label or learner not initialized")
+@app.task(bind=True, name="learner.export_predictions")
+def export_predictions(
+    self,
+    project_id: int,
+    label_id: int,
+    alpha: float = 0.95,
+    **__,
+) -> dict[str, Any]:
+    """Export model predictions"""
+    learner_path = get_label_path(project_id, label_id)
+    with learner_lock(learner_path): # type: ignore
+        # Get learner
+        learner = get_learner(project_id, label_id)
+        preds = learner.export_predictions(alpha=alpha)
 
-#                 learner = flask_app.extensions['learner'].get_learner(
-#                     label.project.datasets[0].id,
-#                     label.al_key
-#                 )
-
-#                 # Get current entries
-#                 entries = {e.entry.entry_id: e.value for e in label.entries}
-#                 learner.sync_labelling(entries)
-
-#                 # Update metrics
-#                 metrics = {
-#                     "last_sync": datetime.utcnow().isoformat(),
-#                     "total_labels": len(entries),
-#                     "consistency_check": learner.check_consistency()
-#                 }
-#                 self._update_label_metrics(label_id, metrics=metrics)
-
-#                 return {"success": True}
-
-#         except Exception as e:
-#             self.retry(exc=e, countdown=60, max_retries=3)
-#             return {"success": False, "errors": [str(e)]}
-
-#     @app.task(bind=True, name="learner.export_predictions")  # type: ignore
-#     def export_predictions(self, label_id: int, alpha: float = 0.95) -> dict[str, Any]:
-#         """Export model predictions"""
-#         try:
-#             with flask_app.app_context():
-#                 label = db.session.get(Label, label_id)
-#                 if not label or not label.al_key:
-#                     raise ValueError("Label or learner not initialized")
-
-#                 learner = flask_app.extensions['learner'].get_learner(
-#                     label.project.datasets[0].id,
-#                     label.al_key
-#                 )
-#                 preds = learner.export_predictions(alpha=alpha)
-
-#                 return {
-#                     "success": True,
-#                     "predictions": preds,
-#                     "metrics": label.get_metrics()
-#                 }
-
-#         except Exception as e:
-#             self.retry(exc=e, countdown=30, max_retries=2)
-#             return {"success": False, "errors": [str(e)]}
-
-#     # Add to LearnerInterface class
-#     @app.task(bind=True, name="learner.get_next_entry")  # type: ignore
-#     def get_next_entry(self, label_id: int) -> dict[str, Any]:
-#         """Get next entry for labelling"""
-#         try:
-#             with flask_app.app_context():
-#                 label = db.session.get(Label, label_id)
-#                 learner = flask_app.extensions['learner'].get_learner(
-#                     label.project.datasets[0].id,
-#                     label.al_key
-#                 )
-#                 return {
-#                     "entry_id": learner.request_next_entry(),
-#                     "messages": learner.metrics_strs
-#                 }
-#         except Exception as e:
-#             self.retry(exc=e, countdown=30, max_retries=3)
+        learner.save()
+    return {"success": True, "predictions": preds}
