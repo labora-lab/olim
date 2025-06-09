@@ -106,7 +106,9 @@ class ActiveLearningBackend:
                 self._unlabelled_dataset.remove(entry_id)
         if initial_labelled_dataset is not None:
             for entry_id, label in initial_labelled_dataset.items():
-                self._dataset[entry_id] = original_dataset[entry_id], self._encode(label)
+                self._dataset[entry_id] = original_dataset[entry_id], self._encode(
+                    label
+                )
                 self._unlabelled_dataset.remove(entry_id)
 
         self._rng = rng
@@ -117,9 +119,13 @@ class ActiveLearningBackend:
             min(self.subsample_size[-2], len(self._unlabelled_dataset)),
             replace=False,
         )
-        self._cached_subsample = [self._unlabelled_dataset[i] for i in cached_subsample_is]
+        self._cached_subsample = [
+            self._unlabelled_dataset[i] for i in cached_subsample_is
+        ]
         self._given_nexts = []
         self._validate = False
+
+        self._last_values = []
 
         # self._bandit_explorer = EpsilonGreedy(n_levers=2, epsilon=0.1, rng=self._rng)
         # self._bandit_explorer = ConformalUCB(
@@ -177,12 +183,19 @@ class ActiveLearningBackend:
         # Load data
         with self._data_lock:
             unlabelled_ids = np.array(self._unlabelled_dataset)
-            unlabelled = [self._original_dataset[entry_id] for entry_id in unlabelled_ids]
+            unlabelled = [
+                self._original_dataset[entry_id] for entry_id in unlabelled_ids
+            ]
             unlabelled_dict = {
-                entry_id: self._original_dataset[entry_id] for entry_id in unlabelled_ids
+                entry_id: self._original_dataset[entry_id]
+                for entry_id in unlabelled_ids
             }
-            labelled = [(entry, labelling) for entry, labelling in self._dataset.values()]
-            validation = [(entry, labelling) for entry, labelling in self._val_dataset.values()]
+            labelled = [
+                (entry, labelling) for entry, labelling in self._dataset.values()
+            ]
+            validation = [
+                (entry, labelling) for entry, labelling in self._val_dataset.values()
+            ]
             rng = np.random.default_rng(seed=self._rng.integers(np.iinfo(int).max))
             # del self._model
             # self._model = DummyClassificationModel(n_classes=len(self.labels))
@@ -204,6 +217,7 @@ class ActiveLearningBackend:
             n_classes=len(self.labels),
         )
         self.message("Instanced model")
+        print(len(labelled), len(validation))
         model.train(labelled, validation)  # , epochs=3)
         self.message("Done training")
 
@@ -236,7 +250,10 @@ class ActiveLearningBackend:
 
             best_ids = np.unique(
                 np.array(
-                    [sorted_ids[i] for i in dist_argmin(kmean.cluster_centers_, to_cluster_emb)[0]]
+                    [
+                        sorted_ids[i]
+                        for i in dist_argmin(kmean.cluster_centers_, to_cluster_emb)[0]
+                    ]
                 )
             )
             other_ids = sorted_ids[~np.isin(sorted_ids, best_ids)]
@@ -251,7 +268,9 @@ class ActiveLearningBackend:
                     .tolist()
                 )
             else:
-                new_cache = new_cache[np.isin(new_cache, self._unlabelled_dataset.array)].tolist()
+                new_cache = new_cache[
+                    np.isin(new_cache, self._unlabelled_dataset.array)
+                ].tolist()
 
         # Store data and do flow control
         with self._cache_lock:
@@ -268,26 +287,36 @@ class ActiveLearningBackend:
         self.metrics_strs = ["Last trained model:"]
         self.metrics_strs.append(f"n labeled: {len(labelled) + len(validation)}")
         self.metrics_strs.append(f"split train/val: {len(labelled)}/{len(validation)}")
-        l, h = self.peek_auc_roc_ovr(alpha=0.1)
-        self.metrics_strs.append(rf"AUC_ROC: ${(l + h) / 2:.2f} \pm {(h - l) / 2:.2f}$")
-        l, h = self.peek_accuracy(alpha=0.1)
-        self.metrics_strs.append(rf"Accuracy: ${(l + h) / 2:.2f} \pm {(h - l) / 2:.2f}$")
+        l, h = self.peek_auc_roc_ovr(alpha=0.05)
+        self.metrics_strs.append(
+            rf"AUC_ROC: \({(l + h) / 2:.2f} \pm {(h - l) / 2:.2f}\)"
+        )
+        l, h = self.peek_accuracy(alpha=0.05)
+        self.metrics_strs.append(
+            rf"Accuracy: \({(l + h) / 2:.2f} \pm {(h - l) / 2:.2f}\)"
+        )
         if len(self.labels) == 2:
-            l, h = self.peek_precision(target=self.labels[1], alpha=0.1)
-            self.metrics_strs.append(rf"Precision: ${(l + h) / 2:.2f} \pm {(h - l) / 2:.2f}$")
-            l, h = self.peek_recall(target=self.labels[1], alpha=0.1)
-            self.metrics_strs.append(rf"Recall: ${(l + h) / 2:.2f} \pm {(h - l) / 2:.2f}$")
+            l, h = self.peek_precision(target=self.labels[1], alpha=0.05)
+            self.metrics_strs.append(
+                rf"Precision: \({(l + h) / 2:.2f} \pm {(h - l) / 2:.2f}\)"
+            )
+            l, h = self.peek_recall(target=self.labels[1], alpha=0.05)
+            self.metrics_strs.append(
+                rf"Recall: \({(l + h) / 2:.2f} \pm {(h - l) / 2:.2f}\)"
+            )
         else:
             for lb in self.labels:
-                l, h = self.peek_precision(target=lb, alpha=0.1)
+                l, h = self.peek_precision(target=lb, alpha=0.05)
                 self.metrics_strs.append(
-                    rf"Precision ({lb}): ${(l + h) / 2:.2f} \pm {(h - l) / 2:.2f}$"
+                    rf"Precision ({lb}): \({(l + h) / 2:.2f} \pm {(h - l) / 2:.2f}\)"
                 )
-                l, h = self.peek_recall(target=lb, alpha=0.1)
+                l, h = self.peek_recall(target=lb, alpha=0.05)
                 self.metrics_strs.append(
-                    rf"Recall ({lb}): ${(l + h) / 2:.2f} \pm {(h - l) / 2:.2f}$"
+                    rf"Recall ({lb}): \({(l + h) / 2:.2f} \pm {(h - l) / 2:.2f}\)"
                 )
-        self.metrics_strs.append(f"Conformal thresholds: {model.threshold}")
+        self.metrics_strs.append(f"Conformal threshold: \({model.threshold}\)")
+        conf_cov = self.peek_predictions(alpha=0.05) * 100
+        self.metrics_strs.append(f"Conformal coverage: \({conf_cov:.1f} \%\)")
 
         for m in self.metrics_strs:
             self.message(m)
@@ -360,10 +389,16 @@ class ActiveLearningBackend:
         inf_auc_before, _ = self.peek_auc_roc_ovr(alpha=0.1)
 
         with self._data_lock:
+            self._last_values = (self._last_values + [labelling])[
+                -min(len(self._last_values), 20) :
+            ]
             # Overwrite _validade if we are not using bandit
             if not USE_BANDIT:
                 rand = self._rng.uniform()
-                is_other = [d[1] != self._encode(labelling) for _, d in self._val_dataset.items()]
+                is_other = [
+                    d[1] != self._encode(labelling)
+                    for _, d in self._val_dataset.items()
+                ]
                 prob = VALIDATE_PROB
                 if len(is_other) > 10:
                     prob = prob * 2 * np.mean(is_other)
@@ -375,12 +410,18 @@ class ActiveLearningBackend:
                     self._encode(labelling),
                 )
             else:
-                self._dataset[entry_id] = self._original_dataset[entry_id], self._encode(labelling)
+                self._dataset[entry_id] = self._original_dataset[
+                    entry_id
+                ], self._encode(labelling)
             if entry_id in self._unlabelled_dataset:
                 self.message(f"removing from unlabeled: {entry_id}")
                 self._unlabelled_dataset.remove(entry_id)
-        self.message(f"Added {entry_id}: {labelling} to {"validation" if self._validate else "dataset"}")
-        self.message(f"dataset: {len(self._dataset)}, validation: {len(self._val_dataset)}")
+        self.message(
+            f"Added {entry_id}: {labelling} to {"validation" if self._validate else "dataset"}"
+        )
+        self.message(
+            f"dataset: {len(self._dataset)}, validation: {len(self._val_dataset)}"
+        )
 
         # FIXME: this auc_roc will not change between training sessions, this might break the bandit
         inf_auc_after, _ = self.peek_auc_roc_ovr(alpha=0.1)
@@ -405,7 +446,9 @@ class ActiveLearningBackend:
             model = self._model
             unlabeled_data = self._unlabelled_dataset
         if len(self.subsample_size) == 3:
-            ids = self._rng.integers(len(unlabeled_data), size=(self.subsample_size[-3]))
+            ids = self._rng.integers(
+                len(unlabeled_data), size=(self.subsample_size[-3])
+            )
             unlabeled_data = [self._original_dataset[unlabeled_data[i]] for i in ids]
         preds = model.predict(unlabeled_data)
         return np.mean([len(pred) in [0, 1] for pred in preds])
@@ -451,7 +494,9 @@ class ActiveLearningBackend:
             model = self._model
 
         target_enc = self._encode(target)
-        texts, labels = zip(*val_dataset.values(), strict=False) if val_dataset else ((), ())
+        texts, labels = (
+            zip(*val_dataset.values(), strict=False) if val_dataset else ((), ())
+        )
         n = len(texts)
 
         if n == 0:
@@ -479,7 +524,9 @@ class ActiveLearningBackend:
             fp = np.sum(pred_target[idx] & ~true_target[idx])
             boots.append(tp / (tp + fp) if (tp + fp) > 0 else 0.0)
 
-        return tuple(np.percentile(boots, [100 * alpha / 2, 100 * (1 - alpha / 2)]).astype(float))
+        return tuple(
+            np.percentile(boots, [100 * alpha / 2, 100 * (1 - alpha / 2)]).astype(float)
+        )
 
     def peek_recall(self, *, target: Labelling, alpha: float) -> tuple[float, float]:
         with self._data_lock:
@@ -487,7 +534,9 @@ class ActiveLearningBackend:
             model = self._model
 
         target_enc = self._encode(target)
-        texts, labels = zip(*val_dataset.values(), strict=False) if val_dataset else ((), ())
+        texts, labels = (
+            zip(*val_dataset.values(), strict=False) if val_dataset else ((), ())
+        )
         n = len(texts)
 
         if n == 0:
@@ -515,15 +564,21 @@ class ActiveLearningBackend:
             fn = np.sum(true_target[idx] & ~pred_target[idx])
             boots.append(tp / (tp + fn) if (tp + fn) > 0 else 0.0)
 
-        return tuple(np.percentile(boots, [100 * alpha / 2, 100 * (1 - alpha / 2)]).astype(float))
+        return tuple(
+            np.percentile(boots, [100 * alpha / 2, 100 * (1 - alpha / 2)]).astype(float)
+        )
 
-    def peek_auc_roc_single(self, *, target: Labelling, alpha: float) -> tuple[float, float]:
+    def peek_auc_roc_single(
+        self, *, target: Labelling, alpha: float
+    ) -> tuple[float, float]:
         with self._data_lock:
             val_dataset = self._val_dataset
             model = self._model
 
         target_enc = self._encode(target)
-        texts, labels = zip(*val_dataset.values(), strict=False) if val_dataset else ((), ())
+        texts, labels = (
+            zip(*val_dataset.values(), strict=False) if val_dataset else ((), ())
+        )
 
         if not texts:
             return (0.0, 1.0)
@@ -563,7 +618,9 @@ class ActiveLearningBackend:
             auc = (np.sum(comp) + 0.5 * np.sum(ties)) / (len(p) * len(n))
             boots.append(auc)
 
-        return tuple(np.percentile(boots, [100 * alpha / 2, 100 * (1 - alpha / 2)]).astype(float))
+        return tuple(
+            np.percentile(boots, [100 * alpha / 2, 100 * (1 - alpha / 2)]).astype(float)
+        )
 
     def peek_auc_roc_ovr(self, *, alpha: float) -> tuple[float, float]:
         infs, sups = [], []
@@ -589,7 +646,9 @@ class ActiveLearningBackend:
                     Labelling(point_pred),
                 ),
             )
-            for text, probas, point_pred in zip(texts, probass, point_preds, strict=False)
+            for text, probas, point_pred in zip(
+                texts, probass, point_preds, strict=False
+            )
         ]
 
     def export_preditictions(
@@ -603,19 +662,27 @@ class ActiveLearningBackend:
             )
         with self._data_lock:
             unlabelled_ids = entry_ids or np.array(self._unlabelled_dataset)
-            unlabelled = [self._original_dataset[entry_id] for entry_id in unlabelled_ids]
-            labelled = [(entry, labelling) for entry, labelling in self._dataset.values()]
-            labelled_data = [(entry_id, entry[1]) for entry_id, entry in self._dataset.items()] + [
-                (entry_id, entry[1]) for entry_id, entry in self._val_dataset.items()
+            unlabelled = [
+                self._original_dataset[entry_id] for entry_id in unlabelled_ids
             ]
-            validation = [(entry, labelling) for entry, labelling in self._val_dataset.values()]
+            labelled = [
+                (entry, labelling) for entry, labelling in self._dataset.values()
+            ]
+            labelled_data = [
+                (entry_id, entry[1]) for entry_id, entry in self._dataset.items()
+            ] + [(entry_id, entry[1]) for entry_id, entry in self._val_dataset.items()]
+            validation = [
+                (entry, labelling) for entry, labelling in self._val_dataset.values()
+            ]
         self._model.train(labelled, validation, skip_model_train=True, alpha=alpha)
 
         decode = {self._encode(l): l for l in self.labels}
 
         data = {
             entry_id: [decode[p] for p in pred]
-            for entry_id, pred in zip(unlabelled_ids, self._model.predict(unlabelled), strict=False)
+            for entry_id, pred in zip(
+                unlabelled_ids, self._model.predict(unlabelled), strict=False
+            )
         }
         for entry_id, labeling in labelled_data:
             data[entry_id] = [self._decode_single(labeling)]
@@ -623,7 +690,7 @@ class ActiveLearningBackend:
         return data
 
     def save(self, path: str | Path | None = None) -> None:
-        path  = path or self.save_path
+        path = path or self.save_path
         path = Path(path)
         if not path.is_dir():
             path.mkdir()
@@ -683,7 +750,8 @@ class ActiveLearningBackend:
             n_kickstart=data["n_kickstart"],
             subsample_size=data["subsample_size"],
             unbiased_evaluation=data["unbiased_evaluation"],
-            entry_ids_to_remove=set(data["_dataset"].keys()) | set(data["_val_dataset"].keys()),
+            entry_ids_to_remove=set(data["_dataset"].keys())
+            | set(data["_val_dataset"].keys()),
             precomputed_original_dataset_keys=precomputed_original_dataset_keys,
             save_path=path,
             rng=rng,

@@ -126,7 +126,8 @@ def get_label_values(label_id: int) -> dict[str, str]:
             if not entrylabel.deleted:
                 values[
                     COMPOSITE_ID.format(
-                        dataset_id=entrylabel.entry.dataset_id, entry_id=entrylabel.entry.entry_id
+                        dataset_id=entrylabel.entry.dataset_id,
+                        entry_id=entrylabel.entry.entry_id,
                     )
                 ] = entrylabel.value
 
@@ -164,8 +165,8 @@ def get_learner(project_id: int, label_id: int) -> ActiveLearningBackend:
             return instanciate_al(project_id, label_id)
         learner = ActiveLearningBackend.load(
             learner_path,
-            data,
-            rng=get_rng(),  # type: ignore
+            data,  # type: ignore
+            rng=get_rng(),
         )
         learners_cache[label_id] = learner
         return learner
@@ -180,8 +181,6 @@ def update_label(label_id: int, **to_update) -> None:
             raise ValueError(f"Label {label_id} not found")
 
         for col, value in to_update.items():
-            if col in ["metrics", "cache"]:
-                value = json.dumps(value)
             setattr(label, col, value)
 
         db.session.commit()

@@ -1,4 +1,4 @@
-import json
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,14 @@ from flask_babel import _
 
 from . import app, db, settings
 from .celery_app import launch_task_with_tracking
-from .database import CeleryTask, Label, add_entry_label, get_datasets, get_entry, get_label
+from .database import (
+    CeleryTask,
+    Label,
+    add_entry_label,
+    get_datasets,
+    get_entry,
+    get_label,
+)
 from .functions import get_highlights, render_entry
 from .tasks.active_learning import (
     COMPOSITE_ID,
@@ -80,14 +87,23 @@ def catch_al(label_id: int) -> ...:
         )
 
         # Drop labeled entry from AL cache
-        cache = json.loads(label.cache)  # type: ignore
+        cache = label.cache  # type: ignore
         comp_id = COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id)
         if comp_id in cache:
             cache.remove(COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id))
-            label.cache = json.dumps(cache)
+            label.cache = cache
+
+        tasks = CeleryTask.query.filter_by(
+            task_name="learner.train_model",
+        ).all()
+        pending_tasks = [
+            task.id
+            for task in tasks
+            if task.kwargs["label_id"] == label_id and task.status in ["PENDING", "STARTED"]
+        ]
 
         # Check train
-        if label.training_counter == 4:
+        if label.training_counter >= 4 and not pending_tasks:
             launch_task_with_tracking(
                 train_model,
                 description=_("Training for label {label_name}").format(label_name=label.name),
@@ -113,22 +129,20 @@ def catch_al(label_id: int) -> ...:
         "label": label,
         "highlight": get_highlights(),
         "valid_entry": True,
-        "messages": json.loads(label.metrics),  # type: ignore
+        "messages": label.metrics,  # type: ignore
     }
+    cache = label.cache[:]
     while True:
-        dataset_id, entry_id = eval(json.loads(label.cache)[0])  # type: ignore
+        dataset_id, entry_id = eval(cache.pop(0))
         entry = get_entry((dataset_id, str(entry_id)), "composite")
+        if entry is None:
+            raise ValueError(f"Failed to fetch entry {entry_id}")
         if label in [el.label for el in entry.labels]:
             print(f"Skipping {dataset_id}, {entry_id}")
-            cache = json.loads(label.cache)  # type: ignore
-            comp_id = COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id)
-            if comp_id in cache:
-                cache.remove(
-                    COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id)
-                )
-                label.cache = json.dumps(cache)
         else:
             break
+    label.cache = cache
+    db.session.commit()
     data = render_entry(str(entry_id), int(dataset_id), data)
     return render_template("al-entry.html", **data)
 
@@ -167,7 +181,7 @@ def gen_predictions(label_id: int) -> ...:
             project_id=label.project_id,
             label_id=label.id,
             user_id=session["user_id"],
-            description=_("Generationg predictions for {label_name}").format(label_name=label.name),
+            description=_("Generating predictions for {label_name}").format(label_name=label.name),
             track_progress=True,
         )
     return redirect(url_for("label_settings", label_id=label_id))
@@ -202,13 +216,20 @@ def get_predictions(label_id: int, task_id: str) -> ...:
             }
         )
 
+        # Create file for local saving
+        filename = Path("/app/data/predictions")
+        filename.mkdir(parents=True, exist_ok=True)
+        filename = filename / f"{label.name}-0.95-predictions.csv"
+
+        # Save to data folder
+        print(f"Saving exported predictions to {filename}")
+        pred_df.to_csv(filename)
+
         # download json res["predictions"] as csv
         return Response(
             pred_df.to_csv(index=False),
             mimetype="text/csv",
-            headers={
-                "Content-disposition": f"attachment; filename={label.name}-0.95-predictions.csv"
-            },
+            headers={"Content-disposition": f"attachment; filename={filename.name}"},
         )
     else:
         flash(

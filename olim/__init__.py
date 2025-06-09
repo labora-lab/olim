@@ -104,4 +104,5 @@ app.jinja_env.globals.update(
     has_learner=True,
     version=VERSION,
     has_help=HELP_URL is not None,
+    debug=DEBUG,
 )

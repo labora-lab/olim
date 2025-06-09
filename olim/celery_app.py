@@ -5,7 +5,13 @@ from datetime import UTC, datetime
 from celery import Celery
 from celery.app.task import Task
 from celery.result import AsyncResult
-from celery.signals import task_failure, task_postrun, task_prerun, task_retry, task_success
+from celery.signals import (
+    task_failure,
+    task_postrun,
+    task_prerun,
+    task_retry,
+    task_success,
+)
 from dotenv import load_dotenv
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
@@ -114,10 +120,14 @@ def task_prerun_handler(
                 # Create new task record
                 user_id = extract_user_id(kwargs or {})
 
+                print(kwargs)
+
                 if kwargs:
                     description = kwargs.get("description", None)
                 else:
                     description = None
+
+                print(description)
 
                 if not description:
                     description = sender.name if sender else "unknown_task"
@@ -143,7 +153,14 @@ def task_prerun_handler(
 
 @task_postrun.connect
 def task_postrun_handler(
-    sender=None, task_id=None, task=None, args=None, kwargs=None, retval=None, state=None, **kwds
+    sender=None,
+    task_id=None,
+    task=None,
+    args=None,
+    kwargs=None,
+    retval=None,
+    state=None,
+    **kwds,
 ) -> None:
     """Handler called after task execution completes"""
     if not should_track_task(kwargs or {}):

@@ -7,6 +7,8 @@
     <!-- Import materialize.css -->
     <link type="text/css" rel="stylesheet" href="{{url_for('static', filename='css/materialize.min.css')}}" />
     <link type="text/css" rel="stylesheet" href="{{url_for('static', filename='css/styles.css')}}" />
+    <!-- Import Mathjax -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <!-- Let browser know website is optimized for mobile -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -73,7 +75,7 @@
             <li><a href="{{ url_for('logout') }}">{{ _('Logout') }}</a></li>
             {% endif %}
             <li style="padding: 10px 20px;">
-                <h5>{{_('Tasks')}}</h5>
+                <h5>{{_('Jobs')}}</h5>
             </li>
             <li id="task-list">
                 {% include "task-list.html"%}

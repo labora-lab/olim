@@ -182,11 +182,7 @@ def add_projects() -> ...:
 @app.before_request  # type: ignore
 def add_tasks() -> ...:
     if check_is_setup():
-        tasks = get_celery_tasks()
-        app.jinja_env.globals.update(
-            active_tasks=tasks["active"],
-            completed_tasks=tasks["completed"],
-        )
+        app.jinja_env.globals.update(tasks=get_celery_tasks())
 
 
 @app.teardown_request
