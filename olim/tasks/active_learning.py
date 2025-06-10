@@ -2,7 +2,7 @@ import json
 import os  # Added for lock handling
 import time  # Added for lock handling
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -49,9 +49,7 @@ def acquire_lock(lock_path: Path, timeout: int = 121) -> None:
             return
         except FileExistsError:
             time.sleep(5)  # Wait before retrying
-    raise LockTimeoutError(
-        f"Could not acquire lock after {timeout} seconds: {lock_path}"
-    )
+    raise LockTimeoutError(f"Could not acquire lock after {timeout} seconds: {lock_path}")
 
 
 def release_lock(lock_path: Path) -> None:
@@ -108,9 +106,7 @@ def get_data(project_id: int) -> dict[str, str]:
                     for line in f.readlines():
                         line_data = json.loads(line)
                         data[
-                            COMPOSITE_ID.format(
-                                dataset_id=project_id, entry_id=line_data["id"]
-                            )
+                            COMPOSITE_ID.format(dataset_id=project_id, entry_id=line_data["id"])
                         ] = line_data["text"]
         except Exception as e:
             if dataset:
@@ -164,9 +160,7 @@ def get_learner(project_id: int, label_id: int) -> ActiveLearningBackend:
         return learners_cache[label_id]
     else:
         data = get_data(project_id)
-        print(
-            f"Learner for Project {project_id},  Label {label_id} not on cache, loading."
-        )
+        print(f"Learner for Project {project_id},  Label {label_id} not on cache, loading.")
         learner_path = get_label_path(project_id, label_id)
         if learner_path is None:
             return instanciate_al(project_id, label_id)
@@ -205,9 +199,7 @@ def create_label_al(
     with learner_lock(learner_path):  # type: ignore
         learner = instanciate_al(project_id, label_id)
 
-        update_label(
-            label_id, metrics=[], cache=learner._cached_subsample, al_key=str(label_id)
-        )
+        update_label(label_id, metrics=[], cache=learner._cached_subsample, al_key=str(label_id))
 
         # Fix to avoid old control
         learner._given_nexts = learner._cached_subsample
@@ -280,12 +272,10 @@ def add_label_value(
         f.write(
             json.dumps(
                 {
-                    "entry_id": COMPOSITE_ID.format(
-                        dataset_id=dataset_id, entry_id=entry_id
-                    ),
+                    "entry_id": COMPOSITE_ID.format(dataset_id=dataset_id, entry_id=entry_id),
                     "labelling": value,
                     "user_id": user_id,
-                    "timestamp": datetime.now(timezone.utc).timestamp(),
+                    "timestamp": datetime.now(UTC).timestamp(),
                 }
             )
             + "\n"

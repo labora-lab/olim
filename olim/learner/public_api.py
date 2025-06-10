@@ -169,10 +169,10 @@ class ActiveLearningBackend:
                 for entry_id in unlabelled_ids
             }
             labelled = [
-                (entry, labelling) for entry, labelling in self._train_dataset.values()
+                (self._original_dataset[entry_id], labelling) for entry_id, labelling in self._train_dataset.items()
             ]
             validation = [
-                (entry, labelling) for entry, labelling in self._val_dataset.values()
+                (self._original_dataset[entry_id], labelling) for entry_id, labelling in self._val_dataset.items()
             ]
             rng = np.random.default_rng(seed=self._rng.integers(np.iinfo(int).max))
             # del self._model
@@ -293,9 +293,9 @@ class ActiveLearningBackend:
                 self.metrics_strs.append(
                     rf"Recall ({lb}): \({(l + h) / 2:.2f} \pm {(h - l) / 2:.2f}\)"
                 )
-        self.metrics_strs.append(f"Conformal threshold: \({model.threshold}\)")
+        self.metrics_strs.append(rf"Conformal threshold: \({model.threshold}\)")
         conf_cov = self.peek_predictions(alpha=0.05) * 100
-        self.metrics_strs.append(f"Conformal coverage: \({conf_cov:.1f} \%\)")
+        self.metrics_strs.append(rf"Conformal coverage: \({conf_cov:.1f} \%\)")
 
         for m in self.metrics_strs:
             self.message(m)
@@ -387,8 +387,8 @@ class ActiveLearningBackend:
             if not USE_BANDIT:
                 rand = self._rng.uniform()
                 is_other = [
-                    d[1] != self._encode(labelling)
-                    for _, d in self._val_dataset.items()
+                    d != self._encode(labelling)
+                    for d in self._val_dataset.values()
                 ]
                 prob = VALIDATE_PROB
                 if len(is_other) > 10:
@@ -468,7 +468,7 @@ class ActiveLearningBackend:
             return (0.0, 1.0)
 
         # Batch process all samples using numpy operations
-        texts, labels = zip(*val_dataset.values(), strict=False)
+        texts, labels = zip(*val_dataset.items(), strict=False)
         proba_dicts = model.predict_proba(texts)  # Get all predictions at once
 
         # Convert probability dictionaries to numpy arrays
@@ -500,7 +500,7 @@ class ActiveLearningBackend:
 
         target_enc = self._encode(target)
         texts, labels = (
-            zip(*val_dataset.values(), strict=False) if val_dataset else ((), ())
+            zip(*val_dataset.items(), strict=False) if val_dataset else ((), ())
         )
         n = len(texts)
 
@@ -540,7 +540,7 @@ class ActiveLearningBackend:
 
         target_enc = self._encode(target)
         texts, labels = (
-            zip(*val_dataset.values(), strict=False) if val_dataset else ((), ())
+            zip(*val_dataset.items(), strict=False) if val_dataset else ((), ())
         )
         n = len(texts)
 
@@ -582,7 +582,7 @@ class ActiveLearningBackend:
 
         target_enc = self._encode(target)
         texts, labels = (
-            zip(*val_dataset.values(), strict=False) if val_dataset else ((), ())
+            zip(*val_dataset.items(), strict=False) if val_dataset else ((), ())
         )
 
         if not texts:
