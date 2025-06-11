@@ -1,22 +1,23 @@
+from typing import Sequence
+from pathlib import Path
 import json
 import pickle
-from collections.abc import Sequence
-from pathlib import Path
-from threading import Lock, Thread
+from threading import Thread, Lock
+from statistics import multimode
 
-import numpy as np
 from icecream import ic
+import numpy as np
+from sklearn.preprocessing import LabelEncoder
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances_argmin_min as dist_argmin
-from sklearn.preprocessing import LabelEncoder
 
 from .active import ClassificationModel
-from .active.policies import ConformalUnsertantyPolicy, Policy
-from .bandits import BanditExplorer, DummyBandit
 from .models import DummyClassificationModel
 from .models.conformal import ConformalPredictor
+from .active.policies import Policy, ConformalUnsertantyPolicy
+from .bandits import BanditExplorer, EpsilonGreedy, ConformalUCB, DummyBandit
+from .utils import dict_to_list, SlotSet, sanitize_data
 from .settings import CLASSIFICATION_MODEL, SKIP_AL, UNCERTAIN_PERC
-from .utils import SlotSet, sanitize_data
 
 if CLASSIFICATION_MODEL == "TfidfXGBoostClassifier":
     from .models.tfidf_sklearn import TfidfXGBoostClassifier
@@ -35,16 +36,18 @@ class ActiveLearningBackend:
     labels: list[str]
 
     subsample_size: list[int]
+    recall_frequency: int
     # [N, n, k] entries to cache based policy
     # N entries to be ranked, embeeded or predicted (optional)
     # n entries to be clustered, this is also our cache size
     # k cluster to select best entries
     # N > n > k
-
     _original_dataset: dict[EntryId, str]
     _unlabelled_dataset: SlotSet[EntryId]
-    _dataset: dict[EntryId, tuple[str, int]]
+    _train_dataset: dict[EntryId, tuple[str, int]]
     _val_dataset: dict[EntryId, tuple[str, int]]
+    # ([entry, labelling, user_id, timestamp], is_validation, true_labelling)
+    _dataset: dict[EntryId, tuple[list[tuple[str, int, int, float]], bool, int]]
     _cached_subsample: list[EntryId]
     _given_nexts: list[EntryId]
 
@@ -69,13 +72,12 @@ class ActiveLearningBackend:
         policy: Policy = ConformalUnsertantyPolicy(),
         initial_labelled_dataset: dict[EntryId, Labelling] | None = None,
         n_kickstart: int = 10,
-        subsample_size: list[int] = [1_000, 500, 20],
+        subsample_size: list[int] = [5_000, 1_000, 20],
         unbiased_evaluation: bool = False,
         entry_ids_to_remove: set[EntryId] | None = None,
         precomputed_original_dataset_keys: SlotSet[EntryId] | None = None,
         rng: np.random.Generator,
         save_path: Path | str | None = None,
-        autotrain: bool = False,
     ):
         if not (isinstance(n_kickstart, int) and n_kickstart >= 1):
             raise TypeError("`n_kickstart` must be an `int` >= 1")
@@ -91,7 +93,6 @@ class ActiveLearningBackend:
 
         self._original_dataset = original_dataset
         self._dataset = {}
-        self._val_dataset = {}
 
         self.labels = labels
         self._label_encoder = LabelEncoder()
@@ -106,8 +107,11 @@ class ActiveLearningBackend:
                 self._unlabelled_dataset.remove(entry_id)
         if initial_labelled_dataset is not None:
             for entry_id, label in initial_labelled_dataset.items():
-                self._dataset[entry_id] = original_dataset[entry_id], self._encode(
-                    label
+                # TODO: Keep track of it
+                self._dataset[entry_id] = (
+                    [(original_dataset[entry_id], self._encode(label), -1, -1)],
+                    False,
+                    self._encode(label),
                 )
                 self._unlabelled_dataset.remove(entry_id)
 
@@ -125,14 +129,12 @@ class ActiveLearningBackend:
         self._given_nexts = []
         self._validate = False
 
-        self._last_values = []
-
         # self._bandit_explorer = EpsilonGreedy(n_levers=2, epsilon=0.1, rng=self._rng)
         # self._bandit_explorer = ConformalUCB(
         #     n_levers=2, reward_upper_bound=1, rng=self._rng
         # )
         self._bandit_explorer = DummyBandit(
-            n_levers=len(labels), prob_levers=[0.5, 0.5], rng=self._rng
+            n_levers=len(labels), prob_levers=[0.8, 0.2], rng=self._rng
         )
         self._policy = policy
 
@@ -143,9 +145,7 @@ class ActiveLearningBackend:
         # If we have enought entries we start training
         self._training = False
         self._retrain = False
-        self._autotrain = autotrain
         self._count_since_last_train = 0
-        self._check_training()
 
     def _encode(self, labelling: Labelling | list[Labelling]) -> int | list[int]:
         if isinstance(labelling, Labelling):
@@ -153,30 +153,8 @@ class ActiveLearningBackend:
         else:
             return self._label_encoder.transform(labelling)
 
-    def _decode_single(self, labelling: int) -> Labelling:
-        return self._label_encoder.inverse_transform([labelling])[0]
-
-    def _decode(self, labelling: list[int]) -> list[Labelling]:
-        return self._label_encoder.inverse_transform(labelling)
-
     def _cache_whether_to_validate(self):
         self._validate = self._bandit_explorer.select_lever() == 1
-
-    def _check_training(self):
-        if self._autotrain:
-            with self._data_lock:
-                if (
-                    self._count_since_last_train >= 5
-                    or len(self._dataset) + len(self._val_dataset) == 100
-                ):
-                    if (
-                        len(self._dataset) + len(self._val_dataset) >= self.n_kickstart
-                        and not self._training
-                    ):
-                        self._training = True
-                        Thread(target=self._train).start()
-                    else:
-                        self._retrain = True
 
     def _train(self):
         self.message("Starting training.")
@@ -191,10 +169,10 @@ class ActiveLearningBackend:
                 for entry_id in unlabelled_ids
             }
             labelled = [
-                (entry, labelling) for entry, labelling in self._dataset.values()
+                (self._original_dataset[entry_id], labelling) for entry_id, labelling in self._train_dataset.items()
             ]
             validation = [
-                (entry, labelling) for entry, labelling in self._val_dataset.values()
+                (self._original_dataset[entry_id], labelling) for entry_id, labelling in self._val_dataset.items()
             ]
             rng = np.random.default_rng(seed=self._rng.integers(np.iinfo(int).max))
             # del self._model
@@ -217,7 +195,6 @@ class ActiveLearningBackend:
             n_classes=len(self.labels),
         )
         self.message("Instanced model")
-        print(len(labelled), len(validation))
         model.train(labelled, validation)  # , epochs=3)
         self.message("Done training")
 
@@ -241,7 +218,7 @@ class ActiveLearningBackend:
                     sorted_ids[-int(self.subsample_size[-2] * (1 - UNCERTAIN_PERC)) :],
                 )
             )
-            print("Done hanking")
+            self.message("Done hanking")
 
             # Cluster in n, and get cosest to each centroid to be highest priority on cache
             to_cluster = [unlabelled_dict[entry_id] for entry_id in sorted_ids]
@@ -256,6 +233,8 @@ class ActiveLearningBackend:
                     ]
                 )
             )
+
+            # TODO: recall_prob to solve untrusted labellings
             other_ids = sorted_ids[~np.isin(sorted_ids, best_ids)]
             rng.shuffle(best_ids)
             rng.shuffle(other_ids)
@@ -314,9 +293,9 @@ class ActiveLearningBackend:
                 self.metrics_strs.append(
                     rf"Recall ({lb}): \({(l + h) / 2:.2f} \pm {(h - l) / 2:.2f}\)"
                 )
-        self.metrics_strs.append(f"Conformal threshold: \({model.threshold}\)")
+        self.metrics_strs.append(rf"Conformal threshold: \({model.threshold}\)")
         conf_cov = self.peek_predictions(alpha=0.05) * 100
-        self.metrics_strs.append(f"Conformal coverage: \({conf_cov:.1f} \%\)")
+        self.metrics_strs.append(rf"Conformal coverage: \({conf_cov:.1f} \%\)")
 
         for m in self.metrics_strs:
             self.message(m)
@@ -328,100 +307,128 @@ class ActiveLearningBackend:
         if retrain:
             self._train()
 
-    def _is_labeled(self, entry_id: EntryId) -> bool:
-        with self._data_lock:
-            return (entry_id in self._dataset) or (entry_id in self._val_dataset)
+    @property
+    def _train_dataset(self) -> dict[EntryId, int]:
+        return {
+            label_id: entry[2]
+            for label_id, entry in self._dataset.items()
+            if not entry[1] and entry[2] != -1
+        }
 
-    def request_next_entry(self) -> EntryId:
-        # Should not mutate ANYTHING in self (including `rng`)!
-        with self._cache_lock:
-            next_id = self._cached_subsample[0]
-            if next_id in self._dataset or next_id in self._val_dataset:
-                self._cached_subsample = self._cached_subsample[1:]
-                skip = True
-            else:
-                self._given_nexts.append(next_id)
-                skip = False
-        if skip:
-            return self.request_next_entry()
-        else:
-            return next_id
+    @property
+    def _val_dataset(self) -> dict[EntryId, int]:
+        return {
+            label_id: entry[2]
+            for label_id, entry in self._dataset.items()
+            if entry[1] and entry[2] != -1
+        }
 
     def message(self, msg):
         print(msg)
         with self.msg_lock:
             self.messages.append(msg)
 
+    def update_trustness(self, entry_id: EntryId) -> None:
+        # Updates trustness following data structures.
+        labellings = [
+            labelling for labelling, *rest in enumerate(self._dataset[entry_id][0])
+        ]
+        modes = multimode(labellings)
+        if len(modes) == 1:
+            # We have a single mode, we can trust this entry
+            self._dataset[entry_id][2] = modes[0]
+        else:
+            # We have multiple modes, we cannot trust this entry
+            self._dataset[entry_id][2] = -1
+
+    # TODO: Verify if adding timestamp and user breaks this.
     def sync_labelling(self, labelled_data: dict[EntryId, Labelling]) -> None:
+
         with self._data_lock:
             for entry_id, labelling in labelled_data.items():
-                # We add everything new to self._dataset because manualy labelled data can be biased.
-                if not ((entry_id in self._dataset) or (entry_id in self._val_dataset)):
+                # We add everything new to self._train_dataset because manualy labelled data can be biased.
+                # Verify if entry in
+                # false is_validate
+                if not (entry_id in self._dataset):
                     self._dataset[entry_id] = (
-                        self._original_dataset[entry_id],
+                        [
+                            (
+                                self._original_dataset[entry_id],
+                                self._encode(labelling),
+                                -1,  # user_id
+                                -1,
+                            ),  # timestamp
+                        ],
+                        False,
                         self._encode(labelling),
                     )
                     self._unlabelled_dataset.remove(entry_id)
                     self._count_since_last_train += 1
-                    # self.submit_labelling(entry_id, labelling, check_given=False)
-        self._check_training()
 
         # FIXME, Recalculate bandit rewards?!?!?!?!
 
     def submit_labelling(
-        self, entry_id: EntryId, labelling: Labelling, check_given: bool = True
+        self,
+        entry_id: EntryId,
+        labelling: Labelling,
+        user_id: int,
+        timestamp: float,
+        check_given: bool = True,
     ) -> None:
         if not isinstance(labelling, Labelling):
             raise TypeError("`labelling` must be a `Labelling`")
 
         if check_given:
             assert entry_id in self._given_nexts, "submitted an unexpected label"
-
-        if entry_id in self._dataset:
-            if self._dataset[entry_id][1] == self._encode(labelling):
-                self.message(f"Ignoring label already on dataset: {entry_id}")
-                return
-        if entry_id in self._val_dataset:
-            if self._val_dataset[entry_id][1] == self._encode(labelling):
-                self.message(f"Ignoring label already on val dataset: {entry_id}")
-                return
-
         inf_auc_before, _ = self.peek_auc_roc_ovr(alpha=0.1)
 
         with self._data_lock:
-            self._last_values = (self._last_values + [labelling])[
-                -min(len(self._last_values), 20) :
-            ]
             # Overwrite _validade if we are not using bandit
             if not USE_BANDIT:
                 rand = self._rng.uniform()
                 is_other = [
-                    d[1] != self._encode(labelling)
-                    for _, d in self._val_dataset.items()
+                    d != self._encode(labelling)
+                    for d in self._val_dataset.values()
                 ]
                 prob = VALIDATE_PROB
                 if len(is_other) > 10:
                     prob = prob * 2 * np.mean(is_other)
                 self._validate = rand >= prob
 
-            if self._validate:
-                self._val_dataset[entry_id] = (
-                    self._original_dataset[entry_id],
+            # TODO: Test this.
+            if entry_id not in self._dataset:
+                self._dataset[entry_id] = (
+                    [
+                        (
+                            self._original_dataset[entry_id],
+                            self._encode(labelling),
+                            user_id,
+                            timestamp,
+                        ),
+                    ],
+                    self._validate,
                     self._encode(labelling),
                 )
             else:
-                self._dataset[entry_id] = self._original_dataset[
-                    entry_id
-                ], self._encode(labelling)
+                self._dataset[entry_id][0].append(
+                    (
+                        self._original_dataset[entry_id],
+                        self._encode(labelling),
+                        user_id,
+                        timestamp,
+                    )
+                )
+                self.update_trustness(entry_id)
+
             if entry_id in self._unlabelled_dataset:
                 self.message(f"removing from unlabeled: {entry_id}")
                 self._unlabelled_dataset.remove(entry_id)
-        self.message(
-            f"Added {entry_id}: {labelling} to {"validation" if self._validate else "dataset"}"
-        )
-        self.message(
-            f"dataset: {len(self._dataset)}, validation: {len(self._val_dataset)}"
-        )
+
+        # self.message(
+        #     f"dataset: {len(self._train_dataset)}, validation: {len(self._val_dataset)}"
+        # )
+
+        self.message(f"dataset: {len(self._dataset)}")
 
         # FIXME: this auc_roc will not change between training sessions, this might break the bandit
         inf_auc_after, _ = self.peek_auc_roc_ovr(alpha=0.1)
@@ -438,8 +445,6 @@ class ActiveLearningBackend:
             self._cached_subsample = self._cached_subsample[1:]
             self._count_since_last_train += 1
         self._cache_whether_to_validate()
-
-        self._check_training()
 
     def peek_predictions(self, *, alpha: float):
         with self._data_lock:
@@ -463,7 +468,7 @@ class ActiveLearningBackend:
             return (0.0, 1.0)
 
         # Batch process all samples using numpy operations
-        texts, labels = zip(*val_dataset.values(), strict=False)
+        texts, labels = zip(*val_dataset.items(), strict=False)
         proba_dicts = model.predict_proba(texts)  # Get all predictions at once
 
         # Convert probability dictionaries to numpy arrays
@@ -495,7 +500,7 @@ class ActiveLearningBackend:
 
         target_enc = self._encode(target)
         texts, labels = (
-            zip(*val_dataset.values(), strict=False) if val_dataset else ((), ())
+            zip(*val_dataset.items(), strict=False) if val_dataset else ((), ())
         )
         n = len(texts)
 
@@ -535,7 +540,7 @@ class ActiveLearningBackend:
 
         target_enc = self._encode(target)
         texts, labels = (
-            zip(*val_dataset.values(), strict=False) if val_dataset else ((), ())
+            zip(*val_dataset.items(), strict=False) if val_dataset else ((), ())
         )
         n = len(texts)
 
@@ -577,7 +582,7 @@ class ActiveLearningBackend:
 
         target_enc = self._encode(target)
         texts, labels = (
-            zip(*val_dataset.values(), strict=False) if val_dataset else ((), ())
+            zip(*val_dataset.items(), strict=False) if val_dataset else ((), ())
         )
 
         if not texts:
@@ -665,14 +670,16 @@ class ActiveLearningBackend:
             unlabelled = [
                 self._original_dataset[entry_id] for entry_id in unlabelled_ids
             ]
+            train_dataset = self._train_dataset
             labelled = [
-                (entry, labelling) for entry, labelling in self._dataset.values()
+                (entry, labelling) for entry, labelling in train_dataset.values()  # type: ignore
             ]
             labelled_data = [
-                (entry_id, entry[1]) for entry_id, entry in self._dataset.items()
-            ] + [(entry_id, entry[1]) for entry_id, entry in self._val_dataset.items()]
+                (entry_id, entry[-1]) for entry_id, entry in self._dataset.items()
+            ]
+            validation_dataset = self._val_dataset
             validation = [
-                (entry, labelling) for entry, labelling in self._val_dataset.values()
+                (entry, labelling) for entry, labelling in validation_dataset.values()
             ]
         self._model.train(labelled, validation, skip_model_train=True, alpha=alpha)
 
@@ -704,7 +711,6 @@ class ActiveLearningBackend:
                             "subsample_size": self.subsample_size,
                             "unbiased_evaluation": self.unbiased_evaluation,
                             "_dataset": self._dataset,
-                            "_val_dataset": self._val_dataset,
                             "labels": self.labels,
                             "_cached_subsample": self._cached_subsample,
                             "_validate": bool(self._validate),
@@ -741,7 +747,6 @@ class ActiveLearningBackend:
 
         if type(list(original_dataset.keys())[0]) is int:
             data["_dataset"] = {int(k): v for k, v in data["_dataset"].items()}
-            data["_val_dataset"] = {int(k): v for k, v in data["_val_dataset"].items()}
 
         out = cls(
             original_dataset,
@@ -750,20 +755,18 @@ class ActiveLearningBackend:
             n_kickstart=data["n_kickstart"],
             subsample_size=data["subsample_size"],
             unbiased_evaluation=data["unbiased_evaluation"],
-            entry_ids_to_remove=set(data["_dataset"].keys())
-            | set(data["_val_dataset"].keys()),
+            entry_ids_to_remove=set(data["_dataset"].keys()),
             precomputed_original_dataset_keys=precomputed_original_dataset_keys,
             save_path=path,
             rng=rng,
         )
 
         out._dataset = data["_dataset"]
-        out._val_dataset = data["_val_dataset"]
         out._unlabelled_dataset = SlotSet(
             [
                 entry_id
                 for entry_id in original_dataset.keys()
-                if entry_id not in out._dataset and entry_id not in out._val_dataset
+                if entry_id not in out._dataset
             ]
         )
         out.messages = data["messages"]
@@ -778,45 +781,5 @@ class ActiveLearningBackend:
         # out._model = DummyClassificationModel(n_classes=len(data["labels"]))
         with open(path / "model.pickle", "rb") as file:
             out._model = pickle.load(file)
-        print(out._model)
-
-        out._count_since_last_train = 5
-        out._check_training()
 
         return out
-
-
-# This is outdated
-
-# def simulate_public_api(
-#     labelled_dataset: dict[EntryId, tuple[str, Literal[2] | Literal[1] | Literal[0]]],
-#     *,
-#     n_rounds: int = 200,
-#     show_progress: bool = True,
-#     policy: Policy,
-#     rng: np.random.Generator,
-# ) -> list[tuple[float, float]]:
-#     ALPHA = 0.1
-
-#     unlabelled_dataset = {
-#         entry_id: text for entry_id, (text, _) in labelled_dataset.items()
-#     }
-#     label_mapping = {
-#         entry_id: {
-#             2: Labelling.YES,
-#             1: Labelling.DUNNO,
-#             0: Labelling.NO,
-#         }[label]
-#         for entry_id, (_, label) in labelled_dataset.items()
-#     }
-
-#     backend = ActiveLearningBackend(unlabelled_dataset, policy=policy, rng=rng)
-
-#     results = []
-#     results.append(backend.peek_accuracy(alpha=ALPHA))
-#     for i in trange(n_rounds, disable=not show_progress):
-#         queried_entry_id = backend.request_next_entry()
-#         backend.submit_labelling(queried_entry_id, label_mapping[queried_entry_id])
-#         results.append(backend.peek_accuracy(alpha=ALPHA))
-
-#     return results

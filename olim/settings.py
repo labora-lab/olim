@@ -37,14 +37,14 @@ PERMANENT_SESSION_LIFETIME = timedelta(days=30)
 
 QUEUES_PATH = Path("/app/queues")
 
-UPLOAD_PATH = Path("/app/uploads/")
-CHUNK_SIZE = 5 * 1024 * 1024
-ALLOWED_EXTENSIONS = {"csv", "tsv"}
-MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024  # 10GB
-
 UPLOAD_BATCH_SIZE = 1000
 
 WORK_PATH = Path(os.getenv("WORK_FOLDER", "/app/work"))
+
+UPLOAD_PATH = WORK_PATH / "uploads"
+CHUNK_SIZE = 5 * 1024 * 1024
+ALLOWED_EXTENSIONS = {"csv", "tsv"}
+MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024  # 10GB
 
 RANDOM_SEED = os.getenv("RANDOM_SEED", None)
 

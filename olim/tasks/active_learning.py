@@ -2,6 +2,7 @@ import json
 import os  # Added for lock handling
 import time  # Added for lock handling
 from contextlib import contextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -229,7 +230,7 @@ def train_model(
                 submissions.append(json.loads(line))
         subs_file.unlink()
         for subm in submissions:
-            learner.submit_labelling(subm["id"], subm["value"], check_given=False)
+            learner.submit_labelling(**subm, check_given=False)
 
         # Sync previously laballed
         values = get_label_values(label_id)
@@ -259,6 +260,7 @@ def add_label_value(
     self,
     project_id: int,
     label_id: int,
+    user_id: int,
     dataset_id: int,
     entry_id: str,
     value: str,
@@ -270,8 +272,10 @@ def add_label_value(
         f.write(
             json.dumps(
                 {
-                    "id": COMPOSITE_ID.format(dataset_id=dataset_id, entry_id=entry_id),
-                    "value": value,
+                    "entry_id": COMPOSITE_ID.format(dataset_id=dataset_id, entry_id=entry_id),
+                    "labelling": value,
+                    "user_id": user_id,
+                    "timestamp": datetime.now(UTC).timestamp(),
                 }
             )
             + "\n"

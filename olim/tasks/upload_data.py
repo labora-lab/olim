@@ -1,13 +1,16 @@
 import json
 from collections.abc import Generator
+from time import sleep, time
 from typing import Any
 
+import pandas as pd
 from elasticsearch import helpers
 
 from .. import app as flask_app, entry_types
 from ..celery_app import app
 from ..database import register_entries
-from ..settings import ES_INDEX, ES_SERVER, UPLOAD_BATCH_SIZE, WORK_PATH
+from ..functions import ensure_dir
+from ..settings import ES_INDEX, ES_SERVER, UPLOAD_BATCH_SIZE, UPLOAD_PATH, WORK_PATH
 from ..utils.es import create_index, get_es_conn
 
 
@@ -185,3 +188,67 @@ def upload_dataset(
         "batches_processed": batch_count,
         "batch_results": processed_batches,
     }
+
+
+@app.task(bind=True, name="upload.save_chunk")
+def save_chunk(
+    self,
+    chunk: bytes,
+    chunk_number: int,
+    file_id: str,
+    **kwargs,
+) -> dict:
+    # Save chunk
+    chunk_dir = UPLOAD_PATH / file_id
+    ensure_dir(chunk_dir)
+
+    chunk_path = chunk_dir / f"{chunk_number:04d}"
+    with open(chunk_path, "wb") as f:
+        f.write(chunk)
+
+    return {
+        "success": True,
+    }
+
+
+@app.task(bind=True, name="upload.finalize_upload")
+def finalize_chunks_upload(
+    self,
+    file_id: str,
+    filename: str,
+    total_chunks: int,
+    **kwargs,
+) -> dict:
+    chunk_dir = UPLOAD_PATH / file_id
+    chunks = sorted(chunk_dir.glob("*"))
+
+    # Wait for all chunks to arrive with a timeout of 60 seconds
+    start_time = time()
+    while time() - start_time < 360:
+        chunks = list(chunk_dir.glob("*"))
+        if len(chunks) == total_chunks:
+            break
+        sleep(1)
+
+    if len(chunks) != total_chunks:
+        raise TimeoutError("Did not receive all chunks within the timeout period.")
+
+    # Sort the chunks to ensure correct order
+    chunks.sort()
+
+    try:
+        with open(filename, "wb") as output:
+            for chunk in chunks:
+                with open(chunk, "rb") as f:
+                    output.write(f.read())
+                chunk.unlink()  # Remove processed chunk
+
+        # Read columns from the first few rows of the CSV
+        columns = list(pd.read_csv(filename, nrows=1).columns)
+
+        return {
+            "success": True,
+            "columns": columns,
+        }
+    except Exception as e:
+        raise self.retry(countdown=2, exc=e)  # noqa

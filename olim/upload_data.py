@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from flask import flash, jsonify, redirect, render_template, request, session, url_for
 from flask_babel import _
 
@@ -8,7 +6,7 @@ from .celery_app import launch_task_with_tracking
 from .database import get_dataset_stats, get_datasets, link_dataset_to_project, new_dataset
 from .functions import check_is_setup
 from .settings import ALLOWED_EXTENSIONS, CHUNK_SIZE, MAX_FILE_SIZE, UPLOAD_PATH
-from .tasks.upload_data import upload_dataset
+from .tasks.upload_data import finalize_chunks_upload, save_chunk, upload_dataset
 
 
 @app.route("/task-list")
@@ -18,11 +16,7 @@ def check_task_status() -> ...:
     return render_template("task-list.html")
 
 
-def ensure_dir(path) -> None:
-    Path(path).mkdir(parents=True, exist_ok=True)
-
-
-@app.route("/upload/large-file", methods=["POST"])
+@app.route("/upload/chunk", methods=["POST"])
 def handle_large_upload() -> ...:
     # Get chunk metadata
     chunk_number = int(request.form["chunkNumber"])
@@ -41,40 +35,38 @@ def handle_large_upload() -> ...:
     if total_chunks * CHUNK_SIZE > MAX_FILE_SIZE:
         return jsonify(error="File too large"), 413
 
-    # Save chunk
-    chunk = request.files["file"]
-    chunk_dir = UPLOAD_PATH / file_id
-    ensure_dir(chunk_dir)
+    chunk = request.files["file"].read()
 
-    chunk_path = chunk_dir / f"{chunk_number:04d}"
-    chunk.save(chunk_path)
+    launch_task_with_tracking(
+        save_chunk,
+        chunk=chunk,
+        chunk_number=chunk_number,
+        file_id=file_id,
+        user_id=session["user_id"],
+        track_progress=False,
+    )
 
     return jsonify(success=True)
 
 
 @app.route("/upload/finalize/<file_id>", methods=["GET"])
 def finalize_upload(file_id) -> ...:
-    try:
-        # Reconstruct file
-        chunk_dir = UPLOAD_PATH / file_id
-        chunks = sorted(chunk_dir.glob("*"))
+    filename = request.args.get("filename")
+    total_chunks = request.args.get("total_chunks")
+    final_path = UPLOAD_PATH / f"{file_id}_{filename}"
 
-        if not chunks:
-            return jsonify(error="No chunks found"), 400
+    res = launch_task_with_tracking(
+        finalize_chunks_upload,
+        file_id=file_id,
+        filename=str(final_path),
+        total_chunks=int(total_chunks),  # type: ignore
+        user_id=session["user_id"],
+        track_progress=False,
+    )
 
-        original_name = request.args.get("filename")
-        final_path = UPLOAD_PATH / f"{file_id}_{original_name}"
+    columns = res.get()["columns"]
 
-        with open(final_path, "wb") as output:
-            for chunk in chunks:
-                with open(chunk, "rb") as f:
-                    output.write(f.read())
-                chunk.unlink()
-
-        return jsonify(success=True, path=str(final_path))
-
-    except Exception as e:
-        return jsonify(error=str(e)), 500
+    return jsonify(success=True, path=str(final_path), columns=columns)
 
 
 @app.route("/upload-data", methods=["GET", "POST"])
