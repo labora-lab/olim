@@ -216,6 +216,7 @@
             function refreshTaskList() {
                 $.get('{{url_for("check_task_status")}}', function (data) {
                     $('#task-list').html(data);
+                    M.AutoInit();
                 })
                     .fail(function () {
                         $('#task-list').html('{{_("Error loading tasks")}}');

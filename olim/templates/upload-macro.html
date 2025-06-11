@@ -38,18 +38,6 @@
                             <strong>text</strong> {{ _('and') }} <strong>text_id</strong>.
                         </p>
                     </a>
-                    <!-- <a href="#!" class="collection-item upload-option" data-value="patient_sheet">
-                        <span class="title">{{ _('Patient Format') }}</span>
-                        <p>
-                            {{ _('Use this option if your CSV file has the following
-                            columns:') }}
-                            <strong>patient_id, text_id, visitation_id, text_type, text,
-                                date</strong>. {% if has_learner %} <br /><strong class="red-text">{{ _('This format is
-                                NOT COMPATIBLE with OLIM-learner!')
-                                }}</strong>
-                            {% endif %}
-                        </p>
-                    </a> -->
                     <a href="#!" class="collection-item upload-option" data-value="sample_data">
                         <span class="title">{{ _('Sample Data') }}</span>
                         <p>{{ _('Upload built-in sample data in Text format.') }}</p>
@@ -79,15 +67,7 @@
                     <input type="hidden" name="filename" id="filename" value="">
                     <input type="hidden" name="file_id" id="file_id" value="">
                     <input type="hidden" name="upload_type" id="upload_type" value="single_text">
-                    <div id="additional-fields">
-                        <div class="input-field">
-                            <input id="id_column" name="id_column" type="text" />
-                            <label for="id_column">{{ _('Column for Text ID') }}</label>
-                        </div>
-                        <div class="input-field">
-                            <input id="text_column" name="text_column" type="text" />
-                            <label for="text_column">{{ _('Column for Text') }}</label>
-                        </div>
+                    <div id="additional-fields" class="hidden">
                     </div>
                 </div>
                 <h6 class="teal-text darker-5 center" style="margin-bottom: 15px;">{{ _('After upload keep eye on the
@@ -123,7 +103,8 @@
                 opt.classList.add('active')
                 const val = opt.getAttribute('data-value')
                 uploadType.value = val
-                addFields.style.display = val === 'single_text' ? 'block' : 'none'
+                // Hide fields regardless of format when changing option
+                addFields.classList.add('hidden')
                 fileSelector.style.display = val === 'sample_data' ? 'none' : 'block'
             })
         })
@@ -137,6 +118,9 @@
     document.getElementById('large-file-input').addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
+
+        // Hide additional fields and reset selects
+        const addFields = document.getElementById('additional-fields');
 
         const progress = document.querySelector('.progress');
         const progressBar = progress.querySelector('.determinate');
@@ -163,7 +147,7 @@
                 formData.append('fileId', fileId);
                 formData.append('fileName', file.name);
 
-                const response = await fetch('/upload/large-file', {
+                const response = await fetch('{{url_for("handle_large_upload")}}', {
                     method: 'POST',
                     body: formData,
                     headers: {
@@ -178,7 +162,7 @@
             status.textContent = '{{ _("Upload complete! Processing file...") }}';
 
             // Finalize upload
-            const finalResponse = await fetch(`/upload/finalize/${fileId}?filename=${file.name}`, {
+            const finalResponse = await fetch(`/upload/finalize/${fileId}?filename=${file.name}&total_chunks=${totalChunks}`, {
                 headers: {
                     'X-Project-ID': '{{ project_id }}'
                 }
@@ -186,10 +170,79 @@
 
             if (!finalResponse.ok) throw new Error('Finalization failed');
 
-            document.getElementById('filename').value = file.name;
-            document.getElementById('file_id').value = fileId;
+            const result = await finalResponse.json();
+            if (result.success && result.columns) {
+                document.getElementById('filename').value = file.name;
+                document.getElementById('file_id').value = fileId;
 
-            status.textContent = '{{ _("File uploaded successfully!") }}';
+                // Create id structure
+                const idDiv = document.createElement('div');
+                idDiv.className = "input-field";
+
+                // Create and append the select element first
+                const idColumn = document.createElement('select');
+                idColumn.id = "id_column";
+                idColumn.name = "id_column";
+                idColumn.className = "select";
+                idColumn.innerHTML = '<option value="" disabled selected>{{ _('Text ID column') }}</option>';
+                idDiv.appendChild(idColumn);
+
+                // Create and append the label after the select
+                const idLabel = document.createElement('label');
+                idLabel.htmlFor = 'id_column';
+                idLabel.textContent = '{{ _('Text ID column') }}';
+                idDiv.appendChild(idLabel);
+
+                // Add the container div to your form or relevant section
+                addFields.appendChild(idDiv);
+
+                const textDiv = document.createElement('div');
+                textDiv.className = "input-field";
+
+                // Create and append the select element first
+                const textColumn = document.createElement('select');
+                textColumn.id = "text_column";
+                textColumn.name = "text_column";
+                textColumn.className = "select"; // Add Materialize class
+                textColumn.innerHTML = '<option value="" disabled selected>{{ _('Text column') }}</option>';
+                textDiv.appendChild(textColumn);
+
+                // Create and append the label after the select
+                const textLabel = document.createElement('label');
+                textLabel.htmlFor = 'text_column';
+                textLabel.textContent = '{{ _('Text column') }}';
+                textDiv.appendChild(textLabel);
+
+                // Add the container div to your form or relevant section
+                addFields.appendChild(textDiv);
+
+                // Only show for single_text format
+                if (document.getElementById('upload_type').value === 'single_text') {
+                    // Populate dropdowns
+                    result.columns.forEach(col => {
+                        console.log(col);
+                        const option1 = document.createElement('option');
+                        option1.value = col;
+                        option1.textContent = col;
+                        idColumn.appendChild(option1);
+
+                        const option2 = document.createElement('option');
+                        option2.value = col;
+                        option2.textContent = col;
+                        textColumn.appendChild(option2);
+                    });
+
+                    // Show additional fields
+                    addFields.classList.remove('hidden');
+                    M.FormSelect.init(document.getElementById('id_column'));
+                    M.FormSelect.init(document.getElementById('text_column'));
+                }
+
+                status.textContent = '{{ _("File uploaded successfully!") }}';
+            } else {
+                throw new Error('Finalization failed');
+            }
+
             setTimeout(() => progress.style.display = 'none', 2000);
 
         } catch (error) {

@@ -1,6 +1,7 @@
 ## Auxiliary functions
 # All functions here must have type hints and docstrings
 import json
+from pathlib import Path
 from typing import Literal
 
 from flask import flash, session
@@ -9,6 +10,10 @@ from flask_babel import _
 from . import entry_types
 from .database import get_entry
 from .utils.es import get_es_conn
+
+
+def ensure_dir(path) -> None:
+    Path(path).mkdir(parents=True, exist_ok=True)
 
 
 def check_is_setup() -> bool:
