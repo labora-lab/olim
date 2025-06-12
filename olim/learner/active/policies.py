@@ -30,7 +30,7 @@ class Policy(ABC):
 
 class EntropyPolicy(Policy):
     def rank(self, candidates: list[str], model: ClassificationModel) -> list[int]:
-        probas = np.array([dict_to_list(preds) for preds in model.predict_proba(candidates)])
+        probas = model.predict_proba(candidates)
         entropies = -np.sum(probas * np.log(probas + 1e-7), axis=1)
         return np.argsort(entropies)[::-1]
 
@@ -40,7 +40,7 @@ class EntropyPolicy(Policy):
 
 class LeastConfidencePolicy(Policy):
     def rank(self, candidates: list[str], model: ClassificationModel) -> list[int]:
-        probas = np.array([dict_to_list(preds) for preds in model.predict_proba(candidates)])
+        probas = model.predict_proba(candidates)
         confidences = np.max(probas, axis=1)
         return np.argsort(confidences)[::-1]
 
@@ -50,7 +50,7 @@ class LeastConfidencePolicy(Policy):
 
 class Top2MarginPolicy(Policy):
     def rank(self, candidates: list[str], model: ClassificationModel) -> list[int]:
-        probas = np.array([dict_to_list(preds) for preds in model.predict_proba(candidates)])
+        probas = model.predict_proba(candidates)
         sorted_probas = np.sort(probas, axis=1)  # XXX double-check
         margins = sorted_probas[:, -1] - sorted_probas[:, -2]
         return np.argsort(margins)
@@ -116,11 +116,11 @@ class ConformalUnsertantyPolicy(Policy):
 
 # class ExpectedErrorReduction(Policy):
 #     def query(self, candidates: list[str], model: ClassificationModel):
-#         probas = np.array([dict_to_list(preds) for preds in model.predict_proba(candidates)])
+#         probas = model.predict_proba(candidates)
 #         pass
 
 
 # class ExpectedAveragePrecisionPolicy(Policy):
 #     def query(self, candidates: list[str], model: ClassificationModel):
-#         probas = np.array([dict_to_list(preds) for preds in model.predict_proba(candidates)])
+#         probas = model.predict_proba(candidates)
 #         pass

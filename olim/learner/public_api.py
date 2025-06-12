@@ -169,10 +169,12 @@ class ActiveLearningBackend:
                 for entry_id in unlabelled_ids
             }
             labelled = [
-                (self._original_dataset[entry_id], labelling) for entry_id, labelling in self._train_dataset.items()
+                (self._original_dataset[entry_id], labelling)
+                for entry_id, labelling in self._train_dataset.items()
             ]
             validation = [
-                (self._original_dataset[entry_id], labelling) for entry_id, labelling in self._val_dataset.items()
+                (self._original_dataset[entry_id], labelling)
+                for entry_id, labelling in self._val_dataset.items()
             ]
             rng = np.random.default_rng(seed=self._rng.integers(np.iinfo(int).max))
             # del self._model
@@ -341,7 +343,7 @@ class ActiveLearningBackend:
             # We have multiple modes, we cannot trust this entry
             self._dataset[entry_id][2] = -1
 
-    # TODO: Verify if adding timestamp and user breaks this.
+    # TODO: Verify if adding timestamp and user breaks this.int,
     def sync_labelling(self, labelled_data: dict[EntryId, Labelling]) -> None:
 
         with self._data_lock:
@@ -387,8 +389,7 @@ class ActiveLearningBackend:
             if not USE_BANDIT:
                 rand = self._rng.uniform()
                 is_other = [
-                    d != self._encode(labelling)
-                    for d in self._val_dataset.values()
+                    d != self._encode(labelling) for d in self._val_dataset.values()
                 ]
                 prob = VALIDATE_PROB
                 if len(is_other) > 10:
@@ -469,13 +470,11 @@ class ActiveLearningBackend:
 
         # Batch process all samples using numpy operations
         texts, labels = zip(*val_dataset.items(), strict=False)
-        proba_dicts = model.predict_proba(texts)  # Get all predictions at once
 
-        # Convert probability dictionaries to numpy arrays
-        classes = np.array(list(proba_dicts[0].keys()))
-        prob_matrix = np.array([list(d.values()) for d in proba_dicts])
-        predicted_indices = np.argmax(prob_matrix, axis=1)
-        correct = (classes[predicted_indices] == np.array(labels)).astype(float)
+        # Get predictions
+        preds = model.raw_predictions(texts)
+        labels = np.array(labels)
+        correct = (preds == np.array(labels)).astype(float)
 
         # Bootstrap resampling with numpy
         B = 1000
@@ -507,11 +506,8 @@ class ActiveLearningBackend:
         if n == 0:
             return (0.0, 1.0)
 
-        # Batch predictions
-        proba_dicts = model.predict_proba(texts)
-        classes = np.array(list(proba_dicts[0].keys()))
-        prob_matrix = np.array([list(d.values()) for d in proba_dicts])
-        preds = classes[np.argmax(prob_matrix, axis=1)]
+        # Get predictions
+        preds = model.raw_predictions(texts)
         labels = np.array(labels)
 
         # Target comparisons
@@ -547,11 +543,8 @@ class ActiveLearningBackend:
         if n == 0:
             return (0.0, 1.0)
 
-        # Batch predictions
-        proba_dicts = model.predict_proba(texts)
-        classes = np.array(list(proba_dicts[0].keys()))
-        prob_matrix = np.array([list(d.values()) for d in proba_dicts])
-        preds = classes[np.argmax(prob_matrix, axis=1)]
+        # Get predictions
+        preds = model.raw_predictions(texts)
         labels = np.array(labels)
 
         # Target comparisons
@@ -589,8 +582,7 @@ class ActiveLearningBackend:
             return (0.0, 1.0)
 
         # Get target probabilities
-        proba_dicts = model.predict_proba(texts)
-        target_probs = np.array([d[target_enc] for d in proba_dicts])
+        target_probs = model.predict_proba(texts)
         labels = np.array(labels)
 
         # Split positive/negative
@@ -634,27 +626,6 @@ class ActiveLearningBackend:
             infs.append(l)
             sups.append(u)
         return (float(np.mean(infs)), float(np.mean(sups)))
-
-    def make_predictions(
-        self, texts: Sequence[str]
-    ) -> list[tuple[str, tuple[dict[Labelling, float], Labelling]]]:
-        with self._data_lock:
-            texts = list(texts)
-            probass = self._model.predict_proba(texts)
-            point_preds = self._model.predict(texts)
-
-        return [
-            (
-                text,
-                (
-                    {Labelling(y): float(p) for y, p in probas.items()},
-                    Labelling(point_pred),
-                ),
-            )
-            for text, probas, point_pred in zip(
-                texts, probass, point_preds, strict=False
-            )
-        ]
 
     def export_preditictions(
         self,

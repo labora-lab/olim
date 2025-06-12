@@ -19,7 +19,7 @@ class ClassificationModel(ABC):
         pass
 
     @abstractmethod
-    def predict_proba(self, unlabelled_data: list[str]) -> list[dict[int, float]]:
+    def predict_proba(self, unlabelled_data: list[str]) -> list[list[float]]:
         pass
 
 
@@ -37,7 +37,7 @@ class RegressionModel(ABC):
         pass
 
     @abstractmethod
-    def predict_interval(self, unlabelled_data: list[str]) -> list[tuple[float, float]]:
+    def predict_interval(self, unlabelled_data: list[str]) -> list[list[float]]:
         pass
 
 
@@ -63,11 +63,9 @@ class DummyClassificationModel(ClassificationModel):
         n = len(unlabelled_data)
 
         scores = self._rng.uniform(0, 1, size=(n, self.n_classes))
-        scores = (scores.T / np.sum(scores, axis=1)).T  # XXX softmax?
+        scores = (scores.T / np.sum(scores, axis=1)).T
 
-        return [
-            {c: scores[i, c] for c in range(self.n_classes)} for i in range(len(unlabelled_data))
-        ]
+        return scores
 
 
 class DummyRegressionModel(RegressionModel):
@@ -79,7 +77,9 @@ class DummyRegressionModel(RegressionModel):
         pass
 
     def predict(self, unlabelled_data: list[str]) -> list[float]:
-        return [(inf + sup) * 0.5 for inf, sup in self.predict_interval(unlabelled_data)]
+        return [
+            (inf + sup) * 0.5 for inf, sup in self.predict_interval(unlabelled_data)
+        ]
 
     def get_embeddings(self, data: list[str]) -> list[list[float]]:
         n = len(data)
@@ -91,4 +91,6 @@ class DummyRegressionModel(RegressionModel):
         boundaries = self._rng.uniform(*self.range, size=(n, 2))
         boundaries = np.sort(boundaries, axis=1)
 
-        return [(boundaries[i, 0], boundaries[i, 1]) for i in range(len(unlabelled_data))]
+        return [
+            (boundaries[i, 0], boundaries[i, 1]) for i in range(len(unlabelled_data))
+        ]

@@ -5,7 +5,9 @@ from sklearn.model_selection import train_test_split
 
 from . import ClassificationModel
 
-BIG_N: float = 10e30  # numpy doesn't like infinity in quantiles, so we'll just use an outrageously large number instead.
+BIG_N: float = (
+    10e30  # numpy doesn't like infinity in quantiles, so we'll just use an outrageously large number instead.
+)
 
 
 class UncertantyPredictor(ClassificationModel):
@@ -51,9 +53,9 @@ class ConformalPredictor(UncertantyPredictor):
         if self.n_classes is None:
             y = [i for _, i in labelled_data]
             labels = np.sort(np.unique(y))
-            assert all([i == j for i, j in zip(labels, np.arange(np.max(y) + 1), strict=False)]), (
-                "Failed to detect classes, try setting n_classes"
-            )
+            assert all(
+                [i == j for i, j in zip(labels, np.arange(np.max(y) + 1), strict=False)]
+            ), "Failed to detect classes, try setting n_classes"
         else:
             labels = np.arange(self.n_classes)
 
@@ -66,14 +68,11 @@ class ConformalPredictor(UncertantyPredictor):
         # Predict probs for calibration data
         cal_unlabeled_data = [s for s, _ in cal_labelled_data]
         cal_labels = np.array([i for _, i in cal_labelled_data])
-        cal_probs_dicts = self.model.predict_proba(cal_unlabeled_data)
-        cal_probs = np.zeros(len(cal_probs_dicts))
+        cal_probs = self.model.predict_proba(cal_unlabeled_data)
 
         # Calculate threshold for each label
         self.cat_threshold = np.zeros(labels.shape)
-        for i in labels:
-            for j in range(len(cal_probs)):
-                cal_probs[j] = cal_probs_dicts[j][i]
+        for i in range(labels):
             mask_label = cal_labels == i
             scores = self._score(cal_probs[mask_label])
             self.cat_threshold[i] = np.quantile(
@@ -82,16 +81,17 @@ class ConformalPredictor(UncertantyPredictor):
 
         # Calculate threshold
         self.threshold = np.zeros(labels.shape)
-        for j in range(len(cal_probs)):
-            cal_probs[j] = cal_probs_dicts[j][cal_labels[j]]
         scores = self._score(cal_probs)
         self.threshold = np.quantile(np.concatenate((scores, [BIG_N])), 1 - self.alpha)
 
     def get_embeddings(self, data: list[str]) -> list[list[float]]:
         return self.model.get_embeddings(data)
 
+    def raw_predictions(self, unlabelled_data: list[str]) -> list[int]:
+        return self.model.predict(unlabelled_data)
+
     def predict(self, unlabelled_data: list[str]) -> list[list[int]]:
-        probas = self.model.predict_proba2(unlabelled_data)
+        probas = self.model.predict_proba(unlabelled_data)
         # preds = [
         #     [i for i, t in enumerate(self.threshold) if self._score(prob[i]) <= t]
         #     for prob in probas

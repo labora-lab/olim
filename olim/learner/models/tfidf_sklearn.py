@@ -16,7 +16,11 @@ from . import ClassificationModel, RegressionModel
 
 class TfidfSklearnClassificationModel(ClassificationModel):
     def __init__(
-        self, *args, ngram_range: tuple[int, int] = (1, 1), n_classes: int | None = None, **kwargs
+        self,
+        *args,
+        ngram_range: tuple[int, int] = (1, 1),
+        n_classes: int | None = None,
+        **kwargs,
     ):
         self.n_classes = n_classes
         self.embedding = TfidfVectorizer(ngram_range=ngram_range)
@@ -52,24 +56,12 @@ class TfidfSklearnClassificationModel(ClassificationModel):
         X = self.embedding.transform(unlabelled_data)
         return [self.label_mapping[pred] for pred in self.model.predict(X)]
 
-    def predict_proba2(self, unlabelled_data: list[str]) -> list[dict[int, float]]:
+    def predict_proba(self, unlabelled_data: list[str]) -> list[dict[int, float]]:
         if len(unlabelled_data) == 0:
             return []
         X = self.embedding.transform(unlabelled_data)
         probas = self.model.predict_proba(X)
         return probas
-
-    def predict_proba(self, unlabelled_data: list[str]) -> list[list[float]]:
-        if len(unlabelled_data) == 0:
-            return []
-        X = self.embedding.transform(unlabelled_data)
-        probas = self.model.predict_proba(X)
-        # return [{j: probas[i, j] for j in range(probas.shape[1])} for i in range(probas.shape[0])]
-        return [
-            dict.fromkeys(range(self.n_classes), 0)
-            | {y: probas[i, j] for y, j in self.inv_label_mapping.items()}
-            for i in range(probas.shape[0])
-        ]
 
 
 class TfidfSklearnQuantileRegressionModel(RegressionModel):
@@ -108,7 +100,9 @@ class TfidfSklearnQuantileRegressionModel(RegressionModel):
         return self.embedding.transform(data)
 
     def predict(self, unlabelled_data: list[str]) -> list[float]:
-        return [(inf + sup) * 0.5 for inf, sup in self.predict_interval(unlabelled_data)]
+        return [
+            (inf + sup) * 0.5 for inf, sup in self.predict_interval(unlabelled_data)
+        ]
 
     def predict_interval(self, unlabelled_data: list[str]) -> list[tuple[float, float]]:
         if self.conformalize:
@@ -148,5 +142,10 @@ class TfidfLinearRegressionRegressor(TfidfSklearnQuantileRegressionModel):
 class TfidfLightGBMRegressor(TfidfSklearnQuantileRegressionModel):
     def _create_model(self, quantile, *args, **kwargs) -> Any:
         return LGBMClassifier(
-            *args, **kwargs, random_state=0, objective="quantile", metric="quantile", alpha=quantile
+            *args,
+            **kwargs,
+            random_state=0,
+            objective="quantile",
+            metric="quantile",
+            alpha=quantile,
         )
