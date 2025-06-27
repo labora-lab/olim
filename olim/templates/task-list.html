@@ -6,7 +6,7 @@
             <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
             <div class="text-xs text-gray-400">{{ _('Running') }}</div>
         </div>
-        <div class="flex items-center">
+        <div class="flex items-center ml-1">
             <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse mr-2"></div>
             <i class="bi bi-play-circle-fill text-blue-400"></i>
         </div>
@@ -17,21 +17,21 @@
             <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
             <div class="text-xs text-gray-400">{{ _('Completed') }}</div>
         </div>
-        <i class="bi bi-check-circle-fill text-green-400"></i>
+        <i class="bi bi-check-circle-fill text-green-400 ml-1"></i>
     </div>
     {% elif task.status == "FAILURE" %}
     <div class="flex items-center justify-between p-2 bg-gray-700 border-l-2 border-red-400 rounded-r-lg{% if task.error %} cursor-help{% endif %}"
-         {% if task.error %}title="{{ ''.join(task.error) }}"{% endif %}>
+        {% if task.error %}title="{{ ''.join(task.error) }}" {% endif %}>
         <div class="flex-1">
             <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
             <div class="text-xs text-gray-400">{{ _('Failed') }}</div>
         </div>
-        <i class="bi bi-exclamation-circle-fill text-red-400"></i>
+        <i class="bi bi-exclamation-circle-fill text-red-400 ml-1"></i>
     </div>
     {% elif task.status == "REVOKED" %}
     <div class="flex items-center justify-between p-2 bg-gray-700 border-l-2 border-gray-500 rounded-r-lg{% if task.error %} cursor-help{% endif %}"
-         {% if task.error %}title="{{ ''.join(task.error) }}"{% endif %}>
-        <div class="flex-1">
+        {% if task.error %}title="{{ ''.join(task.error) }}" {% endif %}>
+        <div class="flex-1 ml-1">
             <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
             <div class="text-xs text-gray-400">{{ _('Canceled') }}</div>
         </div>
@@ -39,7 +39,7 @@
     </div>
     {% elif task.status == "PENDING" or task.status == "RETRY" %}
     <div class="flex items-center justify-between p-2 bg-gray-700 border-l-2 border-yellow-400 rounded-r-lg">
-        <div class="flex-1">
+        <div class="flex-1 ml-1">
             <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
             <div class="text-xs text-gray-400">{{ _('Pending') }}</div>
         </div>

@@ -6,7 +6,6 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from . import app, settings
 from .database import (
     User,
-    get_celery_tasks,
     get_project,
     get_projects,
     get_setup_step,
@@ -177,12 +176,6 @@ def add_projects() -> ...:
             project_id=session["project_id"],
             project_name=get_project(session["project_id"]).name,  # type: ignore
         )
-
-
-@app.before_request  # type: ignore
-def add_tasks() -> ...:
-    if check_is_setup():
-        app.jinja_env.globals.update(tasks=get_celery_tasks())
 
 
 @app.teardown_request
