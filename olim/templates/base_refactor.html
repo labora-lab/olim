@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <title>{% block title %}{% endblock %} - {{ _('OLIM - Open Labeller for Iterative Machine learning') }}</title>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 min-h-screen flex flex-col">
     <!-- Sidebar -->
     <aside id="sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0" aria-label="Sidebar">
         <div class="h-full px-3 py-4 overflow-y-auto bg-gray-800">
@@ -73,7 +73,7 @@
     <div id="sidebar-backdrop" class="fixed inset-0 z-30 bg-gray-900/50 hidden sm:hidden"></div>
 
     <!-- Main Content Wrapper -->
-    <div class="sm:ml-64">
+    <div class="sm:ml-64 flex flex-col min-h-screen">
         <!-- Flash Messages Container -->
         <div class="fixed top-16 right-4 z-50 w-96 space-y-2">
             <!-- Success Messages -->
@@ -168,7 +168,7 @@
         </div>
 
         <!-- Main Content -->
-        <main class="p-4 min-h-screen">
+        <main class="p-4 flex-grow">
             {% block content %}
             <div class="h-96 flex justify-center items-center">
                 <div class="text-center">
@@ -179,33 +179,6 @@
             </div>
             {% endblock %}
         </main>
-
-        <!-- Footer -->
-        <footer class="bg-cyan-600 text-white py-4 mt-8">
-            <div class="container mx-auto px-4">
-                <div class="flex flex-col sm:flex-row justify-between items-center">
-                    <div class="flex items-center space-x-4 mb-2 sm:mb-0">
-                        <a href="https://gitlab.com/nanogennari/olim" class="text-cyan-100 hover:text-white transition-colors">
-                            <i class="bi bi-gitlab mr-2"></i>
-                            {{ _('OLIM - Open Labeller for Iterative Machine learning') }} - v{{ version }}
-                        </a>
-                    </div>
-                    <div class="flex items-center space-x-4">
-                        {% if has_help %}
-                        <a href="{{ url_for('get_help') }}" 
-                           class="text-cyan-100 hover:text-white transition-colors" 
-                           title="{{ _('Report a problem with this page') }}">
-                            <i class="bi bi-question-circle-fill"></i>
-                            {{ _('Help') }}
-                        </a>
-                        {% endif %}
-                        <span class="text-cyan-100 text-sm">
-                            © 2025 OLIM Project
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </footer>
     </div>
 
     <script src="{{ url_for('static', filename='js/flowbite.min.js') }}"></script>
@@ -224,7 +197,5 @@
             backdrop.classList.add('hidden');
         });
     </script>
-
-    {% block scripts %}{% endblock %}
 </body>
 </html>
