@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+  <title>{% block title %}{% endblock %} - {{ _('OLIM - Open Labeller for Iterative Machine learning')}}</title>
+</head>
+<body>
+  {% block content %}
+  <div class="h-screen flex justify-center items-center">
+    <h1 class="text-4xl">FALLBACK UHUUUL!</h1>
+  </div>
+  {% endblock %}
+  <script src="{{ url_for('static', filename='js/flowbite.min.js') }}"></script>
+</body>
+</html>

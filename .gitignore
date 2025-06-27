@@ -176,3 +176,7 @@ instance/
 queues/
 work/
 uploads/
+
+
+# Javascript stuffs
+node_modules/
