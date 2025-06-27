@@ -19,10 +19,9 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import LabelEncoder
 
-from .active import ClassificationModel
 from .active.policies import ConformalUnsertantyPolicy, Policy
 from .bandits import BanditExplorer, DummyBandit
-from .models import DummyClassificationModel
+from .models import ClassificationModel, DummyClassificationModel
 from .models.conformal import ConformalPredictor
 from .settings import CLASSIFICATION_MODEL, SKIP_AL, UNCERTAIN_PERC
 from .utils import SlotSet, sanitize_data
@@ -595,14 +594,39 @@ class ActiveLearningBackend:
         # inf_auc_before, _ = self.peek_auc_roc_ovr(alpha=0.1)
 
         with self._data_lock:
-            # Overwrite _validade if we are not using bandit
+            # Overwrite _validate if we are not using bandit
             if not USE_BANDIT:
                 rand = self._rng.uniform()
-                is_other = [d != self._encode(labelling) for d in self._val_dataset.values()]
-                prob = VALIDATE_PROB
-                if len(is_other) > 10:
-                    prob = prob * 2 * np.mean(is_other)
-                self._validate = rand >= prob
+                current_label = self._encode(labelling)
+
+                # Calculate class distribution in current validation dataset
+                val_labels = list(self._val_dataset.values())
+                if len(val_labels) > 0:
+                    # Count occurrences of current label in validation set
+                    current_label_count = sum(1 for label in val_labels if label == current_label)
+
+                    if current_label_count == 0:
+                        # Current label has no representation in validation set
+                        # Use maximum probability to encourage adding it
+                        prob = min(1.0, len(self.labels) * VALIDATE_PROB)
+                    else:
+                        # Current label proportion in validation set
+                        current_label_proportion = current_label_count / len(val_labels)
+
+                        # Dynamic prob: (n_classes/(n_classes-1)) * (1 - proportion) * VALIDATE_PROB
+                        # This gives low prob for overrepresented, high prob for underrepresented
+                        prob = (
+                            (len(self.labels) / (len(self.labels) - 1))
+                            * (1 - current_label_proportion)
+                            * VALIDATE_PROB
+                        )
+                else:
+                    # No validation data yet, use base probability
+                    prob = VALIDATE_PROB
+
+                print(labelling, prob)
+
+                self._validate = rand < prob
 
             # TODO: Test this.
             if entry_id not in self._dataset:
