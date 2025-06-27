@@ -1,31 +1,93 @@
-{% extends "base.html" %}
+{% extends "base_refactor.html" %}
 {% block title %}{{ _('User Management') }}{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col {% if session.role == 'admin' %}s8{% else %}s12{% endif %}">
-        <div class="card">
-            <div class="card-content">
-                <span class="card-title">{{ _('User Management') }}</span>
-                <table>
-                    <thead>
+<div class="grid grid-cols-1 {% if session.role == 'admin' %}lg:grid-cols-3{% endif %} gap-6">
+    <!-- Users List -->
+    <div class="{% if session.role == 'admin' %}lg:col-span-2{% endif %}">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="bi bi-people-fill text-cyan-600 mr-2"></i>
+                        {{ _('User Management') }}
+                    </h3>
+                    
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                         <tr>
-                            <th>{{ _('Name') }}</th>
-                            <th>{{ _('Username') }}</th>
-                            <th>{{ _('Role') }}</th>
-                            <th>{{ _('Actions') }}</th>
+                            <th scope="col" class="px-6 py-3">
+                                <div class="flex items-center">
+                                    <i class="bi bi-person mr-2"></i>
+                                    {{ _('Name') }}
+                                </div>
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                <div class="flex items-center">
+                                    <i class="bi bi-at mr-2"></i>
+                                    {{ _('Username') }}
+                                </div>
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                <div class="flex items-center">
+                                    <i class="bi bi-shield-check mr-2"></i>
+                                    {{ _('Role') }}
+                                </div>
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                <div class="flex items-center">
+                                    <i class="bi bi-gear mr-2"></i>
+                                    {{ _('Actions') }}
+                                </div>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for user in users %}
-                        <tr>
-                            <td>{{ user.name }}</td>
-                            <td>{{ user.username }}</td>
-                            <td>{{ user.role }}</td>
-                            <td>
-                                <a href="{{ url_for('user_settings', user_id=user.id) }}"
-                                    class="btn waves-effect waves-light tooltipped"
-                                    data-tooltip="{{ _('Change Password') }}">
-                                    <i class="material-icons">edit</i>
+                        <tr class="bg-white border-b hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
+                                        {{ user.name[0]|upper if user.name else user.username[0]|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-gray-900">
+                                            {{ user.name if user.name else _('No name') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="font-mono text-gray-700">{{ user.username }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if user.role == 'admin' %}bg-red-100 text-red-800
+                                    {% elif user.role == 'user' %}bg-blue-100 text-blue-800
+                                    {% elif user.role == 'annotator' %}bg-green-100 text-green-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {% if user.role == 'admin' %}
+                                        <i class="bi bi-shield-fill-exclamation mr-1"></i>
+                                    {% elif user.role == 'user' %}
+                                        <i class="bi bi-person-fill mr-1"></i>
+                                    {% elif user.role == 'annotator' %}
+                                        <i class="bi bi-pencil-fill mr-1"></i>
+                                    {% else %}
+                                        <i class="bi bi-question-circle-fill mr-1"></i>
+                                    {% endif %}
+                                    {{ user.role|title }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <a href="{{ url_for('user_settings', user_id=user.id) }}" 
+                                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 transition-colors"
+                                   title="{{ _('Change Password') }}">
+                                    <i class="bi bi-pencil-square mr-1"></i>
+                                    {{ _('Edit') }}
                                 </a>
                             </td>
                         </tr>
@@ -33,53 +95,133 @@
                     </tbody>
                 </table>
             </div>
+            
+            {% if not users %}
+            <div class="text-center py-12">
+                <i class="bi bi-people text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">{{ _('No users found') }}</h3>
+                <p class="text-gray-500">{{ _('There are no users registered in the system yet.') }}</p>
+            </div>
+            {% endif %}
         </div>
     </div>
+
+    <!-- Add User Form (Admin only) -->
     {% if session.role == 'admin' %}
-    <div class="col s4">
-        <div class="card">
-            <div class="card-content">
-                <span class="card-title">{{ _('Add User') }}</span>
-                <form method="post" action="{{ url_for('users') }}">
-                    <div class="input-field">
-                        <input id="username" type="text" name="username" required>
-                        <label for="username">{{ _('Username') }}</label>
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-person-plus-fill text-green-600 mr-2"></i>
+                    {{ _('Add User') }}
+                </h3>
+            </div>
+            
+            <div class="p-6">
+                <form method="post" action="{{ url_for('users') }}" class="space-y-4">
+                    <!-- Username -->
+                    <div>
+                        <label for="username" class="block mb-2 text-sm font-medium text-gray-900">
+                            <i class="bi bi-at mr-1"></i>
+                            {{ _('Username') }}
+                        </label>
+                        <input type="text" id="username" name="username" required
+                               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                               placeholder="{{ _('Enter username') }}">
                     </div>
-                    <div id="new" class="input-field">
-                        <input id="new_password" type="password" name="new_password" required>
-                        <label for="new_password">{{ _('New Password') }}</label>
+
+                    <!-- Name -->
+                    <div>
+                        <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
+                            <i class="bi bi-person mr-1"></i>
+                            {{ _('Name') }}
+                        </label>
+                        <input type="text" id="name" name="name"
+                               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                               placeholder="{{ _('Enter full name') }}">
                     </div>
-                    <div id="text" class="input-field hidden">
-                        <input id="new_password_text" type="text" name="new_password_text">
-                        <label for="new_password_text">{{ _('New Password') }}</label>
-                    </div>
-                    <div id="check" class="input-field ">
-                        <input id="password_check" type="password" name="password_check" required>
-                        <label for="password_check">{{ _('Confirm Password') }}</label>
-                    </div>
-                    <div id="random">
-                        <button class="btn btn-wide waves-effect waves-light" type="button"
-                            onclick="generateRandomPassword()">
-                            {{ _('Generate Random Password') }}<i class="material-icons right">loop</i>
-                        </button>
-                    </div>
-                    <div class="input-field">
-                        <input id="name" type="text" name="name">
-                        <label for="name">{{ _('Name') }}</label>
-                    </div>
-                    <div class="input-field">
-                        <select id="role" name="role" required>
+
+                    <!-- Role -->
+                    <div>
+                        <label for="role" class="block mb-2 text-sm font-medium text-gray-900">
+                            <i class="bi bi-shield-check mr-1"></i>
+                            {{ _('Role') }}
+                        </label>
+                        <select id="role" name="role" required
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
                             <option value="" disabled selected>{{ _('Select a Role') }}</option>
                             {% for role in roles %}
-                            {% if role != 'guest'%}
-                            <option value="{{ role }}">{{ role }}</option>
+                            {% if role != 'guest' %}
+                            <option value="{{ role }}">{{ role|title }}</option>
                             {% endif %}
                             {% endfor %}
                         </select>
-                        <label for="role">{{ _('Role') }}</label>
                     </div>
-                    <button class="btn waves-effect waves-light" type="submit" name="action">{{ _('Add User') }}
-                        <i class="material-icons right">person_add</i>
+
+                    <!-- Password Section -->
+                    <div class="bg-gray-50 rounded-lg p-4 space-y-4">
+                        <h4 class="text-sm font-medium text-gray-900 flex items-center">
+                            <i class="bi bi-key mr-1"></i>
+                            {{ _('Password Setup') }}
+                        </h4>
+                        
+                        <!-- Generate Random Password Button -->
+                        <button type="button" id="generate-password-btn"
+                                class="w-full inline-flex justify-center items-center px-4 py-2 text-sm font-medium text-cyan-700 bg-cyan-100 border border-cyan-300 rounded-lg hover:bg-cyan-200 focus:ring-4 focus:outline-none focus:ring-cyan-300 transition-colors">
+                            <i class="bi bi-arrow-clockwise mr-2"></i>
+                            {{ _('Generate Random Password') }}
+                        </button>
+
+                        <!-- New Password -->
+                        <div>
+                            <label for="new_password" class="block mb-2 text-sm font-medium text-gray-900">
+                                {{ _('New Password') }}
+                            </label>
+                            <div class="relative">
+                                <input type="password" id="new_password" name="new_password" required
+                                       class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5 pr-10"
+                                       placeholder="{{ _('Enter password') }}">
+                                <button type="button" id="toggle-password" 
+                                        class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
+                                    <i class="bi bi-eye" id="password-icon"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hidden text input for generated password display -->
+                        <div id="password-text-field" class="hidden">
+                            <label for="new_password_text" class="block mb-2 text-sm font-medium text-gray-900">
+                                {{ _('Generated Password') }}
+                            </label>
+                            <div class="relative">
+                                <input type="text" id="new_password_text" name="new_password_text" readonly
+                                       class="bg-yellow-50 border border-yellow-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 pr-10"
+                                       placeholder="{{ _('Generated password will appear here') }}">
+                                <button type="button" id="copy-password" 
+                                        class="absolute inset-y-0 right-0 flex items-center pr-3 text-yellow-600 hover:text-yellow-800"
+                                        title="{{ _('Copy password') }}">
+                                    <i class="bi bi-clipboard" id="copy-icon"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Confirm Password -->
+                        <div>
+                            <label for="password_check" class="block mb-2 text-sm font-medium text-gray-900">
+                                {{ _('Confirm Password') }}
+                            </label>
+                            <input type="password" id="password_check" name="password_check" required
+                                   class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                                   placeholder="{{ _('Confirm password') }}">
+                            <div id="password-match-feedback" class="mt-1 text-sm hidden"></div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" name="action"
+                            class="w-full text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                        <i class="bi bi-person-plus mr-2"></i>
+                        {{ _('Add User') }}
                     </button>
                 </form>
             </div>
@@ -87,4 +229,117 @@
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Password generation and validation functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const generateBtn = document.getElementById('generate-password-btn');
+    const passwordField = document.getElementById('new_password');
+    const passwordTextField = document.getElementById('new_password_text');
+    const passwordTextDiv = document.getElementById('password-text-field');
+    const confirmField = document.getElementById('password_check');
+    const toggleBtn = document.getElementById('toggle-password');
+    const passwordIcon = document.getElementById('password-icon');
+    const copyBtn = document.getElementById('copy-password');
+    const copyIcon = document.getElementById('copy-icon');
+    const matchFeedback = document.getElementById('password-match-feedback');
+
+    // Generate random password
+    function generateRandomPassword() {
+        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+        let password = "";
+        for (let i = 0; i < 12; i++) {
+            password += charset.charAt(Math.floor(Math.random() * charset.length));
+        }
+        return password;
+    }
+
+    // Generate password button click
+    generateBtn?.addEventListener('click', function() {
+        const newPassword = generateRandomPassword();
+        passwordField.value = newPassword;
+        passwordTextField.value = newPassword;
+        confirmField.value = newPassword;
+        
+        // Show the text field with generated password
+        passwordTextDiv.classList.remove('hidden');
+        
+        // Update button text
+        generateBtn.innerHTML = '<i class="bi bi-arrow-clockwise mr-2"></i>{{ _("Generate New Password") }}';
+        generateBtn.classList.remove('text-cyan-700', 'bg-cyan-100', 'border-cyan-300', 'hover:bg-cyan-200');
+        generateBtn.classList.add('text-green-700', 'bg-green-100', 'border-green-300', 'hover:bg-green-200');
+        
+        // Validate passwords
+        validatePasswords();
+    });
+
+    // Toggle password visibility
+    toggleBtn?.addEventListener('click', function() {
+        const isPassword = passwordField.type === 'password';
+        passwordField.type = isPassword ? 'text' : 'password';
+        passwordIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+    });
+
+    // Copy password to clipboard
+    copyBtn?.addEventListener('click', async function() {
+        try {
+            await navigator.clipboard.writeText(passwordTextField.value);
+            copyIcon.className = 'bi bi-check-lg';
+            copyBtn.classList.add('text-green-600');
+            
+            setTimeout(() => {
+                copyIcon.className = 'bi bi-clipboard';
+                copyBtn.classList.remove('text-green-600');
+                copyBtn.classList.add('text-yellow-600');
+            }, 1500);
+        } catch (err) {
+            console.error('Failed to copy password: ', err);
+        }
+    });
+
+    // Password validation
+    function validatePasswords() {
+        const password = passwordField.value;
+        const confirmPassword = confirmField.value;
+        
+        if (password && confirmPassword) {
+            if (password === confirmPassword) {
+                matchFeedback.textContent = '{{ _("Passwords match") }}';
+                matchFeedback.className = 'mt-1 text-sm text-green-600';
+                matchFeedback.classList.remove('hidden');
+                confirmField.classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-500');
+                confirmField.classList.add('border-green-300', 'focus:border-green-500', 'focus:ring-green-500');
+            } else {
+                matchFeedback.textContent = '{{ _("Passwords do not match") }}';
+                matchFeedback.className = 'mt-1 text-sm text-red-600';
+                matchFeedback.classList.remove('hidden');
+                confirmField.classList.remove('border-green-300', 'focus:border-green-500', 'focus:ring-green-500');
+                confirmField.classList.add('border-red-300', 'focus:border-red-500', 'focus:ring-red-500');
+            }
+        } else {
+            matchFeedback.classList.add('hidden');
+            confirmField.classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-500', 'border-green-300', 'focus:border-green-500', 'focus:ring-green-500');
+        }
+    }
+
+    // Add event listeners for password validation
+    passwordField?.addEventListener('input', validatePasswords);
+    confirmField?.addEventListener('input', validatePasswords);
+
+    // Form validation before submit
+    const form = document.querySelector('form');
+    form?.addEventListener('submit', function(e) {
+        const password = passwordField.value;
+        const confirmPassword = confirmField.value;
+
+        if (password !== confirmPassword) {
+            e.preventDefault();
+            confirmField.focus();
+            return false;
+        }
+    });
+});
+</script>
 {% endblock %}
