@@ -180,3 +180,7 @@ uploads/
 
 # Javascript stuffs
 node_modules/
+package-lock.json
+package.json
+
+CLAUDE.md

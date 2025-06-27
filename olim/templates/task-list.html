@@ -1,37 +1,56 @@
-<ul class="collection">
+<div class="space-y-1">
     {% for task in tasks %}
     {% if task.status == "STARTED" %}
-    <li class="collection-item blue-text darker-4">
-        <i class="material-icons right">play_circle_filled</i>{{ task.name }} </br>
-        <strong>{{ _('Running') }}</strong>
-    </li>
+    <div class="flex items-center justify-between p-2 bg-gray-700 border-l-2 border-blue-400 rounded-r-lg">
+        <div class="flex-1">
+            <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
+            <div class="text-xs text-gray-400">{{ _('Running') }}</div>
+        </div>
+        <div class="flex items-center">
+            <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse mr-2"></div>
+            <i class="bi bi-play-circle-fill text-blue-400"></i>
+        </div>
+    </div>
     {% elif task.status == "SUCCESS" %}
-    <li class="collection-item green-text">
-        <i class="material-icons right">check_circle</i> {{ task.name }}</br>
-        <strong>{{ _('Completed') }}</strong>
-    </li>
+    <div class="flex items-center justify-between p-2 bg-gray-700 border-l-2 border-green-400 rounded-r-lg">
+        <div class="flex-1">
+            <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
+            <div class="text-xs text-gray-400">{{ _('Completed') }}</div>
+        </div>
+        <i class="bi bi-check-circle-fill text-green-400"></i>
+    </div>
     {% elif task.status == "FAILURE" %}
-    <li class="collection-item{{' tooltipped' if task.error else ''}} red-text" {% if task.error %}
-        data-tooltip="{{''.join(task.error)}}" {% endif %}>
-        <i class="material-icons right">error</i> {{ task.name }} </br>
-        <strong>{{ _('Failed') }}</strong>
-    </li>
+    <div class="flex items-center justify-between p-2 bg-gray-700 border-l-2 border-red-400 rounded-r-lg{% if task.error %} cursor-help{% endif %}"
+         {% if task.error %}title="{{ ''.join(task.error) }}"{% endif %}>
+        <div class="flex-1">
+            <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
+            <div class="text-xs text-gray-400">{{ _('Failed') }}</div>
+        </div>
+        <i class="bi bi-exclamation-circle-fill text-red-400"></i>
+    </div>
     {% elif task.status == "REVOKED" %}
-    <li class="collection-item{{' tooltipped' if task.error else ''}} grey-text" {% if task.error %}
-        data-tooltip="{{''.join(task.error)}}" {% endif %}>
-        <i class="material-icons right">remove_circle</i> {{ task.name }} </br>
-        <strong>{{ _('Canceled') }}</strong>
-    </li>
+    <div class="flex items-center justify-between p-2 bg-gray-700 border-l-2 border-gray-500 rounded-r-lg{% if task.error %} cursor-help{% endif %}"
+         {% if task.error %}title="{{ ''.join(task.error) }}"{% endif %}>
+        <div class="flex-1">
+            <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
+            <div class="text-xs text-gray-400">{{ _('Canceled') }}</div>
+        </div>
+        <i class="bi bi-x-circle-fill text-gray-500"></i>
+    </div>
     {% elif task.status == "PENDING" or task.status == "RETRY" %}
-    <li class="collection-item grey-text">
-        <i class="material-icons right">play_circle_outline</i> {{ task.name }} </br>
-        <strong>{{ _('Pending') }}</strong>
-    </li>
+    <div class="flex items-center justify-between p-2 bg-gray-700 border-l-2 border-yellow-400 rounded-r-lg">
+        <div class="flex-1">
+            <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
+            <div class="text-xs text-gray-400">{{ _('Pending') }}</div>
+        </div>
+        <i class="bi bi-clock text-yellow-400"></i>
+    </div>
     {% endif %}
     {% endfor %}
     {% if not (tasks) %}
-    <li class="collection-item grey-text darker-4">
-        {{ _('No tasks.') }}
-    </li>
+    <div class="text-center py-4">
+        <i class="bi bi-list-task text-xl text-gray-500 mb-1"></i>
+        <p class="text-xs text-gray-500">{{ _('No tasks.') }}</p>
+    </div>
     {% endif %}
-</ul>
+</div>
