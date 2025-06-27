@@ -341,15 +341,13 @@ def security_edit_password(
         flash(_("Passwords do not match!"), category="error")
         return
 
-    if changer_user["role"] != "admin" and old_password is None:
+    if changer_user.role != "admin" and old_password is None:
         flash(
             _("Please enter your old password!"), category="error"
         )  # no old password when is not admin
         return
 
-    if changer_user["role"] != "admin" and not verify_password(
-        old_password, changer_user["password"]
-    ):
+    if changer_user.role != "admin" and not verify_password(old_password, changer_user.password):
         flash(_("Incorrect old password!"), category="error")  # old password is incorrect
         return
 
@@ -389,9 +387,9 @@ def user_settings(user_id: int | None = None) -> ...:
 @app.route("/user/<int:user_id>/set/password", methods=["POST"])
 def edit_password(user_id: int | None = None) -> ...:
     to_change_user = get_user_obj(user_id)
-    changer_user = session.get("user")
+    changer_user = get_user(session["user_id"])
 
-    if to_change_user is None:
+    if to_change_user is None or changer_user is None:
         flash(
             _(
                 "You do not have permission to change password for user id {user_id} settings."
