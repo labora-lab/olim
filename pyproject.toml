@@ -51,7 +51,6 @@ output-format = "grouped"
 # Excluir diretórios comumente ignorados
 extend-exclude = [
     "migrations/*",
-    "olim/learner/*"
 ]
 
 # Seleção de regras - configuração extensiva baseada na documentação

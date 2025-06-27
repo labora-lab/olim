@@ -1,1 +1,1 @@
-from .public_api import ActiveLearningBackend # noqa
+from .public_api import ActiveLearningBackend  # noqa

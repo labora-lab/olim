@@ -6,7 +6,8 @@ from sklearn.model_selection import train_test_split
 from . import ClassificationModel
 
 BIG_N: float = (
-    10e30  # numpy doesn't like infinity in quantiles, so we'll just use an outrageously large number instead.
+    10e30  # numpy doesn't like infinity in quantiles, so we'll just use an
+    # outrageously large number instead.
 )
 
 
@@ -23,14 +24,14 @@ class ConformalPredictor(UncertantyPredictor):
         calibration_split_size: float = 0.20,
         alpha: float = 0.1,
         n_classes: int | None = None,
-    ):
+    ) -> None:
         self.model: ClassificationModel = model
         self.calibration_split_size: float = calibration_split_size
         self.threshold: list[float] | None = None
         self.alpha: float = alpha
         self.n_classes: int | None = n_classes
 
-    def _score(self, y: int):
+    def _score(self, y: int) -> float:
         return 1 - y
 
     def train(
@@ -53,9 +54,9 @@ class ConformalPredictor(UncertantyPredictor):
         if self.n_classes is None:
             y = [i for _, i in labelled_data]
             labels = np.sort(np.unique(y))
-            assert all(
-                [i == j for i, j in zip(labels, np.arange(np.max(y) + 1), strict=False)]
-            ), "Failed to detect classes, try setting n_classes"
+            assert all(i == j for i, j in zip(labels, np.arange(np.max(y) + 1), strict=False)), (
+                "Failed to detect classes, try setting n_classes"
+            )
         else:
             labels = np.arange(self.n_classes)
 
@@ -70,18 +71,17 @@ class ConformalPredictor(UncertantyPredictor):
         cal_labels = np.array([i for _, i in cal_labelled_data])
         cal_probs = self.model.predict_proba(cal_unlabeled_data)
 
-        # Calculate threshold for each label
+        # Calculate cat conditional thresholds for each label
         self.cat_threshold = np.zeros(labels.shape)
-        for i in range(labels):
+        for i in range(len(labels)):
             mask_label = cal_labels == i
-            scores = self._score(cal_probs[mask_label])
-            self.cat_threshold[i] = np.quantile(
-                np.concatenate((scores, [BIG_N])), 1 - self.alpha
-            )
+            scores = self._score(cal_probs[mask_label, i])
+            self.cat_threshold[i] = np.quantile(np.concatenate((scores, [BIG_N])), 1 - self.alpha)
 
-        # Calculate threshold
-        self.threshold = np.zeros(labels.shape)
-        scores = self._score(cal_probs)
+        # Calculate non-cat conditional threshold
+        true_probs = cal_probs[np.arange(len(cal_labels)), cal_labels]
+        scores = self._score(true_probs)
+        print(scores.shape)
         self.threshold = np.quantile(np.concatenate((scores, [BIG_N])), 1 - self.alpha)
 
     def get_embeddings(self, data: list[str]) -> list[list[float]]:

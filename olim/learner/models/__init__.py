@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any
 
 import numpy as np
-import xgboost as xgb
 
 
 class ClassificationModel(ABC):
@@ -42,14 +40,14 @@ class RegressionModel(ABC):
 
 
 class DummyClassificationModel(ClassificationModel):
-    def __init__(self, *, n_classes: int):
+    def __init__(self, *, n_classes: int) -> None:
         self.n_classes = n_classes
         self._rng = np.random.default_rng(0)
 
     def train(self, labelled_data, validation) -> None:
         pass
 
-    def predict(self, unlabelled_data):
+    def predict(self, unlabelled_data: list[str]) -> list[int]:
         return [
             max(scores.items(), key=lambda x: x[1])[0]
             for scores in self.predict_proba(unlabelled_data)
@@ -69,7 +67,7 @@ class DummyClassificationModel(ClassificationModel):
 
 
 class DummyRegressionModel(RegressionModel):
-    def __init__(self, *, range: tuple[float, float]):
+    def __init__(self, *, range: tuple[float, float]) -> None:
         self.range = range
         self._rng = np.random.default_rng(0)
 
@@ -77,9 +75,7 @@ class DummyRegressionModel(RegressionModel):
         pass
 
     def predict(self, unlabelled_data: list[str]) -> list[float]:
-        return [
-            (inf + sup) * 0.5 for inf, sup in self.predict_interval(unlabelled_data)
-        ]
+        return [(inf + sup) * 0.5 for inf, sup in self.predict_interval(unlabelled_data)]
 
     def get_embeddings(self, data: list[str]) -> list[list[float]]:
         n = len(data)
@@ -91,6 +87,4 @@ class DummyRegressionModel(RegressionModel):
         boundaries = self._rng.uniform(*self.range, size=(n, 2))
         boundaries = np.sort(boundaries, axis=1)
 
-        return [
-            (boundaries[i, 0], boundaries[i, 1]) for i in range(len(unlabelled_data))
-        ]
+        return [(boundaries[i, 0], boundaries[i, 1]) for i in range(len(unlabelled_data))]
