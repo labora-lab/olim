@@ -29,7 +29,8 @@
                 </label>
                 <div class="space-y-2 max-h-32 overflow-y-auto">
                     {% for project in projects %}
-                    <div class="flex items-center p-2 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <div class="project-item flex items-center p-2 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                        data-project-id="{{ project.id }}">
                         <input id="project-{{ project.id }}" type="checkbox" name="projects" value="{{ project.id }}"
                             class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                             {% if projects|length==1 %}checked{% endif %}>
@@ -121,7 +122,7 @@
                     </div>
 
                     <!-- Progress Bar -->
-                    <div class="progress hidden mt-1">
+                    <div class="progress hidden px-1 py-2">
                         <div class="w-full bg-gray-200 rounded-full h-2.5">
                             <div class="determinate bg-blue-600 h-2.5 rounded-full transition-all duration-300"
                                 style="width: 0%"></div>
@@ -129,7 +130,7 @@
                     </div>
 
                     <!-- Upload Status -->
-                    <div id="upload-status" class="text-sm text-gray-600"></div>
+                    <div id="upload-status" class="text-sm text-gray-600 px-2"></div>
                 </div>
 
                 <!-- Hidden Fields -->
@@ -290,6 +291,25 @@
 
         // Make validateForm available globally for file upload
         window.validateForm = validateForm;
+
+        // Project item click functionality
+        const projectItems = document.querySelectorAll('.project-item');
+        projectItems.forEach(item => {
+            item.addEventListener('click', function (e) {
+                // Don't trigger if clicking directly on checkbox or label
+                if (e.target.type === 'checkbox' || e.target.tagName === 'LABEL') {
+                    return;
+                }
+
+                // Find the checkbox in this item
+                const checkbox = this.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                    // Trigger validation after checkbox change
+                    validateForm();
+                }
+            });
+        });
 
         // Drag and drop functionality
         const dropArea = document.getElementById('drop-area');
@@ -505,7 +525,7 @@
                         </div>
                     </div>
                 `;
-                
+
                 status.textContent = '';
             } else {
                 throw new Error('Finalization failed');

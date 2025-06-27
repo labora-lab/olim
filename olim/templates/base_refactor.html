@@ -183,6 +183,7 @@
 
     <!-- Main Content Wrapper -->
     <div class="{% block main_wrapper_classes %}sm:ml-64{% endblock %} flex flex-col min-h-screen">
+        {% block navbar %}{% endblock %}
         <!-- Mobile Header -->
         <div class="sm:hidden bg-gray-800 p-4 flex items-center justify-between">
             <button id="sidebar-toggle" class="text-gray-300 hover:text-white">

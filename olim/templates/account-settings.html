@@ -1,30 +1,71 @@
 {% extends "base_refactor.html" %}
 {% block title %}{{ _('Account Settings') }}{% endblock %}
 
+{% import "user-macro.html" as user_macro %}
+
 {% block content %}
-<div class="max-w-4xl mx-auto space-y-6">
-    <!-- Page Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="flex items-center gap-2">
-            <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white text-lg font-bold mr-4">
-                <i class="bi bi-person-gear"></i>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- User Information Panel -->
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-person-gear text-cyan-600 mr-2"></i>
+                    {{ _('User Information') }}
+                </h3>
             </div>
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">
-                    {{ _('Account Settings') }}
-                </h1>
-                {% if session.role == 'admin' %}
-                <p class="text-gray-600 mt-1">
-                    {{ _('Managing settings for user:') }} <span class="font-semibold">{{ user['name'] or user['username'] }}</span>
-                </p>
-                {% else %}
-                <p class="text-gray-600 mt-1">{{ _('Manage your account preferences and security settings') }}</p>
+            
+            <div class="p-6">
+                <div class="flex flex-col items-center text-center">
+                    <div class="w-20 h-20 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-medium mb-4">
+                        {{ user.name[0]|upper if user.name else user.username[0]|upper }}
+                    </div>
+                    <div>
+                        <div class="font-medium text-gray-900 text-lg">
+                            {{ user.name if user.name else _('No name') }}
+                        </div>
+                        <div class="text-sm text-gray-500 mt-1">
+                            <i class="bi bi-at mr-1"></i>
+                            {{ user.username }}
+                        </div>
+                        <div class="mt-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if user.role == 'admin' %}bg-red-100 text-red-800
+                                {% elif user.role == 'user' %}bg-blue-100 text-blue-800
+                                {% elif user.role == 'annotator' %}bg-green-100 text-green-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {% if user.role == 'admin' %}
+                                <i class="bi bi-shield-fill-exclamation mr-1"></i>
+                                {% elif user.role == 'user' %}
+                                <i class="bi bi-person-fill mr-1"></i>
+                                {% elif user.role == 'annotator' %}
+                                <i class="bi bi-pencil-fill mr-1"></i>
+                                {% else %}
+                                <i class="bi bi-question-circle-fill mr-1"></i>
+                                {% endif %}
+                                {{ user.role|title }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if session.role == 'admin' and session.user_id != user.id %}
+                <div class="mt-6 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div class="flex">
+                        <i class="bi bi-info-circle text-amber-600 mr-2 mt-0.5"></i>
+                        <p class="text-sm text-amber-800">
+                            <strong>{{ _('Admin Note:') }}</strong>
+                            {{ _('You are managing settings for this user account.') }}
+                        </p>
+                    </div>
+                </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Settings Forms -->
+    <div class="lg:col-span-2 space-y-6">
         <!-- Language Settings -->
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
             <div class="px-6 py-4 border-b border-gray-200">
@@ -45,7 +86,6 @@
                         <select id="language" name="language"
                                 class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                             <option value="" {% if not language %} selected{% endif %}>
-                                <i class="bi bi-gear-fill"></i>
                                 {{ _("Automatic") }}
                             </option>
                             {% for cod, lang in languages.items() %}
@@ -77,101 +117,7 @@
             
             <div class="p-6">
                 <form method="POST" action="{{ url_for('edit_password', user_id=user['id']) }}" class="space-y-4">
-                    <!-- Current Password (only for non-admin users) -->
-                    {% if session.role != 'admin' %}
-                    <div>
-                        <label for="old_password" class="block mb-2 text-sm font-medium text-gray-900">
-                            <i class="bi bi-key mr-1"></i>
-                            {{ _('Current Password') }}
-                        </label>
-                        <div class="relative">
-                            <input type="password" id="old_password" name="old_password" required
-                                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 pr-10"
-                                   placeholder="{{ _('Enter your current password') }}">
-                            <button type="button" id="toggle-old-password" 
-                                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
-                                <i class="bi bi-eye" id="old-password-icon"></i>
-                            </button>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- Password Generation Section -->
-                    <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-                        <h4 class="text-sm font-medium text-gray-900 flex items-center mb-3">
-                            <i class="bi bi-magic mr-1"></i>
-                            {{ _('Password Generator') }}
-                        </h4>
-                        
-                        <button type="button" id="generate-password-btn"
-                                class="w-full inline-flex justify-center items-center px-4 py-2 text-sm font-medium text-yellow-700 bg-yellow-100 border border-yellow-300 rounded-lg hover:bg-yellow-200 focus:ring-4 focus:outline-none focus:ring-yellow-300 transition-colors">
-                            <i class="bi bi-arrow-repeat mr-2"></i>
-                            {{ _('Generate Random Password') }}
-                        </button>
-
-                        <!-- Generated Password Display -->
-                        <div id="password-text-field" class="hidden mt-3">
-                            <label for="new_password_text" class="block mb-2 text-xs font-medium text-gray-700">
-                                {{ _('Generated Password') }}
-                            </label>
-                            <div class="relative">
-                                <input type="text" id="new_password_text" name="new_password_text" readonly
-                                       class="bg-white border border-yellow-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 pr-20 font-mono"
-                                       placeholder="{{ _('Generated password will appear here') }}">
-                                <div class="absolute inset-y-0 right-0 flex items-center pr-1">
-                                    <button type="button" id="copy-password" 
-                                            class="p-2 text-yellow-600 hover:text-yellow-800 rounded"
-                                            title="{{ _('Copy password') }}">
-                                        <i class="bi bi-clipboard text-sm" id="copy-icon"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- New Password -->
-                    <div>
-                        <label for="new_password" class="block mb-2 text-sm font-medium text-gray-900">
-                            <i class="bi bi-lock mr-1"></i>
-                            {{ _('New Password') }}
-                        </label>
-                        <div class="relative">
-                            <input type="password" id="new_password" name="new_password" required
-                                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 pr-10"
-                                   placeholder="{{ _('Enter new password') }}">
-                            <button type="button" id="toggle-new-password" 
-                                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
-                                <i class="bi bi-eye" id="new-password-icon"></i>
-                            </button>
-                        </div>
-                        <!-- Password Strength Indicator -->
-                        <div id="password-strength" class="mt-1 hidden">
-                            <div class="flex items-center space-x-1">
-                                <div class="h-1 flex-1 bg-gray-200 rounded">
-                                    <div id="strength-bar" class="h-1 rounded transition-all duration-300"></div>
-                                </div>
-                                <span id="strength-text" class="text-xs font-medium"></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Confirm Password -->
-                    <div>
-                        <label for="password_check" class="block mb-2 text-sm font-medium text-gray-900">
-                            <i class="bi bi-check2-square mr-1"></i>
-                            {{ _('Confirm Password') }}
-                        </label>
-                        <div class="relative">
-                            <input type="password" id="password_check" name="password_check" required
-                                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 pr-10"
-                                   placeholder="{{ _('Confirm your new password') }}">
-                            <button type="button" id="toggle-confirm-password" 
-                                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
-                                <i class="bi bi-eye" id="confirm-password-icon"></i>
-                            </button>
-                        </div>
-                        <div id="password-match-feedback" class="mt-1 text-sm hidden"></div>
-                    </div>
+                    {{ user_macro.password_form(show_current=(session.role != 'admin')) }}
 
                     <!-- Submit Button -->
                     <button type="submit" name="action" id="submit-password-btn"
@@ -187,193 +133,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Elements
-    const generateBtn = document.getElementById('generate-password-btn');
-    const newPasswordField = document.getElementById('new_password');
-    const passwordTextField = document.getElementById('new_password_text');
-    const passwordTextDiv = document.getElementById('password-text-field');
-    const confirmField = document.getElementById('password_check');
-    const matchFeedback = document.getElementById('password-match-feedback');
-    const submitBtn = document.getElementById('submit-password-btn');
-    const copyBtn = document.getElementById('copy-password');
-    const copyIcon = document.getElementById('copy-icon');
-    
-    // Password strength elements
-    const strengthIndicator = document.getElementById('password-strength');
-    const strengthBar = document.getElementById('strength-bar');
-    const strengthText = document.getElementById('strength-text');
-
-    // Toggle password visibility
-    function setupPasswordToggle(fieldId, buttonId, iconId) {
-        const field = document.getElementById(fieldId);
-        const button = document.getElementById(buttonId);
-        const icon = document.getElementById(iconId);
-        
-        button?.addEventListener('click', function() {
-            const isPassword = field.type === 'password';
-            field.type = isPassword ? 'text' : 'password';
-            icon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
-        });
-    }
-
-    // Setup all password toggles
-    setupPasswordToggle('old_password', 'toggle-old-password', 'old-password-icon');
-    setupPasswordToggle('new_password', 'toggle-new-password', 'new-password-icon');
-    setupPasswordToggle('password_check', 'toggle-confirm-password', 'confirm-password-icon');
-
-    // Generate random password
-    function generateRandomPassword() {
-        const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?";
-        let password = "";
-        
-        // Ensure at least one of each type
-        password += "abcdefghijklmnopqrstuvwxyz".charAt(Math.floor(Math.random() * 26));
-        password += "ABCDEFGHIJKLMNOPQRSTUVWXYZ".charAt(Math.floor(Math.random() * 26));
-        password += "0123456789".charAt(Math.floor(Math.random() * 10));
-        password += "!@#$%^&*()_+-=[]{}|;:,.<>?".charAt(Math.floor(Math.random() * 25));
-        
-        // Fill the rest randomly
-        for (let i = 4; i < 14; i++) {
-            password += charset.charAt(Math.floor(Math.random() * charset.length));
-        }
-        
-        // Shuffle the password
-        return password.split('').sort(() => Math.random() - 0.5).join('');
-    }
-
-    // Generate password button click
-    generateBtn?.addEventListener('click', function() {
-        const newPassword = generateRandomPassword();
-        newPasswordField.value = newPassword;
-        passwordTextField.value = newPassword;
-        confirmField.value = newPassword;
-        
-        // Show the text field with generated password
-        passwordTextDiv.classList.remove('hidden');
-        
-        // Update button appearance
-        generateBtn.innerHTML = '<i class="bi bi-arrow-repeat mr-2"></i>{{ _("Generate New Password") }}';
-        generateBtn.classList.remove('text-yellow-700', 'bg-yellow-100', 'border-yellow-300', 'hover:bg-yellow-200');
-        generateBtn.classList.add('text-green-700', 'bg-green-100', 'border-green-300', 'hover:bg-green-200');
-        
-        // Trigger validation
-        validatePasswords();
-        checkPasswordStrength(newPassword);
-    });
-
-    // Copy password to clipboard
-    copyBtn?.addEventListener('click', async function() {
-        try {
-            await navigator.clipboard.writeText(passwordTextField.value);
-            copyIcon.className = 'bi bi-check-lg text-sm';
-            copyBtn.classList.add('text-green-600');
-            
-            setTimeout(() => {
-                copyIcon.className = 'bi bi-clipboard text-sm';
-                copyBtn.classList.remove('text-green-600');
-                copyBtn.classList.add('text-yellow-600');
-            }, 1500);
-        } catch (err) {
-            console.error('Failed to copy password: ', err);
-        }
-    });
-
-    // Password strength checker
-    function checkPasswordStrength(password) {
-        if (!password) {
-            strengthIndicator.classList.add('hidden');
-            return;
-        }
-
-        strengthIndicator.classList.remove('hidden');
-        
-        let score = 0;
-        let feedback = '';
-        
-        // Length check
-        if (password.length >= 8) score += 1;
-        if (password.length >= 12) score += 1;
-        
-        // Character variety
-        if (/[a-z]/.test(password)) score += 1;
-        if (/[A-Z]/.test(password)) score += 1;
-        if (/[0-9]/.test(password)) score += 1;
-        if (/[^A-Za-z0-9]/.test(password)) score += 1;
-
-        // Set strength level
-        if (score < 3) {
-            strengthBar.className = 'h-1 rounded transition-all duration-300 bg-red-500';
-            strengthBar.style.width = '25%';
-            strengthText.textContent = '{{ _("Weak") }}';
-            strengthText.className = 'text-xs font-medium text-red-600';
-        } else if (score < 5) {
-            strengthBar.className = 'h-1 rounded transition-all duration-300 bg-yellow-500';
-            strengthBar.style.width = '50%';
-            strengthText.textContent = '{{ _("Medium") }}';
-            strengthText.className = 'text-xs font-medium text-yellow-600';
-        } else if (score < 6) {
-            strengthBar.className = 'h-1 rounded transition-all duration-300 bg-blue-500';
-            strengthBar.style.width = '75%';
-            strengthText.textContent = '{{ _("Good") }}';
-            strengthText.className = 'text-xs font-medium text-blue-600';
-        } else {
-            strengthBar.className = 'h-1 rounded transition-all duration-300 bg-green-500';
-            strengthBar.style.width = '100%';
-            strengthText.textContent = '{{ _("Strong") }}';
-            strengthText.className = 'text-xs font-medium text-green-600';
-        }
-    }
-
-    // Password validation
-    function validatePasswords() {
-        const password = newPasswordField.value;
-        const confirmPassword = confirmField.value;
-        
-        if (password && confirmPassword) {
-            if (password === confirmPassword) {
-                matchFeedback.textContent = '{{ _("✓ Passwords match") }}';
-                matchFeedback.className = 'mt-1 text-sm text-green-600';
-                matchFeedback.classList.remove('hidden');
-                confirmField.classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-500');
-                confirmField.classList.add('border-green-300', 'focus:border-green-500', 'focus:ring-green-500');
-                submitBtn.disabled = false;
-            } else {
-                matchFeedback.textContent = '{{ _("✗ Passwords do not match") }}';
-                matchFeedback.className = 'mt-1 text-sm text-red-600';
-                matchFeedback.classList.remove('hidden');
-                confirmField.classList.remove('border-green-300', 'focus:border-green-500', 'focus:ring-green-500');
-                confirmField.classList.add('border-red-300', 'focus:border-red-500', 'focus:ring-red-500');
-                submitBtn.disabled = true;
-            }
-        } else {
-            matchFeedback.classList.add('hidden');
-            confirmField.classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-500', 'border-green-300', 'focus:border-green-500', 'focus:ring-green-500');
-            submitBtn.disabled = false;
-        }
-    }
-
-    // Event listeners
-    newPasswordField?.addEventListener('input', function() {
-        checkPasswordStrength(this.value);
-        validatePasswords();
-    });
-    
-    confirmField?.addEventListener('input', validatePasswords);
-
-    // Form validation
-    const form = document.querySelector('form[action*="edit_password"]');
-    form?.addEventListener('submit', function(e) {
-        const password = newPasswordField.value;
-        const confirmPassword = confirmField.value;
-        
-        if (password !== confirmPassword) {
-            e.preventDefault();
-            confirmField.focus();
-            return false;
-        }
-    });
-});
-</script>
+{{ user_macro.password_scripts() }}
 {% endblock %}
