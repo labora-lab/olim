@@ -44,7 +44,7 @@
                         <a href="{{ url_for('labels', project_id=project.id) }}" class="btn waves-effect waves-light">
                             {{ _('Open') }}
                         </a>
-                        {% if has_permition('delete_project') and projects|length > 1 %}
+                        {% if has_permission('delete_project') and projects|length > 1 %}
                         <a href="#" class="btn waves-effect waves-light red darken-4"
                             onclick="show_warnning('{{ _('This permanent! Are you sure that you want to delete project {project_name}?').format(project_name=project.name) }}','window.location.href = \'{{ url_for('delete_project', project_id=project.id) }}\'');">
                             {{ _('Delete') }}

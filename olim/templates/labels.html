@@ -27,8 +27,8 @@
                     {%endfor%}
                     <th style="width:80px;text-align: center;">{{ _('Total') }}</th>
                     <th style="width:130px;text-align: center;">{{ _('Creator') }}</th>
-                    {%if has_permition('delete_label') or has_permition('extract_labels') or
-                    has_permition('catch_queue')%}
+                    {%if has_permission('delete_label') or has_permission('extract_labels') or
+                    has_permission('catch_queue')%}
                     <th style="width:180px;text-align: center;">{{ _('Actions') }}</th>
                     {%endif%}
                 </tr>
@@ -43,11 +43,11 @@
                     {%endfor%}
                     <td style="text-align: center;">{{ values[label.id]["Total"] }}</td>
                     <td style="text-align: center;">{{ label.creator.name }}</td>
-                    {% if has_permition('delete_label') or has_permition('extract_labels') or
-                    has_permition('catch_queue') or
-                    has_permition('sync_label') %}
+                    {% if has_permission('delete_label') or has_permission('extract_labels') or
+                    has_permission('catch_queue') or
+                    has_permission('sync_label') %}
                     <td style="text-align: center; width:25%;">
-                        {% if has_permition('label_settings') %}
+                        {% if has_permission('label_settings') %}
                         <a class="btn waves-effect waves-light tooltipped"
                             href="{{url_for('label_settings', label_id=label.id)}}" data-tooltip="{{_('Settings')}}">
                             <i class="material-icons">settings</i>
@@ -68,7 +68,7 @@
             </tbody>
         </table>
     </div>
-    {%if has_permition('label_up')%}
+    {%if has_permission('label_up')%}
     <div class="col card s12 tight-bottom">
         <div class="card-content row tight-bottom">
             <form action="{{url_for('label_up', project_id=project_id)}}" method="post" enctype="multipart/form-data">

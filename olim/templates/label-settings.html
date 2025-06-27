@@ -34,19 +34,19 @@
                     <i class="material-icons left">remove_circle_outline</i>
                     {{ _('Remove Label') }}
                 </a>
-                {%if has_permition('extract_labels')%}
+                {%if has_permission('extract_labels')%}
                 <a href="{{url_for('extract_labels', label_id=label.id)}}" class="btn-flat waves-effect green-text">
                     <i class="material-icons left">file_download</i>
                     {{ _('Download Labeled Data') }}
                 </a>
                 {% endif %}
-                {%if has_permition('gen_predictions')%}
+                {%if has_permission('gen_predictions')%}
                 <a href="{{url_for('gen_predictions', label_id=label.id)}}" class="btn-flat waves-effect green-text">
                     <i class="material-icons left">autorenew</i>
                     {{ _('Generate Predictions') }}
                 </a>
                 {% endif %}
-                {%if has_permition('catch_queue')%}
+                {%if has_permission('catch_queue')%}
                 <a href="{{url_for('catch_queue', label_id=label.id)}}" class="btn-flat waves-effect orange-text">
                     <i class="material-icons left">send</i>{{ _('Open Queue') }}
                 </a>

@@ -24,7 +24,7 @@
     <header>
         {% block menu %}
         <ul id="slide-out" class="sidenav">
-            {% if has_permition('redirect_to_project') %}
+            {% if has_permission('redirect_to_project') %}
             <ul id="projects-dropdown-2" class="dropdown-content" style="margin-top: 40px;">
                 {% for project in projects %}
                 <li><a href="/{{ project.id }}">{{ project.name }}</a></li>
@@ -38,35 +38,35 @@
             <li style="padding: 10px 20px;">
                 <h5>{{_('Project: {project_name}'.format(project_name=project_name))}}</h5>
             </li>
-            {% if has_permition('labels') %}
+            {% if has_permission('labels') %}
             <li><a href="{{ url_for('labels', project_id = project_id) }}">{{ _('Labels') }}</a></li>
             {% endif %}
-            {% if has_permition('search') %}
+            {% if has_permission('search') %}
             <li><a href="{{ url_for('search', project_id = project_id) }}">{{ _('Search') }}</a></li>
             {% endif %}
-            <!-- {% if has_permition('entry') %}
+            <!-- {% if has_permission('entry') %}
             <li><a href="{{ url_for('entry', project_id = project_id) }}">{{ _('Open Entries') }}</a></li>
             {% endif %} -->
-            {% if has_permition('queue') %}
+            {% if has_permission('queue') %}
             <li><a href="{{ url_for('queue', project_id = project_id) }}">{{ _('Queues') }}</a></li>
             {% endif %}
-            {% if have_hidden() and has_permition('hidden') %}
+            {% if have_hidden() and has_permission('hidden') %}
             <li><a href="{{ url_for('hidden', project_id = project_id) }}">{{ _('Hidden texts') }}</a></li>
             {% endif %}
             {% endif %}
             <li style="padding: 10px 20px;">
                 <h5>{{_('Settings')}}</h5>
             </li>
-            {% if has_permition('users') %}
+            {% if has_permission('users') %}
             <li><a href="{{ url_for('users') }}">{{ _('Users') }}</a></li>
             {% endif %}
-            {% if has_permition('user_settings') %}
+            {% if has_permission('user_settings') %}
             <li><a href="{{ url_for('user_settings') }}">{{ _('account_settings_1') }}</a></li>
             {% endif %}
-            {% if has_permition('projects') %}
+            {% if has_permission('projects') %}
             <li><a href="{{ url_for('projects') }}">{{_("Manage Projects")}}</a></li>
             {% endif %}
-            {% if has_permition('upload_data') %}
+            {% if has_permission('upload_data') %}
             <li><a href="{{ url_for('upload_data') }}">{{_("Upload Data")}}</a></li>
             {% endif %}
             {% if session['user_id'] == 'guest' %}
@@ -91,7 +91,7 @@
                     </span>
                 </div>
                 {% block menuicon %}
-                {% if has_permition('redirect_to_project') %}
+                {% if has_permission('redirect_to_project') %}
                 <div class="nav-mobile left">
                     <span data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></span>
                 </div>

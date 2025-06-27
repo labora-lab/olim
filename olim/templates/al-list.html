@@ -27,8 +27,8 @@
                     {%endfor%}
                     <th style="width:80px;text-align: center;">{{ _('Total') }}</th>
                     <th style="width:130px;text-align: center;">{{ _('Creator') }}</th>
-                    {%if has_permition('delete_label') or has_permition('extract_labels') or
-                    has_permition('catch_queue')%}
+                    {%if has_permission('delete_label') or has_permission('extract_labels') or
+                    has_permission('catch_queue')%}
                     <th style="width:180px;text-align: center;">{{ _('Actions') }}</th>
                     {%endif%}
                 </tr>
@@ -46,7 +46,7 @@
                     <td style="text-align: center;">{{ label.creator.name }}</td>
 
                     <td class="center-align">
-                        {%if has_permition('catch_queue')%}
+                        {%if has_permission('catch_queue')%}
                         <a class="btn waves-ligh tooltipped data-position bottom" href='./al/{{label.id}}'
                             data-tooltip="{{ _('Open active learling queue') }}">
                             <i class="material-icons right">send</i>

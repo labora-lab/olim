@@ -3,8 +3,9 @@ import json
 from flask import Flask, request, session
 from flask_babel import Babel
 from flask_migrate import Migrate
-from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+
+from flask_session import Session
 
 # from werkzeug.middleware.profiler import ProfilerMiddleware
 from .settings import (
@@ -97,7 +98,7 @@ from .utils.entry import have_hidden  # noqa
 # Global variables to templates
 app.jinja_env.globals.update(
     have_hidden=have_hidden,
-    has_permition=auth.role_has_permission,
+    has_permission=auth.role_has_permission,
     labels_types=LABELS,
     labels_rev=LABELS[::-1],
     labels_array=json.dumps([label_values[0].replace(" ", "_") for label_values in LABELS]),
