@@ -3,9 +3,8 @@ import json
 from flask import Flask, request, session
 from flask_babel import Babel
 from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
-
 from flask_session import Session
+from flask_sqlalchemy import SQLAlchemy
 
 # from werkzeug.middleware.profiler import ProfilerMiddleware
 from .settings import (
@@ -89,6 +88,7 @@ from . import auth  # noqa
 from . import cli  # noqa
 from . import commands  # noqa
 from . import database  # noqa
+from . import error_handlers  # noqa
 from . import issue  # noqa
 from . import labels  # noqa
 from . import project  # noqa

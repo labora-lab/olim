@@ -101,6 +101,25 @@ NEED_LEARNER = [
     "catch_al",
 ]
 
+"""List of error handler endpoints that should always be allowed."""
+ERROR_ENDPOINTS = [
+    "bad_request",
+    "unauthorized",
+    "forbidden",
+    "not_found",
+    "method_not_allowed",
+    "request_timeout",
+    "payload_too_large",
+    "too_many_requests",
+    "internal_server_error",
+    "bad_gateway",
+    "service_unavailable",
+    "gateway_timeout",
+    "handle_exception",
+    "test_error",
+    "test_exception",
+]
+
 """Lists of permited endpoints for each user."""
 PERMISSIONS = {
     "admin": [
@@ -129,7 +148,7 @@ PERMISSIONS = {
         "create_al",
         "catch_al",
         "upload_data",
-        "check_task_status",
+        "task_list",
         "sync_label",
         "export_label",
         "get_help",

@@ -214,7 +214,7 @@
             $('.sidenav').sidenav();
 
             function refreshTaskList() {
-                $.get('{{url_for("check_task_status")}}', function (data) {
+                $.get('{{url_for("task_list")}}', function (data) {
                     $('#task-list').html(data);
                     M.AutoInit();
                 })

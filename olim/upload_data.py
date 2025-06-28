@@ -3,7 +3,13 @@ from flask_babel import _
 
 from . import app
 from .celery_app import launch_task_with_tracking
-from .database import get_celery_tasks, get_dataset_stats, get_datasets, link_dataset_to_project, new_dataset
+from .database import (
+    get_celery_tasks,
+    get_dataset_stats,
+    get_datasets,
+    link_dataset_to_project,
+    new_dataset,
+)
 from .functions import check_is_setup
 from .settings import ALLOWED_EXTENSIONS, CHUNK_SIZE, MAX_FILE_SIZE, UPLOAD_PATH
 from .tasks.upload_data import finalize_chunks_upload, save_chunk, upload_dataset
@@ -14,8 +20,9 @@ def add_tasks() -> ...:
     if check_is_setup():
         app.jinja_env.globals.update(tasks=get_celery_tasks())
 
+
 @app.route("/task-list")
-def check_task_status() -> ...:
+def task_list() -> ...:
     """Check and return the status of all tracked tasks"""
 
     return render_template("task-list.html")
@@ -162,12 +169,10 @@ def upload_data() -> ...:
 
         # Start upload task chain
         try:
-            filename = "_".join(upload_params.get("filename", "").split("/")[-1].split("_")[1:]) # type: ignore
+            filename = "_".join(upload_params.get("filename", "").split("/")[-1].split("_")[1:])  # type: ignore
             launch_task_with_tracking(
                 upload_dataset,
-                description=_("Uploading and processing file {filename}").format(
-                    filename=filename
-                ),
+                description=_("Uploading and processing file {filename}").format(filename=filename),
                 upload_type=upload_type,
                 upload_params=upload_params,
                 dataset_id=dataset.id,

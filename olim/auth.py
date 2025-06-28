@@ -64,7 +64,7 @@ def login() -> ...:
 @app.route("/logout")
 def logout() -> ...:
     session.clear()
-    return redirect("/login")
+    return redirect(url_for("login"))
 
 
 def verify_password(password, hashed_password) -> bool:
@@ -93,7 +93,11 @@ def get_user_role(user_id: str | None = None) -> str:
 @app.before_request
 def check_permission() -> ...:
     """Check user permission before each request"""
-    # Aways allow static/guest routes
+    # Always allow error routes (error handlers)
+    if request.endpoint in settings.ERROR_ENDPOINTS:
+        return None
+
+    # Always allow static/guest routes
     if role_has_permission(role="guest"):
         return None
 
@@ -117,10 +121,16 @@ def check_permission() -> ...:
         set_guest_user()  # set user_id to 'guest' in session
         current_user_id = "guest"
 
-    # Redirect guest to login page if they are trying to access resticted endpoint
+    # First check if the route actually exists - return 404 for non-existent routes
+    if request.endpoint and not route_exists(request.endpoint):
+        abort(404)
+
+    # Redirect guest to login page if they are trying to access restricted endpoint
     if current_user_id == "guest" and not role_has_permission(role="guest"):
-        if request.path != "/":
-            flash(_("You are not logged"), category="warning")
+        # For AJAX requests or API endpoints, return 401 instead of redirect
+        if request.is_json or request.path.startswith("/api/"):
+            abort(401)
+        # For regular requests, redirect to login with the current path
         return redirect(url_for("login") + f"?redirect={request.path}")
 
     if current_user_id != "guest":
@@ -133,13 +143,8 @@ def check_permission() -> ...:
             if "favicon" in request.url:
                 abort(403)
             else:
-                flash(
-                    _("You do not have permission to access {requested_url}.").format(
-                        requested_url=request.url
-                    ),
-                    category="warning",
-                )
-                return redirect("/")
+                # Route exists but user doesn't have permission - return 403
+                abort(403)
 
 
 @app.before_request
@@ -154,16 +159,15 @@ def check_elasticsearch() -> ...:
                 raise Exception("Elasticsearch server is not responding")
 
         except Exception as e:
-            flash(
-                _(
-                    "Elasticsearch server is unavailable: {error}."
-                    "If you just started the services, please wait for "
-                    "a few minutes, contact admin if problem persists."
-                ).format(error=str(e)),
-                category="error",
-            )
-            # Render base.html immediately and stop further processing of this request
-            return render_template("base.html")
+            # Log the error for debugging
+            app.logger.error(f"Elasticsearch connection failed: {e}", exc_info=True)
+
+            # Return 503 Service Unavailable for Elasticsearch connection issues
+            from werkzeug.exceptions import ServiceUnavailable
+
+            service_error = ServiceUnavailable()
+            service_error.description = str(e)
+            raise service_error from e
 
 
 @app.before_request  # type: ignore
@@ -197,6 +201,14 @@ def save_database_session(exc=None) -> None:
 def set_guest_user() -> None:
     """Set user_id to 'guest' in session"""
     session["user_id"] = "guest"
+
+
+def route_exists(endpoint=None) -> bool:
+    """Check if a route endpoint actually exists in the Flask app"""
+    endpoint = endpoint or request.endpoint
+    if endpoint is None:
+        return False
+    return endpoint in [rule.endpoint for rule in app.url_map.iter_rules()]
 
 
 def role_has_permission(endpoint=None, role=None) -> bool:
@@ -366,13 +378,11 @@ def user_settings(user_id: int | None = None) -> ...:
     user = get_user_obj(user_id)
 
     if user is None:
-        flash(
-            _("You do not have permission to change user id {user_id} settings.").format(
-                user_id=user_id
-            ),
-            category="error",
-        )
-        return redirect(url_for("user_settings"))
+        # If user_id was provided but user not found, it's a 404
+        if user_id is not None:
+            abort(404)
+        # If no permission for current user, it's a 403
+        abort(403)
 
     return render_template("account-settings.html", user=user, languages=settings.LANGUAGES)
 
@@ -383,13 +393,11 @@ def edit_password(user_id: int | None = None) -> ...:
     changer_user = get_user(session["user_id"])
 
     if to_change_user is None or changer_user is None:
-        flash(
-            _(
-                "You do not have permission to change password for user id {user_id} settings."
-            ).format(user_id=user_id),
-            category="error",
-        )
-        return redirect(url_for("user_settings"))
+        # If user_id was provided but user not found, it's a 404
+        if user_id is not None and to_change_user is None:
+            abort(404)
+        # If no permission, it's a 403
+        abort(403)
 
     if request.method == "POST":
         old_password = request.form.get("old_password")
@@ -407,13 +415,11 @@ def edit_language(user_id: int | None = None) -> ...:
     to_change_user = get_user_obj(user_id)
 
     if to_change_user is None:
-        flash(
-            _("You have no permission to change language for user id {user_id} settings.").format(
-                user_id=user_id
-            ),
-            category="error",
-        )
-        return redirect(url_for("user_settings"))
+        # If user_id was provided but user not found, it's a 404
+        if user_id is not None:
+            abort(404)
+        # If no permission, it's a 403
+        abort(403)
 
     if request.method == "POST":
         language = request.form.get("language") or None

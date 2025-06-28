@@ -9,12 +9,12 @@
 <div class="h-full flex items-center justify-center mt-20">
     <div class="max-w-md w-full mx-4">
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-800">
                 <div class="flex items-end justify-center">
                     <img src="{{ url_for('static', filename='classification.png') }}" alt="OLIM Logo"
                         class="w-20 h-20 mr-5">
                     <div>
-                        <h1 class="text-4xl font-bold text-gray-900">OLIM</h1>
+                        <h1 class="text-4xl font-bold text-white">OLIM</h1>
                     </div>
                 </div>
             </div>
@@ -53,7 +53,7 @@
 
                     <!-- Submit Button -->
                     <button type="submit" name="action"
-                        class="w-full text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                        class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
                         <i class="bi bi-box-arrow-in-right mr-2"></i>
                         {{ _('Sign In') }}
                     </button>

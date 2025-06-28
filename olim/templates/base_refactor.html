@@ -6,6 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <style>
+        .htmx-indicator {
+            opacity: 0;
+            transition: opacity 200ms ease-in;
+        }
+
+        .htmx-request .htmx-indicator {
+            opacity: 1;
+        }
+
+        .htmx-request.htmx-indicator {
+            opacity: 1;
+        }
+    </style>
     <title>{% block title %}{% endblock %} - {{ _('OLIM - Open Labeller for Iterative Machine learning') }}</title>
 </head>
 
@@ -15,109 +30,119 @@
     <aside id="sidebar"
         class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0"
         aria-label="Sidebar">
-        <div class="h-full px-3 py-4 bg-gray-800 flex flex-col">
-            <!-- Logo/Brand -->
-            <div class="flex items-end mb-2 p-2">
-                <img src="{{ url_for('static', filename='classification.png') }}" alt="OLIM Logo" class="w-8 h-8 mr-3">
-                <span class="text-xl font-semibold text-white">OLIM</span>
-            </div>
-            <!-- Project Selector -->
-            {% if has_permission('redirect_to_project') %}
-            <div class="mb-4">
-                <div class="relative">
-                    <button id="project-dropdown-btn"
-                        class="w-full flex items-center justify-between p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
-                        <div class="flex items-center">
-                            <i class="bi bi-folder text-gray-400 group-hover:text-white"></i>
-                            <span class="ms-3 truncate">{{ project_name }}</span>
-                        </div>
-                        <i class="bi bi-chevron-down text-gray-400 group-hover:text-white"></i>
-                    </button>
-                    <div id="project-dropdown"
-                        class="hidden absolute top-full left-0 right-0 mt-1 bg-gray-700 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
-                        {% for project in projects %}
-                        <a href="/{{ project.id }}"
-                            class="block px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white">
-                            {{ project.name }}
-                        </a>
-                        {% endfor %}
-                        {% if has_permission('projects') %}
-                        <div class="border-t border-gray-600 mt-1 pt-1">
-                            <a href="{{ url_for('projects') }}"
-                                class="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white">
-                                <i class="bi bi-folder-plus mr-2"></i>
-                                {{ _('Manage Projects') }}
+        <div class="h-full px-0 py-4 bg-gray-800 flex flex-col">
+            <div class="px-3">
+                <!-- Logo/Brand -->
+                <div class="flex items-end mb-2 p-2">
+                    <img src="{{ url_for('static', filename='classification.png') }}" alt="OLIM Logo"
+                        class="w-8 h-8 mr-3">
+                    <span class="text-xl font-semibold text-white">OLIM</span>
+                </div>
+                <!-- Project Selector -->
+                {% if has_permission('redirect_to_project') %}
+                <div class="mb-4 ">
+                    <div class="relative">
+                        <button id="project-dropdown-btn"
+                            class="w-full flex items-center justify-between p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
+                            <div class="flex items-center">
+                                <i class="bi bi-folder text-gray-400 group-hover:text-white"></i>
+                                <span class="ms-3 truncate">{{ project_name }}</span>
+                            </div>
+                            <i class="bi bi-chevron-down text-gray-400 group-hover:text-white"></i>
+                        </button>
+                        <div id="project-dropdown"
+                            class="hidden absolute top-full left-0 right-0 mt-1 bg-gray-700 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+                            {% for project in projects %}
+                            <a href="/{{ project.id }}"
+                                class="block px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white">
+                                {{ project.name }}
                             </a>
+                            {% endfor %}
+                            {% if has_permission('projects') %}
+                            <div class="border-t border-gray-600 mt-1 pt-1">
+                                <a href="{{ url_for('projects') }}"
+                                    class="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white">
+                                    <i class="bi bi-folder-plus mr-2"></i>
+                                    {{ _('Manage Projects') }}
+                                </a>
+                            </div>
+                            {% endif %}
                         </div>
-                        {% endif %}
+                    </div>
+
+                    <!-- Project Name Header -->
+                    <div class="mt-3 px-2">
+                        <h6 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            {{ _('Project: {project_name}'.format(project_name=project_name)) }}
+                        </h6>
                     </div>
                 </div>
 
-                <!-- Project Name Header -->
-                <div class="mt-3 px-2">
-                    <h6 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                        {{ _('Project: {project_name}'.format(project_name=project_name)) }}
-                    </h6>
-                </div>
+                <!-- Project Navigation -->
+                <ul class="space-y-1 font-medium">
+                    {% if has_permission('labels') %}
+                    <li>
+                        <a href="{{ url_for('labels', project_id = project_id) }}"
+                            class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
+                            <i class="bi bi-tags text-gray-400 group-hover:text-white"></i>
+                            <span class="ms-3">{{ _('Labels') }}</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if has_permission('search') %}
+                    <li>
+                        <a href="{{ url_for('search', project_id = project_id) }}"
+                            class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
+                            <i class="bi bi-search text-gray-400 group-hover:text-white"></i>
+                            <span class="ms-3">{{ _('Search') }}</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if has_permission('queue') %}
+                    <li>
+                        <a href="{{ url_for('queue', project_id = project_id) }}"
+                            class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
+                            <i class="bi bi-list-task text-gray-400 group-hover:text-white"></i>
+                            <span class="ms-3">{{ _('Queues') }}</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if have_hidden() and has_permission('hidden') %}
+                    <li>
+                        <a href="{{ url_for('hidden', project_id = project_id) }}"
+                            class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
+                            <i class="bi bi-eye-slash text-gray-400 group-hover:text-white"></i>
+                            <span class="ms-3">{{ _('Hidden texts') }}</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                {% endif %}
             </div>
 
-            <!-- Project Navigation -->
-            <ul class="space-y-1 font-medium">
-                {% if has_permission('labels') %}
-                <li>
-                    <a href="{{ url_for('labels', project_id = project_id) }}"
-                        class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
-                        <i class="bi bi-tags text-gray-400 group-hover:text-white"></i>
-                        <span class="ms-3">{{ _('Labels') }}</span>
-                    </a>
-                </li>
-                {% endif %}
-                {% if has_permission('search') %}
-                <li>
-                    <a href="{{ url_for('search', project_id = project_id) }}"
-                        class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
-                        <i class="bi bi-search text-gray-400 group-hover:text-white"></i>
-                        <span class="ms-3">{{ _('Search') }}</span>
-                    </a>
-                </li>
-                {% endif %}
-                {% if has_permission('queue') %}
-                <li>
-                    <a href="{{ url_for('queue', project_id = project_id) }}"
-                        class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
-                        <i class="bi bi-list-task text-gray-400 group-hover:text-white"></i>
-                        <span class="ms-3">{{ _('Queues') }}</span>
-                    </a>
-                </li>
-                {% endif %}
-                {% if have_hidden() and has_permission('hidden') %}
-                <li>
-                    <a href="{{ url_for('hidden', project_id = project_id) }}"
-                        class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
-                        <i class="bi bi-eye-slash text-gray-400 group-hover:text-white"></i>
-                        <span class="ms-3">{{ _('Hidden texts') }}</span>
-                    </a>
-                </li>
-                {% endif %}
-            </ul>
-            {% endif %}
-
             <!-- Jobs Section -->
-            {% if tasks %}
-            <div class="border-t border-gray-600 pt-2 flex-1 flex flex-col min-h-0 mb-14">
-                <div class="px-2 py-1 mb-2">
-                    <h6 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            {% if tasks and has_permission('task_list')%}
+            <div
+                class="border-t border-b border-gray-600 bg-gray-700 mt-2 flex-1 flex flex-col min-h-0 mb-10 overflow-y-auto">
+                <div class="px-2 py-2 mb-2">
+                    <i class="bi bi-clipboard text-gray-400"></i>
+                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider ms-2">
                         {{ _('Jobs') }}
-                    </h6>
+                    </span>
+                    <span id="task-loading" class="text-xs text-gray-400 htmx-indicator">
+                        {{ _('Updating...') }}
+                    </span>
                 </div>
-                <div id="task-list" class="text-sm flex-1 overflow-y-auto pr-2">
+                <div id="task-list" class="text-sm flex-1 pr-2" hx-get="{{ url_for('task_list') }}"
+                    hx-trigger="every 3s" hx-swap="innerHTML" hx-indicator="#task-loading">
                     {% include "task-list.html" %}
                 </div>
+
             </div>
             {% endif %}
 
             <!-- Bottom Icons -->
-            <div class="absolute bottom-4 right-4 flex space-x-2">
+            <div class="absolute bottom-2 right-2 flex space-x-2">
                 <!-- Settings Dropdown -->
                 <div class="relative">
                     <button id="settings-dropdown-btn"
@@ -374,6 +399,202 @@
             });
         }, 5000);
     </script>
+
+    <!-- Global Error Modal -->
+    <div id="errorModal" class="fixed inset-0 bg-black bg-opacity-40 hidden z-50 flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden transform transition-all">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-red-100 bg-red-50">
+                <div class="flex items-center">
+                    <div class="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mr-4">
+                        <i class="bi bi-exclamation-triangle-fill text-red-600 text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-red-900">{{ _('Task Error Details') }}</h3>
+                        <p class="text-sm text-red-700 mt-1">{{ _('Something went wrong with your task') }}</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeErrorModal()"
+                    class="text-red-400 hover:text-red-600 focus:outline-none hover:bg-red-100 rounded-lg p-2 transition-colors">
+                    <i class="bi bi-x-lg text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto max-h-[70vh]">
+                <!-- Task Name -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-800 mb-2 uppercase tracking-wide">{{ _('Task')
+                        }}</label>
+                    <div id="modalTaskName"
+                        class="p-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 font-medium"></div>
+                </div>
+
+                <!-- Error Message -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-red-800 mb-2 uppercase tracking-wide">{{ _('Error
+                        Message') }}</label>
+                    <div id="modalErrorMessage"
+                        class="p-4 bg-red-50 border-l-4 border-red-500 rounded-lg text-red-900 font-medium leading-relaxed">
+                    </div>
+                </div>
+
+                <!-- Technical Details (expandable) -->
+                <div id="technicalDetailsSection" class="hidden">
+                    <div class="border-t border-gray-200 pt-6">
+                        <button type="button" id="toggleTechnicalDetails" onclick="toggleTechnicalDetails()"
+                            class="flex items-center justify-between w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
+                            <span class="flex items-center font-medium">
+                                <i class="bi bi-code-square mr-3 text-gray-500"></i>
+                                {{ _('Show Technical Details') }}
+                            </span>
+                            <i class="bi bi-chevron-down transform transition-transform duration-200 text-gray-500"
+                                id="technicalChevron"></i>
+                        </button>
+                        <div id="technicalDetailsContent"
+                            class="hidden mt-4 border border-gray-300 rounded-lg overflow-hidden">
+                            <div class="p-4 bg-gray-900 max-h-60 overflow-auto">
+                                <pre id="modalTechnicalDetails"
+                                    class="text-xs text-gray-300 font-mono whitespace-pre-wrap break-words leading-relaxed"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex justify-end p-6 border-t border-gray-200 bg-gray-50">
+                <button type="button" onclick="closeErrorModal()"
+                    class="px-6 py-3 text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-lg transition-colors">
+                    <i class="bi bi-x-circle mr-2"></i>
+                    {{ _('Close') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global Error Modal Functions
+        function showErrorModalFromData(element) {
+            const taskName = element.getAttribute('data-task-name');
+            const errorText = element.getAttribute('data-error-text');
+            showErrorModal(taskName, errorText);
+        }
+
+        function showErrorModal(taskName, errorText) {
+            // Parse error text to separate user message from technical details
+            const { userMessage, technicalDetails } = parseErrorMessage(errorText);
+
+            // Set task name
+            document.getElementById('modalTaskName').textContent = taskName;
+
+            // Set user-friendly error message
+            document.getElementById('modalErrorMessage').textContent = userMessage;
+
+            // Handle technical details
+            const technicalSection = document.getElementById('technicalDetailsSection');
+            const technicalContent = document.getElementById('modalTechnicalDetails');
+
+            if (technicalDetails && technicalDetails.trim()) {
+                technicalContent.textContent = technicalDetails;
+                technicalSection.classList.remove('hidden');
+            } else {
+                technicalSection.classList.add('hidden');
+            }
+
+            // Reset technical details to collapsed state
+            document.getElementById('technicalDetailsContent').classList.add('hidden');
+            document.getElementById('technicalChevron').classList.remove('rotate-180');
+            const toggleBtn = document.getElementById('toggleTechnicalDetails');
+            toggleBtn.querySelector('span').innerHTML = '<i class="bi bi-code-square mr-3 text-gray-500"></i>{{ _("Show Technical Details") }}';
+
+            // Show modal
+            document.getElementById('errorModal').classList.remove('hidden');
+
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeErrorModal() {
+            document.getElementById('errorModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function toggleTechnicalDetails() {
+            const content = document.getElementById('technicalDetailsContent');
+            const chevron = document.getElementById('technicalChevron');
+            const toggleBtn = document.getElementById('toggleTechnicalDetails');
+
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                chevron.classList.add('rotate-180');
+                toggleBtn.querySelector('span').innerHTML = '<i class="bi bi-code-square mr-3 text-gray-500"></i>{{ _("Hide Technical Details") }}';
+            } else {
+                content.classList.add('hidden');
+                chevron.classList.remove('rotate-180');
+                toggleBtn.querySelector('span').innerHTML = '<i class="bi bi-code-square mr-3 text-gray-500"></i>{{ _("Show Technical Details") }}';
+            }
+        }
+
+        function parseErrorMessage(errorText) {
+            if (!errorText || !errorText.trim()) {
+                return { userMessage: '{{ _("Unknown error occurred") }}', technicalDetails: '' };
+            }
+
+            // Check if it contains traceback/technical information
+            const hasTraceback = errorText.includes('Traceback') ||
+                errorText.includes('File "') ||
+                errorText.includes('.py:') ||
+                errorText.includes('  File ') ||
+                errorText.includes('line ');
+
+            if (!hasTraceback) {
+                // It's already a clean user message
+                return { userMessage: errorText.trim(), technicalDetails: '' };
+            }
+
+            // Try to extract user message from the end of the traceback
+            const lines = errorText.split('\n');
+            let userMessage = '{{ _("Processing failed") }}';
+
+            // Look for the final exception message (usually after "Exception:" or similar)
+            for (let i = lines.length - 1; i >= 0; i--) {
+                const line = lines[i].trim();
+                if (line && !line.startsWith(' ') && line.includes(':')) {
+                    const parts = line.split(':', 2);
+                    if (parts.length === 2) {
+                        const message = parts[1].trim();
+                        // Check if it looks like a user message (not technical)
+                        if (message && !message.includes('File "') && !message.includes('.py') && !message.includes('line ')) {
+                            userMessage = message;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return {
+                userMessage: userMessage,
+                technicalDetails: errorText
+            };
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('errorModal')?.addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeErrorModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeErrorModal();
+            }
+        });
+    </script>
+
     {% block scripts %}{% endblock %}
 </body>
 

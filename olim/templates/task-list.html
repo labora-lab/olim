@@ -1,10 +1,10 @@
-<div class="space-y-1">
+<div class="space-y-2">
     {% for task in tasks %}
     {% if task.status == "STARTED" %}
-    <div class="flex items-center justify-between p-2 bg-gray-700 border-l-2 border-blue-400 rounded-r-lg">
+    <div class="flex items-center justify-between p-2 bg-blue-100 border-l-3 border-blue-400 rounded-r-lg">
         <div class="flex-1">
-            <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
-            <div class="text-xs text-gray-400">{{ _('Running') }}</div>
+            <div class="text-sm font-medium text-gray-700">{{ task.name }}</div>
+            <div class="text-xs text-gray-600">{{ _('Running') }}</div>
         </div>
         <div class="flex items-center ml-1">
             <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse mr-2"></div>
@@ -12,33 +12,49 @@
         </div>
     </div>
     {% elif task.status == "SUCCESS" %}
-    <div class="flex items-center justify-between p-2 bg-gray-700 border-l-2 border-green-400 rounded-r-lg">
+    <div class="flex items-center justify-between p-2 bg-green-100 border-l-3 border-green-400 rounded-r-lg">
         <div class="flex-1">
-            <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
-            <div class="text-xs text-gray-400">{{ _('Completed') }}</div>
+            <div class="text-sm font-medium text-gray-700">{{ task.name }}</div>
+            <div class="text-xs text-gray-600">{{ _('Completed') }}</div>
         </div>
         <i class="bi bi-check-circle-fill text-green-400 ml-1"></i>
     </div>
     {% elif task.status == "FAILURE" %}
-    <div class="flex items-center justify-between p-2 bg-gray-700 border-l-2 border-red-400 rounded-r-lg{% if task.error %} cursor-help{% endif %}"
-        {% if task.error %}title="{{ ''.join(task.error) }}" {% endif %}>
-        <div class="flex-1">
-            <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
-            <div class="text-xs text-gray-400">{{ _('Failed') }}</div>
+    <div class="bg-red-100 border-l-3 border-red-400 rounded-r-lg">
+        <div class="flex items-center justify-between p-2{% if task.error %} cursor-pointer{% endif %}" {% if task.error
+            %}data-task-name="{{ task.name }}" data-error-text="{{ ''.join(task.error)|e }}"
+            onclick="showErrorModalFromData(this)" {% endif %}>
+            <div class="flex-1">
+                <div class="text-sm font-medium text-gray-700">{{ task.name }}</div>
+                <div class="text-xs text-gray-600">{{ _('Failed') }}</div>
+            </div>
+            <div class="flex items-center ml-1">
+                {% if task.error %}
+                <i class="bi bi-info-circle text-red-400 mr-2"></i>
+                {% endif %}
+                <i class="bi bi-exclamation-circle-fill text-red-400"></i>
+            </div>
         </div>
-        <i class="bi bi-exclamation-circle-fill text-red-400 ml-1"></i>
     </div>
     {% elif task.status == "REVOKED" %}
-    <div class="flex items-center justify-between p-2 bg-gray-700 border-l-2 border-gray-500 rounded-r-lg{% if task.error %} cursor-help{% endif %}"
-        {% if task.error %}title="{{ ''.join(task.error) }}" {% endif %}>
-        <div class="flex-1 ml-1">
-            <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
-            <div class="text-xs text-gray-400">{{ _('Canceled') }}</div>
+    <div class="bg-gray-600 border-l-3 border-gray-500 rounded-r-lg">
+        <div class="flex items-center justify-between p-2{% if task.error %} cursor-pointer{% endif %}" {% if task.error
+            %}data-task-name="{{ task.name }}" data-error-text="{{ ''.join(task.error)|e }}"
+            onclick="showErrorModalFromData(this)" {% endif %}>
+            <div class="flex-1 ml-1">
+                <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
+                <div class="text-xs text-gray-400">{{ _('Canceled') }}</div>
+            </div>
+            <div class="flex items-center">
+                {% if task.error %}
+                <i class="bi bi-info-circle text-gray-500 mr-2"></i>
+                {% endif %}
+                <i class="bi bi-x-circle-fill text-gray-500"></i>
+            </div>
         </div>
-        <i class="bi bi-x-circle-fill text-gray-500"></i>
     </div>
     {% elif task.status == "PENDING" or task.status == "RETRY" %}
-    <div class="flex items-center justify-between p-2 bg-gray-700 border-l-2 border-yellow-400 rounded-r-lg">
+    <div class="flex items-center justify-between p-2 bg-gray-600 border-l-3 border-yellow-400 rounded-r-lg">
         <div class="flex-1 ml-1">
             <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
             <div class="text-xs text-gray-400">{{ _('Pending') }}</div>
