@@ -150,7 +150,7 @@
                         <i class="bi bi-gear text-lg"></i>
                     </button>
                     <div id="settings-dropdown"
-                        class="hidden absolute bottom-full right-0 mb-2 bg-gray-700 rounded-lg shadow-lg py-1 min-w-48">
+                        class="hidden absolute bottom-full right-0 mb-3 {% if tasks and has_permission('task_list')%}bg-gray-800{% else %}bg-gray-700{% endif %} rounded-lg shadow-lg py-1 min-w-48">
                         {% if has_permission('users') %}
                         <a href="{{ url_for('users') }}"
                             class="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white">

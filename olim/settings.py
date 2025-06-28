@@ -185,7 +185,6 @@ PERMISSIONS = {
         "export_label",
         "get_help",
         "send_ticket",
-        "projects",
         "redirect_to_project",
     ],
     "guest": ["static", "login"],
