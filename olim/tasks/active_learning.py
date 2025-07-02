@@ -144,7 +144,7 @@ def instanciate_al(project_id, label_id) -> ActiveLearningBackend:
     labels = [label[0] for label in settings.LABELS]
     learner = ActiveLearningBackend(
         original_dataset=data,  # type: ignore
-        labels=labels,
+        label_values=labels,
         # initial_labelled_dataset=values, # type: ignore
         save_path=learner_path,
         rng=get_rng(),
@@ -273,7 +273,7 @@ def add_label_value(
             json.dumps(
                 {
                     "entry_id": COMPOSITE_ID.format(dataset_id=dataset_id, entry_id=entry_id),
-                    "labelling": value,
+                    "label_value": value,
                     "user_id": user_id,
                     "timestamp": datetime.now(UTC).timestamp(),
                 }
