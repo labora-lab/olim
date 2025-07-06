@@ -22,6 +22,22 @@
         localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('sidebar-collapsed'));
     }
 
+    function expandSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const collapseBtn = document.getElementById('collapse-btn');
+        const collapseIcon = collapseBtn?.querySelector('.collapse-icon');
+        
+        sidebar.classList.remove('sidebar-collapsed', 'w-20');
+        sidebar.classList.add('w-64');
+        
+        if (collapseIcon) {
+            collapseIcon.classList.remove('bi-chevron-bar-right');
+            collapseIcon.classList.add('bi-chevron-bar-left');
+        }
+        
+        localStorage.setItem('sidebarCollapsed', 'false');
+    }
+
     // Verifica estado salvo ao carregar a página
     document.addEventListener('DOMContentLoaded', () => {
         const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';

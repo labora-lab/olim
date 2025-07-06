@@ -105,10 +105,22 @@
                 <span id="task-loading" class="text-xs text-gray-400 htmx-indicator">
                     {{ _('Updating...') }}
                 </span>
-
-                <!-- Contador de tasks (visível apenas quando colapsado) -->
-                <div class="task-counter inline-flex items-center justify-center w-8 h-8 text-sm font-bold text-white bg-red-500 rounded-full">{{ tasks|length }}</div>
             </div>
+            
+            <!-- Contador de tasks centralizado quando colapsado -->
+            <div class="task-counter-collapsed hidden justify-center items-center py-4">
+                <div class="relative" title="{{ _('Jobs') }} ({{ tasks|length }})">
+                    <button 
+                        onclick="expandSidebar()"
+                        class="w-12 h-12 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center justify-center text-white transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <i class="bi bi-clipboard-check text-lg"></i>
+                    </button>
+                    <div class="absolute -top-2 -right-2 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 border-2 border-gray-800 rounded-full">
+                        {{ tasks|length }}
+                    </div>
+                </div>
+            </div>
+
             <div id="task-list" class="text-sm flex-1 pr-2 task-list" hx-get="{{ url_for('task_list') }}"
                 hx-trigger="every 3s" hx-swap="innerHTML" hx-indicator="#task-loading">
                 {% include "task-list.html" %}
