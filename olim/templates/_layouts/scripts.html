@@ -1,0 +1,206 @@
+<script src="{{ url_for('static', filename='js/flowbite.min.js') }}"></script>
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const collapseBtn = document.getElementById('collapse-btn');
+        const collapseIcon = collapseBtn.querySelector('.collapse-icon');
+        
+        sidebar.classList.toggle('w-64');
+        sidebar.classList.toggle('w-20');
+        sidebar.classList.toggle('sidebar-collapsed');
+        
+        // Alterna o ícone
+        if (sidebar.classList.contains('sidebar-collapsed')) {
+            collapseIcon.classList.remove('bi-chevron-bar-left');
+            collapseIcon.classList.add('bi-chevron-bar-right');
+        } else {
+            collapseIcon.classList.remove('bi-chevron-bar-right');
+            collapseIcon.classList.add('bi-chevron-bar-left');
+        }
+        
+        // Salva o estado no localStorage
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('sidebar-collapsed'));
+    }
+
+    // Verifica estado salvo ao carregar a página
+    document.addEventListener('DOMContentLoaded', () => {
+        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        const sidebar = document.getElementById('sidebar');
+        const collapseBtn = document.getElementById('collapse-btn');
+        const collapseIcon = collapseBtn.querySelector('.collapse-icon');
+
+        if (isCollapsed) {
+            sidebar.classList.add('w-20', 'sidebar-collapsed');
+            sidebar.classList.remove('w-64');
+            collapseIcon.classList.remove('bi-chevron-bar-left');
+            collapseIcon.classList.add('bi-chevron-bar-right');
+        }
+
+        // Adiciona evento ao botão de colapso
+        collapseBtn.addEventListener('click', toggleSidebar);
+    });
+
+    // Project dropdown functionality
+    const projectDropdownBtn = document.getElementById('project-dropdown-btn');
+    const projectDropdown = document.getElementById('project-dropdown');
+
+    projectDropdownBtn?.addEventListener('click', () => {
+        projectDropdown.classList.toggle('hidden');
+    });
+
+    // Settings dropdown functionality
+    const settingsDropdownBtn = document.getElementById('settings-dropdown-btn');
+    const settingsDropdown = document.getElementById('settings-dropdown');
+
+    settingsDropdownBtn?.addEventListener('click', () => {
+        settingsDropdown.classList.toggle('hidden');
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (event) => {
+        if (projectDropdownBtn && projectDropdown &&
+            !projectDropdownBtn.contains(event.target) &&
+            !projectDropdown.contains(event.target)) {
+            projectDropdown.classList.add('hidden');
+        }
+
+        if (settingsDropdownBtn && settingsDropdown &&
+            !settingsDropdownBtn.contains(event.target) &&
+            !settingsDropdown.contains(event.target)) {
+            settingsDropdown.classList.add('hidden');
+        }
+    });
+
+    // Auto close flash messages after 5 seconds
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('[role="alert"]');
+        alerts.forEach(alert => {
+            if (alert.style.display !== 'none') {
+                alert.style.opacity = '0';
+                alert.style.transition = 'opacity 0.3s ease-out';
+                setTimeout(() => alert.style.display = 'none', 300);
+            }
+        });
+    }, 5000);
+</script>
+
+<script>
+    // Global Error Modal Functions
+    function showErrorModalFromData(element) {
+        const taskName = element.getAttribute('data-task-name');
+        const errorText = element.getAttribute('data-error-text');
+        showErrorModal(taskName, errorText);
+    }
+
+    function showErrorModal(taskName, errorText) {
+        // Parse error text to separate user message from technical details
+        const { userMessage, technicalDetails } = parseErrorMessage(errorText);
+
+        // Set task name
+        document.getElementById('modalTaskName').textContent = taskName;
+
+        // Set user-friendly error message
+        document.getElementById('modalErrorMessage').textContent = userMessage;
+
+        // Handle technical details
+        const technicalSection = document.getElementById('technicalDetailsSection');
+        const technicalContent = document.getElementById('modalTechnicalDetails');
+
+        if (technicalDetails && technicalDetails.trim()) {
+            technicalContent.textContent = technicalDetails;
+            technicalSection.classList.remove('hidden');
+        } else {
+            technicalSection.classList.add('hidden');
+        }
+
+        // Reset technical details to collapsed state
+        document.getElementById('technicalDetailsContent').classList.add('hidden');
+        document.getElementById('technicalChevron').classList.remove('rotate-180');
+        const toggleBtn = document.getElementById('toggleTechnicalDetails');
+        toggleBtn.querySelector('span').innerHTML = '<i class="bi bi-code-square mr-3 text-gray-500"></i>{{ _("Show Technical Details") }}';
+
+        // Show modal
+        document.getElementById('errorModal').classList.remove('hidden');
+
+        // Prevent body scroll
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeErrorModal() {
+        document.getElementById('errorModal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function toggleTechnicalDetails() {
+        const content = document.getElementById('technicalDetailsContent');
+        const chevron = document.getElementById('technicalChevron');
+        const toggleBtn = document.getElementById('toggleTechnicalDetails');
+
+        if (content.classList.contains('hidden')) {
+            content.classList.remove('hidden');
+            chevron.classList.add('rotate-180');
+            toggleBtn.querySelector('span').innerHTML = '<i class="bi bi-code-square mr-3 text-gray-500"></i>{{ _("Hide Technical Details") }}';
+        } else {
+            content.classList.add('hidden');
+            chevron.classList.remove('rotate-180');
+            toggleBtn.querySelector('span').innerHTML = '<i class="bi bi-code-square mr-3 text-gray-500"></i>{{ _("Show Technical Details") }}';
+        }
+    }
+
+    function parseErrorMessage(errorText) {
+        if (!errorText || !errorText.trim()) {
+            return { userMessage: '{{ _("Unknown error occurred") }}', technicalDetails: '' };
+        }
+
+        // Check if it contains traceback/technical information
+        const hasTraceback = errorText.includes('Traceback') ||
+            errorText.includes('File "') ||
+            errorText.includes('.py:') ||
+            errorText.includes('  File ') ||
+            errorText.includes('line ');
+
+        if (!hasTraceback) {
+            // It's already a clean user message
+            return { userMessage: errorText.trim(), technicalDetails: '' };
+        }
+
+        // Try to extract user message from the end of the traceback
+        const lines = errorText.split('\n');
+        let userMessage = '{{ _("Processing failed") }}';
+
+        // Look for the final exception message (usually after "Exception:" or similar)
+        for (let i = lines.length - 1; i >= 0; i--) {
+            const line = lines[i].trim();
+            if (line && !line.startsWith(' ') && line.includes(':')) {
+                const parts = line.split(':', 2);
+                if (parts.length === 2) {
+                    const message = parts[1].trim();
+                    // Check if it looks like a user message (not technical)
+                    if (message && !message.includes('File "') && !message.includes('.py') && !message.includes('line ')) {
+                        userMessage = message;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return {
+            userMessage: userMessage,
+            technicalDetails: errorText
+        };
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('errorModal')?.addEventListener('click', function (e) {
+        if (e.target === this) {
+            closeErrorModal();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeErrorModal();
+        }
+    });
+</script>

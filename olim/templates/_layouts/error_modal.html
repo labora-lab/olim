@@ -1,0 +1,73 @@
+<!-- Global Error Modal -->
+<div id="errorModal" class="fixed inset-0 bg-black bg-opacity-40 hidden z-50 flex items-center justify-center p-4">
+    <div
+        class="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden transform transition-all">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-6 border-b border-red-100 bg-red-50">
+            <div class="flex items-center">
+                <div class="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mr-4">
+                    <i class="bi bi-exclamation-triangle-fill text-red-600 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-red-900">{{ _('Task Error Details') }}</h3>
+                    <p class="text-sm text-red-700 mt-1">{{ _('Something went wrong with your task') }}</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeErrorModal()"
+                class="text-red-400 hover:text-red-600 focus:outline-none hover:bg-red-100 rounded-lg p-2 transition-colors">
+                <i class="bi bi-x-lg text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 overflow-y-auto max-h-[70vh]">
+            <!-- Task Name -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-800 mb-2 uppercase tracking-wide">{{ _('Task')
+                    }}</label>
+                <div id="modalTaskName"
+                    class="p-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 font-medium"></div>
+            </div>
+
+            <!-- Error Message -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-red-800 mb-2 uppercase tracking-wide">{{ _('Error
+                    Message') }}</label>
+                <div id="modalErrorMessage"
+                    class="p-4 bg-red-50 border-l-4 border-red-500 rounded-lg text-red-900 font-medium leading-relaxed">
+                </div>
+            </div>
+
+            <!-- Technical Details (expandable) -->
+            <div id="technicalDetailsSection" class="hidden">
+                <div class="border-t border-gray-200 pt-6">
+                    <button type="button" id="toggleTechnicalDetails" onclick="toggleTechnicalDetails()"
+                        class="flex items-center justify-between w-full p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 text-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all">
+                        <span class="flex items-center font-medium">
+                            <i class="bi bi-code-square mr-3 text-gray-500"></i>
+                            {{ _('Show Technical Details') }}
+                        </span>
+                        <i class="bi bi-chevron-down transform transition-transform duration-200 text-gray-500"
+                            id="technicalChevron"></i>
+                    </button>
+                    <div id="technicalDetailsContent"
+                        class="hidden mt-4 border border-gray-300 rounded-lg overflow-hidden">
+                        <div class="p-4 bg-gray-900 max-h-60 overflow-auto">
+                            <pre id="modalTechnicalDetails"
+                                class="text-xs text-gray-300 font-mono whitespace-pre-wrap break-words leading-relaxed"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex justify-end p-6 border-t border-gray-200 bg-gray-50">
+            <button type="button" onclick="closeErrorModal()"
+                class="px-6 py-3 text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded-lg transition-colors">
+                <i class="bi bi-x-circle mr-2"></i>
+                {{ _('Close') }}
+            </button>
+        </div>
+    </div>
+</div>
