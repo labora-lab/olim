@@ -23,6 +23,7 @@ from sklearn.preprocessing import LabelEncoder
 
 from .active.policies import ConformalUnsertantyPolicy, Policy
 from .bandits import BanditExplorer, DummyBandit
+from .eval.metrics import accuracy, precision, recall, specificity, auc_roc
 from .models import ClassificationModel, DummyClassificationModel
 from .models.conformal import ConformalPredictor
 from .settings import CLASSIFICATION_MODEL, SKIP_AL, UNCERTAIN_PERC
@@ -337,7 +338,7 @@ class ActiveLearningBackend:
 
         # AUC-ROC Overall
         _, auc_ci = self.metric_with_confidence(
-            self._ovr_auc_metric, alpha=0.05, model=model
+            auc_roc, alpha=0.05
         )
         lower, upper = auc_ci
         self.metrics_strs.append(
@@ -345,7 +346,7 @@ class ActiveLearningBackend:
         )
 
         # Accuracy
-        _, acc_ci = self.metric_with_confidence(self._accuracy, alpha=0.05)
+        _, acc_ci = self.metric_with_confidence(accuracy, alpha=0.05)
         lower, upper = acc_ci
         self.metrics_strs.append(
             rf"Accuracy: \({(lower + upper) / 2:.2f} \pm {(upper - lower) / 2:.2f}\)"
@@ -354,11 +355,11 @@ class ActiveLearningBackend:
         # Precision, Recall, and Specificity
         if len(self.label_values) == 2:
             # Binary classification - report for positive class
-            target = self.label_values[1]
+            target_value = self._encode(self.label_values[1])
 
             # Precision
             _, prec_ci = self.metric_with_confidence(
-                self._precision, alpha=0.05, target=target
+                precision, alpha=0.05, target=target_value
             )
             lower, upper = prec_ci
             self.metrics_strs.append(
@@ -367,14 +368,14 @@ class ActiveLearningBackend:
 
             # Recall
             _, rec_ci = self.metric_with_confidence(
-                self._recall, alpha=0.05, target=target
+                recall, alpha=0.05, target=target_value
             )
             lower, upper = rec_ci
             self.metrics_strs.append(
                 rf"Recall: \({(lower + upper) / 2:.2f} \pm {(upper - lower) / 2:.2f}\)"
             )
             _, spec_ci = self.metric_with_confidence(
-                self._specificity, alpha=0.05, target=target
+                specificity, alpha=0.05, target=target_value
             )
             lower, upper = spec_ci
             self.metrics_strs.append(
@@ -383,9 +384,10 @@ class ActiveLearningBackend:
         else:
             # Multiclass classification - report per class
             for label_value_name in self.label_values:
+                target_value = self._encode(label_value_name)
                 # Precision
                 _, prec_ci = self.metric_with_confidence(
-                    self._precision, alpha=0.05, target=label_value_name
+                    precision, alpha=0.05, target=target_value
                 )
                 lower, upper = prec_ci
                 self.metrics_strs.append(
@@ -395,7 +397,7 @@ class ActiveLearningBackend:
 
                 # Recall
                 _, rec_ci = self.metric_with_confidence(
-                    self._recall, alpha=0.05, target=label_value_name
+                    recall, alpha=0.05, target=target_value
                 )
                 lower, upper = rec_ci
                 self.metrics_strs.append(
@@ -405,7 +407,7 @@ class ActiveLearningBackend:
 
                 # Specificity
                 _, spec_ci = self.metric_with_confidence(
-                    self._specificity, alpha=0.05, target=label_value_name
+                    specificity, alpha=0.05, target=target_value
                 )
                 lower, upper = spec_ci
                 self.metrics_strs.append(
@@ -633,11 +635,15 @@ class ActiveLearningBackend:
         texts = list(val_dataset.keys())
         label_values = np.array(list(val_dataset.values()))
 
-        # Get predictions
+        # Get predictions and probabilities
         preds = np.array(model.raw_predictions(texts))
+        try:
+            label_proba = model.predict_proba(texts)
+        except AttributeError:
+            label_proba = None
 
         # Compute original metric
-        original = metric_fn(texts, label_values, preds, **kwargs)
+        original = metric_fn(label_values, preds, label_proba, **kwargs)
 
         # Prepare storage based on return type
         match original:
@@ -666,9 +672,12 @@ class ActiveLearningBackend:
             sample_label_values = label_values[sample_idx]
             sample_preds = preds[sample_idx]
 
+            # Get probabilities for resampled data if needed
+            sample_label_proba = label_proba[sample_idx] if label_proba is not None else None
+            
             # Compute metric on resampled data
             result = metric_fn(
-                sample_texts, sample_label_values, sample_preds, **kwargs
+                sample_label_values, sample_preds, sample_label_proba, **kwargs
             )
 
             # Store result based on type
@@ -700,93 +709,6 @@ class ActiveLearningBackend:
 
         return original, ci
 
-    # Static metric methods
-    @staticmethod
-    def _accuracy(texts: list[str], label_values: IntArray, preds: IntArray) -> float:
-        return (preds == label_values).mean()
-
-    @staticmethod
-    def _precision(
-        texts: list[str], label_values: IntArray, preds: IntArray, target: int
-    ) -> float:
-        target_mask = label_values == target
-        pred_target = preds == target
-        tp = np.sum(target_mask & pred_target)
-        fp = np.sum(pred_target & ~target_mask)
-        return tp / (tp + fp) if (tp + fp) > 0 else 0.0
-
-    @staticmethod
-    def _recall(
-        texts: list[str], label_values: IntArray, preds: IntArray, target: int
-    ) -> float:
-        target_mask = label_values == target
-        pred_target = preds == target
-        tp = np.sum(target_mask & pred_target)
-        fn = np.sum(target_mask & ~pred_target)
-        return tp / (tp + fn) if (tp + fn) > 0 else 0.0
-
-    @staticmethod
-    def _specificity(
-        texts: list[str], label_values: IntArray, preds: IntArray, target: int
-    ) -> float:
-        """Compute specificity (true negative rate) for target class"""
-        non_target_mask = label_values != target
-        pred_non_target = preds != target
-        tn = np.sum(non_target_mask & pred_non_target)
-        fp = np.sum(non_target_mask & ~pred_non_target)
-        return tn / (tn + fp) if (tn + fp) > 0 else 0.0
-
-    @staticmethod
-    def _auc_roc(
-        texts: list[str],
-        label_values: IntArray,
-        preds: IntArray,
-        target: int,
-        model: ConformalPredictor,
-        **kwargs,
-    ) -> float:
-        try:
-            probs = model.predict_proba(texts)
-        except AttributeError:
-            raise RuntimeError("Model does not support probability predictions")
-
-        target_probs = probs[:, target]
-        pos_probs = target_probs[label_values == target]
-        neg_probs = target_probs[label_values != target]
-
-        if len(pos_probs) == 0 or len(neg_probs) == 0:
-            return 0.5
-
-        comparisons = pos_probs[:, None] > neg_probs[None, :]
-        ties = pos_probs[:, None] == neg_probs[None, :]
-        auc = (np.sum(comparisons) + 0.5 * np.sum(ties)) / (
-            len(pos_probs) * len(neg_probs)
-        )
-        return auc
-
-    @staticmethod
-    def _ovr_auc_metric(
-        texts: list[str],
-        label_values: IntArray,
-        preds: IntArray,
-        model: ConformalPredictor,
-        **kwargs,
-    ) -> float:
-        unique_label_values = np.unique(label_values)
-        auc_sum = 0.0
-        count = 0
-
-        for label_value in unique_label_values:
-            try:
-                auc = ActiveLearningBackend._auc_roc(
-                    texts, label_values, preds, label_value, model
-                )
-                auc_sum += auc
-                count += 1
-            except RuntimeError:
-                continue
-
-        return auc_sum / count if count > 0 else 0.5
 
     def export_preditictions(
         self,
