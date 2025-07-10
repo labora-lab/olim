@@ -4,7 +4,6 @@ from typing import Any, Generic, TypeVar
 
 import numpy as np
 
-
 T = TypeVar("T")
 
 
@@ -12,7 +11,7 @@ def dict_to_list(x: dict[int, Any]) -> list[Any]:
     return [x[i] for i in range(len(x))]
 
 
-def sanitize_data(data):
+def sanitize_data(data: Any) -> Any:  # noqa: ANN401
     """
     Recursively sanitizes all data in dict, list, array, tuple, or set by converting
     any numpy types into native Python types.
@@ -34,7 +33,7 @@ def sanitize_data(data):
         return {sanitize_data(item) for item in data}
     elif isinstance(data, np.ndarray):
         return sanitize_data(data.tolist())
-    elif isinstance(data, (np.integer, np.floating)):
+    elif isinstance(data, np.integer | np.floating):
         return data.item()
     elif isinstance(data, np.bool_):
         return bool(data)
@@ -58,7 +57,7 @@ class SlotSet(Generic[T]):
         elems (Iterable[T] | None): An optional iterable of elements to initialize the SlotSet with.
     """
 
-    def __init__(self, elems: Iterable[T] | None = None):
+    def __init__(self, elems: Iterable[T] | None = None) -> None:
         if elems is None:
             elems = []
         self.array = list(elems)

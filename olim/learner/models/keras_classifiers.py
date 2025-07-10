@@ -9,7 +9,7 @@ class DebertaV3Wrapper(ClassificationModel):
         n_classes: int | None = None,
         model: str = "deberta_v3_base_en",
         verbose: int = 0,
-    ):
+    ) -> None:
         # Load the pretrained DeBERTa V3 model
         self.verbose = verbose
         if model.startswith("deberta"):
