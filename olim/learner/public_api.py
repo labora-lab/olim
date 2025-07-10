@@ -90,7 +90,7 @@ class ActiveLearningBackend:
         # model_factory: Callable[[], ClassificationModel],
         policy: Policy | None = None,
         initial_label_value_dataset: dict[EntryId, LabelValue] | None = None,
-        n_kickstart: int = 10,
+        n_kickstart: int = 20,
         subsample_size: list[int] | None = None,
         unbiased_evaluation: bool = False,
         entry_ids_to_remove: set[EntryId] | None = None,
@@ -337,9 +337,7 @@ class ActiveLearningBackend:
             )
 
         # AUC-ROC Overall
-        _, auc_ci = self.metric_with_confidence(
-            auc_roc, alpha=0.05
-        )
+        _, auc_ci = self.metric_with_confidence(auc_roc, alpha=0.05)
         lower, upper = auc_ci
         self.metrics_strs.append(
             rf"AUC_ROC: \({(lower + upper) / 2:.2f} \pm {(upper - lower) / 2:.2f}\)"
@@ -538,7 +536,6 @@ class ActiveLearningBackend:
                 else:
                     # No validation data yet, use base probability
                     prob = VALIDATE_PROB
-                print(label_value, prob)
                 self._validate = rand < prob
 
             # TODO: Test this.
@@ -632,7 +629,8 @@ class ActiveLearningBackend:
         if n == 0:
             return 0.0, (0.0, 1.0)
 
-        texts = list(val_dataset.keys())
+        ids = list(val_dataset.keys())
+        texts = [self._original_dataset[entry_id] for entry_id in ids]
         label_values = np.array(list(val_dataset.values()))
 
         # Get predictions and probabilities
@@ -668,13 +666,14 @@ class ActiveLearningBackend:
         for i in range(n_bootstrap):
             # Resample with replacement
             sample_idx = rng.choice(indices, size=n, replace=True)
-            sample_texts = [texts[j] for j in sample_idx]
             sample_label_values = label_values[sample_idx]
             sample_preds = preds[sample_idx]
 
             # Get probabilities for resampled data if needed
-            sample_label_proba = label_proba[sample_idx] if label_proba is not None else None
-            
+            sample_label_proba = (
+                label_proba[sample_idx] if label_proba is not None else None
+            )
+
             # Compute metric on resampled data
             result = metric_fn(
                 sample_label_values, sample_preds, sample_label_proba, **kwargs
@@ -708,7 +707,6 @@ class ActiveLearningBackend:
                 ]
 
         return original, ci
-
 
     def export_preditictions(
         self,
