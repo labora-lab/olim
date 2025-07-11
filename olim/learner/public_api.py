@@ -861,6 +861,7 @@ class ActiveLearningBackend:
         *,
         precomputed_original_dataset_keys: SlotSet[EntryId] | None = None,
         rng: np.random.Generator,
+        **kwargs,
     ) -> "ActiveLearningBackend":
         path = Path(path)
 
@@ -877,18 +878,23 @@ class ActiveLearningBackend:
         if "labels" in data and "label_values" not in data:
             data["label_values"] = data["labels"]
 
-        out = cls(
-            original_dataset,
-            label_values=data["label_values"],
-            policy=policy,
-            n_kickstart=data["n_kickstart"],
-            subsample_size=data["subsample_size"],
-            unbiased_evaluation=data["unbiased_evaluation"],
-            entry_ids_to_remove=set(data["_dataset"].keys()),
-            precomputed_original_dataset_keys=precomputed_original_dataset_keys,
-            save_path=path,
-            rng=rng,
-        )
+        # Start with saved parameters
+        load_params = {
+            "label_values": data["label_values"],
+            "policy": policy,
+            "n_kickstart": data["n_kickstart"],
+            "subsample_size": data["subsample_size"],
+            "unbiased_evaluation": data["unbiased_evaluation"],
+            "entry_ids_to_remove": set(data["_dataset"].keys()),
+            "precomputed_original_dataset_keys": precomputed_original_dataset_keys,
+            "save_path": path,
+            "rng": rng,
+        }
+        
+        # Update with any provided kwargs to overwrite changed parameters
+        load_params.update(kwargs)
+        
+        out = cls(original_dataset, **load_params)
 
         out._dataset = data["_dataset"]
         out._unlabelled_dataset = SlotSet(

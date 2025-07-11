@@ -49,7 +49,9 @@ def acquire_lock(lock_path: Path, timeout: int = 121) -> None:
             return
         except FileExistsError:
             time.sleep(5)  # Wait before retrying
-    raise LockTimeoutError(f"Could not acquire lock after {timeout} seconds: {lock_path}")
+    raise LockTimeoutError(
+        f"Could not acquire lock after {timeout} seconds: {lock_path}"
+    )
 
 
 def release_lock(lock_path: Path) -> None:
@@ -106,7 +108,9 @@ def get_data(project_id: int) -> dict[str, str]:
                     for line in f.readlines():
                         line_data = json.loads(line)
                         data[
-                            COMPOSITE_ID.format(dataset_id=project_id, entry_id=line_data["id"])
+                            COMPOSITE_ID.format(
+                                dataset_id=project_id, entry_id=line_data["id"]
+                            )
                         ] = line_data["text"]
         except Exception as e:
             if dataset:
@@ -139,16 +143,35 @@ def instanciate_al(project_id, label_id) -> ActiveLearningBackend:
     data = get_data(project_id)
     learner_path = get_label_path(project_id, label_id, check=False)
     print(f"Instanciating learner for Project {project_id},  Label {label_id}")
-    # with flask_app.app_context():
-    #     values = get_label_values(label_id)
+
+    # Get learner parameters from label
+    with flask_app.app_context():
+        label = get_label(label_id)
+        learner_params = (
+            label.learner_parameters if label and label.learner_parameters else {}
+        )
+
     labels = [label[0] for label in settings.LABELS]
-    learner = ActiveLearningBackend(
-        original_dataset=data,  # type: ignore
-        label_values=labels,
+
+    # Base parameters for ActiveLearningBackend
+    base_params = {
+        "original_dataset": data,  # type: ignore
+        "label_values": labels,
         # initial_labelled_dataset=values, # type: ignore
-        save_path=learner_path,
-        rng=get_rng(),
-    )
+        "save_path": learner_path,
+        "rng": get_rng(),
+    }
+
+    # Merge base parameters with custom learner parameters
+    all_params = {**base_params, **learner_params}
+
+    print(f"[INSTANCIATE_AL] Label {label_id} learner parameters from DB: {learner_params}")
+    print(f"[INSTANCIATE_AL] Base parameters: {list(base_params.keys())}")
+    print(f"[INSTANCIATE_AL] All parameters being passed to ActiveLearningBackend: {list(all_params.keys())}")
+    if learner_params:
+        print(f"[INSTANCIATE_AL] Custom parameters values: {learner_params}")
+    learner = ActiveLearningBackend(**all_params)
+
     print(f"Storing learner for Project {project_id},  Label {label_id}")
     learner.save()
     learners_cache[label_id] = learner
@@ -160,14 +183,33 @@ def get_learner(project_id: int, label_id: int) -> ActiveLearningBackend:
         return learners_cache[label_id]
     else:
         data = get_data(project_id)
-        print(f"Learner for Project {project_id},  Label {label_id} not on cache, loading.")
+        print(
+            f"Learner for Project {project_id},  Label {label_id} not on cache, loading."
+        )
         learner_path = get_label_path(project_id, label_id)
         if learner_path is None:
             return instanciate_al(project_id, label_id)
+
+        # Get current learner parameters from database
+        with flask_app.app_context():
+            label = get_label(label_id)
+            learner_params = (
+                label.learner_parameters if label and label.learner_parameters else {}
+            )
+
+        print(f"[GET_LEARNER] Label {label_id} learner parameters from DB: {learner_params}")
+        if learner_params:
+            print(f"[GET_LEARNER] Loading learner with updated parameters: {learner_params}")
+            print(f"[GET_LEARNER] Parameters keys: {list(learner_params.keys())}")
+            print(f"[GET_LEARNER] Parameters values: {list(learner_params.values())}")
+        else:
+            print(f"[GET_LEARNER] No custom parameters found for label {label_id}")
+
         learner = ActiveLearningBackend.load(
             learner_path,
             data,  # type: ignore
             rng=get_rng(),
+            **learner_params,  # Pass current parameters to override saved ones
         )
         learners_cache[label_id] = learner
         return learner
@@ -199,7 +241,9 @@ def create_label_al(
     with learner_lock(learner_path):  # type: ignore
         learner = instanciate_al(project_id, label_id)
 
-        update_label(label_id, metrics=[], cache=learner._cached_subsample, al_key=str(label_id))
+        update_label(
+            label_id, metrics=[], cache=learner._cached_subsample, al_key=str(label_id)
+        )
 
         # Fix to avoid old control
         learner._given_nexts = learner._cached_subsample
@@ -273,7 +317,9 @@ def add_label_value(
         f.write(
             json.dumps(
                 {
-                    "entry_id": COMPOSITE_ID.format(dataset_id=dataset_id, entry_id=entry_id),
+                    "entry_id": COMPOSITE_ID.format(
+                        dataset_id=dataset_id, entry_id=entry_id
+                    ),
                     "label_value": value,
                     "user_id": user_id,
                     "timestamp": datetime.now(UTC).timestamp(),
