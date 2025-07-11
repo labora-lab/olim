@@ -67,9 +67,9 @@ def catch_al(label_id: int) -> ...:
         entry = get_entry(request.form["entry_id"], by="id")
         if entry is None:
             flash(
-                _("Error on active learning for label {label_name} report to developers.").format(
-                    label_name=label.name
-                ),
+                _(
+                    "Error on active learning for label {label_name} report to developers."
+                ).format(label_name=label.name),
                 category="error",
             )
             return redirect("/")
@@ -88,9 +88,25 @@ def catch_al(label_id: int) -> ...:
 
         # Drop labeled entry from AL cache
         cache = label.cache  # type: ignore
-        comp_id = COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id)
-        if comp_id in cache:
-            cache.remove(COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id))
+        comp_id = COMPOSITE_ID.format(
+            dataset_id=entry.dataset_id, entry_id=entry.entry_id
+        )
+
+        # Handle both old format (string) and new format (list from JSON)
+        cache_items_to_remove = []
+        for cache_item in cache:
+            if isinstance(cache_item, list):
+                entry_composite_id, review_needed = cache_item
+                if entry_composite_id == comp_id:
+                    cache_items_to_remove.append(cache_item)
+            else:
+                if cache_item == comp_id:
+                    cache_items_to_remove.append(cache_item)
+
+        for item in cache_items_to_remove:
+            cache.remove(item)
+
+        if cache_items_to_remove:
             label.cache = cache
 
         tasks = CeleryTask.query.filter_by(
@@ -99,14 +115,17 @@ def catch_al(label_id: int) -> ...:
         pending_tasks = [
             task.id
             for task in tasks
-            if task.kwargs["label_id"] == label_id and task.status in ["PENDING", "STARTED"]
+            if task.kwargs["label_id"] == label_id
+            and task.status in ["PENDING", "STARTED"]
         ]
 
         # Check train
         if label.training_counter >= 4 and not pending_tasks:
             launch_task_with_tracking(
                 train_model,
-                description=_("Training for label {label_name}").format(label_name=label.name),
+                description=_("Training for label {label_name}").format(
+                    label_name=label.name
+                ),
                 project_id=label.project_id,
                 label_id=label.id,
                 user_id=session["user_id"],
@@ -119,8 +138,8 @@ def catch_al(label_id: int) -> ...:
         db.session.commit()
 
         flash(
-            _(f'Added value "{value_str}" for entry {request.form["entry_id"]}.').format(
-                label_name=label.name
+            _('Added value "{value_str}" for entry {entry_id}.').format(
+                value_str=value_str, entry_id=request.form["entry_id"]
             ),
             category="success",
         )
@@ -132,16 +151,34 @@ def catch_al(label_id: int) -> ...:
         "messages": label.metrics,  # type: ignore
     }
     cache = label.cache[:]
-    while True:
-        dataset_id, entry_id = eval(cache.pop(0))
+    cache_index = 0
+    
+    while cache_index < len(cache):
+        cache_item = cache[cache_index]
+        # Handle both old format (string) and new format (list from JSON)
+        if isinstance(cache_item, list):
+            entry_composite_id, review_needed = cache_item
+        else:
+            entry_composite_id = cache_item
+            review_needed = False
+
+        dataset_id, entry_id = eval(entry_composite_id)
         entry = get_entry((dataset_id, str(entry_id)), "composite")
         if entry is None:
             raise ValueError(f"Failed to fetch entry {entry_id}")
-        if label in [el.label for el in entry.labels]:
+
+        # Skip only if already labeled AND not marked for review
+        if label in [el.label for el in entry.labels] and not review_needed:
             print(f"Skipping {dataset_id}, {entry_id}")
+            cache_index += 1
         else:
             break
-    label.cache = cache
+    
+    # Only update cache on POST (after submission), not on GET
+    if request.method == "POST":
+        # Remove the processed items from cache
+        updated_cache = cache[cache_index + 1:]
+        label.cache = updated_cache
     db.session.commit()
     data = render_entry(str(entry_id), int(dataset_id), data)
     return render_template("al-entry.html", **data)
@@ -181,7 +218,9 @@ def gen_predictions(label_id: int) -> ...:
             project_id=label.project_id,
             label_id=label.id,
             user_id=session["user_id"],
-            description=_("Generating predictions for {label_name}").format(label_name=label.name),
+            description=_("Generating predictions for {label_name}").format(
+                label_name=label.name
+            ),
             track_progress=True,
         )
     return redirect(url_for("label_settings", label_id=label_id))
@@ -203,7 +242,9 @@ def get_predictions(label_id: int, task_id: str) -> ...:
 
     if res.ready():
         preds = res.result["predictions"]  # type: ignore
-        preds_values = [pred[0] if len(pred) == 1 else np.nan for pred in preds.values()]
+        preds_values = [
+            pred[0] if len(pred) == 1 else np.nan for pred in preds.values()
+        ]
         preds_ids = [eval(i)[1] for i in preds.keys()]
         dataset_ids = [eval(i)[0] for i in preds.keys()]
         dataset_names = [dataset_names[i] for i in dataset_ids]

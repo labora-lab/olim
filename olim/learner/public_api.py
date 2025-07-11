@@ -65,8 +65,8 @@ class ActiveLearningBackend:
     _unlabelled_dataset: SlotSet[EntryId]
     # _train_dataset: dict[EntryId, tuple[str, int]]
     # _val_dataset: dict[EntryId, tuple[str, int]]
-    # ([entry, label_value, user_id, timestamp], is_validation, true_label_value)
-    _dataset: dict[EntryId, tuple[list[tuple[str, int, int, float]], bool, int]]
+    # ([label_id, user_id, timestamp], is_validation, trusted_label_id)
+    _dataset: dict[EntryId, list[list[tuple[int, int, float]], bool, int]]
     _cached_subsample: list[EntryId]
     _given_nexts: list[EntryId]
 
@@ -97,6 +97,7 @@ class ActiveLearningBackend:
         precomputed_original_dataset_keys: SlotSet[EntryId] | None = None,
         rng: np.random.Generator,
         save_path: Path | str | None = None,
+        review_frequency: int = 10,
     ) -> None:
         if not (isinstance(n_kickstart, int) and n_kickstart >= 1):
             raise TypeError("`n_kickstart` must be an `int` >= 1")
@@ -132,11 +133,12 @@ class ActiveLearningBackend:
         if initial_label_value_dataset is not None:
             for entry_id, label_value in initial_label_value_dataset.items():
                 # TODO: Keep track of it
-                self._dataset[entry_id] = (
-                    [(original_dataset[entry_id], self._encode(label_value), -1, -1)],
+                label_id = self._encode(label_value)
+                self._dataset[entry_id] = [
+                    [(label_id, -1, -1)],
                     False,
-                    self._encode(label_value),
-                )
+                    label_id,
+                ]
                 self._unlabelled_dataset.remove(entry_id)
 
         self._rng = rng
@@ -166,6 +168,7 @@ class ActiveLearningBackend:
         self._data_lock = Lock()
         self._cache_lock = Lock()
         self._model = DummyClassificationModel(n_classes=len(self.label_values))
+        self._review_frequency = review_frequency
 
         # If we have enought entries we start training
         self._training = False
@@ -178,15 +181,11 @@ class ActiveLearningBackend:
         else:
             return self._label_value_encoder.transform([label_value])[0]
 
-    def _decode(
-        self, encoded_label_value: int | list[int] | np.ndarray
-    ) -> str | list[str]:
-        if isinstance(encoded_label_value, list | np.ndarray):
-            return self._label_value_encoder.inverse_transform(
-                encoded_label_value
-            ).tolist()
+    def _decode(self, label_id: int | list[int] | np.ndarray) -> str | list[str]:
+        if isinstance(label_id, list | np.ndarray):
+            return self._label_value_encoder.inverse_transform(label_id).tolist()
         else:
-            return self._label_value_encoder.inverse_transform([encoded_label_value])[0]
+            return self._label_value_encoder.inverse_transform([label_id])[0]
 
     def _cache_whether_to_validate(self) -> None:
         self._validate = self._bandit_explorer.select_lever() == 1
@@ -288,15 +287,63 @@ class ActiveLearningBackend:
 
             new_cache = np.concatenate((best_ids, other_ids))
             if isinstance(next(iter(self._original_dataset)), int):
-                new_cache = (
+                unlabelled_ids = (
                     new_cache[np.isin(new_cache, self._unlabelled_dataset.array)]
                     .astype(int)
                     .tolist()
                 )
             else:
-                new_cache = new_cache[
+                unlabelled_ids = new_cache[
                     np.isin(new_cache, self._unlabelled_dataset.array)
                 ].tolist()
+
+            # Convert to tuple format (entry_id, review_needed)
+            new_cache = [(entry_id, False) for entry_id in unlabelled_ids]
+
+            # Insert untrusted entries using normal distribution for offset
+            untrusted_entries = [
+                entry_id
+                for entry_id, entry in self._dataset.items()
+                if entry[2] == -1  # untrusted entries
+            ]
+
+            if untrusted_entries:
+                # Randomly shuffle untrusted entries
+                self._rng.shuffle(untrusted_entries)
+
+                final_cache = []
+                untrusted_idx = 0
+                cache_idx = 0
+
+                # Use exponential distribution for coin toss at each position
+                while cache_idx < len(new_cache) or untrusted_idx < len(
+                    untrusted_entries
+                ):
+                    # If we still have regular cache entries and untrusted entries
+                    if cache_idx < len(new_cache) and untrusted_idx < len(
+                        untrusted_entries
+                    ):
+                        # Coin toss using exponential distribution
+                        # Lower values mean higher probability of inserting untrusted entry
+                        prob_untrusted = 1.0 / self._review_frequency
+                        if self._rng.exponential(1.0) < prob_untrusted:
+                            # Insert untrusted entry
+                            final_cache.append((untrusted_entries[untrusted_idx], True))
+                            untrusted_idx += 1
+                        else:
+                            # Insert regular cache entry
+                            final_cache.append(new_cache[cache_idx])
+                            cache_idx += 1
+                    # If only regular cache entries remain
+                    elif cache_idx < len(new_cache):
+                        final_cache.append(new_cache[cache_idx])
+                        cache_idx += 1
+                    # If only untrusted entries remain
+                    else:
+                        final_cache.append((untrusted_entries[untrusted_idx], True))
+                        untrusted_idx += 1
+
+                new_cache = final_cache
 
         # Store data and do flow control
         with self._cache_lock:
@@ -312,6 +359,18 @@ class ActiveLearningBackend:
 
         self.metrics_strs = ["Last trained model:"]
         self.metrics_strs.append(f"n label_valued: {len(labelled) + len(validation)}")
+
+        # Add untrusted entries count to metrics
+        untrusted_count = len(
+            [
+                entry_id
+                for entry_id, entry in self._dataset.items()
+                if entry[2] == -1  # untrusted entries
+            ]
+        )
+
+        if untrusted_count > 0:
+            self.metrics_strs.append(f"n untrusted: {untrusted_count}")
         # Count items per label_value in training and validation sets
         train_label_value_counts = {}
         val_label_value_counts = {}
@@ -428,16 +487,16 @@ class ActiveLearningBackend:
     @property
     def _train_dataset(self) -> dict[EntryId, int]:
         return {
-            label_value_id: entry[2]
-            for label_value_id, entry in self._dataset.items()
+            entry_id: entry[2]
+            for entry_id, entry in self._dataset.items()
             if not entry[1] and entry[2] != -1
         }
 
     @property
     def _val_dataset(self) -> dict[EntryId, int]:
         return {
-            label_value_id: entry[2]
-            for label_value_id, entry in self._dataset.items()
+            entry_id: entry[2]
+            for entry_id, entry in self._dataset.items()
             if entry[1] and entry[2] != -1
         }
 
@@ -448,16 +507,14 @@ class ActiveLearningBackend:
 
     def update_trustness(self, entry_id: EntryId) -> None:
         # Updates trustness following data structures.
-        label_values = [
-            label_value for label_value, *_ in enumerate(self._dataset[entry_id][0])
-        ]
-        modes = multimode(label_values)
-        if len(modes) == 1:
-            # We have a single mode, we can trust this entry
-            self._dataset[entry_id][2] = modes[0]
-        else:
-            # We have multiple modes, we cannot trust this entry
-            self._dataset[entry_id][2] = -1
+        label_ids = [label_entry[0] for label_entry in self._dataset[entry_id][0]]
+        modes = multimode(label_ids)
+        trusted_label_id = modes[0] if len(modes) == 1 else -1
+        self._dataset[entry_id][2] = trusted_label_id
+
+        # Report if this entry becomes untrusted
+        if trusted_label_id == -1:
+            self.message(f"Untrusted entry {entry_id}")
 
     # TODO: Verify if adding timestamp and user breaks this.int,
     def sync_labelling(self, labelled_data: dict[EntryId, LabelValue]) -> None:
@@ -468,18 +525,18 @@ class ActiveLearningBackend:
                 # Verify if entry in
                 # false is_validate
                 if entry_id not in self._dataset:
-                    self._dataset[entry_id] = (
+                    label_id = self._encode(label_value)
+                    self._dataset[entry_id] = [
                         [
                             (
-                                self._original_dataset[entry_id],
-                                self._encode(label_value),
+                                label_id,
                                 -1,  # user_id
                                 -1,
                             ),  # timestamp
                         ],
                         False,
-                        self._encode(label_value),
-                    )
+                        label_id,
+                    ]
                     self._unlabelled_dataset.remove(entry_id)
                     self._count_since_last_train += 1
 
@@ -540,23 +597,23 @@ class ActiveLearningBackend:
 
             # TODO: Test this.
             if entry_id not in self._dataset:
-                self._dataset[entry_id] = (
+                label_id = self._encode(label_value)
+                self._dataset[entry_id] = [
                     [
                         (
-                            self._original_dataset[entry_id],
-                            self._encode(label_value),
+                            label_id,
                             user_id,
                             timestamp,
                         ),
                     ],
                     self._validate,
-                    self._encode(label_value),
-                )
+                    label_id,
+                ]
             else:
+                label_id = self._encode(label_value)
                 self._dataset[entry_id][0].append(
                     (
-                        self._original_dataset[entry_id],
-                        self._encode(label_value),
+                        label_id,
                         user_id,
                         timestamp,
                     )
@@ -571,7 +628,18 @@ class ActiveLearningBackend:
         #     f"dataset: {len(self._train_dataset)}, validation: {len(self._val_dataset)}"
         # )
 
-        self.message(f"dataset: {len(self._dataset)}")
+        untrusted_count = len(
+            [
+                entry_id
+                for entry_id, entry in self._dataset.items()
+                if entry[2] == -1  # untrusted entries
+            ]
+        )
+
+        if untrusted_count > 0:
+            self.message(f"dataset: {len(self._dataset)}, untrusted: {untrusted_count}")
+        else:
+            self.message(f"dataset: {len(self._dataset)}")
 
         # FIXME: this auc_roc will not change between training sessions, this might break the bandit
         # inf_auc_after, _ = self.peek_auc_roc_ovr(alpha=0.1)
@@ -724,16 +792,16 @@ class ActiveLearningBackend:
             ]
             train_dataset = self._train_dataset
             labelled = [
-                (entry, label_value)
-                for entry, label_value in train_dataset.values()  # type: ignore
+                (self._original_dataset[entry_id], label_value)
+                for entry_id, label_value in train_dataset.items()
             ]
             labelled_data = [
                 (entry_id, entry[-1]) for entry_id, entry in self._dataset.items()
             ]
             validation_dataset = self._val_dataset
             validation = [
-                (entry, label_value)
-                for entry, label_value in validation_dataset.values()
+                (self._original_dataset[entry_id], label_value)
+                for entry_id, label_value in validation_dataset.items()
             ]
         self._model.train(labelled, validation, skip_model_train=True, alpha=alpha)
 

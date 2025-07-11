@@ -230,6 +230,7 @@ def train_model(
                 submissions.append(json.loads(line))
         subs_file.unlink()
         for subm in submissions:
+            print(f"Submitting {subm.get('label_value')} for {subm.get('entry_id')}")
             learner.submit_labelling(**subm, check_given=False)
 
         # Sync previously laballed
