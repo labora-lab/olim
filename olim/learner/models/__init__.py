@@ -5,6 +5,10 @@ import numpy as np
 
 class ClassificationModel(ABC):
     @abstractmethod
+    def __init__(self, *, n_classes: int, **kwargs) -> None:
+        pass
+
+    @abstractmethod
     def train(self, labelled_data: list[tuple[str, int]]) -> None:
         pass
 
@@ -44,7 +48,7 @@ class DummyClassificationModel(ClassificationModel):
         self.n_classes = n_classes
         self._rng = np.random.default_rng(0)
 
-    def train(self, labelled_data, validation) -> None:
+    def train(self, labelled_data, validation=None, **kwargs) -> None:
         pass
 
     def predict(self, unlabelled_data: list[str]) -> list[int]:
@@ -75,7 +79,9 @@ class DummyRegressionModel(RegressionModel):
         pass
 
     def predict(self, unlabelled_data: list[str]) -> list[float]:
-        return [(inf + sup) * 0.5 for inf, sup in self.predict_interval(unlabelled_data)]
+        return [
+            (inf + sup) * 0.5 for inf, sup in self.predict_interval(unlabelled_data)
+        ]
 
     def get_embeddings(self, data: list[str]) -> list[list[float]]:
         n = len(data)
@@ -87,4 +93,6 @@ class DummyRegressionModel(RegressionModel):
         boundaries = self._rng.uniform(*self.range, size=(n, 2))
         boundaries = np.sort(boundaries, axis=1)
 
-        return [(boundaries[i, 0], boundaries[i, 1]) for i in range(len(unlabelled_data))]
+        return [
+            (boundaries[i, 0], boundaries[i, 1]) for i in range(len(unlabelled_data))
+        ]

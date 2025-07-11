@@ -29,10 +29,39 @@ from .models.conformal import ConformalPredictor
 from .settings import CLASSIFICATION_MODEL, SKIP_AL, UNCERTAIN_PERC
 from .utils import SlotSet, sanitize_data
 
-if CLASSIFICATION_MODEL == "TfidfXGBoostClassifier":
-    from .models.tfidf_sklearn import TfidfXGBoostClassifier
-elif CLASSIFICATION_MODEL == "DebertaV3Wrapper":
+# Dictionary for available model classes
+AVAILABLE_MODELS = {
+    "DummyClassificationModel": DummyClassificationModel,
+}
+
+# Import and add TFIDF/sklearn models if available
+try:
+    from .models.tfidf_sklearn import (
+        TfidfXGBoostClassifier,
+        TfidfLogisticRegressionClassifier,
+        TfidfDecisionTreeClassifier,
+        TfidfLightGBMClassifier,
+    )
+
+    AVAILABLE_MODELS.update(
+        {
+            "TfidfXGBoostClassifier": TfidfXGBoostClassifier,
+            "TfidfLogisticRegressionClassifier": TfidfLogisticRegressionClassifier,
+            "TfidfDecisionTreeClassifier": TfidfDecisionTreeClassifier,
+            "TfidfLightGBMClassifier": TfidfLightGBMClassifier,
+        }  # type: ignore
+    )
+except ImportError:
+    pass
+
+# Import and add DebertaV3Wrapper if keras_hub is available
+try:
+    import keras_hub  # type: ignore
     from .models.keras_classifiers import DebertaV3Wrapper
+
+    AVAILABLE_MODELS["DebertaV3Wrapper"] = DebertaV3Wrapper  # type: ignore
+except ImportError:
+    pass
 
 VALIDATE_PROB = 0.4
 USE_BANDIT = False
@@ -98,6 +127,9 @@ class ActiveLearningBackend:
         rng: np.random.Generator,
         save_path: Path | str | None = None,
         review_frequency: int = 10,
+        classification_model: str = "TfidfXGBoostClassifier",
+        model_parameters: str = "{}",
+        model_train_parameters: str = "{}",
     ) -> None:
         if not (isinstance(n_kickstart, int) and n_kickstart >= 1):
             raise TypeError("`n_kickstart` must be an `int` >= 1")
@@ -170,6 +202,26 @@ class ActiveLearningBackend:
         self._model = DummyClassificationModel(n_classes=len(self.label_values))
         self._review_frequency = review_frequency
 
+        # Store model configuration parameters
+        self._classification_model = classification_model
+
+        # Parse model parameters strings into dictionaries
+        try:
+            self._model_parameters = eval(model_parameters) if model_parameters else {}
+        except Exception as e:
+            print(f"Error parsing model_parameters '{model_parameters}': {e}")
+            self._model_parameters = {}
+
+        try:
+            self._model_train_parameters = (
+                eval(model_train_parameters) if model_train_parameters else {}
+            )
+        except Exception as e:
+            print(
+                f"Error parsing model_train_parameters '{model_train_parameters}': {e}"
+            )
+            self._model_train_parameters = {}
+
         # If we have enought entries we start training
         self._training = False
         self._retrain = False
@@ -221,17 +273,30 @@ class ActiveLearningBackend:
             self.message("Not enough label values, skipping training.")
             return None
 
-        # Train new model
-        if CLASSIFICATION_MODEL == "TfidfXGBoostClassifier":
-            class_model = TfidfXGBoostClassifier(n_classes=len(self.label_values))
-        elif CLASSIFICATION_MODEL == "DebertaV3Wrapper":
-            class_model = DebertaV3Wrapper(
-                n_classes=len(self.label_values),
-                model="deberta_v3_base_en",
-                verbose=0,
-            )
+        # Train new model using configured classification model
+        if self._classification_model in AVAILABLE_MODELS:
+            # Get model class from constants dictionary
+            model_class = AVAILABLE_MODELS[self._classification_model]
+            model_params = self._model_parameters.copy()
+            model_params["n_classes"] = len(
+                self.label_values
+            )  # Always ensure n_classes is set
+
+            # Set model-specific defaults
+            if self._classification_model == "DebertaV3Wrapper":
+                model_params.setdefault("model", "deberta_v3_base_en")
+                model_params.setdefault("verbose", 0)
+
+            class_model = model_class(**model_params)
+            self.message(f"Using model {self._classification_model}.")
         else:
             # Fallback to dummy model if no specific model is configured
+            self.message(
+                f"WARNING: Model '{self._classification_model}' not found in available models. Falling back to DummyClassificationModel."
+            )
+            self.message(
+                f"WARNING: Falling back to DummyClassificationModel for '{self._classification_model}'"
+            )
             class_model = DummyClassificationModel(n_classes=len(self.label_values))
 
         model = ConformalPredictor(
@@ -240,7 +305,10 @@ class ActiveLearningBackend:
             n_classes=len(self.label_values),
         )
         self.message("Instanced model")
-        model.train(labelled, validation)  # , epochs=3)
+
+        # Pass training parameters to the model's train method
+        train_params = self._model_train_parameters.copy()
+        model.train(labelled, validation, **train_params)
         self.message("Done training")
 
         new_cache = None
@@ -890,10 +958,10 @@ class ActiveLearningBackend:
             "save_path": path,
             "rng": rng,
         }
-        
+
         # Update with any provided kwargs to overwrite changed parameters
         load_params.update(kwargs)
-        
+
         out = cls(original_dataset, **load_params)
 
         out._dataset = data["_dataset"]
