@@ -141,9 +141,15 @@ class Label(db.Model, CreationControl):
     priority: Mapped[float] = db.mapped_column(default=1.0, nullable=False)
     project_id: Mapped[int] = db.mapped_column(db.ForeignKey("projects.id"), nullable=False)
 
-    metrics: Mapped[dict] = db.mapped_column(db.JSON, nullable=True)
-    cache: Mapped[dict] = db.mapped_column(db.JSON, nullable=True)
+    metrics: Mapped[list] = db.mapped_column(db.JSON, nullable=True)
+    cache: Mapped[list] = db.mapped_column(db.JSON, nullable=True)
     training_counter: Mapped[int] = db.mapped_column(db.Integer, default=0)
+    
+    # Learner parameters for active learning configuration
+    learner_parameters: Mapped[dict] = db.mapped_column(db.JSON, nullable=True)
+    
+    # Auto-labels stored as {COMPOSITE_ID: value} for automatic labeling during active learning
+    auto_labels: Mapped[dict] = db.mapped_column(db.JSON, nullable=True)
 
     # Relationships
     entries: Mapped[list["LabelEntry"]] = db.relationship(
@@ -1039,7 +1045,7 @@ class TaskStatus(TypedDict):
     error: str | None
 
 
-def get_celery_tasks(n=10) -> dict[str, list[TaskStatus]]:
+def get_celery_tasks(n=10) -> list[TaskStatus]:
     """
     Update task statuses and categorize into pending/completed tasks.
 
@@ -1047,35 +1053,38 @@ def get_celery_tasks(n=10) -> dict[str, list[TaskStatus]]:
         tuple: (list_of_pending_tasks, list_of_completed_tasks)
     """
     # Get all active/waiting tasks from database
-    active_tasks = CeleryTask.query.filter(
-        CeleryTask.is_deleted == False  # noqa
-    ).all()
+    active_tasks = (
+        CeleryTask.query.filter(CeleryTask.is_deleted == False)  # noqa
+        .order_by(CeleryTask.created.desc(), CeleryTask.id.desc())
+        .all()
+    )
 
-    pending = []
-    completed = []
+    tasks = []
+    n_comp = 0
 
     for task in active_tasks:
         # Categorize based on updated status
         if task.status in {"SUCCESS", "FAILURE", "REVOKED"}:
             if (datetime.now() - task.date_completed) <= timedelta(hours=24):
-                completed.append(
-                    {
-                        "id": task.id,
-                        "name": task.description if task.description else task.task_name,
-                        "error": task.error,
-                        "status": task.status,
-                    }
-                )
+                if n_comp < n:
+                    n_comp += 1
+                    tasks.append(
+                        {
+                            "id": task.id,
+                            "name": (task.description if task.description else task.task_name),
+                            "error": task.error,
+                            "status": task.status,
+                        }
+                    )
         else:
-            pending.append(
+            tasks.append(
                 {
                     "id": task.id,
                     "name": task.description if task.description else task.task_name,
                     "status": task.status,
                 }
             )
-    completed = completed[: min(n, len(completed))]
-    return {"active": pending[::-1], "completed": completed[::-1]}
+    return tasks
 
 
 # endregion

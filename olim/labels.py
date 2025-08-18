@@ -84,7 +84,10 @@ def create_label(project_id: int) -> ...:
 def delete_label(label_id: int) -> ...:
     label = get_label(label_id)
     if label is None:
-        flash(_("Label id: {label_id} not found!").format(label_id=label_id), category="warning")
+        flash(
+            _("Label id: {label_id} not found!").format(label_id=label_id),
+            category="warning",
+        )
         return redirect("/")
 
     # Check project_id
@@ -104,7 +107,10 @@ def delete_label(label_id: int) -> ...:
 def extract_labels(label_id: int) -> ...:
     label = get_label(label_id)
     if label is None:
-        flash(_("Label id: {label_id} not found!").format(label_id=label_id), category="warning")
+        flash(
+            _("Label id: {label_id} not found!").format(label_id=label_id),
+            category="warning",
+        )
         return redirect("/")
     project_id = label.project_id
 
@@ -123,7 +129,9 @@ def extract_labels(label_id: int) -> ...:
     for le in label.entries:
         if not le.is_deleted:
             module = getattr(entry_types, le.entry.type)
-            dfs_entries.append(module.extract_texts(le.entry.entry_id, le.entry.dataset.id))
+            dfs_entries.append(
+                module.extract_texts(le.entry.entry_id, le.entry.dataset.id)
+            )
     df = df.merge(pd.concat(dfs_entries, ignore_index=True), how="left", on="entry_id")
     return Response(
         df.to_csv(index=False),
@@ -136,7 +144,10 @@ def extract_labels(label_id: int) -> ...:
 def extract_labels_json(label_id: int) -> ...:
     label = get_label(label_id)
     if label is None:
-        flash(_("Label id: {label_id} not found!").format(label_id=label_id), category="warning")
+        flash(
+            _("Label id: {label_id} not found!").format(label_id=label_id),
+            category="warning",
+        )
         return redirect("/")
     project_id = label.project_id
 
@@ -163,7 +174,10 @@ def extract_labels_json(label_id: int) -> ...:
 def catch_queue(label_id: int) -> ...:
     label = get_label(label_id)
     if label is None:
-        flash(_("Label id: {label_id} not found!").format(label_id=label_id), category="warning")
+        flash(
+            _("Label id: {label_id} not found!").format(label_id=label_id),
+            category="warning",
+        )
         return redirect("/")
     project_id = label.project_id
 
@@ -188,11 +202,16 @@ def catch_queue(label_id: int) -> ...:
 def label_settings(label_id: int) -> ...:
     label = get_label(label_id)
     if label is None:
-        flash(_("Label id: {label_id} not found!").format(label_id=label_id), category="warning")
+        flash(
+            _("Label id: {label_id} not found!").format(label_id=label_id),
+            category="warning",
+        )
         return redirect("/")
     project_id = label.project_id
 
-    export_tasks = CeleryTask.query.filter_by(task_name="learner.export_predictions").all()[::-1]
+    export_tasks = CeleryTask.query.filter_by(
+        task_name="learner.export_predictions"
+    ).all()[::-1]
 
     # Check project_id
     res = update_session_project(project_id)
@@ -201,7 +220,160 @@ def label_settings(label_id: int) -> ...:
     if label is None:
         flash(_("Label not found"), category="error")
         return redirect(url_for("labels", project_id=project_id))
-    return render_template("label-settings.html", label=label, export_tasks=export_tasks)
+    return render_template(
+        "label-settings.html", label=label, export_tasks=export_tasks
+    )
+
+
+@app.route("/label/<int:label_id>/update-learner-parameters", methods=["POST"])
+def update_learner_parameters(label_id: int) -> ...:
+    """Update learner parameters for a label"""
+    # Check admin role
+    if session.get("role") != "admin":
+        flash(_("Admin access required"), category="error")
+        return redirect(url_for("label_settings", label_id=label_id))
+
+    label = get_label(label_id)
+    if label is None:
+        flash(_("Label not found"), category="error")
+        return redirect("/")
+
+    try:
+        # Get form data
+        param_names = request.form.getlist("param_names[]")
+        param_types = request.form.getlist("param_types[]")
+        param_values = request.form.getlist("param_values[]")
+        param_is_list = request.form.getlist("param_is_list[]")
+
+        # Convert form data to parameters dictionary
+        parameters = {}
+
+        for i, name in enumerate(param_names):
+            if not name.strip():  # Skip empty names
+                continue
+
+            if i >= len(param_types) or i >= len(param_values):
+                continue
+
+            base_type = param_types[i]
+            value_str = param_values[i]
+            is_list = str(i + 1) in param_is_list  # Check if checkbox was checked
+
+            # Type conversion function
+            def convert_value(val_str: str, val_type: str):
+                val_str = val_str.strip()
+                if val_type == "int":
+                    return int(val_str)
+                elif val_type == "float":
+                    return float(val_str)
+                elif val_type == "bool":
+                    return val_str.lower() in ("true", "1", "yes", "on")
+                else:  # str
+                    return val_str
+
+            # Process value based on whether it's a list or single value
+            if is_list:
+                # Split by comma and convert each value
+                if value_str.strip():
+                    list_values = [v.strip() for v in value_str.split(",") if v.strip()]
+                    parameters[name] = [
+                        convert_value(v, base_type) for v in list_values
+                    ]
+                else:
+                    parameters[name] = []
+            else:
+                # Single value - always store the parameter, even if empty
+                parameters[name] = convert_value(value_str, base_type) if value_str.strip() else ""
+
+        # Update label with new parameters
+        label.learner_parameters = parameters if parameters else None
+        db.session.commit()
+
+        flash(_("Learner parameters updated successfully"), category="success")
+
+    except ValueError as e:
+        flash(
+            _("Error converting parameter values: {error}").format(error=str(e)),
+            category="error",
+        )
+    except Exception as e:
+        flash(
+            _("Error updating parameters: {error}").format(error=str(e)),
+            category="error",
+        )
+
+    return redirect(url_for("label_settings", label_id=label_id))
+
+
+@app.route("/label/<int:label_id>/upload-auto-labels", methods=["POST"])
+def upload_auto_labels(label_id: int) -> ...:
+    """Upload and process auto-labels CSV file"""
+    # Check admin role
+    if session.get("role") != "admin":
+        flash(_("Admin access required"), category="error")
+        return redirect(url_for("label_settings", label_id=label_id))
+
+    label = get_label(label_id)
+    if label is None:
+        flash(_("Label not found"), category="error")
+        return redirect("/")
+
+    if "auto_label_file" not in request.files:
+        flash(_("No file selected"), category="error")
+        return redirect(url_for("label_settings", label_id=label_id))
+
+    file = request.files["auto_label_file"]
+    if file.filename == "":
+        flash(_("No file selected"), category="error")
+        return redirect(url_for("label_settings", label_id=label_id))
+
+    try:
+        # Read CSV file
+        df = pd.read_csv(file.stream)
+
+        # Validate required columns
+        required_columns = {"dataset_id", "entry_id", "value"}
+        if not required_columns.issubset(df.columns):
+            missing = required_columns - set(df.columns)
+            flash(
+                _("Missing required columns: {columns}").format(
+                    columns=", ".join(missing)
+                ),
+                category="error",
+            )
+            return redirect(url_for("label_settings", label_id=label_id))
+
+        # Convert to {COMPOSITE_ID: value} format
+        new_auto_labels = {}
+        from .tasks.active_learning import COMPOSITE_ID
+
+        for index, row in df.iterrows():
+            composite_id = COMPOSITE_ID.format(
+                dataset_id=int(row["dataset_id"]), entry_id=row["entry_id"]
+            )
+            new_auto_labels[composite_id] = str(row["value"])
+
+        # Merge with existing auto-labels if they exist
+        existing_auto_labels = label.auto_labels if label.auto_labels else {}
+        merged_auto_labels = {**existing_auto_labels, **new_auto_labels}
+
+        # Update label with merged auto-labels
+        label.auto_labels = merged_auto_labels
+        db.session.commit()
+
+        flash(
+            _("Successfully uploaded {count} auto-labels").format(
+                count=len(new_auto_labels)
+            ),
+            category="success",
+        )
+
+    except Exception as e:
+        flash(
+            _("Error processing file: {error}").format(error=str(e)), category="error"
+        )
+
+    return redirect(url_for("label_settings", label_id=label_id))
 
 
 @app.route("/<int:project_id>/label-upload", methods=["POST"])

@@ -37,14 +37,14 @@ PERMANENT_SESSION_LIFETIME = timedelta(days=30)
 
 QUEUES_PATH = Path("/app/queues")
 
-UPLOAD_PATH = Path("/app/uploads/")
-CHUNK_SIZE = 5 * 1024 * 1024
-ALLOWED_EXTENSIONS = {"csv", "tsv"}
-MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024  # 10GB
-
 UPLOAD_BATCH_SIZE = 1000
 
 WORK_PATH = Path(os.getenv("WORK_FOLDER", "/app/work"))
+
+UPLOAD_PATH = WORK_PATH / "uploads"
+CHUNK_SIZE = 5 * 1024 * 1024
+ALLOWED_EXTENSIONS = {"csv", "tsv"}
+MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024  # 10GB
 
 RANDOM_SEED = os.getenv("RANDOM_SEED", None)
 
@@ -91,7 +91,9 @@ if "LABELS_TYPES" in labels:
 try:
     LABELS = eval(labels)
 except (TypeError, NameError):
-    print(f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!")
+    print(
+        f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!"
+    )
     LABELS = LabelTypes.YES_NO
 
 """List of endpoints that need a setup backend."""
@@ -103,47 +105,6 @@ NEED_LEARNER = [
 
 """Lists of permited endpoints for each user."""
 PERMISSIONS = {
-    "admin": [
-        "static",
-        "login",
-        "init_config",
-        "users",
-        "commands",
-        "hidden",
-        "labels",
-        "create_label",
-        "delete_label",
-        "extract_labels",
-        "extract_labels_json",
-        "label_settings",
-        "label_up",
-        "entry",
-        "queue",
-        "catch_queue",
-        "search",
-        "user_settings",
-        "edit_password",
-        "edit_language",
-        "logout",
-        "active_learning",
-        "create_al",
-        "catch_al",
-        "upload_data",
-        "check_task_status",
-        "sync_label",
-        "export_label",
-        "get_help",
-        "send_ticket",
-        "projects",
-        "delete_project",
-        "create_project",
-        "redirect_to_project",
-        "print_session",
-        "handle_large_upload",
-        "finalize_upload",
-        "gen_predictions",
-        "get_predictions",
-    ],
     "user": [
         "static",
         "login",

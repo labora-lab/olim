@@ -18,29 +18,29 @@ class BanditExplorer(ABC):
 
 
 class DummyBandit(BanditExplorer):
-    def __init__(self, *, n_levers: int, prob_levers: list[int], rng):
+    def __init__(self, *, n_levers: int, prob_levers: list[int], rng: np.random.Generator) -> None:
         self.prob_levers = prob_levers
         self.rng: np.random.Generator = rng
         self.n_levers = n_levers
 
-    def n_levers(self):
+    def n_levers(self) -> int:
         return self.n_levers
 
-    def inform(self, lever, reward):
+    def inform(self, lever: int, reward: float) -> None:
         pass
 
-    def select_lever(self):
+    def select_lever(self) -> int:
         return self.rng.choice(range(self.n_levers), p=self.prob_levers)
 
 
 class EpsilonGreedy(BanditExplorer):
-    def __init__(self, *, n_levers: int, epsilon: float, rng):
+    def __init__(self, *, n_levers: int, epsilon: float, rng: np.random.Generator) -> None:
         self.epsilon = epsilon
         self.rng = rng
 
         self._highest_known_payouts = np.ones(n_levers) * (-np.inf)
 
-    def n_levers(self):
+    def n_levers(self) -> int:
         return len(self._highest_known_payouts)
 
     def inform(self, lever: int, reward: float) -> None:
@@ -56,13 +56,15 @@ class EpsilonGreedy(BanditExplorer):
 
 
 class ConformalUCB(BanditExplorer):
-    def __init__(self, *, n_levers: int, reward_upper_bound: float, rng):
+    def __init__(
+        self, *, n_levers: int, reward_upper_bound: float, rng: np.random.Generator
+    ) -> None:
         self.rng = rng
 
         self.reward_upper_bound = reward_upper_bound
         self._payouts = [[] for _ in range(n_levers)]
 
-    def n_levers(self):
+    def n_levers(self) -> int:
         return len(self._payouts)
 
     def inform(self, lever: int, reward: float) -> None:

@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pandas as pd
 from flask import flash, session
 from flask_babel import _
@@ -7,7 +9,10 @@ from ..database import add_entry_label, get_dataset, get_entry, get_labels, new_
 
 
 def label_upload(
-    df, user_id: int | None = None, project_id: int | None = None, dataset_id: int | None = None
+    df,
+    user_id: int | None = None,
+    project_id: int | None = None,
+    dataset_id: int | None = None,
 ) -> None:
     """Upload label data from a dataframe
 
@@ -18,6 +23,9 @@ def label_upload(
     user_id = user_id or session["user_id"]
     project_id = project_id or session["project_id"]
     # Parse dates and sort by them
+    if "created" not in df.columns:
+        df["created"] = datetime.now()
+
     df["created"] = pd.to_datetime(df["created"])
     df = df.sort_values(by="created")
 

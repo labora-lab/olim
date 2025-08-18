@@ -1,68 +1,98 @@
-from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 import numpy as np
+import numpy.typing as npt
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
 
-from ..models import ClassificationModel
-from ..utils import dict_to_list
+# Type aliases
+IntArray = npt.NDArray[np.int64]
+FloatArray = npt.NDArray[np.float64]
 
 
-class ProbabilisticMetric(ABC):
-    @abstractmethod
-    def __call__(self, y_true: list[dict[int, float]], y_pred: list[int]) -> float:
-        pass
+def accuracy(
+    label_values: IntArray, preds: IntArray, label_proba: FloatArray | None = None
+) -> float:
+    return float(accuracy_score(label_values, preds))
 
 
-class ConcreteMetric(ABC):
-    @abstractmethod
-    def __call__(self, y_true: list[int], y_pred: list[int]) -> float:
-        pass
+def precision(
+    label_values: IntArray,
+    preds: IntArray,
+    label_proba: FloatArray | None = None,
+    target: int | None = None,
+) -> float:
+    if target is None:
+        raise ValueError("target parameter is required for precision metric")
+    binary_labels = (label_values == target).astype(int)
+    binary_preds = (preds == target).astype(int)
+    return float(precision_score(binary_labels, binary_preds, zero_division=0))
 
 
-class Auc(ProbabilisticMetric):
-    def __call__(self, y_true: list[dict[int, float]], y_pred: list[int]) -> float:
-        return roc_auc_score(
-            np.asarray(y_true),
-            [dict_to_list(preds) for preds in y_pred],
-            multi_class="ovr",
-        )  # FIXME
+def recall(
+    label_values: IntArray,
+    preds: IntArray,
+    label_proba: FloatArray | None = None,
+    target: int | None = None,
+) -> float:
+    if target is None:
+        raise ValueError("target parameter is required for recall metric")
+    binary_labels = (label_values == target).astype(int)
+    binary_preds = (preds == target).astype(int)
+    return float(recall_score(binary_labels, binary_preds, zero_division=0))
 
 
-class Accuracy(ConcreteMetric):
-    def __call__(self, y_true: list[int], y_pred: list[int]) -> float:
-        return accuracy_score(y_true, y_pred)
+def specificity(
+    label_values: IntArray,
+    preds: IntArray,
+    label_proba: FloatArray | None = None,
+    target: int | None = None,
+) -> float:
+    """Compute specificity (true negative rate) for target class"""
+    if target is None:
+        raise ValueError("target parameter is required for specificity metric")
+
+    # Specificity is recall for the negative class
+    binary_labels = (label_values != target).astype(int)
+    binary_preds = (preds != target).astype(int)
+    return float(recall_score(binary_labels, binary_preds, zero_division=0))
 
 
-class Precision(ConcreteMetric):
-    def __call__(self, y_true: list[int], y_pred: list[int]) -> float:
-        return precision_score(
-            y_true, y_pred, zero_division=1
-        )  # TODO switch to `zero_division=np.nan`
+def auc_roc(
+    label_values: IntArray,
+    preds: IntArray,
+    label_proba: FloatArray | None = None,
+    target: int | None = None,
+    **kwargs,
+) -> float:
+    if label_proba is None:
+        raise ValueError("label_proba parameter is required for auc_roc metric")
 
+    # If target is None, compute macro-averaged AUC (one-vs-rest)
+    if target is None:
+        unique_label_values = np.unique(label_values)
 
-class Recall(ConcreteMetric):
-    def __call__(self, y_true: list[int], y_pred: list[int]) -> float:
-        return recall_score(
-            y_true, y_pred, zero_division=1
-        )  # TODO switch to `zero_division=np.nan`
+        if len(unique_label_values) < 2:
+            return 0
 
+        # For binary classification, use standard AUC
+        if len(unique_label_values) == 2:
+            return float(roc_auc_score(label_values, label_proba[:, 1]))
 
-Metrics = list[ProbabilisticMetric | ConcreteMetric]
+        # For multiclass, use OvR
+        try:
+            return float(
+                roc_auc_score(
+                    label_values, label_proba, multi_class="ovr", average="macro"
+                )
+            )
+        except ValueError:
+            return 0
 
+    # Single target AUC
+    binary_labels = (label_values == target).astype(int)
+    target_probs = label_proba[:, target]
 
-def evaluate_metrics(
-    metrics: Metrics, model: ClassificationModel, labelled_data: list[tuple[str, int]]
-) -> dict[str, float]:
-    unlabelled_data = [text for text, label in labelled_data]
-    y_true = [label for text, label in labelled_data]
+    if len(np.unique(binary_labels)) < 2:
+        return 0
 
-    out = {}
-    for metric in metrics:
-        if isinstance(metric, ProbabilisticMetric):
-            value = metric(y_true, model.predict_proba(unlabelled_data))
-        elif isinstance(metric, ConcreteMetric):
-            value = metric(y_true, model.predict(unlabelled_data))
-        else:
-            raise TypeError()
-        out[type(metric).__name__] = value
-    return out
+    return float(roc_auc_score(binary_labels, target_probs))

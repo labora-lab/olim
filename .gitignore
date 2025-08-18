@@ -176,3 +176,8 @@ instance/
 queues/
 work/
 uploads/
+
+# Claude Code project instructions
+CLAUDE.md
+
+node_modules/*

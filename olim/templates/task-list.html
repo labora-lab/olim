@@ -1,23 +1,35 @@
 <ul class="collection">
-    {% if active_tasks %}
-    {% for task in active_tasks %}
-    <li class="collection-item grey-text darker-4">
-        <span>{{ task['name'] }} <em>({{ _('Running') }})</em></span>
+    {% for task in tasks %}
+    {% if task.status == "STARTED" %}
+    <li class="collection-item blue-text darker-4">
+        <i class="material-icons right">play_circle_filled</i>{{ task.name }} </br>
+        <strong>{{ _('Running') }}</strong>
     </li>
-    {% endfor %}
-    {% endif %}
-    {% if completed_tasks %}
-    {% for task in completed_tasks[:20] %}
-    <li class="collection-item{{' tooltipped' if task.error else ''}}  {{ 'green-text' if task['status'] == 'SUCCESS' else 'red-text' }}"
-        {% if task.error %} data-tooltip="{{''.join(task.error)}}" {% endif %}>
-        <i class="material-icons right">
-            {{ 'check_circle' if task['status'] == "SUCCESS" else 'error' }}
-        </i> {{ task.name }} — {{ _('Completed') if task['status'] == "SUCCESS" else
-        _('Failed') }}
+    {% elif task.status == "SUCCESS" %}
+    <li class="collection-item green-text">
+        <i class="material-icons right">check_circle</i> {{ task.name }}</br>
+        <strong>{{ _('Completed') }}</strong>
     </li>
-    {% endfor %}
+    {% elif task.status == "FAILURE" %}
+    <li class="collection-item{{' tooltipped' if task.error else ''}} red-text" {% if task.error %}
+        data-tooltip="{{''.join(task.error)}}" {% endif %}>
+        <i class="material-icons right">error</i> {{ task.name }} </br>
+        <strong>{{ _('Failed') }}</strong>
+    </li>
+    {% elif task.status == "REVOKED" %}
+    <li class="collection-item{{' tooltipped' if task.error else ''}} grey-text" {% if task.error %}
+        data-tooltip="{{''.join(task.error)}}" {% endif %}>
+        <i class="material-icons right">remove_circle</i> {{ task.name }} </br>
+        <strong>{{ _('Canceled') }}</strong>
+    </li>
+    {% elif task.status == "PENDING" or task.status == "RETRY" %}
+    <li class="collection-item grey-text">
+        <i class="material-icons right">play_circle_outline</i> {{ task.name }} </br>
+        <strong>{{ _('Pending') }}</strong>
+    </li>
     {% endif %}
-    {% if not (active_tasks or completed_tasks) %}
+    {% endfor %}
+    {% if not (tasks) %}
     <li class="collection-item grey-text darker-4">
         {{ _('No tasks.') }}
     </li>

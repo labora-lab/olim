@@ -1,4 +1,4 @@
-import json
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,14 @@ from flask_babel import _
 
 from . import app, db, settings
 from .celery_app import launch_task_with_tracking
-from .database import CeleryTask, Label, add_entry_label, get_datasets, get_entry, get_label
+from .database import (
+    CeleryTask,
+    Label,
+    add_entry_label,
+    get_datasets,
+    get_entry,
+    get_label,
+)
 from .functions import get_highlights, render_entry
 from .tasks.active_learning import (
     COMPOSITE_ID,
@@ -21,6 +28,83 @@ from .tasks.active_learning import (
 
 def new_al(label: Label) -> None:
     return None
+
+
+def submit_label_value(label, entry, value_str, user_id, is_auto_label=False):
+    """Helper function to submit a label value and handle all associated tasks"""
+    # Add the label to the database
+    add_entry_label(label.id, entry.id, user_id, value_str)
+
+    # Launch task to process the label
+    launch_task_with_tracking(
+        add_label_value,
+        project_id=label.project_id,
+        label_id=label.id,
+        dataset_id=entry.dataset_id,
+        entry_id=entry.entry_id,
+        value=value_str,
+        user_id=user_id,
+        track_progress=False,
+    )
+
+    # Drop labeled entry from AL cache
+    cache = label.cache if label.cache else []
+    comp_id = COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id)
+
+    # Handle both old format (string) and new format (list from JSON)
+    cache_items_to_remove = []
+    for cache_item in cache:
+        if isinstance(cache_item, list):
+            entry_composite_id, review_needed = cache_item
+            if entry_composite_id == comp_id:
+                cache_items_to_remove.append(cache_item)
+        else:
+            if cache_item == comp_id:
+                cache_items_to_remove.append(cache_item)
+
+    for item in cache_items_to_remove:
+        cache.remove(item)
+
+    if cache_items_to_remove:
+        label.cache = cache
+
+    # Check for training
+    tasks = CeleryTask.query.filter_by(
+        task_name="learner.train_model",
+    ).all()
+    pending_tasks = [
+        task.id
+        for task in tasks
+        if task.kwargs["label_id"] == label.id and task.status in ["PENDING", "STARTED"]
+    ]
+
+    # Check train
+    if label.training_counter >= 4 and not pending_tasks:
+        launch_task_with_tracking(
+            train_model,
+            description=_("Training for label {label_name}").format(
+                label_name=label.name
+            ),
+            project_id=label.project_id,
+            label_id=label.id,
+            user_id=user_id,
+            track_progress=True,
+        )
+        label.training_counter = 0
+    else:
+        label.training_counter += 1
+
+    # Flash appropriate message
+    suffix = " (auto-label file)" if is_auto_label else ""
+    flash(
+        _('Added value "{value_str}" for entry {entry_id}.').format(
+            value_str=value_str, entry_id=entry.entry_id
+        )
+        + suffix,
+        category="success",
+    )
+
+    return cache_items_to_remove
 
 
 @app.route("/al/<int:label_id>", methods=["GET", "POST"])
@@ -60,75 +144,72 @@ def catch_al(label_id: int) -> ...:
         entry = get_entry(request.form["entry_id"], by="id")
         if entry is None:
             flash(
-                _("Error on active learning for label {label_name} report to developers.").format(
-                    label_name=label.name
-                ),
+                _(
+                    "Error on active learning for label {label_name} report to developers."
+                ).format(label_name=label.name),
                 category="error",
             )
             return redirect("/")
 
-        add_entry_label(label_id, entry.id, session["user_id"], value_str)
-        launch_task_with_tracking(
-            add_label_value,
-            project_id=label.project_id,
-            label_id=label.id,
-            dataset_id=entry.dataset_id,
-            entry_id=entry.entry_id,
-            value=value_str,
-            user_id=session["user_id"],
-            track_progress=False,
+        # Use helper function to submit the label
+        submit_label_value(
+            label, entry, value_str, session["user_id"], is_auto_label=False
         )
-
-        # Drop labeled entry from AL cache
-        cache = json.loads(label.cache)  # type: ignore
-        comp_id = COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id)
-        if comp_id in cache:
-            cache.remove(COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id))
-            label.cache = json.dumps(cache)
-
-        # Check train
-        if label.training_counter == 4:
-            launch_task_with_tracking(
-                train_model,
-                description=_("Training for label {label_name}").format(label_name=label.name),
-                project_id=label.project_id,
-                label_id=label.id,
-                user_id=session["user_id"],
-                track_progress=True,
-            )
-            label.training_counter = 0
-        else:
-            label.training_counter += 1
-
         db.session.commit()
-
-        flash(
-            _(f'Added value "{value_str}" for entry {request.form["entry_id"]}.').format(
-                label_name=label.name
-            ),
-            category="success",
-        )
 
     data = {
         "label": label,
         "highlight": get_highlights(),
         "valid_entry": True,
-        "messages": json.loads(label.metrics),  # type: ignore
+        "messages": label.metrics if label.metrics else [],
     }
-    while True:
-        dataset_id, entry_id = eval(json.loads(label.cache)[0])  # type: ignore
+    cache = label.cache[:] if label.cache else []
+    cache_index = 0
+
+    while cache_index < len(cache):
+        cache_item = cache[cache_index]
+        # Handle both old format (string) and new format (list from JSON)
+        if isinstance(cache_item, list):
+            entry_composite_id, review_needed = cache_item
+        else:
+            entry_composite_id = cache_item
+            review_needed = False
+
+        dataset_id, entry_id = eval(entry_composite_id)
+        print(dataset_id, entry_id)
         entry = get_entry((dataset_id, str(entry_id)), "composite")
-        if label in [el.label for el in entry.labels]:
+        if entry is None:
+            raise ValueError(f"Failed to fetch entry {entry_id}")
+
+        # Check if entry has an auto-label and auto-submit it
+        if label.auto_labels and entry_composite_id in label.auto_labels:
+            auto_label_value = label.auto_labels[entry_composite_id]
+            print(
+                f"[AUTO-LABEL] Found auto-label for {entry_composite_id}: {auto_label_value}"
+            )
+
+            # Use helper function to submit the auto-label
+            submit_label_value(
+                label, entry, auto_label_value, session["user_id"], is_auto_label=True
+            )
+
+            # Move to next cache item
+            cache_index += 1
+            continue
+
+        # Skip only if already labeled AND not marked for review
+        if label in [el.label for el in entry.labels] and not review_needed:
             print(f"Skipping {dataset_id}, {entry_id}")
-            cache = json.loads(label.cache)  # type: ignore
-            comp_id = COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id)
-            if comp_id in cache:
-                cache.remove(
-                    COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id)
-                )
-                label.cache = json.dumps(cache)
+            cache_index += 1
         else:
             break
+
+    # Only update cache on POST (after submission), not on GET
+    if request.method == "POST":
+        # Remove the processed items from cache
+        updated_cache = cache[cache_index + 1 :]
+        label.cache = updated_cache
+    db.session.commit()
     data = render_entry(str(entry_id), int(dataset_id), data)
     return render_template("al-entry.html", **data)
 
@@ -167,7 +248,9 @@ def gen_predictions(label_id: int) -> ...:
             project_id=label.project_id,
             label_id=label.id,
             user_id=session["user_id"],
-            description=_("Generationg predictions for {label_name}").format(label_name=label.name),
+            description=_("Generating predictions for {label_name}").format(
+                label_name=label.name
+            ),
             track_progress=True,
         )
     return redirect(url_for("label_settings", label_id=label_id))
@@ -189,7 +272,9 @@ def get_predictions(label_id: int, task_id: str) -> ...:
 
     if res.ready():
         preds = res.result["predictions"]  # type: ignore
-        preds_values = [pred[0] if len(pred) == 1 else np.nan for pred in preds.values()]
+        preds_values = [
+            pred[0] if len(pred) == 1 else np.nan for pred in preds.values()
+        ]
         preds_ids = [eval(i)[1] for i in preds.keys()]
         dataset_ids = [eval(i)[0] for i in preds.keys()]
         dataset_names = [dataset_names[i] for i in dataset_ids]
@@ -202,13 +287,20 @@ def get_predictions(label_id: int, task_id: str) -> ...:
             }
         )
 
+        # Create file for local saving
+        filename = Path("/app/data/predictions")
+        filename.mkdir(parents=True, exist_ok=True)
+        filename = filename / f"{label.name}-0.95-predictions.csv"
+
+        # Save to data folder
+        print(f"Saving exported predictions to {filename}")
+        pred_df.to_csv(filename)
+
         # download json res["predictions"] as csv
         return Response(
             pred_df.to_csv(index=False),
             mimetype="text/csv",
-            headers={
-                "Content-disposition": f"attachment; filename={label.name}-0.95-predictions.csv"
-            },
+            headers={"Content-disposition": f"attachment; filename={filename.name}"},
         )
     else:
         flash(

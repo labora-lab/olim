@@ -1,0 +1,71 @@
+# Docker Compose for workers only
+# Use this to run workers that connect to remote database, Redis, and Elasticsearch
+# This setup includes local Redis and workers connecting to remote DB and ES
+# Usage: docker-compose -f docker-compose.workers-only.yml up
+
+x-app-base: &app-base
+  image: olim:latest
+  volumes:
+    - ./:/app
+    # - worker-data:/app/work
+    # - upload-data:/app/uploads
+    # - ./data:/app/data
+  networks:
+    - olim-workers
+  restart: unless-stopped
+
+# Environments for remote connections
+x-worker-env: &worker-env
+  DB_HOST: "${DB_HOST}"
+  DB_NAME: "${POSTGRES_DB}"
+  DB_USER: "${POSTGRES_USER}"
+  DB_PASSWORD: "${POSTGRES_PASSWORD}"
+  DB_PORT: "${POSTGRES_PORT:-5432}"
+  DEBUG: "${DEBUG:-false}"
+  ES_SERVER: "${ES_SERVER}"
+  WORK_PATH: /app/work
+  LABELS: "${LABELS}"
+  HELP_URL: "${HELP_URL}"
+  REDIS_HOST: "olim_redis"
+  REDIS_PASSWORD: "${REDIS_PASSWORD}"
+  REDIS_PORT: "${REDIS_PORT:-6379}"
+
+services:
+  redis:
+    container_name: olim_redis
+    image: redis:latest
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    healthcheck:
+      test: [ 'CMD', 'redis-cli', 'ping' ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - olim-workers
+
+  worker:
+    <<: *app-base
+    container_name: olim_worker
+    command: celery -A olim.celery_app worker --loglevel=info
+    entrypoint: "" # Skips entrypoint script
+    environment:
+      <<: *worker-env
+    depends_on:
+      - redis
+
+volumes:
+  worker-data:
+    driver: local
+  upload-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  olim-workers:
+    driver: bridge
