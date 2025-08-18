@@ -129,9 +129,7 @@ def extract_labels(label_id: int) -> ...:
     for le in label.entries:
         if not le.is_deleted:
             module = getattr(entry_types, le.entry.type)
-            dfs_entries.append(
-                module.extract_texts(le.entry.entry_id, le.entry.dataset.id)
-            )
+            dfs_entries.append(module.extract_texts(le.entry.entry_id, le.entry.dataset.id))
     df = df.merge(pd.concat(dfs_entries, ignore_index=True), how="left", on="entry_id")
     return Response(
         df.to_csv(index=False),
@@ -209,9 +207,7 @@ def label_settings(label_id: int) -> ...:
         return redirect("/")
     project_id = label.project_id
 
-    export_tasks = CeleryTask.query.filter_by(
-        task_name="learner.export_predictions"
-    ).all()[::-1]
+    export_tasks = CeleryTask.query.filter_by(task_name="learner.export_predictions").all()[::-1]
 
     # Check project_id
     res = update_session_project(project_id)
@@ -220,9 +216,7 @@ def label_settings(label_id: int) -> ...:
     if label is None:
         flash(_("Label not found"), category="error")
         return redirect(url_for("labels", project_id=project_id))
-    return render_template(
-        "label-settings.html", label=label, export_tasks=export_tasks
-    )
+    return render_template("label-settings.html", label=label, export_tasks=export_tasks)
 
 
 @app.route("/label/<int:label_id>/update-learner-parameters", methods=["POST"])
@@ -260,7 +254,7 @@ def update_learner_parameters(label_id: int) -> ...:
             is_list = str(i + 1) in param_is_list  # Check if checkbox was checked
 
             # Type conversion function
-            def convert_value(val_str: str, val_type: str):
+            def convert_value(val_str: str, val_type: str) -> ...:
                 val_str = val_str.strip()
                 if val_type == "int":
                     return int(val_str)
@@ -276,9 +270,7 @@ def update_learner_parameters(label_id: int) -> ...:
                 # Split by comma and convert each value
                 if value_str.strip():
                     list_values = [v.strip() for v in value_str.split(",") if v.strip()]
-                    parameters[name] = [
-                        convert_value(v, base_type) for v in list_values
-                    ]
+                    parameters[name] = [convert_value(v, base_type) for v in list_values]
                 else:
                     parameters[name] = []
             else:
@@ -336,9 +328,7 @@ def upload_auto_labels(label_id: int) -> ...:
         if not required_columns.issubset(df.columns):
             missing = required_columns - set(df.columns)
             flash(
-                _("Missing required columns: {columns}").format(
-                    columns=", ".join(missing)
-                ),
+                _("Missing required columns: {columns}").format(columns=", ".join(missing)),
                 category="error",
             )
             return redirect(url_for("label_settings", label_id=label_id))
@@ -347,7 +337,7 @@ def upload_auto_labels(label_id: int) -> ...:
         new_auto_labels = {}
         from .tasks.active_learning import COMPOSITE_ID
 
-        for index, row in df.iterrows():
+        for __, row in df.iterrows():
             composite_id = COMPOSITE_ID.format(
                 dataset_id=int(row["dataset_id"]), entry_id=row["entry_id"]
             )
@@ -362,16 +352,12 @@ def upload_auto_labels(label_id: int) -> ...:
         db.session.commit()
 
         flash(
-            _("Successfully uploaded {count} auto-labels").format(
-                count=len(new_auto_labels)
-            ),
+            _("Successfully uploaded {count} auto-labels").format(count=len(new_auto_labels)),
             category="success",
         )
 
     except Exception as e:
-        flash(
-            _("Error processing file: {error}").format(error=str(e)), category="error"
-        )
+        flash(_("Error processing file: {error}").format(error=str(e)), category="error")
 
     return redirect(url_for("label_settings", label_id=label_id))
 

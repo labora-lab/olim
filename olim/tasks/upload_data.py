@@ -159,9 +159,7 @@ def upload_dataset(
     if jsonl_file.exists():
         from datetime import datetime
 
-        backup_name = (
-            f"{dataset_id}.jsonl.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        )
+        backup_name = f"{dataset_id}.jsonl.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         backup_path = dataset_dir / backup_name
         jsonl_file.rename(backup_path)
         print(f"WARNING: Existing JSONL file found and moved to {backup_name}")
@@ -200,15 +198,11 @@ def upload_dataset(
         # Process current batch
         result = process_batch.s(batch, dataset_id, upload_type, index_name)()
 
-        processed_batches.append(
-            {"batch": batch_count, "result": result, "size": len(batch)}
-        )
+        processed_batches.append({"batch": batch_count, "result": result, "size": len(batch)})
 
         # Check for failure
         if not result.get("success", False):
-            raise Exception(
-                f"Batch {batch_count} failed: {result.get('error', 'Unknown error')}"
-            )
+            raise Exception(f"Batch {batch_count} failed: {result.get('error', 'Unknown error')}")
 
     return {
         "success": True,

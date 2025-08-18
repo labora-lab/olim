@@ -1,5 +1,3 @@
-from typing import TYPE_CHECKING
-
 import numpy as np
 import numpy.typing as npt
 from sklearn.metrics import accuracy_score, precision_score, recall_score, roc_auc_score
@@ -81,9 +79,7 @@ def auc_roc(
         # For multiclass, use OvR
         try:
             return float(
-                roc_auc_score(
-                    label_values, label_proba, multi_class="ovr", average="macro"
-                )
+                roc_auc_score(label_values, label_proba, multi_class="ovr", average="macro")
             )
         except ValueError:
             return 0

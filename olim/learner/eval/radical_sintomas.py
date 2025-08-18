@@ -1,4 +1,5 @@
 import re
+
 import pandas as pd
 
 
@@ -26,14 +27,14 @@ def rm_accent(text: str, pattern: str | list[str] = "all") -> str:
         "umlaut": "aeiouAEIOUy",
         "cedil": "cC",
     }
-    accent_types = ["´", "`", "^", "~", "¨", "ç"]
+    # accent_types = ["´", "`", "^", "~", "¨", "ç"] # noqa
     all_patterns = ["all", "al", "a", "todos", "t", "to", "tod", "todo"]
     if any(p in all_patterns for p in pattern):
         all_symbols = "".join(symbols.values())
         all_nude = "".join(nude_symbols.values())
         return text.translate(str.maketrans(all_symbols, all_nude))
     accent_map = {
-        "´": ("acute", "acute"),
+        "´": ("acute", "acute"),  # noqa
         "`": ("grave", "grave"),
         "^": ("circunflex", "circunflex"),
         "~": ("tilde", "tilde"),
@@ -43,9 +44,7 @@ def rm_accent(text: str, pattern: str | list[str] = "all") -> str:
     for p in pattern:
         if p in accent_map:
             accent = accent_map[p]
-            text = text.translate(
-                str.maketrans(symbols[accent[0]], nude_symbols[accent[1]])
-            )
+            text = text.translate(str.maketrans(symbols[accent[0]], nude_symbols[accent[1]]))
     return text
 
 
@@ -94,9 +93,7 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame | None:
     df["sintomas_identificados"] = df["sintomas_queixas"].apply(identificar_sintomas)
     df["sintomas_arboviroses"] = df["sintomas_identificados"].apply(
         lambda x: (
-            ", ".join(re.findall(r"(\b\w+\b\,\s+)?\bFEBRE\b(\,\s+\b\w+\b)?", x))
-            if x
-            else None
+            ", ".join(re.findall(r"(\b\w+\b\,\s+)?\bFEBRE\b(\,\s+\b\w+\b)?", x)) if x else None
         )
     )
     df["grafico"] = df["sintomas_arboviroses"]
@@ -136,8 +133,7 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame | None:
             df.loc[mask, col] = "1"
     df["suspeita_arbo3"] = "0"
     df.loc[
-        (df["febre"] == "1")
-        & ((df["mancha"] == "1") | (df["dor_retro_orbital"] == "1")),
+        (df["febre"] == "1") & ((df["mancha"] == "1") | (df["dor_retro_orbital"] == "1")),
         "suspeita_arbo3",
     ] = "1"
     df["suspeita_arbo4"] = "0"
@@ -231,9 +227,7 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame | None:
             & df["sintomas_c"].str.contains("GARGANTA", na=False)
             & (
                 df["cefaleia"].eq("1")
-                | df["sintomas_c"].str.contains(
-                    "DOR ARTICULAR|MIALGIA|ARTRALGIA", na=False
-                )
+                | df["sintomas_c"].str.contains("DOR ARTICULAR|MIALGIA|ARTRALGIA", na=False)
             )
         ),
         (
@@ -241,9 +235,7 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame | None:
             & df["sintomas_c"].str.contains("ODINOFAGIA", na=False)
             & (
                 df["cefaleia"].eq("1")
-                | df["sintomas_c"].str.contains(
-                    "DOR ARTICULAR|MIALGIA|ARTRALGIA", na=False
-                )
+                | df["sintomas_c"].str.contains("DOR ARTICULAR|MIALGIA|ARTRALGIA", na=False)
             )
         ),
         (
@@ -254,9 +246,7 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame | None:
         (
             df["sintomas_c"].str.contains("FEBR", na=False)
             & (df["idade"] < 2)
-            & df["sintomas_c"].str.contains(
-                "TOSSE|CORIZA|OBSTRUCAO NASAL|NARIZ ENTUPIDO", na=False
-            )
+            & df["sintomas_c"].str.contains("TOSSE|CORIZA|OBSTRUCAO NASAL|NARIZ ENTUPIDO", na=False)
         ),
     ]
     for condition in resp_conditions:
@@ -266,18 +256,12 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame | None:
         (
             df["sintomas_c"].str.contains("FEBR", na=False)
             & df["sintomas_c"].str.contains("GARGANTA", na=False)
-            & (
-                df["cefaleia"].eq("1")
-                | df["sintomas_c"].str.contains("MIALGIA", na=False)
-            )
+            & (df["cefaleia"].eq("1") | df["sintomas_c"].str.contains("MIALGIA", na=False))
         ),
         (
             df["sintomas_c"].str.contains("FEBR", na=False)
             & df["sintomas_c"].str.contains("ODINOFAGIA", na=False)
-            & (
-                df["cefaleia"].eq("1")
-                | df["sintomas_c"].str.contains("MIALGIA", na=False)
-            )
+            & (df["cefaleia"].eq("1") | df["sintomas_c"].str.contains("MIALGIA", na=False))
         ),
         (
             df["sintomas_c"].str.contains("FEBR", na=False)
@@ -287,9 +271,7 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame | None:
         (
             df["sintomas_c"].str.contains("FEBR", na=False)
             & (df["idade"] < 2)
-            & df["sintomas_c"].str.contains(
-                "TOSSE|CORIZA|OBSTRUCAO NASAL|NARIZ ENTUPIDO", na=False
-            )
+            & df["sintomas_c"].str.contains("TOSSE|CORIZA|OBSTRUCAO NASAL|NARIZ ENTUPIDO", na=False)
         ),
     ]
     for condition in resp2_conditions:
@@ -325,8 +307,7 @@ def process_data(df: pd.DataFrame) -> pd.DataFrame | None:
     ] = "1"
     df["ict"] = "0"
     df.loc[
-        (df["febre"].eq("1"))
-        & (df["sintomas_c"].str.contains("ICTER|AMAREL", na=False)),
+        (df["febre"].eq("1")) & (df["sintomas_c"].str.contains("ICTER|AMAREL", na=False)),
         "ict",
     ] = "1"
     df["diarreica"] = "0"
@@ -375,7 +356,9 @@ def get_radical_predictions(symptom_name: str, texts: list[str]) -> list[int]:
     if symptom_name not in df_processed.columns:
         raise ValueError(
             f"Symptom '{symptom_name}' not found in radical classification output. "
-            f"Valid symptoms: {', '.join([col for col in df_processed.columns if col not in df.columns])}"
+            f"Valid symptoms: {
+                ', '.join([col for col in df_processed.columns if col not in df.columns])
+            }"
         )
 
     # Convert predictions to binary integers
@@ -419,7 +402,7 @@ def evaluate_symptom_performance(
     radical_pos_count = 0
 
     # Compare predictions
-    for model_pred, radical_pred in zip(model_predictions, radical_predictions):
+    for model_pred, radical_pred in zip(model_predictions, radical_predictions, strict=False):
         # Count matches
         if model_pred == radical_pred:
             match_count += 1
@@ -446,9 +429,7 @@ def evaluate_symptom_performance(
 
     # Percentage of radical positives that model missed
     radical_pos_model_failed = (
-        (model_neg_radical_pos / radical_pos_count * 100)
-        if radical_pos_count > 0
-        else 0.0
+        (model_neg_radical_pos / radical_pos_count * 100) if radical_pos_count > 0 else 0.0
     )
 
     return {

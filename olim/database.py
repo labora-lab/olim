@@ -144,10 +144,10 @@ class Label(db.Model, CreationControl):
     metrics: Mapped[list] = db.mapped_column(db.JSON, nullable=True)
     cache: Mapped[list] = db.mapped_column(db.JSON, nullable=True)
     training_counter: Mapped[int] = db.mapped_column(db.Integer, default=0)
-    
+
     # Learner parameters for active learning configuration
     learner_parameters: Mapped[dict] = db.mapped_column(db.JSON, nullable=True)
-    
+
     # Auto-labels stored as {COMPOSITE_ID: value} for automatic labeling during active learning
     auto_labels: Mapped[dict] = db.mapped_column(db.JSON, nullable=True)
 

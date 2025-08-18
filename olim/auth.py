@@ -211,11 +211,11 @@ def role_has_permission(endpoint=None, role=None) -> bool:
     if role is None:
         role = get_user_role()
     endpoint = endpoint or request.endpoint
-    
+
     # Admin users have permission for everything
     if role == "admin":
         return True
-    
+
     permitted_endpoints = settings.PERMISSIONS.get(role, [])
     return endpoint in permitted_endpoints
 

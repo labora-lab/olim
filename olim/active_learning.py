@@ -30,7 +30,7 @@ def new_al(label: Label) -> None:
     return None
 
 
-def submit_label_value(label, entry, value_str, user_id, is_auto_label=False):
+def submit_label_value(label, entry, value_str, user_id, is_auto_label=False) -> list[str]:
     """Helper function to submit a label value and handle all associated tasks"""
     # Add the label to the database
     add_entry_label(label.id, entry.id, user_id, value_str)
@@ -82,9 +82,7 @@ def submit_label_value(label, entry, value_str, user_id, is_auto_label=False):
     if label.training_counter >= 4 and not pending_tasks:
         launch_task_with_tracking(
             train_model,
-            description=_("Training for label {label_name}").format(
-                label_name=label.name
-            ),
+            description=_("Training for label {label_name}").format(label_name=label.name),
             project_id=label.project_id,
             label_id=label.id,
             user_id=user_id,
@@ -144,17 +142,15 @@ def catch_al(label_id: int) -> ...:
         entry = get_entry(request.form["entry_id"], by="id")
         if entry is None:
             flash(
-                _(
-                    "Error on active learning for label {label_name} report to developers."
-                ).format(label_name=label.name),
+                _("Error on active learning for label {label_name} report to developers.").format(
+                    label_name=label.name
+                ),
                 category="error",
             )
             return redirect("/")
 
         # Use helper function to submit the label
-        submit_label_value(
-            label, entry, value_str, session["user_id"], is_auto_label=False
-        )
+        submit_label_value(label, entry, value_str, session["user_id"], is_auto_label=False)
         db.session.commit()
 
     data = {
@@ -184,9 +180,7 @@ def catch_al(label_id: int) -> ...:
         # Check if entry has an auto-label and auto-submit it
         if label.auto_labels and entry_composite_id in label.auto_labels:
             auto_label_value = label.auto_labels[entry_composite_id]
-            print(
-                f"[AUTO-LABEL] Found auto-label for {entry_composite_id}: {auto_label_value}"
-            )
+            print(f"[AUTO-LABEL] Found auto-label for {entry_composite_id}: {auto_label_value}")
 
             # Use helper function to submit the auto-label
             submit_label_value(
@@ -248,9 +242,7 @@ def gen_predictions(label_id: int) -> ...:
             project_id=label.project_id,
             label_id=label.id,
             user_id=session["user_id"],
-            description=_("Generating predictions for {label_name}").format(
-                label_name=label.name
-            ),
+            description=_("Generating predictions for {label_name}").format(label_name=label.name),
             track_progress=True,
         )
     return redirect(url_for("label_settings", label_id=label_id))
@@ -272,9 +264,7 @@ def get_predictions(label_id: int, task_id: str) -> ...:
 
     if res.ready():
         preds = res.result["predictions"]  # type: ignore
-        preds_values = [
-            pred[0] if len(pred) == 1 else np.nan for pred in preds.values()
-        ]
+        preds_values = [pred[0] if len(pred) == 1 else np.nan for pred in preds.values()]
         preds_ids = [eval(i)[1] for i in preds.keys()]
         dataset_ids = [eval(i)[0] for i in preds.keys()]
         dataset_names = [dataset_names[i] for i in dataset_ids]

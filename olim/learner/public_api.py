@@ -1,32 +1,24 @@
 import json
 import pickle
-import warnings
 from collections.abc import Callable
 from pathlib import Path
 from statistics import multimode
 from threading import Lock
-from typing import TypeAlias, Callable
 
 import numpy as np
 import numpy.typing as npt
-from sklearn.preprocessing import LabelEncoder
 from sklearn.cluster import KMeans
 from sklearn.metrics import (
-    accuracy_score,
-    confusion_matrix,
     pairwise_distances_argmin_min as dist_argmin,
-    precision_score,
-    recall_score,
-    roc_auc_score,
 )
 from sklearn.preprocessing import LabelEncoder
 
 from .active.policies import ConformalUnsertantyPolicy, Policy
 from .bandits import BanditExplorer, DummyBandit
-from .eval.metrics import accuracy, precision, recall, specificity, auc_roc
+from .eval.metrics import accuracy, auc_roc, precision, recall, specificity
 from .models import ClassificationModel, DummyClassificationModel
 from .models.conformal import ConformalPredictor
-from .settings import CLASSIFICATION_MODEL, SKIP_AL, UNCERTAIN_PERC
+from .settings import SKIP_AL, UNCERTAIN_PERC
 from .utils import SlotSet, sanitize_data
 
 # Dictionary for available model classes
@@ -37,10 +29,10 @@ AVAILABLE_MODELS = {
 # Import and add TFIDF/sklearn models if available
 try:
     from .models.tfidf_sklearn import (
-        TfidfXGBoostClassifier,
-        TfidfLogisticRegressionClassifier,
         TfidfDecisionTreeClassifier,
         TfidfLightGBMClassifier,
+        TfidfLogisticRegressionClassifier,
+        TfidfXGBoostClassifier,
     )
 
     AVAILABLE_MODELS.update(
@@ -56,7 +48,8 @@ except ImportError:
 
 # Import and add DebertaV3Wrapper if keras_hub is available
 try:
-    import keras_hub  # type: ignore
+    import keras_hub  # noqa
+
     from .models.keras_classifiers import DebertaV3Wrapper
 
     AVAILABLE_MODELS["DebertaV3Wrapper"] = DebertaV3Wrapper  # type: ignore
@@ -72,8 +65,8 @@ EntryId = int | str
 FloatArray = npt.NDArray[np.float64]
 IntArray = npt.NDArray[np.int64]
 ConfidenceInterval = tuple[float, float]
-MetricResult: TypeAlias = float | dict[str, float] | list[float]
-MetricWithCI: TypeAlias = tuple[
+MetricResult: type = float | dict[str, float] | list[float]
+MetricWithCI: type = tuple[
     MetricResult,
     ConfidenceInterval | dict[str, ConfidenceInterval] | list[ConfidenceInterval],
 ]
@@ -181,13 +174,12 @@ class ActiveLearningBackend:
             min(self.subsample_size[-2], len(self._unlabelled_dataset)),
             replace=False,
         )
-        self._cached_subsample = [
-            self._unlabelled_dataset[i] for i in cached_subsample_is
-        ]
+        self._cached_subsample = [self._unlabelled_dataset[i] for i in cached_subsample_is]
         self._given_nexts = []
         self._validate = False
 
-        # self._bandit_explorer = EpsilonGreedy(n_levers=2, epsilon=0.1, rng=self._rng)        self._data_lock = Lock()
+        # self._bandit_explorer = EpsilonGreedy(n_levers=2, epsilon=0.1, rng=self._rng)
+        # self._data_lock = Lock()
         self._cache_lock = Lock()
         # self._bandit_explorer = ConformalUCB(
         #     n_levers=2, reward_upper_bound=1, rng=self._rng
@@ -217,9 +209,7 @@ class ActiveLearningBackend:
                 eval(model_train_parameters) if model_train_parameters else {}
             )
         except Exception as e:
-            print(
-                f"Error parsing model_train_parameters '{model_train_parameters}': {e}"
-            )
+            print(f"Error parsing model_train_parameters '{model_train_parameters}': {e}")
             self._model_train_parameters = {}
 
         # If we have enought entries we start training
@@ -247,12 +237,9 @@ class ActiveLearningBackend:
         # Load data
         with self._data_lock:
             unlabelled_ids = np.array(self._unlabelled_dataset)
-            unlabelled = [
-                self._original_dataset[entry_id] for entry_id in unlabelled_ids
-            ]
+            unlabelled = [self._original_dataset[entry_id] for entry_id in unlabelled_ids]
             unlabelled_dict = {
-                entry_id: self._original_dataset[entry_id]
-                for entry_id in unlabelled_ids
+                entry_id: self._original_dataset[entry_id] for entry_id in unlabelled_ids
             }
             labelled = [
                 (self._original_dataset[entry_id], label_value)
@@ -278,9 +265,7 @@ class ActiveLearningBackend:
             # Get model class from constants dictionary
             model_class = AVAILABLE_MODELS[self._classification_model]
             model_params = self._model_parameters.copy()
-            model_params["n_classes"] = len(
-                self.label_values
-            )  # Always ensure n_classes is set
+            model_params["n_classes"] = len(self.label_values)  # Always ensure n_classes is set
 
             # Set model-specific defaults
             if self._classification_model == "DebertaV3Wrapper":
@@ -292,10 +277,12 @@ class ActiveLearningBackend:
         else:
             # Fallback to dummy model if no specific model is configured
             self.message(
-                f"WARNING: Model '{self._classification_model}' not found in available models. Falling back to DummyClassificationModel."
+                f"WARNING: Model '{self._classification_model}' not found in available "
+                "models. Falling back to DummyClassificationModel."
             )
             self.message(
-                f"WARNING: Falling back to DummyClassificationModel for '{self._classification_model}'"
+                "WARNING: Falling back to DummyClassificationModel "
+                f"for '{self._classification_model}'"
             )
             class_model = DummyClassificationModel(n_classes=len(self.label_values))
 
@@ -341,10 +328,7 @@ class ActiveLearningBackend:
 
             best_ids = np.unique(
                 np.array(
-                    [
-                        sorted_ids[i]
-                        for i in dist_argmin(kmean.cluster_centers_, to_cluster_emb)[0]
-                    ]
+                    [sorted_ids[i] for i in dist_argmin(kmean.cluster_centers_, to_cluster_emb)[0]]
                 )
             )
 
@@ -384,13 +368,9 @@ class ActiveLearningBackend:
                 cache_idx = 0
 
                 # Use exponential distribution for coin toss at each position
-                while cache_idx < len(new_cache) or untrusted_idx < len(
-                    untrusted_entries
-                ):
+                while cache_idx < len(new_cache) or untrusted_idx < len(untrusted_entries):
                     # If we still have regular cache entries and untrusted entries
-                    if cache_idx < len(new_cache) and untrusted_idx < len(
-                        untrusted_entries
-                    ):
+                    if cache_idx < len(new_cache) and untrusted_idx < len(untrusted_entries):
                         # Coin toss using exponential distribution
                         # Lower values mean higher probability of inserting untrusted entry
                         prob_untrusted = 1.0 / self._review_frequency
@@ -445,15 +425,11 @@ class ActiveLearningBackend:
 
         for _, encoded_label in labelled:
             label_value = self._decode(encoded_label)
-            train_label_value_counts[label_value] = (
-                train_label_value_counts.get(label_value, 0) + 1
-            )
+            train_label_value_counts[label_value] = train_label_value_counts.get(label_value, 0) + 1
 
         for _, encoded_label in validation:
             label_value = self._decode(encoded_label)
-            val_label_value_counts[label_value] = (
-                val_label_value_counts.get(label_value, 0) + 1
-            )
+            val_label_value_counts[label_value] = val_label_value_counts.get(label_value, 0) + 1
 
         # Create summary strings for each label_value
         for label_value in self.label_values:
@@ -483,25 +459,19 @@ class ActiveLearningBackend:
             target_value = self._encode(self.label_values[1])
 
             # Precision
-            _, prec_ci = self.metric_with_confidence(
-                precision, alpha=0.05, target=target_value
-            )
+            _, prec_ci = self.metric_with_confidence(precision, alpha=0.05, target=target_value)
             lower, upper = prec_ci
             self.metrics_strs.append(
                 rf"Precision: \({(lower + upper) / 2:.2f} \pm {(upper - lower) / 2:.2f}\)"
             )
 
             # Recall
-            _, rec_ci = self.metric_with_confidence(
-                recall, alpha=0.05, target=target_value
-            )
+            _, rec_ci = self.metric_with_confidence(recall, alpha=0.05, target=target_value)
             lower, upper = rec_ci
             self.metrics_strs.append(
                 rf"Recall: \({(lower + upper) / 2:.2f} \pm {(upper - lower) / 2:.2f}\)"
             )
-            _, spec_ci = self.metric_with_confidence(
-                specificity, alpha=0.05, target=target_value
-            )
+            _, spec_ci = self.metric_with_confidence(specificity, alpha=0.05, target=target_value)
             lower, upper = spec_ci
             self.metrics_strs.append(
                 rf"Specificity: \({(lower + upper) / 2:.2f} \pm {(upper - lower) / 2:.2f}\)"
@@ -511,9 +481,7 @@ class ActiveLearningBackend:
             for label_value_name in self.label_values:
                 target_value = self._encode(label_value_name)
                 # Precision
-                _, prec_ci = self.metric_with_confidence(
-                    precision, alpha=0.05, target=target_value
-                )
+                _, prec_ci = self.metric_with_confidence(precision, alpha=0.05, target=target_value)
                 lower, upper = prec_ci
                 self.metrics_strs.append(
                     rf"Precision ({label_value_name}): "
@@ -521,9 +489,7 @@ class ActiveLearningBackend:
                 )
 
                 # Recall
-                _, rec_ci = self.metric_with_confidence(
-                    recall, alpha=0.05, target=target_value
-                )
+                _, rec_ci = self.metric_with_confidence(recall, alpha=0.05, target=target_value)
                 lower, upper = rec_ci
                 self.metrics_strs.append(
                     rf"Recall ({label_value_name}): "
@@ -536,7 +502,8 @@ class ActiveLearningBackend:
                 )
                 lower, upper = spec_ci
                 self.metrics_strs.append(
-                    rf"Specificity ({label_value_name}): \({(lower + upper) / 2:.2f} \pm {(upper - lower) / 2:.2f}\)"
+                    rf"Specificity ({label_value_name}): \({(lower + upper) / 2:.2f} "
+                    rf"\pm {(upper - lower) / 2:.2f}\)"
                 )
         self.metrics_strs.append(rf"Conformal threshold: \({model.threshold}\)")
         conf_cov = self.peek_predictions(alpha=0.05) * 100
@@ -636,9 +603,7 @@ class ActiveLearningBackend:
                 if len(val_label_values) > 0:
                     # Count occurrences of current label_value in validation set
                     current_label_value_count = sum(
-                        1
-                        for label_value in val_label_values
-                        if label_value == current_label_value
+                        1 for label_value in val_label_values if label_value == current_label_value
                     )
 
                     if current_label_value_count == 0:
@@ -647,8 +612,8 @@ class ActiveLearningBackend:
                         prob = min(1.0, len(self.label_values) * VALIDATE_PROB)
                     else:
                         # Current label_value proportion in validation set
-                        current_label_value_proportion = (
-                            current_label_value_count / len(val_label_values)
+                        current_label_value_proportion = current_label_value_count / len(
+                            val_label_values
                         )
 
                         # Dynamic prob: (n_classes/(n_classes-1)) * (1 - proportion) * VALIDATE_PROB
@@ -715,7 +680,8 @@ class ActiveLearningBackend:
         # with self._data_lock:
         #     self._bandit_explorer.inform(
         #         {True: 1, False: 0}[self._validate], reward
-        #     )  # dict lookup so that we get an error if an unexpected value shows up (e.g. because we've changed the number of levers)
+        #     )  # dict lookup so that we get an error if an unexpected
+        #        # value shows up (e.g. because we've changed the number of levers)
         #     self._policy.inform(reward)
 
         # Update cached_subsample and validate
@@ -730,9 +696,7 @@ class ActiveLearningBackend:
             model = self._model
             unlabeled_data = self._unlabelled_dataset
         if len(self.subsample_size) == 3:
-            ids = self._rng.integers(
-                len(unlabeled_data), size=(self.subsample_size[-3])
-            )
+            ids = self._rng.integers(len(unlabeled_data), size=(self.subsample_size[-3]))
             unlabeled_data = [self._original_dataset[unlabeled_data[i]] for i in ids]
         preds = model.predict(unlabeled_data)
         return np.mean([len(pred) in [0, 1] for pred in preds])
@@ -806,14 +770,10 @@ class ActiveLearningBackend:
             sample_preds = preds[sample_idx]
 
             # Get probabilities for resampled data if needed
-            sample_label_proba = (
-                label_proba[sample_idx] if label_proba is not None else None
-            )
+            sample_label_proba = label_proba[sample_idx] if label_proba is not None else None
 
             # Compute metric on resampled data
-            result = metric_fn(
-                sample_label_values, sample_preds, sample_label_proba, **kwargs
-            )
+            result = metric_fn(sample_label_values, sample_preds, sample_label_proba, **kwargs)
 
             # Store result based on type
             match return_type:
@@ -834,13 +794,10 @@ class ActiveLearningBackend:
                 ci = tuple(np.percentile(bootstrap_vals, percentiles))
             case "dict":
                 ci = {
-                    k: tuple(np.percentile(vals, percentiles))
-                    for k, vals in bootstrap_vals.items()
+                    k: tuple(np.percentile(vals, percentiles)) for k, vals in bootstrap_vals.items()
                 }
             case "list":
-                ci = [
-                    tuple(np.percentile(vals, percentiles)) for vals in bootstrap_vals
-                ]
+                ci = [tuple(np.percentile(vals, percentiles)) for vals in bootstrap_vals]
 
         return original, ci
 
@@ -851,21 +808,18 @@ class ActiveLearningBackend:
     ) -> dict[EntryId, list[LabelValue]]:
         if isinstance(self._model, DummyClassificationModel):
             raise ValueError(
-                "Trained model not available, please add more label values to trigger a model training."
+                "Trained model not available, please add more "
+                "label values to trigger a model training."
             )
         with self._data_lock:
             unlabelled_ids = entry_ids or np.array(self._unlabelled_dataset)
-            unlabelled = [
-                self._original_dataset[entry_id] for entry_id in unlabelled_ids
-            ]
+            unlabelled = [self._original_dataset[entry_id] for entry_id in unlabelled_ids]
             train_dataset = self._train_dataset
             labelled = [
                 (self._original_dataset[entry_id], label_value)
                 for entry_id, label_value in train_dataset.items()
             ]
-            labelled_data = [
-                (entry_id, entry[-1]) for entry_id, entry in self._dataset.items()
-            ]
+            labelled_data = [(entry_id, entry[-1]) for entry_id, entry in self._dataset.items()]
             validation_dataset = self._val_dataset
             validation = [
                 (self._original_dataset[entry_id], label_value)
@@ -873,15 +827,11 @@ class ActiveLearningBackend:
             ]
         self._model.train(labelled, validation, skip_model_train=True, alpha=alpha)
 
-        decode = {
-            self._encode(label_value): label_value for label_value in self.label_values
-        }
+        decode = {self._encode(label_value): label_value for label_value in self.label_values}
 
         data = {
             entry_id: [decode[p] for p in pred]
-            for entry_id, pred in zip(
-                unlabelled_ids, self._model.predict(unlabelled), strict=False
-            )
+            for entry_id, pred in zip(unlabelled_ids, self._model.predict(unlabelled), strict=False)
         }
         for entry_id, labeling in labelled_data:
             data[entry_id] = [self._decode(labeling)]
@@ -966,11 +916,7 @@ class ActiveLearningBackend:
 
         out._dataset = data["_dataset"]
         out._unlabelled_dataset = SlotSet(
-            [
-                entry_id
-                for entry_id in original_dataset.keys()
-                if entry_id not in out._dataset
-            ]
+            [entry_id for entry_id in original_dataset.keys() if entry_id not in out._dataset]
         )
         out.messages = data["messages"]
         out._given_nexts = data["_given_nexts"]
