@@ -369,15 +369,31 @@ def label_up(project_id: int) -> ...:
     if res is not None:
         return res
 
-    # Get selected dataset from form
-    dataset_id = request.form.get("dataset_id")
-    if not dataset_id:
-        flash(_("Dataset selection required"), category="warning")
+    # Get datasets for this project
+    datasets = list(get_datasets(project_id))
+    if not datasets:
+        flash(_("No datasets available for this project"), category="warning")
         return redirect(url_for("labels", project_id=project_id))
 
-    # Verify dataset exists
-    dataset = get_dataset(dataset_id)
-    if not dataset:
+    # Handle dataset selection
+    if len(datasets) == 1:
+        # Auto-select if only one dataset
+        dataset_id = datasets[0].id
+    else:
+        # Multiple datasets - require selection
+        dataset_id = request.form.get("dataset_id")
+        if not dataset_id:
+            flash(_("Dataset selection required"), category="warning")
+            return redirect(url_for("labels", project_id=project_id))
+
+    # Verify dataset exists and is valid
+    try:
+        dataset_id = int(dataset_id)
+        dataset = get_dataset(dataset_id)
+        if not dataset or dataset not in datasets:
+            flash(_("Invalid dataset selection"), category="warning")
+            return redirect(url_for("labels", project_id=project_id))
+    except (ValueError, TypeError):
         flash(_("Invalid dataset selection"), category="warning")
         return redirect(url_for("labels", project_id=project_id))
 

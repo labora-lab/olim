@@ -106,7 +106,7 @@ def get_data(project_id: int) -> dict[str, str]:
                     for line in f.readlines():
                         line_data = json.loads(line)
                         data[
-                            COMPOSITE_ID.format(dataset_id=project_id, entry_id=line_data["id"])
+                            COMPOSITE_ID.format(dataset_id=dataset.id, entry_id=line_data["id"])
                         ] = line_data["text"]
         except Exception as e:
             if dataset:

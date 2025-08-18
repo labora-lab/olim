@@ -127,9 +127,10 @@ def entry(
     data.update(
         {
             "show_hidden": show_hidden,
-            "labels": get_labels(),
+            "labels": get_labels(project_id=project_id),
             "highlight": get_highlights(),
             "hidden_labels": hidden_labels,
+            "datasets": list(get_datasets(project_id)),
         }
     )
 
