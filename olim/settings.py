@@ -3,7 +3,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import ClassVar
 
-VERSION = "0.2.0-rc1"
+VERSION = "0.2.0"
 """Version of the application"""
 
 ES_INDEX = "dataset-{dataset_id}"
