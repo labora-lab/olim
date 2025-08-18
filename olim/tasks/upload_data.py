@@ -16,7 +16,12 @@ from ..utils.es import create_index, get_es_conn
 
 @app.task(bind=True, name="upload.process_batch")
 def process_batch(
-    self, batch_data: list[dict], dataset_id: int, entry_type: str, index_name: str, **kwargs
+    self,
+    batch_data: list[dict],
+    dataset_id: int,
+    entry_type: str,
+    index_name: str,
+    **kwargs,
 ) -> dict:
     """Process a batch of data through the entire pipeline"""
     # Extract IDs and texts
@@ -64,7 +69,11 @@ def upload_to_elasticsearch(
     # Generator for bulk upload
     def doc_generator() -> Generator[dict]:
         for entry_id in ids:
-            doc = {"_index": index, "_id": entry_id, "_source": {"text": texts[entry_id]}}
+            doc = {
+                "_index": index,
+                "_id": entry_id,
+                "_source": {"text": texts[entry_id]},
+            }
             for key, value in metadata[entry_id].items():
                 doc["_source"][key] = value
             yield doc
@@ -142,6 +151,21 @@ def upload_dataset(
     index_name = ES_INDEX.format(dataset_id=dataset_id)
     create_index(index_name)
 
+    # Check if JSONL file already exists and backup if needed
+    dataset_dir = WORK_PATH / "datasets"
+    dataset_dir.mkdir(parents=True, exist_ok=True)
+    jsonl_file = dataset_dir / f"{dataset_id}.jsonl"
+
+    if jsonl_file.exists():
+        from datetime import datetime
+
+        backup_name = (
+            f"{dataset_id}.jsonl.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        )
+        backup_path = dataset_dir / backup_name
+        jsonl_file.rename(backup_path)
+        print(f"WARNING: Existing JSONL file found and moved to {backup_name}")
+
     # Create batch generator
     if not hasattr(entry_types, upload_type):
         raise ValueError(f"Invalid upload type: {upload_type}")
@@ -176,11 +200,15 @@ def upload_dataset(
         # Process current batch
         result = process_batch.s(batch, dataset_id, upload_type, index_name)()
 
-        processed_batches.append({"batch": batch_count, "result": result, "size": len(batch)})
+        processed_batches.append(
+            {"batch": batch_count, "result": result, "size": len(batch)}
+        )
 
         # Check for failure
         if not result.get("success", False):
-            raise Exception(f"Batch {batch_count} failed: {result.get('error', 'Unknown error')}")
+            raise Exception(
+                f"Batch {batch_count} failed: {result.get('error', 'Unknown error')}"
+            )
 
     return {
         "success": True,

@@ -176,6 +176,7 @@ def catch_al(label_id: int) -> ...:
             review_needed = False
 
         dataset_id, entry_id = eval(entry_composite_id)
+        print(dataset_id, entry_id)
         entry = get_entry((dataset_id, str(entry_id)), "composite")
         if entry is None:
             raise ValueError(f"Failed to fetch entry {entry_id}")
