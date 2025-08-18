@@ -332,23 +332,34 @@ function update_highlight() {
     }
 }
 
-// Initilize highlights and highlights chips
+// Initialize highlights and highlights chips
 function init_highlight(data) {
-    var data_obj = [];
-    for (i in data) {
-        data_obj.push({
-            tag: data[i],
-        })
-    }
     let elems = document.querySelector('#highlights');
+    
+    // Only initialize if not already initialized
+    if (M.Chips.getInstance(elems)) {
+        return;
+    }
+    
+    // Prepare server data
+    var chips_data = [];
+    for (i in data) {
+        chips_data.push({
+            tag: data[i],
+        });
+    }
+    
+    // Add chips class for styling
+    elems.classList.add('chips');
+    
     let options = {
         onChipAdd: () => update_highlight(),
         onChipDelete: () => update_highlight(),
-        placeholder: 'Adicionar Destaque',
-        secondaryPlaceholder: 'Adicionar Destaque',
-        data: data_obj,
+        placeholder: 'Add Highlight',
+        secondaryPlaceholder: 'Add Highlight',
+        data: chips_data,
     }
-    let instances = M.Chips.init(elems, options);
+    M.Chips.init(elems, options);
     update_highlight();
 }
 
