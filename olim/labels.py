@@ -46,7 +46,7 @@ def labels(project_id: int) -> ...:
     for label_id in labels_values:
         labels_values[label_id]["Total"] = sum(labels_values[label_id].values())
     labels = get_labels(project_id)
-    datasets = get_datasets(project_id, non_empty=True)
+    datasets = list(get_datasets(project_id, non_empty=True))
     return render_template(
         "labels.html",
         labels=labels,
@@ -397,10 +397,14 @@ def label_up(project_id: int) -> ...:
         flash(_("Invalid dataset selection"), category="warning")
         return redirect(url_for("labels", project_id=project_id))
 
+    # Check if user wants to use validation (active learning pipeline)
+    use_for_validation = request.form.get("use_for_validation") == "on"
+
     # Create a df from csv passed by POST
     df = pd.read_csv(request.files["file"].stream)
 
-    label_upload(df, session["user_id"], project_id, dataset.id)
+    # Use the label_upload function with the use_active_learning parameter
+    label_upload(df, session["user_id"], project_id, dataset.id, use_active_learning=use_for_validation)
 
     # Wait 1 seconds for write operations to finish and redirect back to labels page
     time.sleep(1)
