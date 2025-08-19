@@ -404,7 +404,9 @@ def label_up(project_id: int) -> ...:
     df = pd.read_csv(request.files["file"].stream)
 
     # Use the label_upload function with the use_active_learning parameter
-    label_upload(df, session["user_id"], project_id, dataset.id, use_active_learning=use_for_validation)
+    label_upload(
+        df, session["user_id"], project_id, dataset.id, use_active_learning=use_for_validation
+    )
 
     # Wait 1 seconds for write operations to finish and redirect back to labels page
     time.sleep(1)

@@ -28,7 +28,7 @@ def label_upload(
         df: DataFrame with label data
         user_id: User ID to register labels as, defaults to current session user
         project_id: Project ID
-        dataset_id: Dataset ID 
+        dataset_id: Dataset ID
         use_active_learning: If True, submit through active learning pipeline
     """
     user_id = user_id or session["user_id"]
@@ -73,15 +73,15 @@ def label_upload(
 
     # Store labels (only for existing entries)
     existing_ids_set = set(existing_ids)
-    
+
     if use_active_learning:
         # Import here to avoid circular imports
         from ..active_learning import submit_label_value
         from ..celery_app import launch_task_with_tracking
         from ..tasks.active_learning import create_label_al
-        
+
         processed_count = 0
-        for entry_id, label_name, value, created in tqdm(group, desc="Processing via active learning"):
+        for entry_id, label_name, value, __ in tqdm(group, desc="Processing via active learning"):
             # Skip if entry doesn't exist
             if str(entry_id) not in existing_ids_set:
                 continue
@@ -103,16 +103,18 @@ def label_upload(
                     user_id=user_id,
                     track_progress=False,
                 )
-            
+
             # Get the label object
             label = get_label(labels[label_name])
             if label is None:
                 continue
-                
+
             # Submit through active learning pipeline (suppress individual flashes)
-            submit_label_value(label, entry, value, user_id, is_auto_label=False, suppress_flash=True)
+            submit_label_value(
+                label, entry, value, user_id, is_auto_label=False, suppress_flash=True
+            )
             processed_count += 1
-        
+
         # Show summary flash message
         flash(
             _("Successfully processed {count} labels through active learning pipeline").format(

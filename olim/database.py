@@ -937,7 +937,9 @@ def check_entries_exist(entry_ids: list[str], dataset_id: int) -> tuple[list[str
     """
     existing_entry_ids = (
         db.session.execute(
-            db.select(Entry.entry_id).filter(Entry.dataset_id == dataset_id, Entry.entry_id.in_(entry_ids))
+            db.select(Entry.entry_id).filter(
+                Entry.dataset_id == dataset_id, Entry.entry_id.in_(entry_ids)
+            )
         )
         .scalars()
         .all()
