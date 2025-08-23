@@ -4,11 +4,21 @@
         const sidebar = document.getElementById('sidebar');
         const collapseBtn = document.getElementById('collapse-btn');
         const collapseIcon = collapseBtn.querySelector('.collapse-icon');
-        
+        const mainContent = document.getElementById('main-content');
+
         sidebar.classList.toggle('w-64');
-        sidebar.classList.toggle('w-20');
+        sidebar.classList.toggle('w-16');
         sidebar.classList.toggle('sidebar-collapsed');
-        
+
+        // Ajusta a margem do conteúdo principal
+        if (sidebar.classList.contains('sidebar-collapsed')) {
+            mainContent.classList.remove('sm:ml-64');
+            mainContent.classList.add('sm:ml-16');
+        } else {
+            mainContent.classList.remove('sm:ml-16');
+            mainContent.classList.add('sm:ml-64');
+        }
+
         // Alterna o ícone
         if (sidebar.classList.contains('sidebar-collapsed')) {
             collapseIcon.classList.remove('bi-chevron-bar-left');
@@ -17,7 +27,7 @@
             collapseIcon.classList.remove('bi-chevron-bar-right');
             collapseIcon.classList.add('bi-chevron-bar-left');
         }
-        
+
         // Salva o estado no localStorage
         localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('sidebar-collapsed'));
     }
@@ -26,19 +36,26 @@
         const sidebar = document.getElementById('sidebar');
         const collapseBtn = document.getElementById('collapse-btn');
         const collapseIcon = collapseBtn?.querySelector('.collapse-icon');
-        
-        sidebar.classList.remove('sidebar-collapsed', 'w-20');
+        const mainContent = document.getElementById('main-content');
+
+        sidebar.classList.remove('sidebar-collapsed', 'w-16');
         sidebar.classList.add('w-64');
-        
+
+        // Ajusta a margem do conteúdo principal
+        if (mainContent) {
+            mainContent.classList.remove('sm:ml-16');
+            mainContent.classList.add('sm:ml-64');
+        }
+
         if (collapseIcon) {
             collapseIcon.classList.remove('bi-chevron-bar-right');
             collapseIcon.classList.add('bi-chevron-bar-left');
         }
-        
+
         localStorage.setItem('sidebarCollapsed', 'false');
     }
 
-    // Verifica estado salvo ao carregar a página
+    // Check saved state on page load
     document.addEventListener('DOMContentLoaded', () => {
         const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
         const sidebar = document.getElementById('sidebar');
@@ -46,15 +63,81 @@
         const collapseIcon = collapseBtn.querySelector('.collapse-icon');
 
         if (isCollapsed) {
-            sidebar.classList.add('w-20', 'sidebar-collapsed');
+            const mainContent = document.getElementById('main-content');
+            
+            // Remove preload class and apply full collapsed state
+            document.documentElement.classList.remove('sidebar-preload-collapsed');
+            
+            // Disable transitions temporarily
+            sidebar.style.transition = 'none';
+            if (mainContent) {
+                mainContent.style.transition = 'none';
+            }
+            
+            sidebar.classList.add('w-16', 'sidebar-collapsed');
             sidebar.classList.remove('w-64');
             collapseIcon.classList.remove('bi-chevron-bar-left');
             collapseIcon.classList.add('bi-chevron-bar-right');
+
+            // Adjust main content margin
+            if (mainContent) {
+                mainContent.classList.remove('sm:ml-64');
+                mainContent.classList.add('sm:ml-16');
+            }
+            
+            // Re-enable transitions after a small delay
+            setTimeout(() => {
+                sidebar.style.transition = '';
+                if (mainContent) {
+                    mainContent.style.transition = '';
+                }
+            }, 50);
+        } else {
+            // Remove preload class if not collapsed
+            document.documentElement.classList.remove('sidebar-preload-collapsed');
         }
 
-        // Adiciona evento ao botão de colapso
+        // Add event listener to collapse button
         collapseBtn.addEventListener('click', toggleSidebar);
     });
+
+    // Function to update task counter
+    function updateTaskCounter() {
+        const taskList = document.getElementById('task-list');
+        const taskCounterButton = document.querySelector('.task-counter-collapsed button');
+        const taskCounterContainer = document.querySelector('.task-counter-collapsed .relative');
+        const sidebar = document.getElementById('sidebar');
+        
+        if (taskList && taskCounterButton && taskCounterContainer) {
+            const runningCount = parseInt(taskList.querySelector('[data-running-count]')?.getAttribute('data-running-count') || '0');
+            const isCollapsed = sidebar.classList.contains('sidebar-collapsed');
+            
+            // Remove existing badge
+            const existingBadge = taskCounterContainer.querySelector('.absolute');
+            if (existingBadge) {
+                existingBadge.remove();
+            }
+            
+            // Update colors and badge based on running jobs count
+            if (runningCount > 0) {
+                // With running jobs - blue background and show badge
+                taskCounterButton.className = taskCounterButton.className
+                    .replace(/bg-gray-\d+/g, 'bg-blue-600')
+                    .replace(/hover:bg-gray-\d+/g, 'hover:bg-blue-700');
+                
+                // Create new badge
+                const badge = document.createElement('div');
+                badge.className = 'absolute -top-2 -right-2 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 border-2 border-gray-800 rounded-full';
+                badge.textContent = runningCount;
+                taskCounterContainer.appendChild(badge);
+            } else {
+                // No running jobs - gray background and no badge
+                taskCounterButton.className = taskCounterButton.className
+                    .replace(/bg-blue-\d+/g, 'bg-gray-700')
+                    .replace(/hover:bg-blue-\d+/g, 'hover:bg-gray-600');
+            }
+        }
+    }
 
     // Project dropdown functionality
     const projectDropdownBtn = document.getElementById('project-dropdown-btn');
