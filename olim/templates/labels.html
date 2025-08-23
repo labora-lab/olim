@@ -84,6 +84,7 @@
                         <input class="file-path validate" type="text" name="filename">
                     </div>
                 </div>
+                {% if datasets|length > 1 %}
                 <div class="input-field col s12">
                     <select name="dataset_id" required>
                         <option value="" disabled selected>{{ _('Select Dataset') }}</option>
@@ -92,6 +93,21 @@
                         {% endfor %}
                     </select>
                     <label>{{ _('Target Dataset') }}</label>
+                </div>
+                {% else %}
+                <input type="hidden" name="dataset_id" value="{{ datasets[0].id }}">
+                <div class="col s12" style="margin-bottom: 10px;">
+                    <p><strong>{{ _('Target Dataset') }}:</strong> {{ datasets[0].name }}</p>
+                </div>
+                {% endif %}
+                <div class="col s12">
+                    <p>
+                        <label>
+                            <input type="checkbox" name="use_for_validation" />
+                            <span>{{ _('Submit trough active learning (values will be considered for validation)')
+                                }}</span>
+                        </label>
+                    </p>
                 </div>
                 <div class="input-field col s12">
                     <button class="btn waves-effect waves-light btn-wide" type="submit">{{ _('Upload') }}

@@ -5,16 +5,37 @@
     <div class="col {% if valid_entry %}s9{% else %}s12{% endif %}">
         <div class="card">
             <div class="card-content row tight-bottom">
+                {% if datasets|length > 1 %}
+                <div class="input-field col m4 s12">
+                    <input id="id" name="id" type="text" class="validate" value="{{entry.entry_id}}">
+                    <label for="id">{{ _('Entry ID') }}</label>
+                </div>
+                <div class="input-field col m4 s12">
+                    <select id="dataset_id">
+                        {% for dataset in datasets %}
+                        <option value="{{ dataset.id }}" {% if entry and entry.dataset_id == dataset.id %}selected{% endif %}>{{ dataset.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <label>{{ _('Dataset') }}</label>
+                </div>
+                <div class="input-field col m4 s12" style="height:55px;">
+                    <a class="btn waves-effect waves-light btn-wide"
+                        onclick="window.location.href = '/{{ project_id }}/entry/'+$('#dataset_id').val()+'/'+$('#id').val();">{{ _('Load Entry') }}
+                        <i class="material-icons right">assignment</i>
+                    </a>
+                </div>
+                {% else %}
                 <div class="input-field col m7 s12">
                     <input id="id" name="id" type="text" class="validate" value="{{entry.entry_id}}">
                     <label for="id">{{ _('Entry ID') }}</label>
                 </div>
                 <div class="input-field col m5 s12" style="height:55px;">
                     <a class="btn waves-effect waves-light btn-wide"
-                        onclick="window.location.href = '/entry/'+$('#id').val();">{{ _('Load Entry') }}
+                        onclick="window.location.href = '/{{ project_id }}/entry/{% if datasets %}{{ datasets[0].id }}/{% endif %}'+$('#id').val();">{{ _('Load Entry') }}
                         <i class="material-icons right">assignment</i>
                     </a>
                 </div>
+                {% endif %}
                 {% if queue_id %}
                 <div class="col s4" style="height:50px;">
                     <a class="waves-effect waves-light btn btn-wide{% if queue_pos == 1 %} disabled{% endif %}"
@@ -104,8 +125,8 @@
                     </button>
                 </div>
                 {% endif %}
-                <div class="input-field col s12 chips tight-top" id="highlights">
-                    <input style="width: max-content !important;">
+                <div class="input-field col s12 tight-top" id="highlights">
+                    <input style="width: max-content !important;" placeholder="{{ _('Add Highlight') }}">
                 </div>
             </div>
         </div>

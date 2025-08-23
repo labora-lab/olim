@@ -4,7 +4,7 @@ CLASSIFICATION_MODEL = os.getenv("CLASSIFICATION_MODEL", "TfidfXGBoostClassifier
 
 assert CLASSIFICATION_MODEL in ["TfidfXGBoostClassifier", "DebertaV3Wrapper"]
 
-SKIP_AL = False #bool(os.getenv("SKIP_AL", "False"))
+SKIP_AL = False  # bool(os.getenv("SKIP_AL", "False"))
 
 assert type(SKIP_AL) is bool
 

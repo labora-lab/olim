@@ -216,7 +216,9 @@
             function refreshTaskList() {
                 $.get('{{url_for("task_list")}}', function (data) {
                     $('#task-list').html(data);
-                    M.AutoInit();
+                    // Reinitialize only task-list components, not chips
+                    $('#task-list .dropdown-trigger').dropdown();
+                    $('#task-list .tooltipped').tooltip();
                 })
                     .fail(function () {
                         $('#task-list').html('{{_("Error loading tasks")}}');

@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import Any
 
 import numpy as np
-import xgboost as xgb
 
 
 class ClassificationModel(ABC):
+    @abstractmethod
+    def __init__(self, *, n_classes: int, **kwargs) -> None:
+        pass
+
     @abstractmethod
     def train(self, labelled_data: list[tuple[str, int]]) -> None:
         pass
@@ -19,7 +21,7 @@ class ClassificationModel(ABC):
         pass
 
     @abstractmethod
-    def predict_proba(self, unlabelled_data: list[str]) -> list[dict[int, float]]:
+    def predict_proba(self, unlabelled_data: list[str]) -> list[list[float]]:
         pass
 
 
@@ -37,19 +39,19 @@ class RegressionModel(ABC):
         pass
 
     @abstractmethod
-    def predict_interval(self, unlabelled_data: list[str]) -> list[tuple[float, float]]:
+    def predict_interval(self, unlabelled_data: list[str]) -> list[list[float]]:
         pass
 
 
 class DummyClassificationModel(ClassificationModel):
-    def __init__(self, *, n_classes: int):
+    def __init__(self, *, n_classes: int) -> None:
         self.n_classes = n_classes
         self._rng = np.random.default_rng(0)
 
-    def train(self, labelled_data, validation) -> None:
+    def train(self, labelled_data, validation=None, **kwargs) -> None:
         pass
 
-    def predict(self, unlabelled_data):
+    def predict(self, unlabelled_data: list[str]) -> list[int]:
         return [
             max(scores.items(), key=lambda x: x[1])[0]
             for scores in self.predict_proba(unlabelled_data)
@@ -63,15 +65,13 @@ class DummyClassificationModel(ClassificationModel):
         n = len(unlabelled_data)
 
         scores = self._rng.uniform(0, 1, size=(n, self.n_classes))
-        scores = (scores.T / np.sum(scores, axis=1)).T  # XXX softmax?
+        scores = (scores.T / np.sum(scores, axis=1)).T
 
-        return [
-            {c: scores[i, c] for c in range(self.n_classes)} for i in range(len(unlabelled_data))
-        ]
+        return scores
 
 
 class DummyRegressionModel(RegressionModel):
-    def __init__(self, *, range: tuple[float, float]):
+    def __init__(self, *, range: tuple[float, float]) -> None:
         self.range = range
         self._rng = np.random.default_rng(0)
 

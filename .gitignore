@@ -177,10 +177,10 @@ queues/
 work/
 uploads/
 
+# Claude Code project instructions
+CLAUDE.md
 
 # Javascript stuffs
 node_modules/
 package-lock.json
 package.json
-
-CLAUDE.md

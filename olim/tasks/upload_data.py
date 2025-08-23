@@ -96,7 +96,12 @@ def cleanup_elasticsearch_index(index_name: str) -> bool:
 
 @app.task(bind=True, name="upload.process_batch")
 def process_batch(
-    self, batch_data: list[dict], dataset_id: int, entry_type: str, index_name: str, **kwargs
+    self,
+    batch_data: list[dict],
+    dataset_id: int,
+    entry_type: str,
+    index_name: str,
+    **kwargs,
 ) -> dict:
     """Process a batch of data through the entire pipeline"""
     try:
@@ -204,7 +209,11 @@ def upload_to_elasticsearch(
     # Generator for bulk upload
     def doc_generator() -> Generator[dict]:
         for entry_id in ids:
-            doc = {"_index": index, "_id": entry_id, "_source": {"text": texts[entry_id]}}
+            doc = {
+                "_index": index,
+                "_id": entry_id,
+                "_source": {"text": texts[entry_id]},
+            }
             for key, value in metadata[entry_id].items():
                 doc["_source"][key] = value
             yield doc
@@ -346,6 +355,19 @@ def upload_dataset(
     # Create Elasticsearch index
     index_name = ES_INDEX.format(dataset_id=dataset_id)
     create_index(index_name)
+
+    # Check if JSONL file already exists and backup if needed
+    dataset_dir = WORK_PATH / "datasets"
+    dataset_dir.mkdir(parents=True, exist_ok=True)
+    jsonl_file = dataset_dir / f"{dataset_id}.jsonl"
+
+    if jsonl_file.exists():
+        from datetime import datetime
+
+        backup_name = f"{dataset_id}.jsonl.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        backup_path = dataset_dir / backup_name
+        jsonl_file.rename(backup_path)
+        print(f"WARNING: Existing JSONL file found and moved to {backup_name}")
 
     try:
         # Create batch generator

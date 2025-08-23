@@ -141,9 +141,15 @@ class Label(db.Model, CreationControl):
     priority: Mapped[float] = db.mapped_column(default=1.0, nullable=False)
     project_id: Mapped[int] = db.mapped_column(db.ForeignKey("projects.id"), nullable=False)
 
-    metrics: Mapped[dict] = db.mapped_column(db.JSON, nullable=True)
-    cache: Mapped[dict] = db.mapped_column(db.JSON, nullable=True)
+    metrics: Mapped[list] = db.mapped_column(db.JSON, nullable=True)
+    cache: Mapped[list] = db.mapped_column(db.JSON, nullable=True)
     training_counter: Mapped[int] = db.mapped_column(db.Integer, default=0)
+
+    # Learner parameters for active learning configuration
+    learner_parameters: Mapped[dict] = db.mapped_column(db.JSON, nullable=True)
+
+    # Auto-labels stored as {COMPOSITE_ID: value} for automatic labeling during active learning
+    auto_labels: Mapped[dict] = db.mapped_column(db.JSON, nullable=True)
 
     # Relationships
     entries: Mapped[list["LabelEntry"]] = db.relationship(
@@ -917,6 +923,32 @@ def get_entries(type=None) -> ScalarResult:
     if type is None:
         return db.session.execute(db.select(Entry.id)).scalars()
     return db.session.execute(db.select(Entry.id).filter_by(type=type)).scalars()
+
+
+def check_entries_exist(entry_ids: list[str], dataset_id: int) -> tuple[list[str], list[str]]:
+    """Bulk check which entry IDs exist in a dataset.
+
+    Args:
+        entry_ids: List of entry ID strings to check
+        dataset_id: Dataset ID to check within
+
+    Returns:
+        Tuple of (existing_ids, missing_ids)
+    """
+    existing_entry_ids = (
+        db.session.execute(
+            db.select(Entry.entry_id).filter(
+                Entry.dataset_id == dataset_id, Entry.entry_id.in_(entry_ids)
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    existing_set = set(existing_entry_ids)
+    missing_ids = [eid for eid in entry_ids if eid not in existing_set]
+
+    return list(existing_set), missing_ids
 
 
 def random_entries(number: int, project_id: int | None = None) -> list[Entry]:
