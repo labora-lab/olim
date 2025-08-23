@@ -50,9 +50,9 @@
 
             <!-- Project Navigation -->
             <ul class="space-y-1 font-medium">
-                {% if has_permission('ribbon_interface') %}
+                {% if has_permission('labels') %}
                 <li class="border-t border-gray-600 pt-2 mt-2">
-                    <a href="{{ url_for('ribbon_interface', project_id = project_id) }}"
+                    <a href="{{ url_for('labels', project_id = project_id) }}"
                         class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
                         <i class="bi bi-grid text-gray-400 group-hover:text-white sidebar-item-icon"></i>
                         <span class="ms-3 sidebar-item-text">{{ _('Dashboard') }}</span>
