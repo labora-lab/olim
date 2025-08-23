@@ -330,7 +330,7 @@ def users() -> ...:
 
     context = {
         "users": get_users(),
-        "roles": list(settings.PERMISSIONS.keys()),
+        "roles": [*list(settings.PERMISSIONS.keys()), 'admin'],
     }
 
     return render_template("users.html", **context)
