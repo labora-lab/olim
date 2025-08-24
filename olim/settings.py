@@ -57,29 +57,29 @@ HELP_URL = os.getenv("HELP_URL", "")
 
 class LabelTypes:
     SIM_NAO: ClassVar = [
-        ("sim", "icon", "check", "green"),
-        ("não", "icon", "clear", "red"),
+        ("sim", "icon", "check-circle-fill", "green"),
+        ("não", "icon", "x-circle-fill", "red"),
     ]
     SIM_NAO_NS: ClassVar = [
-        ("sim", "icon", "check", "green"),
-        ("não", "icon", "clear", "red"),
+        ("sim", "icon", "check-circle-fill", "green"),
+        ("não", "icon", "x-circle-fill", "red"),
         ("não sei", "text", "?", "orange"),
     ]
     YES_NO: ClassVar = [
-        ("yes", "icon", "check", "green"),
-        ("no", "icon", "clear", "red"),
+        ("yes", "icon", "check-circle-fill", "green"),
+        ("no", "icon", "x-circle-fill", "red"),
     ]
     CHECK: ClassVar = [
-        ("check", "icon", "check", "green"),
+        ("check", "icon", "check-circle-fill", "green"),
     ]
     YES_NO_UNKNOWN: ClassVar = [
-        ("yes", "icon", "check", "green"),
-        ("no", "icon", "clear", "red"),
+        ("yes", "icon", "check-circle-fill", "green"),
+        ("no", "icon", "x-circle-fill", "red"),
         ("unknown", "text", "?", "orange"),
     ]
     YES_NO_IDK: ClassVar = [
-        ("yes", "icon", "check", "green"),
-        ("no", "icon", "clear", "red"),
+        ("yes", "icon", "check-circle-fill", "green"),
+        ("no", "icon", "x-circle-fill", "red"),
         ("don't know", "text", "?", "orange"),
     ]
 
