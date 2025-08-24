@@ -1,43 +1,70 @@
-{% extends "base.html" %}
+{% extends "base_refactor.html" %}
 {% block title %}{{ _('Help') }}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row">
-        <div class="col s12">
-            <h4 class="center-align">{{ _('Help') }}</h4>
-            <p>{{ _('Fill in this form to send a ticket for the page: ') + previous_url }}</p>
-            <p>{{ _('We will get back to you as soon as possible. Some metadata will be sent together to help us understand.') }}</p>
+<div class="max-w-2xl mx-auto">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-question-circle-fill text-cyan-600 mr-2"></i>
+                {{ _('Help') }}
+            </h3>
+            <div class="mt-2 text-sm text-gray-600">
+                <p>{{ _('Fill in this form to send a ticket for the page: ') + previous_url }}</p>
+                <p class="mt-1">{{ _('We will get back to you as soon as possible. Some metadata will be sent together to help us understand.') }}</p>
+            </div>
         </div>
-    </div>
-    <div class="card hoverable">
-        <div class="card-content">
-            <form action="/help/send" method="post">
-                <div class="row">
-                    <div class="input-field col s12">
-                        <input id="email" name="email" type="email" class="validate" required>
-                        <label for="email">{{ _('Your e-mail') }}</label>
-                    </div>
-                    <div class="input-field col s12">
-                        <input id="subject" name="subject" type="text" class="validate" required>
-                        <label for="subject">{{ _('Subject') }}</label>
-                    </div>
-                    <div class="input-field col s12">
-                        <textarea id="message" name="message" class="materialize-textarea" required></textarea>
-                        <label for="message">{{ _('Message') }}</label>
-                    </div>
-                    <div class="input-field col s12">
-                        <input id="url" name="url" type="text" class="validate" value="{{ previous_url }}" required>
-                        <label for="url">{{ _('Page URL') }}</label>
-                    </div>
-                    <div class="col s12">
-                        <button class="btn waves-effect waves-light right" type="submit" name="action">{{ _('Send') }}
-                            <i class="material-icons right">send</i>
-                        </button>
-                    </div>
+        
+        <div class="p-6">
+            <form action="/help/send" method="post" class="space-y-4">
+                <div>
+                    <label for="email" class="block mb-2 text-sm font-medium text-gray-900">
+                        <i class="bi bi-envelope mr-1"></i>
+                        {{ _('Your e-mail') }}
+                    </label>
+                    <input type="email" id="email" name="email" required
+                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                           placeholder="{{ _('Enter your email address') }}">
+                </div>
+                
+                <div>
+                    <label for="subject" class="block mb-2 text-sm font-medium text-gray-900">
+                        <i class="bi bi-tag mr-1"></i>
+                        {{ _('Subject') }}
+                    </label>
+                    <input type="text" id="subject" name="subject" required
+                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                           placeholder="{{ _('Brief description of your issue') }}">
+                </div>
+                
+                <div>
+                    <label for="message" class="block mb-2 text-sm font-medium text-gray-900">
+                        <i class="bi bi-chat-text mr-1"></i>
+                        {{ _('Message') }}
+                    </label>
+                    <textarea id="message" name="message" rows="6" required
+                              class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                              placeholder="{{ _('Please describe your issue in detail...') }}"></textarea>
+                </div>
+                
+                <div>
+                    <label for="url" class="block mb-2 text-sm font-medium text-gray-900">
+                        <i class="bi bi-link-45deg mr-1"></i>
+                        {{ _('Page URL') }}
+                    </label>
+                    <input type="text" id="url" name="url" value="{{ previous_url }}" required
+                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                </div>
+                
+                <div class="pt-4">
+                    <button type="submit" name="action"
+                            class="w-full text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                        <i class="bi bi-send mr-2"></i>
+                        {{ _('Send') }}
+                    </button>
                 </div>
             </form>
         </div>
-    
+    </div>
 </div>
 {% endblock %}
