@@ -508,10 +508,6 @@
   document.addEventListener('DOMContentLoaded', function() {
       const statusMessages = document.querySelector('.status-messages');
       if (statusMessages) {
-          // Add a subtle pulsing animation to draw attention
-          statusMessages.style.animation = 'pulse 2s infinite';
-
-          // Click to dismiss immediately
           statusMessages.addEventListener('click', function() {
               this.style.transition = 'all 0.3s ease-out';
               this.style.transform = 'translateY(-10px)';
