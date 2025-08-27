@@ -1,50 +1,128 @@
-<div id="label_{{label.id}}"
-    class="input-field col s12 tight-top{% if label.id in hidden_labels %} hidden-entry{% if not show_hidden %} hidden{% endif %}{% endif %}">
-    <span>{{label.name}}</span>
+<div id="label_{{ label.id }}" 
+     class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 {% if label.id in hidden_labels %}hidden-entry{% if not show_hidden %} hidden{% endif %}{% endif %}">
+    <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center space-x-3">
+            <h5 class="text-sm font-medium text-gray-900">{{ label.name }}</h5>
+            {% if valid_entry %}
+            <!-- Status Badge -->
+            {% if label.id in labels_values %}
+            {% set p_label = labels_values[label.id] %}
+            {% if p_label != 'none' and p_label != '' %}
+            {% for label_str, type, icon, color in labels_rev %}
+            {% if p_label == label_str %}
+            <span class="inline-flex items-center bg-{{ color }}-100 text-{{ color }}-800 text-xs font-medium px-2.5 py-0.5 rounded-full border border-{{ color }}-300">
+                <span class="w-2 h-2 me-1 bg-{{ color }}-500 rounded-full"></span>
+                {{ label_str }}
+            </span>
+            {% endif %}
+            {% endfor %}
+            {% else %}
+            <span class="inline-flex items-center bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-0.5 rounded-full border border-gray-300">
+                <span class="w-2 h-2 me-1 bg-gray-400 rounded-full"></span>
+                {{ _('Não definido') }}
+            </span>
+            {% endif %}
+            {% else %}
+            <span class="inline-flex items-center bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-0.5 rounded-full border border-gray-300">
+                <span class="w-2 h-2 me-1 bg-gray-400 rounded-full"></span>
+                {{ _('Não definido') }}
+            </span>
+            {% endif %}
+            {% endif %}
+        </div>
+        
+        <div class="flex items-center space-x-2">
+            {% if valid_entry %}
+            <!-- Hide/Show Label Controls -->
+            <button type="button" onclick="hideLabel('{{ label.name }}', '{{ label.id }}')"
+                    id="hide_{{ label.id }}"
+                    data-tooltip-target="tooltip-hide-{{ label.id }}" data-tooltip-placement="top"
+                    class="inline-flex items-center p-1.5 text-xs text-gray-500 hover:text-red-600 focus:outline-none transition-colors {% if label.id in hidden_labels %} hidden{% endif %}">
+                <i class="bi bi-x-circle"></i>
+            </button>
+            <div id="tooltip-hide-{{ label.id }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                {{ _('Ocultar esta label') }}
+                <div class="tooltip-arrow" data-popper-arrow></div>
+            </div>
+            
+            <button type="button" onclick="unhideLabel('{{ label.name }}', '{{ label.id }}')"
+                    id="hide_sel_{{ label.id }}"
+                    data-tooltip-target="tooltip-show-{{ label.id }}" data-tooltip-placement="top"
+                    class="inline-flex items-center p-1.5 text-xs text-red-600 hover:text-red-700 focus:outline-none transition-colors {% if label.id not in hidden_labels %} hidden{% endif %}">
+                <i class="bi bi-x-circle-fill"></i>
+            </button>
+            <div id="tooltip-show-{{ label.id }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                {{ _('Mostrar esta label') }}
+                <div class="tooltip-arrow" data-popper-arrow></div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
     {% if valid_entry %}
     {% if label.id in labels_values %}
     {% set p_label = labels_values[label.id] %}
     {% else %}
     {% set p_label = 'none' %}
     {% endif %}
-    <a class="tooltipped right cursor {% if label.id in hidden_labels %} hidden{% endif %}" data-position="bottom"
-        data-tooltip="{{ _('Hide the value of this label') }}" onclick="hide_label('{{label.name}}','{{label.id}}');"
-        id="hide_{{label.id}}">
-        <i class="material-icons grey-text">cancel</i>
-    </a>
-    <a class="tooltipped right cursor {% if label.id not in hidden_labels %} hidden{% endif %}" data-position="bottom"
-        data-tooltip="{{ _('Show the value of this label') }}" onclick="unhide_label('{{label.name}}','{{label.id}}');"
-        id="hide_sel_{{label.id}}">
-        <i class="material-icons red-text">cancel</i>
-    </a>
-    {% for label_str, type, icon, color in labels_rev %}
-    {% if type == 'text'%}
-    <a class="tooltipped right {{color}}-text labels-text-icon cursor{%if p_label != label_str%} hidden{%endif%}"
-        data-position="bottom" data-tooltip="{{ _('Uncheck {label_str}').format(label_str=label_str)}}"
-        id="{{label_str | replace(' ', '_')}}_unsel_{{label.id}}"
-        onclick="add_entry_label({{entry.id}},{{label.id}}, '');">
-        <strong>{{icon}}</strong>
-    </a>
-    <a class="tooltipped right grey-text labels-text-icon cursor{%if p_label == label_str%} hidden{%endif%}"
-        data-position="bottom" data-tooltip="{{ _('Check {label_str}').format(label_str=label_str) }}"
-        id="{{label_str | replace(' ', '_')}}_sel_{{label.id}}"
-        onclick="add_entry_label({{entry.id}},{{label.id}}, '{{label_str}}');">
-        <strong>{{icon}}</strong>
-    </a>
-    {% else %}
-    <a class="tooltipped right cursor{%if p_label != label_str%} hidden{%endif%}" data-position="bottom"
-        data-tooltip="{{ _('Uncheck {label_str}').format(label_str=label_str) }}"
-        onclick="add_entry_label({{entry.id}},{{label.id}}, '');"
-        id="{{label_str | replace(' ', '_')}}_unsel_{{label.id}}">
-        <i class="material-icons {{color}}-text">{{icon}}</i>
-    </a>
-    <a class="tooltipped right cursor{%if p_label == label_str%} hidden{%endif%}" data-position="bottom"
-        data-tooltip="{{ _('Check {label_str}').format(label_str=label_str) }}"
-        onclick="add_entry_label({{entry.id}},{{label.id}}, '{{label_str}}');"
-        id="{{label_str | replace(' ', '_')}}_sel_{{label.id}}">
-        <i class="material-icons grey-text">{{icon}}</i>
-    </a>
-    {% endif %}
-    {% endfor %}
+    
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-2">
+        {% for label_str, type, icon, color in labels_rev %}
+        <!-- Selected State Button -->
+        <button type="button" 
+                onclick="addEntryLabel({{ entry.id }}, {{ label.id }}, '')"
+                id="{{ label_str | replace(' ', '_') }}_unsel_{{ label.id }}"
+                data-tooltip-target="tooltip-unsel-{{ label.id }}-{{ loop.index }}" data-tooltip-placement="top"
+                class="relative inline-flex items-center justify-center px-3 py-2.5 text-sm font-medium text-white bg-{{ color }}-600 border-2 border-{{ color }}-600 rounded-lg hover:bg-{{ color }}-700 hover:border-{{ color }}-700 focus:outline-none focus:ring-2 focus:ring-{{ color }}-200 transition-all duration-200 shadow-sm{% if p_label != label_str %} hidden{% endif %}">
+            {% if type == 'text' %}
+            <span class="font-bold mr-2">{{ icon }}</span>
+            {% else %}
+            <i class="bi bi-{{ icon }} mr-2"></i>
+            {% endif %}
+            <span>{{ label_str }}</span>
+            <div class="absolute -top-1 -right-1 w-5 h-5 bg-green-500 border-2 border-white rounded-full flex items-center justify-center">
+                <i class="bi bi-check text-white text-xs font-bold"></i>
+            </div>
+        </button>
+        <div id="tooltip-unsel-{{ label.id }}-{{ loop.index }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+            {{ _('Clique para desmarcar "{label_str}"').format(label_str=label_str) }}
+            <div class="tooltip-arrow" data-popper-arrow></div>
+        </div>
+        
+        <!-- Unselected State Button -->
+        <button type="button" 
+                onclick="addEntryLabel({{ entry.id }}, {{ label.id }}, '{{ label_str }}')"
+                id="{{ label_str | replace(' ', '_') }}_sel_{{ label.id }}"
+                data-tooltip-target="tooltip-sel-{{ label.id }}-{{ loop.index }}" data-tooltip-placement="top"
+                class="inline-flex items-center justify-center px-3 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-{{ color }}-50 hover:border-{{ color }}-300 hover:text-{{ color }}-700 focus:outline-none focus:ring-2 focus:ring-{{ color }}-200 transition-all duration-200 shadow-sm{% if p_label == label_str %} hidden{% endif %}">
+            {% if type == 'text' %}
+            <span class="font-bold mr-2 opacity-60">{{ icon }}</span>
+            {% else %}
+            <i class="bi bi-{{ icon }} mr-2 opacity-60"></i>
+            {% endif %}
+            <span>{{ label_str }}</span>
+            <i class="bi bi-circle ml-2 text-gray-400"></i>
+        </button>
+        <div id="tooltip-sel-{{ label.id }}-{{ loop.index }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+            {{ _('Clique para marcar como "{label_str}"').format(label_str=label_str) }}
+            <div class="tooltip-arrow" data-popper-arrow></div>
+        </div>
+        {% endfor %}
+        
+        <!-- Clear Selection Button (when something is selected) -->
+        {% if p_label != 'none' and p_label != '' %}
+        <button type="button" 
+                onclick="addEntryLabel({{ entry.id }}, {{ label.id }}, '')"
+                data-tooltip-target="tooltip-clear-{{ label.id }}" data-tooltip-placement="top"
+                class="col-span-full inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border-2 border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-200 transition-all duration-200">
+            <i class="bi bi-x-circle mr-2"></i>
+            {{ _('Limpar seleção') }}
+        </button>
+        <div id="tooltip-clear-{{ label.id }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+            {{ _('Remove a seleção atual desta label') }}
+            <div class="tooltip-arrow" data-popper-arrow></div>
+        </div>
+        {% endif %}
+    </div>
     {% endif %}
 </div>
