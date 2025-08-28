@@ -1,146 +1,486 @@
-{% extends "base.html" %}
+{% extends "base_refactor.html" %}
 {% block title %}{{ _('Patient Search') }}{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col card s12">
-        <form action="{{url_for('search', project_id=project_id)}}" method="GET" id="form">
-            <div class="input-field col s12">
-                <p class='tight-bottom' style="font-size: 24px;margin-top:0px;">
-                    <i class="material-icons green-text">check</i> {{ _('Inclusion of terms') }}
-                </p>
-                <div class="input-field tight-bottom" id="include">
-                    <input style="width: 100% !important;">
-                </div>
-            </div>
-            <div class="input-field col s12">
-                <p class='tight-bottom' style="font-size: 24px;margin-top:0px;">
-                    <i class="material-icons red-text">close</i> {{ _('Exclusion of terms') }}
-                </p>
-                <div class="input-field" id="exclude">
-                    <input style="width: 100% !important;">
+<div class="space-y-6">
+    <!-- Search Form -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-search text-cyan-600 mr-2"></i>
+                {{ _('Patient Search') }}
+            </h3>
+        </div>
+
+        <div class="p-6">
+            <form action="{{url_for('search', project_id=project_id)}}" method="GET" id="form" class="space-y-6">
+                <!-- Inclusion Terms -->
+                <div class="space-y-3">
+                    <div class="flex items-center">
+                        <i class="bi bi-check-circle-fill text-green-600 mr-2"></i>
+                        <h4 class="text-lg font-medium text-gray-900">{{ _('Inclusion of terms') }}</h4>
+                    </div>
+                    <div id="include-container" class="space-y-2">
+                        <div class="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg bg-gray-50 min-h-12" id="include-chips"></div>
+                        <input type="text" id="include-input" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                               placeholder="{{ _('Add terms (type and press ENTER)') }}">
+                    </div>
                 </div>
 
-            </div>
-            <div class="input-field col s12 m6">
-                <input type="text" id="number" name="number" class="tooltipped" data-position="bottom"
-                    data-tooltip="{{ _('Number of Entries') }}" value="{{ number }}">
-                <label for="number">{{ _('Number of Entries') }} <i class="material-icons left">inbox</i></label>
-            </div>
-            <!-- <div class="input-field col s12 m6">
-            <label>
-                <input type="checkbox" name="only-queue" />
-                <span>{{ _('Generate queue only') }}</span>
-            </label>
-        </div> -->
-            <div class="input-field col s12 m6 center">
+                <!-- Exclusion Terms -->
+                <div class="space-y-3">
+                    <div class="flex items-center">
+                        <i class="bi bi-x-circle-fill text-red-600 mr-2"></i>
+                        <h4 class="text-lg font-medium text-gray-900">{{ _('Exclusion of terms') }}</h4>
+                    </div>
+                    <div id="exclude-container" class="space-y-2">
+                        <div class="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg bg-gray-50 min-h-12" id="exclude-chips"></div>
+                        <input type="text" id="exclude-input" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                               placeholder="{{ _('Add terms (type and press ENTER)') }}">
+                    </div>
+                </div>
+
+                <!-- Search Options -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="number" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="bi bi-inbox mr-1"></i>
+                            {{ _('Number of Entries') }}
+                        </label>
+                        <input type="text" id="number" name="number" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                               value="{{ number }}" 
+                               title="{{ _('Number of Entries') }}">
+                    </div>
+                    
+                    <div class="flex items-end">
+                        <button type="submit" 
+                                class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 transition-colors">
+                            <i class="bi bi-search mr-2"></i>
+                            {{ _('Search') }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hidden fields for form submission -->
                 <input type="hidden" name="include" id="include_field">
                 <input type="hidden" name="exclude" id="exclude_field">
-                <button class="btn waves-effect waves-light btn-wide">{{ _('Search') }}
-                    <i class="material-icons right">search</i>
-                </button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 
-    {% if n_results > 0 %}
-    <div class="col card s12">
-        <div class="card-content">
-            <div class="row">
-                <div class="col s12">
-                    <h5 class="center">{{ _('Found {number} results').format(number=n_results) }}</h5>
+    <!-- Search Results -->
+    {% if n_results is defined %}
+        {% if n_results > 0 %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-check-circle text-green-600 mr-2"></i>
+                    {{ _('Search Results') }}
+                </h3>
+            </div>
+            
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-full text-lg font-medium">
+                        <i class="bi bi-check-circle-fill mr-2"></i>
+                        {{ _('Found {number} results').format(number=n_results) }}
+                    </div>
                 </div>
-                <div class="col s12">
-                    <a class="waves-effect waves-light btn btn-wide"
-                        href="{{url_for('queue', project_id=project_id, queue_id=queue_id)}}">
-                        <i class="material-icons right">send</i>{{ _('Open Queue') }}
+                
+                <div class="text-center">
+                    <a href="{{url_for('queue', project_id=project_id, queue_id=queue_id)}}"
+                       class="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 transition-colors">
+                        <i class="bi bi-send mr-2"></i>
+                        {{ _('Open Queue') }}
                     </a>
                 </div>
             </div>
         </div>
-    </div>
-    <!-- <div class="col s12">
-        <div class="card day">
-            {% for entry in results %}
-            <div class="card-content blue-grey white-text patient-header" style="display:block;">
-                <a href="{{url_for('entry', project_id=project_id, queue_id=queue_id, queue_pos=loop.index)}}"
-                    class="btn btn-float right" target="_blank">{{ _('Open')
-                    }}</a>
-                <p><b>{{ entry['entry_id'] }}</b>: {{ entry['description'] }}</p>
-                <span class="small-title">
-                    {{ _('Occurences: {} - Score of Search: {}').format(entry['match_count'], entry["score"])
-                    }}</span>
+        
+        {% elif n_results == 0 %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-12 text-center">
+                <i class="bi bi-search text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">{{ _('No results for the search') }}</h3>
+                <p class="text-gray-500">{{ _('Try adjusting your search terms or criteria.') }}</p>
             </div>
-            {% endfor %}
         </div>
-    </div> -->
-    {% elif n_results == 0 %}
-    <div class="col s12">
-        <h4 class="center">{{ _('No results for the search') }}</h4>
-    </div>
-    {% else %}
-    <div class="col card s12">
-        <div class="card-content">
-            <div class="row">
-                <span class="card-title col s12">
+        
+        {% else %}
+        <!-- Random Generate -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-shuffle text-purple-600 mr-2"></i>
                     {{ _('Random Generate') }}
-                </span>
-                <form method="post" action="{{url_for('queue', project_id=project_id)}}">
-                    <div class="input-field col s12">
-                        <input id="number" name="number" type="text" class="validate" value="{{number}}">
-                        <label for="number">{{ _('Number of entries') }}</label>
+                </h3>
+            </div>
+            
+            <div class="p-6">
+                <form method="post" action="{{url_for('queue', project_id=project_id)}}" class="space-y-4">
+                    <div>
+                        <label for="random-number" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ _('Number of entries') }}
+                        </label>
+                        <input id="random-number" name="number" type="text" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500" 
+                               value="{{number}}">
                     </div>
+                    
                     <input type="hidden" name="type" value="random">
-                    <div class="col s12">
-                        <button class="btn btn-wide waves-effect waves-light" type="submit" name="action">{{ _('Generate
-                            queue') }}
-                            <i class="material-icons right">send</i>
-                        </button>
-                    </div>
+                    
+                    <button type="submit" 
+                            class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 transition-colors">
+                        {{ _('Generate queue') }}
+                        <i class="bi bi-send ml-2"></i>
+                    </button>
                 </form>
             </div>
         </div>
-    </div>
+        {% endif %}
     {% endif %}
 </div>
 {% endblock %}
+
 {% block scripts %}
 <script>
-    function update_search(id) {
-        var data = $('#' + id + ' .chip').map(function () {
-            var text = $(this).text()
-            return text.substring(0, text.length - 5);
-        }).get();
-        $('#' + id + '_field').val(JSON.stringify(data));
+class ChipManager {
+    constructor(containerId, inputId, fieldId, color = 'blue') {
+        this.container = document.getElementById(`${containerId}-chips`);
+        this.input = document.getElementById(`${inputId}-input`);
+        this.field = document.getElementById(fieldId);
+        this.color = color;
+        this.chips = [];
+        
+        this.init();
     }
-
-    function init_field(id, data) {
-        let elems = document.querySelector('#' + id);
-        let options = {
-            onChipAdd: () => update_search(id),
-            onChipDelete: () => update_search(id),
-            placeholder: '{{ _('Add terms(type and press ENTER)') }}',
-            secondaryPlaceholder: '{{ _('Add more terms(type and press ENTER)') }}',
-            data: data,
-        }
-        let instances = M.Chips.init(elems, options);
-        $('#' + id + ' input').on('focusout', function () { set_chip(id); });
-    }
-
-    function set_chip(id) {
-        M.Chips.getInstance($('#' + id)).addChip({ tag: $('#' + id + ' input').val() });
-        $('#' + id + ' input').val("");
-    }
-
-    $(document).ready(function () {
-        $('#form').on('submit', function () {
-            update_search("include");
-            update_search("exclude");
-            return true
+    
+    init() {
+        // Initialize with existing data if any
+        const existingData = this.field.value ? JSON.parse(this.field.value) : [];
+        existingData.forEach(text => this.addChip(text, false));
+        
+        // Set up event listeners
+        this.input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ',') {
+                e.preventDefault();
+                this.addChipFromInput();
+            }
         });
-        init_field('include', JSON.parse('{{ include | safe }}'));
-        init_field('exclude', JSON.parse('{{ exclude | safe }}'));
-        $(".patient-body").highlight({{ highlight | safe }});
+        
+        this.input.addEventListener('blur', () => {
+            this.addChipFromInput();
+        });
+        
+        // Update field on initialization
+        this.updateField();
+    }
+    
+    addChipFromInput() {
+        const text = this.input.value.trim();
+        if (text && !this.chips.includes(text)) {
+            this.addChip(text);
+            this.input.value = '';
+            this.input.focus();
+        }
+    }
+    
+    addChip(text, updateField = true) {
+        if (!text || this.chips.includes(text)) return;
+        
+        this.chips.push(text);
+        
+        const chip = document.createElement('div');
+        chip.className = `inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-${this.color}-100 text-${this.color}-800 border border-${this.color}-200`;
+        chip.innerHTML = `
+            <span>${text}</span>
+            <button type="button" class="ml-2 text-${this.color}-600 hover:text-${this.color}-800 focus:outline-none" onclick="this.parentElement.remove(); chipManagers.get('${this.container.id.replace('-chips', '')}').removeChip('${text}')">
+                <i class="bi bi-x text-sm"></i>
+            </button>
+        `;
+        
+        this.container.appendChild(chip);
+        
+        if (updateField) {
+            this.updateField();
+        }
+    }
+    
+    removeChip(text) {
+        const index = this.chips.indexOf(text);
+        if (index > -1) {
+            this.chips.splice(index, 1);
+            this.updateField();
+        }
+    }
+    
+    updateField() {
+        this.field.value = JSON.stringify(this.chips);
+    }
+}
+
+// Global chip managers registry
+const chipManagers = new Map();
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize chip managers
+    const includeManager = new ChipManager('include', 'include', 'include_field', 'green');
+    const excludeManager = new ChipManager('exclude', 'exclude', 'exclude_field', 'red');
+    
+    chipManagers.set('include', includeManager);
+    chipManagers.set('exclude', excludeManager);
+    
+    // Parse URL parameters to restore form state
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Restore number field from URL
+    const numberParam = urlParams.get('number');
+    if (numberParam) {
+        document.getElementById('number').value = numberParam;
+    }
+    
+    // Restore include terms from URL first, then fallback to backend data
+    let includeTerms = [];
+    try {
+        const includeParam = urlParams.get('include');
+        if (includeParam) {
+            // Parse from URL parameter
+            includeTerms = JSON.parse(decodeURIComponent(includeParam));
+        } else {
+            // Fallback to backend data - handle the {"tag": "value"} format
+            const includeDataRaw = {{ include | tojson | safe }};
+            if (includeDataRaw && Array.isArray(includeDataRaw)) {
+                includeTerms = includeDataRaw.map(item => {
+                    if (typeof item === 'object' && item.tag) {
+                        return item.tag;
+                    }
+                    return item;
+                }).filter(Boolean);
+            }
+        }
+        if (Array.isArray(includeTerms)) {
+            includeTerms.forEach(term => includeManager.addChip(term, false));
+        }
+    } catch(e) {
+        console.warn('Failed to parse include data:', e);
+    }
+    
+    // Restore exclude terms from URL first, then fallback to backend data
+    let excludeTerms = [];
+    try {
+        const excludeParam = urlParams.get('exclude');
+        if (excludeParam) {
+            // Parse from URL parameter
+            excludeTerms = JSON.parse(decodeURIComponent(excludeParam));
+        } else {
+            // Fallback to backend data - handle the {"tag": "value"} format
+            const excludeDataRaw = {{ exclude | tojson | safe }};
+            if (excludeDataRaw && Array.isArray(excludeDataRaw)) {
+                excludeTerms = excludeDataRaw.map(item => {
+                    if (typeof item === 'object' && item.tag) {
+                        return item.tag;
+                    }
+                    return item;
+                }).filter(Boolean);
+            }
+        }
+        if (Array.isArray(excludeTerms)) {
+            excludeTerms.forEach(term => excludeManager.addChip(term, false));
+        }
+    } catch(e) {
+        console.warn('Failed to parse exclude data:', e);
+    }
+    
+    // Form submission handler
+    const form = document.getElementById('form');
+    form.addEventListener('submit', function(e) {
+        includeManager.updateField();
+        excludeManager.updateField();
     });
+    
+    // Initialize highlighting if data exists
+    try {
+        const highlightDataRaw = {{ highlight | tojson | safe }};
+        if (highlightDataRaw && Array.isArray(highlightDataRaw)) {
+            initHighlight(highlightDataRaw);
+        }
+    } catch(e) {
+        console.warn('Highlight initialization failed:', e);
+    }
+    
+    // Form validation
+    const numberInput = document.getElementById('number');
+    if (numberInput) {
+        numberInput.addEventListener('input', function() {
+            // Only allow numbers
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Don't trigger shortcuts when typing in input fields
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        // Press 's' to focus search
+        if (e.key === 's' || e.key === 'S') {
+            e.preventDefault();
+            document.getElementById('include-input').focus();
+        }
+        
+        // Press 'Enter' on form to submit
+        if (e.key === 'Enter' && e.ctrlKey) {
+            e.preventDefault();
+            form.submit();
+        }
+    });
+    
+    // Auto-focus first input
+    document.getElementById('include-input').focus();
+});
+
+// Custom highlight function (replaces jQuery highlight)
+function initHighlight(highlightData) {
+    if (!highlightData || !Array.isArray(highlightData)) return;
+    
+    const contentAreas = document.querySelectorAll('.prose, .search-content');
+    
+    highlightData.forEach(term => {
+        contentAreas.forEach(area => {
+            highlightText(area, term, 'search-highlight');
+        });
+    });
+}
+
+function highlightText(element, searchText, className = 'highlight') {
+    if (!searchText || !element) return;
+    
+    const walker = document.createTreeWalker(
+        element,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+    );
+    
+    const textNodes = [];
+    let node;
+    
+    while (node = walker.nextNode()) {
+        textNodes.push(node);
+    }
+    
+    textNodes.forEach(textNode => {
+        const parent = textNode.parentNode;
+        const text = textNode.textContent;
+        const regex = new RegExp(`(${searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        
+        if (regex.test(text)) {
+            const highlightedHTML = text.replace(regex, `<mark class="${className}">$1</mark>`);
+            const temp = document.createElement('div');
+            temp.innerHTML = highlightedHTML;
+            
+            while (temp.firstChild) {
+                parent.insertBefore(temp.firstChild, textNode);
+            }
+            parent.removeChild(textNode);
+        }
+    });
+}
+
+// Notification system (similar to other refactored pages)
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    const colors = {
+        success: 'bg-green-100 border-green-500 text-green-700',
+        error: 'bg-red-100 border-red-500 text-red-700',
+        info: 'bg-blue-100 border-blue-500 text-blue-700',
+        warning: 'bg-yellow-100 border-yellow-500 text-yellow-700'
+    };
+    
+    notification.className = `fixed top-4 right-4 px-4 py-3 border-l-4 rounded shadow-lg ${colors[type] || colors.info} transform transition-all duration-300 translate-x-full opacity-0 z-50`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="bi bi-check-circle mr-2"></i>
+            <span class="text-sm font-medium">${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-current hover:text-gray-600">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full', 'opacity-0');
+    }, 100);
+    
+    // Auto remove after 4 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 300);
+        }
+    }, 4000);
+}
 </script>
+
+<style>
+.search-highlight {
+    background-color: #fef08a;
+    color: #365314;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
+/* Chip animation */
+.chip-enter {
+    opacity: 0;
+    transform: scale(0.8);
+}
+
+.chip-enter-active {
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 200ms, transform 200ms;
+}
+
+.chip-exit {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.chip-exit-active {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 200ms, transform 200ms;
+}
+
+/* Hover effects */
+.search-chip {
+    transition: all 0.2s ease;
+}
+
+.search-chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Input focus styling */
+#include-input:focus {
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+#exclude-input:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+</style>
 {% endblock %}
