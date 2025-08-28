@@ -60,7 +60,7 @@
                 </li>
                 {% endif %}
 
-                {% if has_permission('entry') %}
+                <!-- {% if has_permission('entry') %}
                 <li>
                     <a href="{{ url_for('entry', project_id = project_id) }}"
                         class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
@@ -68,7 +68,7 @@
                         <span class="ms-3 sidebar-item-text">{{ _('Annotation') }}</span>
                     </a>
                 </li>
-                {% endif %}
+                {% endif %} -->
 
                 {% if has_permission('search') %}
                 <li>
