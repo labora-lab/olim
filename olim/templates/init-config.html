@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Initial configuration') }}{% endblock %}
-{% block sidebar %}{% endblock %}
-{% block mobile_backdrop %}{% endblock %}
-{% block main_wrapper_classes %}{% endblock %}
+{% set suppress_sidebar = true %}
 
 {% block navbar %}
 <nav class="bg-gray-800 shadow-sm">

@@ -2,19 +2,33 @@
 <html lang="en">
 
 <head>
+    {% if suppress_sidebar %}
+    <style>
+        .no-sidebar #main-content,
+        .no-sidebar nav,
+        .no-sidebar footer {
+            margin-left: 0 !important;
+            max-width: 100vw !important;
+            width: 100vw !important;
+            box-sizing: border-box;
+        }
+    </style>
+    {% endif %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    {% if not suppress_sidebar %}
     <script>
         // Apply collapsed state immediately if needed to prevent flash
-        (function() {
+        (function () {
             if (localStorage.getItem('sidebarCollapsed') === 'true') {
                 document.documentElement.classList.add('sidebar-preload-collapsed');
             }
         })();
     </script>
+    {% endif %}
     <style>
         .htmx-indicator {
             opacity: 0;
@@ -133,12 +147,14 @@
         .sidebar-collapsed .task-counter-collapsed {
             margin-top: -2rem !important;
         }
+
         /* Only override when no jobs running (gray background) */
         .sidebar-collapsed .task-counter-collapsed button.bg-gray-700,
         .sidebar-collapsed .task-counter-collapsed button.bg-gray-600 {
             background-color: #374151 !important;
             color: #D1D5DB !important;
         }
+
         .sidebar-collapsed .task-counter-collapsed button.bg-gray-700:hover,
         .sidebar-collapsed .task-counter-collapsed button.bg-gray-600:hover,
         .sidebar-collapsed .task-counter-collapsed button.hover\\:bg-gray-600:hover {
@@ -176,14 +192,16 @@
             line-height: 20px;
             font-weight: bold;
         }
-        
+
         /* Preload collapsed state to prevent flash */
         .sidebar-preload-collapsed #sidebar {
             width: 4rem !important;
         }
+
         .sidebar-preload-collapsed #main-content {
             margin-left: 4rem !important;
         }
+
         @media (max-width: 640px) {
             .sidebar-preload-collapsed #main-content {
                 margin-left: 0 !important;
@@ -193,19 +211,34 @@
     <title>{% block title %}{% endblock %} - {{ _('OLIM - Open Labeller for Iterative Machine learning') }}</title>
 </head>
 
-<body class="bg-gray-50 min-h-screen flex flex-col">
+<body class="bg-gray-50 min-h-screen flex flex-col{% if suppress_sidebar %} no-sidebar{% endif %}">
+
+    {% if not suppress_sidebar %}
     {% block sidebar %}
     {% include '_layouts/sidebar.html' %}
     {% endblock %}
+    {% endif %}
 
+
+    {% if not suppress_sidebar %}
     {% block mobile_backdrop %}
     {% from 'macros/ui_components.html' import mobile_backdrop %}
     {{ mobile_backdrop() }}
     {% endblock %}
+    {% endif %}
 
     <!-- Main Content Wrapper -->
     <div id="main-content"
-        class="{% block main_wrapper_classes %}sm:ml-64{% endblock %} flex flex-col min-h-screen transition-all duration-300">
+        class="flex flex-col min-h-screen transition-all duration-300 {% if suppress_sidebar %}w-full max-w-none{% else %}{% block main_wrapper_classes %}sm:ml-64{% endblock %}{% endif %}">
+        {# Remove sm:ml-64 if suppress_sidebar is true #}
+        {% if suppress_sidebar %}
+        {# Remove any margin-left classes forcibly #}
+        <style>
+            #main-content {
+                margin-left: 0 !important;
+            }
+        </style>
+        {% endif %}
         {% block navbar %}{% endblock %}
         {% from 'macros/ui_components.html' import mobile_header %}
         {{ mobile_header() }}
