@@ -12,7 +12,7 @@
                 {{ _('Entry Navigation') }}
             </h3>
         </div>
-        
+
         <div class="p-6">
             {% if datasets|length > 1 %}
             <!-- Multiple Dataset Form -->
@@ -23,25 +23,26 @@
                         {{ _('Entry ID') }}
                     </label>
                     <input type="text" id="id" name="id" value="{{ entry.entry_id if entry else '' }}"
-                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
                 </div>
                 <div>
                     <label for="dataset_id" class="block mb-2 text-sm font-medium text-gray-900">
                         <i class="bi bi-database mr-1"></i>
                         {{ _('Dataset') }}
                     </label>
-                    <select id="dataset_id" 
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                    <select id="dataset_id"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
                         {% for dataset in datasets %}
-                        <option value="{{ dataset.id }}" {% if entry and entry.dataset_id == dataset.id %}selected{% endif %}>
+                        <option value="{{ dataset.id }}" {% if entry and entry.dataset_id==dataset.id %}selected{% endif
+                            %}>
                             {{ dataset.name }}
                         </option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="flex items-end">
-                    <button type="button" onclick="loadEntry()" 
-                            class="w-full text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                    <button type="button" onclick="loadEntry()"
+                        class="w-full text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
                         <i class="bi bi-box-arrow-in-right mr-2"></i>
                         {{ _('Load Entry') }}
                     </button>
@@ -56,11 +57,11 @@
                         {{ _('Entry ID') }}
                     </label>
                     <input type="text" id="id" name="id" value="{{ entry.entry_id if entry else '' }}"
-                           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
                 </div>
                 <div class="flex items-end">
-                    <button type="button" onclick="loadEntry()" 
-                            class="text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                    <button type="button" onclick="loadEntry()"
+                        class="text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
                         <i class="bi bi-box-arrow-in-right mr-2"></i>
                         {{ _('Load Entry') }}
                     </button>
@@ -72,27 +73,27 @@
             <!-- Queue Navigation -->
             <div class="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-lg p-4">
                 <div class="flex items-center space-x-4">
-                    <button type="button" onclick="navigateQueue(-1)" 
-                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50 focus:ring-4 focus:outline-none focus:ring-purple-200 transition-colors {% if queue_pos == 1 %}opacity-50 cursor-not-allowed{% endif %}"
-                            {% if queue_pos == 1 %}disabled{% endif %}>
+                    <button type="button" onclick="navigateQueue(-1)"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50 focus:ring-4 focus:outline-none focus:ring-purple-200 transition-colors {% if queue_pos == 1 %}opacity-50 cursor-not-allowed{% endif %}"
+                        {% if queue_pos==1 %}disabled{% endif %}>
                         <i class="bi bi-arrow-left mr-2"></i>
                         {{ _('Previous') }}
                     </button>
-                    
+
                     <a href="{{ url_for('queue', project_id=project_id, queue_id=queue_id) }}" target="_blank"
-                       class="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-600 bg-purple-100 border border-purple-300 rounded-lg hover:bg-purple-200 focus:ring-4 focus:outline-none focus:ring-purple-300 transition-colors">
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-600 bg-purple-100 border border-purple-300 rounded-lg hover:bg-purple-200 focus:ring-4 focus:outline-none focus:ring-purple-300 transition-colors">
                         <i class="bi bi-list-ol mr-2"></i>
                         {{ queue_pos }}/{{ queue_len }}
                     </a>
-                    
-                    <button type="button" onclick="navigateQueue(1)" 
-                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50 focus:ring-4 focus:outline-none focus:ring-purple-200 transition-colors {% if queue_pos == queue_len %}opacity-50 cursor-not-allowed{% endif %}"
-                            {% if queue_pos == queue_len %}disabled{% endif %}>
+
+                    <button type="button" onclick="navigateQueue(1)"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50 focus:ring-4 focus:outline-none focus:ring-purple-200 transition-colors {% if queue_pos == queue_len %}opacity-50 cursor-not-allowed{% endif %}"
+                        {% if queue_pos==queue_len %}disabled{% endif %}>
                         {{ _('Next') }}
                         <i class="bi bi-arrow-right ml-2"></i>
                     </button>
                 </div>
-                
+
                 <div class="text-sm text-purple-600">
                     <i class="bi bi-info-circle mr-1"></i>
                     {{ _('Queue Navigation') }}
@@ -113,13 +114,14 @@
                         <i class="bi bi-file-richtext text-green-600 mr-2"></i>
                         {{ _('Entry Content') }}
                         {% if entry %}
-                        <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span
+                            class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             {{ entry.entry_id }}
                         </span>
                         {% endif %}
                     </h3>
                 </div>
-                
+
                 <div class="p-6" style="max-height: 70vh; overflow-y: auto;">
                     <div class="prose max-w-none">
                         {{ entry_html|safe }}
@@ -151,8 +153,8 @@
                         <div class="flex flex-wrap gap-2">
                             {% for label_str, type, icon, color in labels_rev %}
                             <button type="button" onclick="applyToAll('{{ label_str }}', true)"
-                                    data-tooltip-target="tooltip-apply-{{ loop.index }}" data-tooltip-placement="top"
-                                    class="inline-flex items-center px-2 py-1 text-xs font-medium text-{{ color }}-700 bg-{{ color }}-100 border border-{{ color }}-300 rounded hover:bg-{{ color }}-200 focus:outline-none focus:ring-2 focus:ring-{{ color }}-200 transition-colors">
+                                data-tooltip-target="tooltip-apply-{{ loop.index }}" data-tooltip-placement="top"
+                                class="inline-flex items-center px-2 py-1 text-xs font-medium text-{{ color }}-700 bg-{{ color }}-100 border border-{{ color }}-300 rounded hover:bg-{{ color }}-200 focus:outline-none focus:ring-2 focus:ring-{{ color }}-200 transition-colors">
                                 {% if type == 'text' %}
                                 <span class="font-bold mr-1">{{ icon }}</span>
                                 {% else %}
@@ -161,14 +163,16 @@
                                 {{ label_str }}
                                 <i class="bi bi-check-all ml-1"></i>
                             </button>
-                            <div id="tooltip-apply-{{ loop.index }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
-                                {{ _('Aplicar "{label_str}" para todas as opções visíveis').format(label_str=label_str) }}
+                            <div id="tooltip-apply-{{ loop.index }}" role="tooltip"
+                                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                                {{ _('Aplicar "{label_str}" para todas as opções visíveis').format(label_str=label_str)
+                                }}
                                 <div class="tooltip-arrow" data-popper-arrow></div>
                             </div>
-                            
+
                             <button type="button" onclick="applyToAll('{{ label_str }}', false)"
-                                    data-tooltip-target="tooltip-remove-{{ loop.index }}" data-tooltip-placement="top"
-                                    class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors">
+                                data-tooltip-target="tooltip-remove-{{ loop.index }}" data-tooltip-placement="top"
+                                class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors">
                                 {% if type == 'text' %}
                                 <span class="font-bold mr-1">{{ icon }}</span>
                                 {% else %}
@@ -176,7 +180,8 @@
                                 {% endif %}
                                 <i class="bi bi-x ml-1"></i>
                             </button>
-                            <div id="tooltip-remove-{{ loop.index }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                            <div id="tooltip-remove-{{ loop.index }}" role="tooltip"
+                                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
                                 {{ _('Remover "{label_str}" de todas as opções visíveis').format(label_str=label_str) }}
                                 <div class="tooltip-arrow" data-popper-arrow></div>
                             </div>
@@ -194,23 +199,25 @@
                     <!-- Hidden Entries Controls -->
                     <div class="pt-4 border-t border-gray-200">
                         <button type="button" id="show_hidden_btn" onclick="toggleHidden(true)"
-                                data-tooltip-target="tooltip-show-hidden" data-tooltip-placement="top"
-                                class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors {% if show_hidden %}hidden{% endif %}">
+                            data-tooltip-target="tooltip-show-hidden" data-tooltip-placement="top"
+                            class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors {% if show_hidden %}hidden{% endif %}">
                             <i class="bi bi-eye mr-2"></i>
                             {{ _('Show hidden') }}
                         </button>
-                        <div id="tooltip-show-hidden" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                        <div id="tooltip-show-hidden" role="tooltip"
+                            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
                             {{ _('Mostrar labels que foram ocultadas') }}
                             <div class="tooltip-arrow" data-popper-arrow></div>
                         </div>
-                        
+
                         <button type="button" id="hide_hidden_btn" onclick="toggleHidden(false)"
-                                data-tooltip-target="tooltip-hide-hidden" data-tooltip-placement="top"
-                                class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-300 rounded-lg hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-200 transition-colors {% if not show_hidden %}hidden{% endif %}">
+                            data-tooltip-target="tooltip-hide-hidden" data-tooltip-placement="top"
+                            class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-300 rounded-lg hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-200 transition-colors {% if not show_hidden %}hidden{% endif %}">
                             <i class="bi bi-eye-slash mr-2"></i>
                             {{ _('Hide hidden') }}
                         </button>
-                        <div id="tooltip-hide-hidden" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                        <div id="tooltip-hide-hidden" role="tooltip"
+                            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
                             {{ _('Ocultar labels que foram marcadas como ocultas') }}
                             <div class="tooltip-arrow" data-popper-arrow></div>
                         </div>
@@ -219,24 +226,26 @@
                     {% if entry.type == "patient" %}
                     <!-- Patient-specific controls -->
                     <div class="pt-4 border-t border-gray-200 space-y-2">
-                        <button type="button" onclick="expandAll(true)"
-                                data-tooltip-target="tooltip-expand-all" data-tooltip-placement="top"
-                                class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-300 rounded-lg hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-200 transition-colors">
+                        <button type="button" onclick="expandAll(true)" data-tooltip-target="tooltip-expand-all"
+                            data-tooltip-placement="top"
+                            class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-300 rounded-lg hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-200 transition-colors">
                             <i class="bi bi-plus-circle mr-2"></i>
                             {{ _('Expand all') }}
                         </button>
-                        <div id="tooltip-expand-all" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                        <div id="tooltip-expand-all" role="tooltip"
+                            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
                             {{ _('Expandir todas as seções retraídas do conteúdo') }}
                             <div class="tooltip-arrow" data-popper-arrow></div>
                         </div>
-                        
-                        <button type="button" onclick="retractAll(false)"
-                                data-tooltip-target="tooltip-retract-all" data-tooltip-placement="top"
-                                class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-orange-700 bg-orange-50 border border-orange-300 rounded-lg hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-200 transition-colors">
+
+                        <button type="button" onclick="retractAll(false)" data-tooltip-target="tooltip-retract-all"
+                            data-tooltip-placement="top"
+                            class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-orange-700 bg-orange-50 border border-orange-300 rounded-lg hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-200 transition-colors">
                             <i class="bi bi-dash-circle mr-2"></i>
                             {{ _('Retract all') }}
                         </button>
-                        <div id="tooltip-retract-all" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                        <div id="tooltip-retract-all" role="tooltip"
+                            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
                             {{ _('Retrair todas as seções expandidas do conteúdo') }}
                             <div class="tooltip-arrow" data-popper-arrow></div>
                         </div>
@@ -251,7 +260,7 @@
                         </h4>
                         <div id="highlights-container">
                             <input type="text" id="highlight-input" placeholder="{{ _('Add Highlight') }}"
-                                   class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 p-2.5">
+                                class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 p-2.5">
                             <div id="highlights-list" class="mt-2 space-y-1">
                                 <!-- Dynamic highlight chips will be added here -->
                             </div>
@@ -276,429 +285,27 @@
 
 {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize date pickers if they exist
-    initDatePickers();
-    
-    // Initialize highlights
-    {% if valid_entry and highlight %}
-    try {
-        var highlightData = {{ highlight|safe }};
-        if (highlightData) {
-            initHighlight(highlightData);
-        }
-    } catch(e) {
-        console.warn('Highlight initialization failed:', e);
-    }
+    // Set up global variables for entry page functionality
+    window.projectId = {{ project_id }};
+    {% if datasets and datasets|length > 0 %}
+    window.defaultDatasetId = {{ datasets[0].id }};
     {% endif %}
-    
-    // Add keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-        
-        // Arrow keys for queue navigation
-        if (e.key === 'ArrowLeft') {
-            e.preventDefault();
-            navigateQueue(-1);
-        } else if (e.key === 'ArrowRight') {
-            e.preventDefault();
-            navigateQueue(1);
-        }
-        
-        // Enter to load entry
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            loadEntry();
-        }
-    });
-});
-
-// Date picker initialization (vanilla JS replacement for jQuery datepicker)
-function initDatePickers() {
-    const startDateInput = document.getElementById('start-date');
-    const endDateInput = document.getElementById('end-date');
-    
-    if (startDateInput) {
-        // You would integrate a vanilla JS date picker library here
-        // For now, we'll use the native HTML5 date input
-        startDateInput.type = 'date';
-    }
-    
-    if (endDateInput) {
-        endDateInput.type = 'date';
-    }
-}
-
-// Highlight functionality (vanilla JS replacement for jQuery highlight plugin)
-function initHighlight(highlightData) {
-    if (!highlightData || !Array.isArray(highlightData)) return;
-    
-    const container = document.getElementById('highlights-list');
-    const input = document.getElementById('highlight-input');
-    
-    if (!container || !input) return;
-    
-    // Initialize existing highlights
-    highlightData.forEach(term => {
-        addHighlightChip(term);
-        highlightText(term);
-    });
-    
-    // Handle adding new highlights
-    input.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter' && this.value.trim()) {
-            e.preventDefault();
-            const term = this.value.trim();
-            addHighlightChip(term);
-            highlightText(term);
-            updateHighlightSession();
-            this.value = '';
-        }
-    });
-}
-
-function addHighlightChip(term) {
-    const container = document.getElementById('highlights-list');
-    if (!container) return;
-    
-    const chip = document.createElement('div');
-    chip.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-300';
-    chip.innerHTML = `
-        <span>${escapeHtml(term)}</span>
-        <button type="button" onclick="removeHighlight('${escapeHtml(term)}')" class="ml-2 text-yellow-600 hover:text-yellow-800">
-            <i class="bi bi-x"></i>
-        </button>
-    `;
-    chip.dataset.term = term;
-    container.appendChild(chip);
-}
-
-function removeHighlight(term) {
-    const container = document.getElementById('highlights-list');
-    const chip = container.querySelector(`[data-term="${term}"]`);
-    if (chip) {
-        chip.remove();
-        unhighlightText(term);
-        updateHighlightSession();
-    }
-}
-
-function highlightText(term) {
-    const contentArea = document.querySelector('.prose');
-    if (!contentArea || !term) return;
-    
-    const regex = new RegExp(`(${escapeRegExp(term)})`, 'gi');
-    const walker = document.createTreeWalker(
-        contentArea,
-        NodeFilter.SHOW_TEXT,
-        null,
-        false
-    );
-    
-    const textNodes = [];
-    let node;
-    while (node = walker.nextNode()) {
-        if (regex.test(node.textContent)) {
-            textNodes.push(node);
-        }
-    }
-    
-    textNodes.forEach(textNode => {
-        const parent = textNode.parentNode;
-        if (parent.tagName !== 'MARK') {
-            const highlightedHTML = textNode.textContent.replace(regex, '<mark class="bg-yellow-300 text-yellow-900 px-1 rounded">$1</mark>');
-            const temp = document.createElement('div');
-            temp.innerHTML = highlightedHTML;
-            
-            while (temp.firstChild) {
-                parent.insertBefore(temp.firstChild, textNode);
-            }
-            parent.removeChild(textNode);
-        }
-    });
-}
-
-function unhighlightText(term) {
-    const contentArea = document.querySelector('.prose');
-    if (!contentArea) return;
-    
-    const highlights = contentArea.querySelectorAll('mark');
-    highlights.forEach(mark => {
-        if (mark.textContent.toLowerCase().includes(term.toLowerCase())) {
-            const parent = mark.parentNode;
-            parent.replaceChild(document.createTextNode(mark.textContent), mark);
-            parent.normalize();
-        }
-    });
-}
-
-function updateHighlightSession() {
-    const chips = document.querySelectorAll('#highlights-list [data-term]');
-    const data = Array.from(chips).map(chip => chip.dataset.term);
-    
-    // Send update to server (you'll need to implement this endpoint)
-    fetch('/update-session', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            parameter: 'highlight',
-            data: data
-        })
-    }).catch(console.error);
-}
-
-// Entry navigation functions
-function loadEntry() {
-    const entryId = document.getElementById('id').value;
-    const datasetSelect = document.getElementById('dataset_id');
-    
-    if (!entryId) {
-        showNotification('{{ _("Please enter an entry ID") }}', 'warning');
-        return;
-    }
-    
-    let url = `/{{ project_id }}/entry`;
-    if (datasetSelect) {
-        url += `/${datasetSelect.value}/${encodeURIComponent(entryId)}`;
-    } else {
-        url += `/{% if datasets %}{{ datasets[0].id }}/{% endif %}${encodeURIComponent(entryId)}`;
-    }
-    
-    window.location.href = url;
-}
-
-function navigateQueue(direction) {
     {% if queue_id and queue_pos and queue_len %}
-    const newPos = {{ queue_pos }} + direction;
-    if (newPos >= 1 && newPos <= {{ queue_len }}) {
-        window.location.href = '/{{ project_id }}/queue/{{ queue_id }}/' + newPos;
-    }
+    window.queueId = {{ queue_id }};
+    window.queuePos = {{ queue_pos }};
+    window.queueLen = {{ queue_len }};
     {% endif %}
-}
-
-// Label management functions
-function applyToAll(labelStr, apply) {
-    const selector = apply ? `[id^="${labelStr.replace(' ', '_')}_sel_"]:not(.hidden)` : `[id^="${labelStr.replace(' ', '_')}_unsel_"]:not(.hidden)`;
-    const buttons = document.querySelectorAll(selector);
-    
-    buttons.forEach(button => {
-        if (button.style.display !== 'none') {
-            button.click();
-        }
-    });
-}
-
-function toggleHidden(show) {
-    const hiddenEntries = document.querySelectorAll('.hidden-entry');
-    const showBtn = document.getElementById('show_hidden_btn');
-    const hideBtn = document.getElementById('hide_hidden_btn');
-    
-    hiddenEntries.forEach(entry => {
-        entry.style.display = show ? 'block' : 'none';
-    });
-    
-    if (show) {
-        showBtn.classList.add('hidden');
-        hideBtn.classList.remove('hidden');
-        updateUrl('show-hidden', 'True');
-    } else {
-        showBtn.classList.remove('hidden');
-        hideBtn.classList.add('hidden');
-        updateUrl('show-hidden', 'False');
-    }
-}
-
-function expandAll(expand) {
-    const buttons = document.querySelectorAll(expand ? '.btn-expand:not(.hidden)' : '.btn-retract:not(.hidden)');
-    buttons.forEach(button => {
-        if (button.style.display !== 'none') {
-            button.click();
-        }
-    });
-}
-
-function retractAll() {
-    expandAll(false);
-}
-
-// Label management functions from original scripts.js
-function addEntryLabel(entryId, labelId, value) {
-    // Call the backend to add/update label
-    runCommand('add-label', [
-        'entry_id=' + entryId, 
-        'label_id=' + labelId, 
-        'value=' + value, 
-        'callback=markLabel("' + labelId + '", "' + value + '");'
-    ]);
-}
-
-function hideLabel(label, labelId) {
-    runCommand('manage-label', [
-        'label=' + label, 
-        'label_id=' + labelId, 
-        'mode=add', 
-        'callback=hideById("' + labelId + '");'
-    ]);
-}
-
-function unhideLabel(label, labelId) {
-    runCommand('manage-label', [
-        'label=' + label, 
-        'label_id=' + labelId, 
-        'mode=remove', 
-        'callback=unhideById("' + labelId + '");'
-    ]);
-}
-
-function hideById(id) {
-    const hiddenSelBtn = document.getElementById('hidden_sel_btn');
-    if (!hiddenSelBtn || !hiddenSelBtn.style.visibility === 'visible') {
-        const labelElement = document.getElementById('label_' + id);
-        if (labelElement) {
-            labelElement.style.display = 'none';
-        }
-    }
-    const labelElement = document.getElementById('label_' + id);
-    if (labelElement) {
-        labelElement.classList.add('hidden-entry');
-    }
-    const hideSelElement = document.getElementById('hide_sel_' + id);
-    if (hideSelElement) {
-        hideSelElement.classList.remove('hidden');
-    }
-    const hideElement = document.getElementById('hide_' + id);
-    if (hideElement) {
-        hideElement.classList.add('hidden');
-    }
-}
-
-function unhideById(id) {
-    const labelElement = document.getElementById('label_' + id);
-    if (labelElement) {
-        labelElement.classList.remove('hidden-entry');
-    }
-    const hideSelElement = document.getElementById('hide_sel_' + id);
-    if (hideSelElement) {
-        hideSelElement.classList.add('hidden');
-    }
-    const hideElement = document.getElementById('hide_' + id);
-    if (hideElement) {
-        hideElement.classList.remove('hidden');
-    }
-}
-
-function markLabel(labelId, value) {
-    // Unselect all first
-    const LABELS = ['YES', 'NO', 'MAYBE']; // You might need to adjust this based on your actual labels
-    LABELS.forEach(label => {
-        const unselElement = document.getElementById(label + '_unsel_' + labelId);
-        const selElement = document.getElementById(label + '_sel_' + labelId);
-        if (unselElement) unselElement.classList.add('hidden');
-        if (selElement) selElement.classList.remove('hidden');
-    });
-    
-    // Select back according to value
-    value = value.replace(' ', '_');
-    const unselElement = document.getElementById(value + '_unsel_' + labelId);
-    const selElement = document.getElementById(value + '_sel_' + labelId);
-    if (unselElement) unselElement.classList.remove('hidden');
-    if (selElement) selElement.classList.add('hidden');
-}
-
-// Backend communication function
-function runCommand(cmd, args) {
-    let URL = "/commands?cmd=" + cmd;
-    
-    for (let i in args) {
-        URL = URL + "&" + args[i];
-    }
-    
-    fetch(URL)
-        .then(response => response.json())
-        .then((data) => {
-            console.log(data);
-            if (data.type == 'OK') {
-                if (data.callback) {
-                    console.log(data.callback);
-                    eval(data.callback);
-                }
-            } else if (data.type == 'silentOK') {
-                if (data.callback) {
-                    console.log(data.callback);
-                    eval(data.callback);
-                }
-            } else {
-                showNotification("ERROR: " + data.text, 'error');
-                if (data.fail_callback) {
-                    eval(data.fail_callback);
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification("Communication error", 'error');
-        });
-}
-
-// Utility functions
-function updateUrl(param, value) {
-    const url = new URL(window.location);
-    if (value === undefined) {
-        url.searchParams.delete(param);
-    } else {
-        url.searchParams.set(param, value);
-    }
-    window.history.pushState(null, '', url);
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function escapeRegExp(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    const colors = {
-        success: 'bg-green-100 border-green-500 text-green-700',
-        error: 'bg-red-100 border-red-500 text-red-700',
-        info: 'bg-blue-100 border-blue-500 text-blue-700',
-        warning: 'bg-yellow-100 border-yellow-500 text-yellow-700'
+    {% if valid_entry and highlight %}
+    window.highlightData = {{ highlight|safe }};
+    {% endif %}
+    window.translations = {
+        pleaseEnterEntryId: '{{ _("Please enter an entry ID") }}'
     };
-    
-    notification.className = `fixed top-4 right-4 px-4 py-3 border-l-4 rounded shadow-lg ${colors[type] || colors.info} transform transition-all duration-300 translate-x-full opacity-0 z-50`;
-    notification.innerHTML = `
-        <div class="flex items-center">
-            <i class="bi bi-info-circle mr-2"></i>
-            <span class="text-sm font-medium">${message}</span>
-            <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-current hover:text-gray-600">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.classList.remove('translate-x-full', 'opacity-0');
-    }, 100);
-    
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.classList.add('translate-x-full', 'opacity-0');
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
-                }
-            }, 300);
-        }
-    }, 4000);
-}
+
+    // Initialize entry page when DOM is ready
+    document.addEventListener('DOMContentLoaded', function () {
+        initEntryPage();
+    });
+
 </script>
 {% endblock %}

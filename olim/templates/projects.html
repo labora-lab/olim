@@ -174,31 +174,15 @@
 
 {% block scripts %}
 <script>
-let deleteUrl = '';
+    // Set up global variables for projects page functionality
+    window.translations = {
+        confirmDeleteProject: '{{ _("Are you sure you want to delete project") }}',
+        cannotBeUndone: '{{ _("This action cannot be undone.") }}'
+    };
 
-function confirmDelete(projectName, url) {
-    deleteUrl = url;
-    document.getElementById('deleteMessage').textContent = 
-        "{{ _('Are you sure you want to delete project') }} \"" + projectName + "\"? {{ _('This action cannot be undone.') }}";
-    document.getElementById('deleteModal').classList.remove('hidden');
-}
-
-function closeDeleteModal() {
-    document.getElementById('deleteModal').classList.add('hidden');
-    deleteUrl = '';
-}
-
-document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
-    if (deleteUrl) {
-        window.location.href = deleteUrl;
-    }
-});
-
-// Close modal when clicking outside
-document.getElementById('deleteModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeDeleteModal();
-    }
-});
+    // Initialize projects page when DOM is ready
+    document.addEventListener('DOMContentLoaded', function () {
+        initProjectsPage();
+    });
 </script>
 {% endblock %}

@@ -187,188 +187,20 @@
 
 {% block scripts %}
 <script>
-let currentAction = null;
-let currentTextId = null;
-
-// Remove individual hidden entry
-function removeFromHidden(textId) {
-    currentAction = 'single';
-    currentTextId = textId;
-    
-    document.getElementById('modal-message').textContent = '{{ _("Are you sure you want to remove this entry from hidden entries?") }}';
-    document.getElementById('confirmModal').classList.remove('hidden');
-}
-
-// Remove all hidden entries
-function removeAllHidden() {
-    currentAction = 'all';
-    currentTextId = null;
-    
-    document.getElementById('modal-message').textContent = '{{ _("Are you sure you want to remove ALL entries from hidden entries? This action cannot be undone.") }}';
-    document.getElementById('confirmModal').classList.remove('hidden');
-}
-
-// Execute the confirmed action
-function executeAction() {
-    if (currentAction === 'single' && currentTextId) {
-        // Call backend to remove single entry
-        runCommand('remove-hidden', [
-            'text_id=' + currentTextId, 
-            'callback=removeEntryFromDOM("text_' + currentTextId + '");'
-        ]);
-    } else if (currentAction === 'all') {
-        // Call backend to remove all entries
-        runCommand('remove-all-hidden', [
-            'callback=reloadPage();'
-        ]);
-    }
-    
-    closeConfirmModal();
-}
-
-// Close confirmation modal
-function closeConfirmModal() {
-    document.getElementById('confirmModal').classList.add('hidden');
-    currentAction = null;
-    currentTextId = null;
-}
-
-// Toggle full text display
-function toggleFullText(textId) {
-    const fullTextDiv = document.getElementById('full-text-' + textId);
-    const button = event.target;
-    
-    if (fullTextDiv.classList.contains('hidden')) {
-        fullTextDiv.classList.remove('hidden');
-        button.textContent = '{{ _("Show less...") }}';
-    } else {
-        fullTextDiv.classList.add('hidden');
-        button.textContent = '{{ _("Show more...") }}';
-    }
-}
-
-// View entry details (placeholder for future implementation)
-function viewEntryDetails(textId) {
-    showNotification('{{ _("Entry details view coming soon!") }}', 'info');
-    // In the future, this could open a modal or navigate to entry details
-}
-
-// DOM manipulation callbacks
-function removeEntryFromDOM(elementId) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.style.transition = 'all 0.3s ease-out';
-        element.style.transform = 'translateX(100%)';
-        element.style.opacity = '0';
-        
-        setTimeout(() => {
-            element.remove();
-            checkEmptyState();
-        }, 300);
-        
-        showNotification('{{ _("Entry removed successfully!") }}', 'success');
-    }
-}
-
-function reloadPage() {
-    showNotification('{{ _("All entries removed successfully!") }}', 'success');
-    setTimeout(() => {
-        window.location.reload();
-    }, 1000);
-}
-
-// Check if we need to show empty state
-function checkEmptyState() {
-    const entries = document.querySelectorAll('[id^="text_"]');
-    if (entries.length === 0) {
-        setTimeout(() => {
-            window.location.reload();
-        }, 500);
-    }
-}
-
-// Backend communication function
-function runCommand(cmd, args) {
-    let URL = "/commands?cmd=" + cmd;
-    
-    for (let i in args) {
-        URL = URL + "&" + args[i];
-    }
-    
-    fetch(URL)
-        .then(response => response.json())
-        .then((data) => {
-            console.log(data);
-            if (data.type == 'OK') {
-                if (data.callback) {
-                    console.log(data.callback);
-                    eval(data.callback);
-                }
-            } else if (data.type == 'silentOK') {
-                if (data.callback) {
-                    console.log(data.callback);
-                    eval(data.callback);
-                }
-            } else {
-                showNotification("ERROR: " + data.text, 'error');
-                if (data.fail_callback) {
-                    eval(data.fail_callback);
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification("Communication error", 'error');
-        });
-}
-
-// Notification system
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    const colors = {
-        success: 'bg-green-100 border-green-500 text-green-700',
-        error: 'bg-red-100 border-red-500 text-red-700',
-        info: 'bg-blue-100 border-blue-500 text-blue-700',
-        warning: 'bg-yellow-100 border-yellow-500 text-yellow-700'
+    // Set up global variables for hidden page functionality
+    window.translations = {
+        confirmRemoveSingle: '{{ _("Are you sure you want to remove this entry from hidden entries?") }}',
+        confirmRemoveAll: '{{ _("Are you sure you want to remove ALL entries from hidden entries? This action cannot be undone.") }}',
+        showLess: '{{ _("Show less...") }}',
+        showMore: '{{ _("Show more...") }}',
+        entryDetailsComingSoon: '{{ _("Entry details view coming soon!") }}',
+        entryRemovedSuccess: '{{ _("Entry removed successfully!") }}',
+        allEntriesRemovedSuccess: '{{ _("All entries removed successfully!") }}'
     };
-    
-    notification.className = `fixed top-4 right-4 px-4 py-3 border-l-4 rounded shadow-lg ${colors[type] || colors.info} transform transition-all duration-300 translate-x-full opacity-0 z-50`;
-    notification.innerHTML = `
-        <div class="flex items-center">
-            <i class="bi bi-info-circle mr-2"></i>
-            <span class="text-sm font-medium">${message}</span>
-            <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-current hover:text-gray-600">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.classList.remove('translate-x-full', 'opacity-0');
-    }, 100);
-    
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.classList.add('translate-x-full', 'opacity-0');
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
-                }
-            }, 300);
-        }
-    }, 4000);
-}
 
-// Keyboard shortcuts
-document.addEventListener('keydown', function(e) {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-    
-    // Escape to close modal
-    if (e.key === 'Escape') {
-        closeConfirmModal();
-    }
-});
+    // Initialize hidden page when DOM is ready
+    document.addEventListener('DOMContentLoaded', function () {
+        initHiddenPage();
+    });
 </script>
 {% endblock %}

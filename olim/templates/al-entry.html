@@ -393,130 +393,17 @@
 <!--  -->
 {% block scripts %}
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-      // Initialize highlighting functionality
-      try {
-          var highlightData = {% if highlight %}{{ highlight|safe }}{% else %}null{% endif %};
-          if (highlightData) {
-              init_highlight(highlightData);
-          }
-      } catch(e) {
-          console.warn('Highlight initialization failed:', e);
-      }
+    // Set up global variables for al-entry page functionality
+    window.alEntryData = {
+        highlight: {% if highlight %}{{ highlight|safe }}{% else %}null{% endif %}
+    };
+    window.translations = {
+        scrollToTop: '{{ _("Scroll to top") }}'
+    };
 
-      // Add keyboard shortcuts for quick labeling
-      document.addEventListener('keydown', function(e) {
-          // Only trigger shortcuts when not in an input field
-          if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-          const labelForms = document.querySelectorAll('[id^="label_form_"]');
-
-          // Number keys 1-9 for quick label selection
-          if (e.key >= '1' && e.key <= '9') {
-              const index = parseInt(e.key);
-              if (labelForms[index - 1]) {
-                  e.preventDefault();
-                  labelForms[index - 1].submit();
-              }
-          }
-
-          // 'r' key for refresh
-          if (e.key === 'r' || e.key === 'R') {
-              e.preventDefault();
-              location.reload();
-          }
-
-          // Escape key to go back
-          if (e.key === 'Escape') {
-              e.preventDefault();
-              window.history.back();
-          }
-
-          // '?' key to show help
-          if (e.key === '?' || (e.shiftKey && e.key === '/')) {
-              e.preventDefault();
-              toggleShortcutsModal();
-          }
-      });
-
-      // Add visual feedback when hovering over content
-      const contentArea = document.querySelector('.prose');
-      if (contentArea) {
-          contentArea.addEventListener('mouseenter', function() {
-              this.style.backgroundColor = '#f8fafc';
-          });
-          contentArea.addEventListener('mouseleave', function() {
-              this.style.backgroundColor = '';
-          });
-      }
-
-      // Smooth scroll to top when content is long
-      const scrollToTopBtn = document.createElement('button');
-      scrollToTopBtn.innerHTML = '<i class="bi bi-arrow-up"></i>';
-      scrollToTopBtn.className = 'fixed bottom-4 right-4 w-12 h-12 bg-cyan-600 text-white rounded-full shadow-lg hover:bg-cyan-700 focus:outline-none focus:ring-4 focus:ring-cyan-300 transition-all opacity-0 pointer-events-none';
-      scrollToTopBtn.style.zIndex = '1000';
-      scrollToTopBtn.title = '{{ _("Scroll to top") }}';
-      document.body.appendChild(scrollToTopBtn);
-
-      window.addEventListener('scroll', function() {
-          if (window.scrollY > 300) {
-              scrollToTopBtn.style.opacity = '1';
-              scrollToTopBtn.style.pointerEvents = 'auto';
-          } else {
-              scrollToTopBtn.style.opacity = '0';
-              scrollToTopBtn.style.pointerEvents = 'none';
-          }
-      });
-
-      scrollToTopBtn.addEventListener('click', function() {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-  });
-
-  // Initialize highlighting function (compatibility with existing code)
-  function init_highlight(highlightData) {
-      if (!highlightData) return;
-
-      try {
-          // Show highlights section if there's highlight data
-          const highlightsSection = document.getElementById('highlights');
-          if (highlightsSection && highlightData) {
-              highlightsSection.classList.remove('hidden');
-              // Add highlight functionality here based on your existing implementation
-          }
-      } catch(e) {
-          console.warn('Highlight display failed:', e);
-      }
-  }
-
-  // Shortcuts modal functions
-  function toggleShortcutsModal() {
-      const modal = document.getElementById('shortcutsModal');
-      if (modal) {
-          modal.classList.toggle('hidden');
-      }
-  }
-
-  function closeShortcutsModal() {
-      const modal = document.getElementById('shortcutsModal');
-      if (modal) {
-          modal.classList.add('hidden');
-      }
-  }
-
-  // Auto-hide status messages after 15 seconds
-  document.addEventListener('DOMContentLoaded', function() {
-      const statusMessages = document.querySelector('.status-messages');
-      if (statusMessages) {
-          statusMessages.addEventListener('click', function() {
-              this.style.transition = 'all 0.3s ease-out';
-              this.style.transform = 'translateY(-10px)';
-              this.style.opacity = '0';
-              setTimeout(() => {
-                  this.style.display = 'none';
-              }, 300);
-          });
-      }
-  });
+    // Initialize al-entry page when DOM is ready
+    document.addEventListener('DOMContentLoaded', function () {
+        initAlEntryPage();
+    });
 </script>
 {% endblock %}
