@@ -41,11 +41,9 @@ function run_command(cmd, args) {
     fetch(URL)
         .then(response => response.json())
         .then((data) => {
-            console.log(data);
             if (data.type == 'OK') {
                 //M.toast({ html: data.text, displayLength: 2000, classes: 'teal darken-3' });
                 if (data.callback) {
-                    console.log(data.callback)
                     eval(data.callback);
                 }
             }
@@ -375,21 +373,29 @@ function unhideById(id) {
 }
 
 function markLabel(labelId, value) {
-    // Unselect all first
-    const LABELS = window.LABELS || ['YES', 'NO', 'MAYBE'];
-    LABELS.forEach(label => {
-        const unselElement = document.getElementById(label + '_unsel_' + labelId);
-        const selElement = document.getElementById(label + '_sel_' + labelId);
-        if (unselElement) unselElement.classList.add('hidden');
-        if (selElement) selElement.classList.remove('hidden');
-    });
+    // Find all buttons for this label by looking in the label container
+    const labelContainer = document.getElementById('label_' + labelId);
+    if (!labelContainer) {
+        return;
+    }
 
-    // Select back according to value
-    value = value.replace(' ', '_');
-    const unselElement = document.getElementById(value + '_unsel_' + labelId);
-    const selElement = document.getElementById(value + '_sel_' + labelId);
-    if (unselElement) unselElement.classList.remove('hidden');
-    if (selElement) selElement.classList.add('hidden');
+    // Find all unsel and sel buttons for this label
+    const unselButtons = labelContainer.querySelectorAll('[id$="_unsel_' + labelId + '"]');
+    const selButtons = labelContainer.querySelectorAll('[id$="_sel_' + labelId + '"]');
+
+    // Unselect all first (hide selected buttons, show unselected buttons)
+    unselButtons.forEach(btn => btn.classList.add('hidden'));
+    selButtons.forEach(btn => btn.classList.remove('hidden'));
+
+    // If value is not empty, select the specific value
+    if (value && value.trim() !== '') {
+        const valueKey = value.replace(' ', '_');
+        const unselElement = document.getElementById(valueKey + '_unsel_' + labelId);
+        const selElement = document.getElementById(valueKey + '_sel_' + labelId);
+
+        if (unselElement) unselElement.classList.remove('hidden');
+        if (selElement) selElement.classList.add('hidden');
+    }
 }
 
 // Utility functions

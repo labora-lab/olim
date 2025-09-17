@@ -1,16 +1,16 @@
-<div class="card">
-    <div class="card-content text-entry">
-        <span class="card-title">
-            {{res['_source']['text']}}
-        </span>
+<div class="p-6 text-entry">
+    <div class="text-lg font-semibold text-gray-900 mb-2">
+        {{res['_source']['text']}}
     </div>
-    <div class="card-action text-entry">
-        <ul>
-            {% for key in res['_source'].keys() %}
-            {% if key != 'text' %}
-            <li><b>{{key}}</b>: {{res['_source'][key]}}</li>
-            {%endif%}
-            {%endfor%}
-        </ul>
-    </div>
+</div>
+<div class="px-6 pb-6 text-entry">
+    <h4 class="mb-2">{{ _('Additional Information') }}</h4>
+    <ul class="space-y-2">
+        {% for key in res['_source'].keys() %}
+        {% if key != 'text' %}
+        <li class="text-sm"><span class="font-medium text-gray-700">{{key}}</span>: <span
+                class="text-gray-600">{{res['_source'][key]}}</span></li>
+        {%endif%}
+        {%endfor%}
+    </ul>
 </div>

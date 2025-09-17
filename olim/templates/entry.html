@@ -4,6 +4,7 @@
 
 {% block content %}
 <div class="space-y-6">
+    {% if not queue_id %}
     <!-- Entry Navigation Card -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">
         <div class="px-6 py-4 border-b border-gray-200">
@@ -68,40 +69,34 @@
                 </div>
             </div>
             {% endif %}
-
-            {% if queue_id %}
-            <!-- Queue Navigation -->
-            <div class="flex items-center justify-between bg-purple-50 border border-purple-200 rounded-lg p-4">
-                <div class="flex items-center space-x-4">
-                    <button type="button" onclick="navigateQueue(-1)"
-                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50 focus:ring-4 focus:outline-none focus:ring-purple-200 transition-colors {% if queue_pos == 1 %}opacity-50 cursor-not-allowed{% endif %}"
-                        {% if queue_pos==1 %}disabled{% endif %}>
-                        <i class="bi bi-arrow-left mr-2"></i>
-                        {{ _('Previous') }}
-                    </button>
-
-                    <a href="{{ url_for('queue', project_id=project_id, queue_id=queue_id) }}" target="_blank"
-                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-600 bg-purple-100 border border-purple-300 rounded-lg hover:bg-purple-200 focus:ring-4 focus:outline-none focus:ring-purple-300 transition-colors">
-                        <i class="bi bi-list-ol mr-2"></i>
-                        {{ queue_pos }}/{{ queue_len }}
-                    </a>
-
-                    <button type="button" onclick="navigateQueue(1)"
-                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50 focus:ring-4 focus:outline-none focus:ring-purple-200 transition-colors {% if queue_pos == queue_len %}opacity-50 cursor-not-allowed{% endif %}"
-                        {% if queue_pos==queue_len %}disabled{% endif %}>
-                        {{ _('Next') }}
-                        <i class="bi bi-arrow-right ml-2"></i>
-                    </button>
-                </div>
-
-                <div class="text-sm text-purple-600">
-                    <i class="bi bi-info-circle mr-1"></i>
-                    {{ _('Queue Navigation') }}
-                </div>
-            </div>
-            {% endif %}
         </div>
     </div>
+    {% else %}
+    <!-- Queue Navigation -->
+    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <div class="flex flex-col sm:flex-row w-full gap-3">
+            <button type="button" onclick="navigateEntryQueue(-1)"
+                class="flex-1 w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50 focus:ring-4 focus:outline-none focus:ring-purple-200 transition-colors {% if queue_pos == 1 %}opacity-50 cursor-not-allowed{% endif %}"
+                {% if queue_pos==1 %}disabled{% endif %}>
+                <i class="bi bi-arrow-left mr-2"></i>
+                {{ _('Previous') }}
+            </button>
+
+            <a href="{{ url_for('queue', project_id=project_id, queue_id=queue_id) }}" target="_blank"
+                class="flex-1 w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-purple-600 bg-purple-100 border border-purple-300 rounded-lg hover:bg-purple-200 focus:ring-4 focus:outline-none focus:ring-purple-300 transition-colors">
+                <i class="bi bi-list-ol mr-2"></i>
+                {{ queue_pos }}/{{ queue_len }}
+            </a>
+
+            <button type="button" onclick="navigateEntryQueue(1)"
+                class="flex-1 w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50 focus:ring-4 focus:outline-none focus:ring-purple-200 transition-colors {% if queue_pos == queue_len %}opacity-50 cursor-not-allowed{% endif %}"
+                {% if queue_pos==queue_len %}disabled{% endif %}>
+                {{ _('Next') }}
+                <i class="bi bi-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+    {% endif %}
 
     {% if valid_entry %}
     <!-- Main Content Area -->
@@ -116,16 +111,14 @@
                         {% if entry %}
                         <span
                             class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {{ entry.entry_id }}
+                            {{ entry.entry_id }}{% if datasets|length > 1 %} ({{ entry.dataset.name }}){% endif %}
                         </span>
                         {% endif %}
                     </h3>
                 </div>
 
-                <div class="p-6" style="max-height: 70vh; overflow-y: auto;">
-                    <div class="prose max-w-none">
-                        {{ entry_html|safe }}
-                    </div>
+                <div>
+                    {{ entry_html|safe }}
                 </div>
             </div>
         </div>
@@ -138,12 +131,9 @@
                         <i class="bi bi-tags-fill text-blue-600 mr-2"></i>
                         {{ _('Labels') }}
                     </h3>
-                    <p class="text-sm text-gray-600 mt-1">
-                        {{ _('Manage labels for this entry') }}
-                    </p>
                 </div>
 
-                <div class="p-6 space-y-4">
+                <div class="p-6 space-y-2">
                     <!-- Apply to All Controls -->
                     <div class="bg-gray-50 rounded-lg p-4">
                         <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
@@ -165,7 +155,7 @@
                             </button>
                             <div id="tooltip-apply-{{ loop.index }}" role="tooltip"
                                 class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
-                                {{ _('Aplicar "{label_str}" para todas as opções visíveis').format(label_str=label_str)
+                                {{ _('Apply "{label_str}" to all visible labels').format(label_str=label_str)
                                 }}
                                 <div class="tooltip-arrow" data-popper-arrow></div>
                             </div>
@@ -182,7 +172,7 @@
                             </button>
                             <div id="tooltip-remove-{{ loop.index }}" role="tooltip"
                                 class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
-                                {{ _('Remover "{label_str}" de todas as opções visíveis').format(label_str=label_str) }}
+                                {{ _('Remove "{label_str}" from all visible labels').format(label_str=label_str) }}
                                 <div class="tooltip-arrow" data-popper-arrow></div>
                             </div>
                             {% endfor %}
@@ -197,16 +187,16 @@
                     </div>
 
                     <!-- Hidden Entries Controls -->
-                    <div class="pt-4 border-t border-gray-200">
+                    <div class="pt-2">
                         <button type="button" id="show_hidden_btn" onclick="toggleHidden(true)"
                             data-tooltip-target="tooltip-show-hidden" data-tooltip-placement="top"
                             class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors {% if show_hidden %}hidden{% endif %}">
                             <i class="bi bi-eye mr-2"></i>
-                            {{ _('Show hidden') }}
+                            {{ _('Show hidden labels') }}
                         </button>
                         <div id="tooltip-show-hidden" role="tooltip"
                             class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
-                            {{ _('Mostrar labels que foram ocultadas') }}
+                            {{ _('Show labels that were marked as hidden') }}
                             <div class="tooltip-arrow" data-popper-arrow></div>
                         </div>
 
@@ -214,11 +204,11 @@
                             data-tooltip-target="tooltip-hide-hidden" data-tooltip-placement="top"
                             class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-300 rounded-lg hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-200 transition-colors {% if not show_hidden %}hidden{% endif %}">
                             <i class="bi bi-eye-slash mr-2"></i>
-                            {{ _('Hide hidden') }}
+                            {{ _('Hide hidden labels') }}
                         </button>
                         <div id="tooltip-hide-hidden" role="tooltip"
                             class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
-                            {{ _('Ocultar labels que foram marcadas como ocultas') }}
+                            {{ _('Hide labels that were marked as hidden') }}
                             <div class="tooltip-arrow" data-popper-arrow></div>
                         </div>
                     </div>
@@ -287,16 +277,16 @@
 <script>
     // Set up global variables for entry page functionality
     window.projectId = {{ project_id }};
-    {% if datasets and datasets|length > 0 %}
+    {% if datasets and datasets | length > 0 %}
     window.defaultDatasetId = {{ datasets[0].id }};
     {% endif %}
     {% if queue_id and queue_pos and queue_len %}
-    window.queueId = {{ queue_id }};
+    window.queueId = '{{ queue_id }}';
     window.queuePos = {{ queue_pos }};
     window.queueLen = {{ queue_len }};
     {% endif %}
     {% if valid_entry and highlight %}
-    window.highlightData = {{ highlight|safe }};
+    window.highlightData = {{ highlight | safe }};
     {% endif %}
     window.translations = {
         pleaseEnterEntryId: '{{ _("Please enter an entry ID") }}'

@@ -182,7 +182,7 @@
         const fileSelector = document.getElementById('file-selector');
 
         // Validation function
-        function validateForm() {
+        window.validateForm = function validateForm() {
             const isNameValid = nameField.value.trim() !== '';
             const isProjectSelected = Array.from(projectCheckboxes).some(cb => cb.checked);
             const isFormatSelected = uploadType.value !== '';
@@ -210,7 +210,7 @@
             updateFieldValidation(nameField, isNameValid);
 
             return isFormValid;
-        }
+        };
 
         function updateFieldValidation(field, isValid) {
             if (field.value.trim() === '') {
@@ -227,9 +227,9 @@
         }
 
         // Event listeners for validation
-        nameField?.addEventListener('input', validateForm);
-        projectCheckboxes.forEach(cb => cb.addEventListener('change', validateForm));
-        fileInput?.addEventListener('change', validateForm);
+        nameField?.addEventListener('input', window.validateForm);
+        projectCheckboxes.forEach(cb => cb.addEventListener('change', window.validateForm));
+        fileInput?.addEventListener('change', window.validateForm);
 
         // Upload-option handler
         options.forEach((opt) => {
@@ -256,7 +256,7 @@
                 fileSelector.style.display = val === 'sample_data' ? 'none' : 'block'
 
                 // Validate form after format change
-                validateForm();
+                window.validateForm();
             })
         })
 
@@ -268,7 +268,7 @@
 
         // Form submission validation
         form?.addEventListener('submit', function (e) {
-            if (!validateForm()) {
+            if (!window.validateForm()) {
                 e.preventDefault();
 
                 // Focus on first invalid field
@@ -287,10 +287,7 @@
         });
 
         // Initial validation
-        validateForm();
-
-        // Make validateForm available globally for file upload
-        window.validateForm = validateForm;
+        window.validateForm();
 
         // Project item click functionality
         const projectItems = document.querySelectorAll('.project-item');
@@ -306,7 +303,7 @@
                 if (checkbox) {
                     checkbox.checked = !checkbox.checked;
                     // Trigger validation after checkbox change
-                    validateForm();
+                    window.validateForm();
                 }
             });
         });

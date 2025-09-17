@@ -130,8 +130,7 @@
             </div>
 
             <div id="task-list" class="text-sm flex-1 pr-2 task-list" hx-get="{{ url_for('task_list') }}"
-                hx-trigger="every 3s" hx-swap="innerHTML"
-                hx-on::after-swap="document.getElementById('task-loading').style.display = 'none'; updateTaskCounter();">
+                hx-trigger="every 3s" hx-swap="innerHTML">
                 {% include "task-list.html" %}
             </div>
         </div>

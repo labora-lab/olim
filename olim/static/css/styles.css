@@ -1,68 +1,25 @@
-.small-title {
-    font-size: 15px !important;
-}
+/* ========================================
+   OLIM Custom Styles - Tailwind Complements
+   Only styles that can't be expressed in Tailwind
+   ======================================== */
 
-.no-bottom-pad {
-    padding-bottom: 0px !important;
-}
-
-.no-top-pad {
-    padding-top: 0px !important;
-}
-
-.reduced-pad {
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
-}
-
-.reduced-pad>.card-title {
-    margin-bottom: 0px !important;
-}
-
-.btn-wide {
-    width: 100% !important;
-}
-
-.btn-narrow {
-    width: 30px;
-    padding-right: 5px;
-}
-
-.top-right {
-    margin: -5px -5px 0px 0px;
-}
-
-.brand-logo {
-    margin-left: 20px;
-}
-
+/* Legacy utility classes still used in templates */
 .hidden {
     display: none;
 }
 
-.card .card-content {
-    padding: 18px !important;
+.cursor {
+    cursor: pointer;
 }
 
-.clear {
-    margin-left: -100px;
-    margin-top: 2px;
-}
-
-
-.msg_close {
-    margin-right: -32px;
-    margin-top: -12px;
-}
-
-.tight-top {
-    margin-top: 0px;
-    padding-top: 0px;
-}
-
-.tight-bottom {
-    margin-bottom: 0px;
-    padding-bottom: 0px;
+/* Component-specific styles */
+.highlight {
+    display: inline;
+    background-color: rgb(255, 172, 47);
+    color: rgb(54, 83, 20);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 500;
 }
 
 .patient-body {
@@ -75,15 +32,6 @@
 .patient-header {
     font-size: 23px;
     border-bottom: solid 1px;
-}
-
-.highlight {
-    display: inline;
-    background-color: rgb(255, 172, 47);
-}
-
-.collapsible-header {
-    display: block !important;
 }
 
 .labels-menu {
@@ -100,10 +48,6 @@
     margin-top: -3px;
 }
 
-.cursor {
-    cursor: pointer;
-}
-
 .label-group {
     position: relative;
     margin: 15px 0;
@@ -118,20 +62,6 @@
     padding: 0;
 }
 
-.add-label {
-    margin-bottom: 20px;
-}
-
-.task {
-    padding: 0px 20px;
-    border-top: 1px;
-    border-left: 0px;
-    border-right: 0px;
-    border-bottom: 1px;
-    border-style: solid;
-    border-color: gray;
-}
-
 .radio-group {
     max-height: 200px;
     overflow-y: auto;
@@ -142,19 +72,10 @@
     margin: 5px 0;
 }
 
+/* Toast positioning override */
 #toast-container {
     top: auto !important;
     right: auto !important;
     bottom: 10%;
     left: 7%;
-}
-
-body {
-    display: flex;
-    min-height: 100vh;
-    flex-direction: column;
-}
-
-main {
-    flex: 1 0 auto;
 }

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ _('User Management') }}{% endblock %}
 
-{% import "user-macro.html" as user_macro %}
+{% import "macros/new-user-form.html" as user_macro %}
 
 {% block content %}
 <div class="grid grid-cols-1 {% if session.role == 'admin' %}lg:grid-cols-3{% endif %} gap-6">
