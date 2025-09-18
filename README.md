@@ -1,3 +1,5 @@
+<img src="olim/static/olim.svg" alt="OLIM Logo" align="left" width="100" style="margin-right: 10px;" />
+
 # OLIM
 ### Open Labeller for Iterative Machine learning
 
