@@ -1,9 +1,10 @@
 x-app-base: &app-base
   image: olim:latest
   volumes:
-    - worker-data:/app/work
-    - upload-data:/app/uploads
-    - ./data:/app/data
+    - ./:/app
+    # - worker-data:/app/work
+    # - upload-data:/app/uploads
+    # - ./data:/app/data
   networks:
     - olim-es
   depends_on:

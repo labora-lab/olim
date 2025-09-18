@@ -3,7 +3,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import ClassVar
 
-VERSION = "0.3.0-rc1"
+VERSION = "0.3.0-dev"
 """Version of the application"""
 
 ES_INDEX = "dataset-{dataset_id}"
@@ -91,7 +91,9 @@ if "LABELS_TYPES" in labels:
 try:
     LABELS = eval(labels)
 except (TypeError, NameError):
-    print(f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!")
+    print(
+        f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!"
+    )
     LABELS = LabelTypes.YES_NO
 
 """List of endpoints that need a setup backend."""
