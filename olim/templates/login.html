@@ -1,25 +1,79 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Login') }}{% endblock %}
+
+{% set suppress_sidebar = true %}
+
 {% block content %}
-<div class="row">
-    <div class="col s12 m8 offset-m2 card">
-        <div class="card-content">
-            <span class="card-title">{{ _('Login') }}</span>
-            <form method="POST" action="{{ url_for('login') }}">
-                <div class="input-field">
-                    <input id="username" type="text" name="username" required>
-                    <label for="username">{{ _('Username') }}</label>
+<div class="h-full flex items-center justify-center mt-20">
+    <div class="max-w-md w-full mx-4">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gray-800">
+                <div class="flex items-end justify-center">
+                    <img src="{{ url_for('static', filename='olim.svg') }}" alt="OLIM Logo" class="w-20 h-20 mr-5">
+                    <div>
+                        <h1 class="text-4xl font-bold text-white">OLIM</h1>
+                    </div>
                 </div>
-                <div class="input-field">
-                    <input id="password" type="password" name="password" required>
-                    <label for="password">{{ _('Password') }}</label>
-                </div>
-                <input type="hidden" name="redirect" value="{{redirect}}">
-                <button class="btn btn-wide waves-effect waves-light" type="submit" name="action">{{ _('Sign In') }}
-                    <i class="material-icons right">send</i>
-                </button>
-            </form>
+            </div>
+
+            <div class="p-6">
+                <form method="POST" action="{{ url_for('login') }}" class="space-y-4">
+                    <!-- Username -->
+                    <div>
+                        <label for="username" class="block mb-2 text-sm font-medium text-gray-900">
+                            <i class="bi bi-person mr-1"></i>
+                            {{ _('Username') }}
+                        </label>
+                        <input type="text" id="username" name="username" required
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                            placeholder="{{ _('Enter your username') }}">
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <label for="password" class="block mb-2 text-sm font-medium text-gray-900">
+                            <i class="bi bi-key mr-1"></i>
+                            {{ _('Password') }}
+                        </label>
+                        <div class="relative">
+                            <input type="password" id="password" name="password" required
+                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5 pr-10"
+                                placeholder="{{ _('Enter your password') }}">
+                            <button type="button" id="toggle-password"
+                                class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
+                                <i class="bi bi-eye" id="password-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="redirect" value="{{redirect}}">
+
+                    <!-- Submit Button -->
+                    <button type="submit" name="action"
+                        class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                        <i class="bi bi-box-arrow-in-right mr-2"></i>
+                        {{ _('Sign In') }}
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Password visibility toggle
+    document.addEventListener('DOMContentLoaded', function () {
+        const toggleBtn = document.getElementById('toggle-password');
+        const passwordField = document.getElementById('password');
+        const passwordIcon = document.getElementById('password-icon');
+
+        toggleBtn?.addEventListener('click', function () {
+            const isPassword = passwordField.type === 'password';
+            passwordField.type = isPassword ? 'text' : 'password';
+            passwordIcon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+        });
+    });
+</script>
 {% endblock %}

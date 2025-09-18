@@ -1,0 +1,217 @@
+<!-- Sidebar com controle de colapso -->
+<aside id="sidebar"
+    class="fixed top-0 left-0 z-40 w-64 h-screen transition-all duration-300 -translate-x-full sm:translate-x-0"
+    aria-label="Sidebar">
+    <div class="h-full px-0 py-4 bg-gray-800 flex flex-col">
+        <div class="px-3">
+            <!-- Logo/Brand -->
+            <div class="flex items-end mb-2 p-2">
+                <img src="{{ url_for('static', filename='olim.svg') }}" alt="OLIM Logo" class="w-10 h-8 mr-3">
+                <span class="text-xl font-semibold text-white sidebar-item-text">OLIM</span>
+            </div>
+
+            <!-- Project Selector -->
+            {% if has_permission('redirect_to_project') %}
+            <div class="mb-4">
+                <div class="relative">
+                    <button id="project-dropdown-btn"
+                        class="w-full flex items-center justify-between p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
+                        <div class="flex items-center">
+                            <i class="bi bi-folder text-gray-400 group-hover:text-white sidebar-item-icon"></i>
+                            <span class="ms-3 truncate sidebar-item-text">{{ project_name }}</span>
+                        </div>
+                        <i class="bi bi-chevron-down text-gray-400 group-hover:text-white sidebar-item-text"></i>
+                    </button>
+                    <div id="project-dropdown"
+                        class="hidden absolute top-full left-0 right-0 mt-1 bg-gray-700 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+                        {% for project in projects %}
+                        <a href="/{{ project.id }}"
+                            class="block px-3 py-2 text-sm {% if project.id == project_id %}text-white bg-gray-600{% else %}text-gray-300{% endif %} hover:bg-gray-600 hover:text-white">
+                            {{ project.name }}
+                        </a>
+                        {% endfor %}
+                        {% if has_permission('projects') %}
+                        <div class="border-t border-gray-600 mt-1 pt-1">
+                            <a href="{{ url_for('projects') }}"
+                                class="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white">
+                                <i class="bi bi-folder-plus mr-2"></i>
+                                {{ _('Manage Projects') }}
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Project Name Header -->
+                <div class="mt-3 px-2">
+                    <h6 class="text-xs font-semibold text-gray-400 uppercase tracking-wider project-name-header">
+                        {{ _('Project: {project_name}'.format(project_name=project_name)) }}
+                    </h6>
+                </div>
+            </div>
+
+            <!-- Project Navigation -->
+            <ul class="space-y-1 font-medium">
+                {% if has_permission('labels') %}
+                <li class="border-t border-gray-600 pt-2 mt-2">
+                    <a href="{{ url_for('labels', project_id = project_id) }}" class="flex items-center p-2 rounded-lg group
+                        {% if request.endpoint == 'labels' %}
+                            bg-cyan-600 text-white
+                        {% else %}
+                            text-gray-300 hover:bg-gray-700
+                        {% endif %}">
+                        <i class="bi bi-tags sidebar-item-icon
+                        {% if request.endpoint == 'labels' %}
+                            text-white
+                        {% else %}
+                            text-gray-400 group-hover:text-white
+                        {% endif %}"></i>
+                        <span class="ms-3 sidebar-item-text">{{ _('Labels') }}</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if has_permission('data_navigation') %}
+                <li>
+                    <a href="{{ url_for('data_navigation', project_id = project_id) }}" class="flex items-center p-2 rounded-lg group
+                        {% if request.endpoint == 'data_navigation' %}
+                            bg-cyan-600 text-white
+                        {% else %}
+                            text-gray-300 hover:bg-gray-700
+                        {% endif %}">
+                        <i class="bi bi-compass sidebar-item-icon
+                        {% if request.endpoint == 'data_navigation' %}
+                            text-white
+                        {% else %}
+                            text-gray-400 group-hover:text-white
+                        {% endif %}"></i>
+                        <span class="ms-3 sidebar-item-text">{{ _('Data Navigation') }}</span>
+                    </a>
+                </li>
+                {% endif %}
+
+
+                {% if have_hidden() and has_permission('hidden') %}
+                <li>
+                    <a href="{{ url_for('hidden', project_id = project_id) }}" class="flex items-center p-2 rounded-lg group
+                        {% if request.endpoint == 'hidden' %}
+                            bg-cyan-600 text-white
+                        {% else %}
+                            text-gray-300 hover:bg-gray-700
+                        {% endif %}">
+                        <i class="bi bi-eye-slash sidebar-item-icon
+                        {% if request.endpoint == 'hidden' %}
+                            text-white
+                        {% else %}
+                            text-gray-400 group-hover:text-white
+                        {% endif %}"></i>
+                        <span class="ms-3 sidebar-item-text">{{ _('Hidden texts') }}</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+            {% endif %}
+        </div>
+
+        <!-- Jobs Section -->
+        {% if tasks and has_permission('task_list')%}
+        <div
+            class="border-t border-b border-gray-600 bg-gray-700 mt-2 flex-1 flex flex-col min-h-0 mb-10 overflow-y-auto relative">
+            <div class="flex items-center px-5 py-2 mb-2">
+                <i class="bi bi-clipboard text-gray-400 task-section-icon"></i>
+                <span class="ms-3 text-gray-400 task-section-title sidebar-item-text">{{ _('Jobs') }}</span>
+            </div>
+
+            <!-- Contador de tasks centralizado quando colapsado -->
+            <div class="task-counter-collapsed hidden justify-center items-center py-4">
+                {% set running_tasks = tasks|selectattr('status', 'equalto', 'STARTED')|list %}
+                {% set completed_tasks = tasks|selectattr('status', 'equalto', 'SUCCESS')|list %}
+                {% set failed_tasks = tasks|selectattr('status', 'equalto', 'FAILURE')|list %}
+                {% set pending_tasks = tasks|selectattr('status', 'equalto', 'PENDING')|list %}
+                <div class="relative"
+                    title="{{ _('Jobs') }}: {{ running_tasks|length }} {{ _('running') }}, {{ completed_tasks|length }} {{ _('completed') }}, {{ (failed_tasks|length + pending_tasks|length) }} {{ _('pending/failed') }}">
+                    <button onclick="expandSidebar()"
+                        class="w-12 h-12 rounded-lg flex items-center justify-center text-white transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        <i class="bi bi-clipboard-check text-lg"></i>
+                    </button>
+                    {% if running_tasks|length > 0 %}
+                    <div
+                        class="absolute -top-2 -right-2 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 border-2 border-gray-800 rounded-full">
+                        {{ running_tasks|length }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div id="task-list" class="text-sm flex-1 pr-2 task-list" hx-get="{{ url_for('task_list') }}"
+                hx-trigger="every 3s" hx-swap="innerHTML">
+                {% include "task-list.html" %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Bottom Icons -->
+        <div class="absolute bottom-2 right-2 flex space-x-2 bottom-icons">
+            <!-- Botão de colapso/expandir -->
+            <button id="collapse-btn"
+                class="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center text-gray-300 hover:bg-gray-600 hover:text-white transition-colors"
+                title="{{ _('Collapse/Expand Sidebar') }}">
+                <i class="bi bi-chevron-bar-left text-lg collapse-icon"></i>
+            </button>
+
+            <!-- Settings Dropdown -->
+            <div class="relative">
+                <button id="settings-dropdown-btn"
+                    class="w-10 h-10 {% if request.endpoint in ['users', 'user_settings', 'projects', 'upload_data'] %}bg-cyan-600 text-white{% else %}bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white{% endif %} rounded-lg flex items-center justify-center transition-colors">
+                    <i class="bi bi-gear text-lg"></i>
+                </button>
+                <div id="settings-dropdown"
+                    class="hidden absolute bottom-full right-0 mb-3 {% if tasks and has_permission('task_list')%}bg-gray-800{% else %}bg-gray-700{% endif %} rounded-lg shadow-lg py-1 min-w-48">
+                    {% if has_permission('users') %}
+                    <a href="{{ url_for('users') }}"
+                        class="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white">
+                        <i class="bi bi-people mr-2"></i>
+                        {{ _('Users') }}
+                    </a>
+                    {% endif %}
+                    {% if has_permission('user_settings') %}
+                    <a href="{{ url_for('user_settings') }}"
+                        class="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white">
+                        <i class="bi bi-person-gear mr-2"></i>
+                        {{ _('account_settings_1') }}
+                    </a>
+                    {% endif %}
+                    {% if has_permission('projects') %}
+                    <a href="{{ url_for('projects') }}"
+                        class="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white">
+                        <i class="bi bi-folder-plus mr-2"></i>
+                        {{ _('Manage Projects') }}
+                    </a>
+                    {% endif %}
+                    {% if has_permission('upload_data') %}
+                    <a href="{{ url_for('upload_data') }}"
+                        class="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white">
+                        <i class="bi bi-cloud-upload mr-2"></i>
+                        {{ _('Upload Data') }}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Logout/Login Icon -->
+            {% if session['user_id'] == 'guest' %}
+            <a href="{{ url_for('login') }}"
+                class="w-10 h-10 bg-cyan-600 rounded-lg flex items-center justify-center text-white hover:bg-cyan-700 transition-colors"
+                title="{{ _('Login') }}">
+                <i class="bi bi-box-arrow-in-right text-lg"></i>
+            </a>
+            {% else %}
+            <a href="{{ url_for('logout') }}"
+                class="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white hover:bg-red-700 transition-colors"
+                title="{{ _('Logout') }}">
+                <i class="bi bi-box-arrow-right text-lg"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</aside>

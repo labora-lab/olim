@@ -3,7 +3,7 @@ from datetime import timedelta
 from pathlib import Path
 from typing import ClassVar
 
-VERSION = "0.2.0"
+VERSION = "0.3.0-rc1"
 """Version of the application"""
 
 ES_INDEX = "dataset-{dataset_id}"
@@ -57,29 +57,29 @@ HELP_URL = os.getenv("HELP_URL", "")
 
 class LabelTypes:
     SIM_NAO: ClassVar = [
-        ("sim", "icon", "check", "green"),
-        ("não", "icon", "clear", "red"),
+        ("sim", "icon", "check-circle-fill", "green"),
+        ("não", "icon", "x-circle-fill", "red"),
     ]
     SIM_NAO_NS: ClassVar = [
-        ("sim", "icon", "check", "green"),
-        ("não", "icon", "clear", "red"),
+        ("sim", "icon", "check-circle-fill", "green"),
+        ("não", "icon", "x-circle-fill", "red"),
         ("não sei", "text", "?", "orange"),
     ]
     YES_NO: ClassVar = [
-        ("yes", "icon", "check", "green"),
-        ("no", "icon", "clear", "red"),
+        ("yes", "icon", "check-circle-fill", "green"),
+        ("no", "icon", "x-circle-fill", "red"),
     ]
     CHECK: ClassVar = [
-        ("check", "icon", "check", "green"),
+        ("check", "icon", "check-circle-fill", "green"),
     ]
     YES_NO_UNKNOWN: ClassVar = [
-        ("yes", "icon", "check", "green"),
-        ("no", "icon", "clear", "red"),
+        ("yes", "icon", "check-circle-fill", "green"),
+        ("no", "icon", "x-circle-fill", "red"),
         ("unknown", "text", "?", "orange"),
     ]
     YES_NO_IDK: ClassVar = [
-        ("yes", "icon", "check", "green"),
-        ("no", "icon", "clear", "red"),
+        ("yes", "icon", "check-circle-fill", "green"),
+        ("no", "icon", "x-circle-fill", "red"),
         ("don't know", "text", "?", "orange"),
     ]
 
@@ -101,6 +101,25 @@ NEED_LEARNER = [
     "catch_al",
 ]
 
+"""List of error handler endpoints that should always be allowed."""
+ERROR_ENDPOINTS = [
+    "bad_request",
+    "unauthorized",
+    "forbidden",
+    "not_found",
+    "method_not_allowed",
+    "request_timeout",
+    "payload_too_large",
+    "too_many_requests",
+    "internal_server_error",
+    "bad_gateway",
+    "service_unavailable",
+    "gateway_timeout",
+    "handle_exception",
+    "test_error",
+    "test_exception",
+]
+
 """Lists of permited endpoints for each user."""
 PERMISSIONS = {
     "user": [
@@ -115,6 +134,8 @@ PERMISSIONS = {
         "queue",
         "catch_queue",
         "search",
+        "data_navigation",
+        "data_navigation_component",
         "user_settings",
         "edit_password",
         "edit_language",
@@ -125,7 +146,6 @@ PERMISSIONS = {
         "export_label",
         "get_help",
         "send_ticket",
-        "projects",
         "redirect_to_project",
     ],
     "guest": ["static", "login"],

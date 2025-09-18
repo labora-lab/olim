@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Data Navigation') }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Navigation Card -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <!-- Header with Menu Bar -->
+        <div class="px-6 py-4">
+            <h1 class="text-2xl font-bold text-gray-900 flex items-center mb-4">
+                <i class="bi bi-compass text-cyan-600 mr-3"></i>
+                {{ _('Data Navigation') }}
+            </h1>
+
+            <!-- Menu Bar -->
+            <nav class="flex space-x-1" aria-label="Navigation Menu">
+                <button class="tab-button active px-4 py-2 text-sm font-medium text-cyan-700 bg-cyan-100 border border-cyan-200 rounded-lg hover:bg-cyan-200 transition-colors"
+                        data-tab="entry-navigation">
+                    <i class="bi bi-file-text mr-2"></i>
+                    {{ _('Entry Access') }}
+                </button>
+                <button class="tab-button px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                        data-tab="text-search">
+                    <i class="bi bi-search mr-2"></i>
+                    {{ _('Text Search') }}
+                </button>
+                <button class="tab-button px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                        data-tab="random-queue">
+                    <i class="bi bi-shuffle mr-2"></i>
+                    {{ _('Random Queue') }}
+                </button>
+                <button class="tab-button px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                        data-tab="queue-management">
+                    <i class="bi bi-list-ol mr-2"></i>
+                    {{ _('Queue Management') }}
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Content Area -->
+    <div id="tab-content">
+        <!-- Content will be loaded here via HTMX -->
+        <div class="flex items-center justify-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600"></div>
+            <span class="ml-2 text-gray-600">{{ _('Loading...') }}</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Set up global variables for data navigation page
+    window.projectId = {{ project_id }};
+    {% if datasets and datasets|length > 0 %}
+    window.defaultDatasetId = {{ datasets[0].id }};
+    {% endif %}
+
+    // Tab switching functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContent = document.getElementById('tab-content');
+
+        function switchTab(tabName, updateUrl = true) {
+            // Update menu button states
+            tabButtons.forEach(button => {
+                if (button.dataset.tab === tabName) {
+                    button.classList.add('active', 'text-cyan-700', 'bg-cyan-100', 'border-cyan-200');
+                    button.classList.remove('text-gray-600', 'bg-gray-50', 'border-gray-200');
+                } else {
+                    button.classList.remove('active', 'text-cyan-700', 'bg-cyan-100', 'border-cyan-200');
+                    button.classList.add('text-gray-600', 'bg-gray-50', 'border-gray-200');
+                }
+            });
+
+            // Update URL without page reload
+            if (updateUrl) {
+                const newUrl = `/{{ project_id }}/data-navigation?section=${tabName}`;
+                window.history.pushState({ section: tabName }, '', newUrl);
+            }
+
+            // Load content via HTMX
+            htmx.ajax('GET', `/{{ project_id }}/data-navigation/component/${tabName}`, {
+                target: '#tab-content',
+                swap: 'innerHTML'
+            });
+        }
+
+        // Add click listeners to tab buttons
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                switchTab(button.dataset.tab);
+            });
+        });
+
+        // Handle browser back/forward navigation
+        window.addEventListener('popstate', function(event) {
+            if (event.state && event.state.section) {
+                switchTab(event.state.section, false); // Don't update URL again
+            } else {
+                // Parse section from current URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const section = urlParams.get('section') || 'entry-navigation';
+                switchTab(section, false);
+            }
+        });
+
+        // Load initial tab (from server parameter or default)
+        const activeSection = '{{ active_section }}' || 'entry-navigation';
+        switchTab(activeSection, false); // Don't update URL on initial load
+
+        // Initialize page functionality
+        if (typeof window.init === 'function') {
+            window.init();
+        }
+    });
+</script>
+{% endblock %}

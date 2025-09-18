@@ -1,94 +1,96 @@
-<div class="card">
-    <div class="card-content" style="padding-bottom: 0px !important;padding-top: 0px !important;">
-        <div class="row">
-            <form method="get">
-                <div class="input-field col m4 s12">
-                    <span class="right clear">
-                        <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
-                            data-tooltip="{{ _('Clear Date') }}" onclick="clear_date('start-date');">
-                            <i class="material-icons grey-text text-darken-4">clear</i>
-                        </a>
-                    </span>
-                    <input type="text" name="start-date" id="start-date" class="datepicker" value="{{start_date}}">
-                    <label for="start">{{ _('Start Date') }}</label>
-                </div>
-                <div class="input-field col m4 s12">
-                    <span class="right clear">
-                        <a class='btn-floating btn btn-flat waves-ligh tooltipped' data-position="bottom"
-                            data-tooltip="{{ _('Clear Date') }}" onclick="clear_date('end-date');">
-                            <i class="material-icons grey-text text-darken-4">clear</i>
-                        </a>
-                    </span>
-                    <input type="text" name="end-date" id="end-date" class="datepicker" value="{{end_date}}">
-                    <label for="end">{{ _('End Date') }}</label>
-                </div>
-                <div class="input-field col m4 s12">
-                    <input type="hidden" name="show-hidden" id="show-hidden" value="{{show_hidden}}">
-                    <button class="btn waves-effect waves-light btn-wide" id="search" type="submit">{{ _('Apply Dates') }}
-                        <i class="material-icons right">date_range</i>
-                    </button>
-                </div>
-            </form>
-        </div>
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-4">
+    <div class="p-0">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+            <div class="relative">
+                <button type="button" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+                        onclick="clear_date('start-date');"
+                        title="{{ _('Clear Date') }}">
+                    <i class="bi bi-x text-lg"></i>
+                </button>
+                <input type="text" name="start-date" id="start-date"
+                       class="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       value="{{start_date}}" placeholder="{{ _('Start Date') }}">
+            </div>
+            <div class="relative">
+                <button type="button" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
+                        onclick="clear_date('end-date');"
+                        title="{{ _('Clear Date') }}">
+                    <i class="bi bi-x text-lg"></i>
+                </button>
+                <input type="text" name="end-date" id="end-date"
+                       class="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       value="{{end_date}}" placeholder="{{ _('End Date') }}">
+            </div>
+            <div>
+                <input type="hidden" name="show-hidden" id="show-hidden" value="{{show_hidden}}">
+                <button class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center justify-center"
+                        id="search" type="submit">
+                    {{ _('Apply Dates') }}
+                    <i class="bi bi-calendar-date ml-2"></i>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
 {% for date in dates.keys() %}
     {% set date_id = 'day_' + date.replace('/', '_') %}
-    <div class="card day" id="{{ date_id }}">
-        <div class="card-content reduced-pad">
-            <span class="right top-right">
-                <a class="btn-floating btn btn-flat waves-ligh tooltipped" data-position="bottom"
-                    data-tooltip="{{ _('Hide all above') }}" onclick="hide_before('{{ date_id }}', '{{ date }}');">
-                    <i class="material-icons grey-text text-darken-4" style="transform: rotate(90deg);">first_page</i>
-                </a>
-                <a class="btn-floating btn btn-flat waves-light tooltipped" data-position="bottom"
-                    data-tooltip="{{ _('Hide all below') }}" onclick="hide_after('{{ date_id }}', '{{ date }}');">
-                    <i class="material-icons grey-text text-darken-4" style="transform: rotate(90deg);">last_page</i>
-                </a>
-            </span>
-            <div class="card-title cursor" onclick="toggle_day('{{ date_id }}')">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 day" id="{{ date_id }}">
+        <div class="px-4 py-3 relative">
+            <div class="absolute top-3 right-3 flex space-x-1">
+                <button class="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                        onclick="hide_before('{{ date_id }}', '{{ date }}');"
+                        title="{{ _('Hide all above') }}">
+                    <i class="bi bi-chevron-double-up text-sm"></i>
+                </button>
+                <button class="p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
+                        onclick="hide_after('{{ date_id }}', '{{ date }}');"
+                        title="{{ _('Hide all below') }}">
+                    <i class="bi bi-chevron-double-down text-sm"></i>
+                </button>
+            </div>
+            <div class="cursor-pointer text-lg font-semibold text-gray-900 pr-16" onclick="toggle_day('{{ date_id }}')">
                 {{ date }}
-                <span class="hidden-count small-title"></span>
-                <a class="btn-expand hidden toggle_inline_{{ date_id }}"></a>
+                <span class="hidden-count text-sm font-normal text-gray-500"></span>
+                <button class="btn-expand hidden toggle_inline_{{ date_id }}"></button>
             </div>
         </div>
         <div class="toggle_{{ date_id }}">
             {% for row in dates[date]['texts'] %}
                 <div class="entry{% if row['is_hidden'] or row['hidden_everywhere'] %} hidden-entry{% if not show_hidden %} hidden{% endif %}{% endif %}"
                     id="text_{{ row['text_id'] }}">
-                    {% if not loop.first %}<div class="divider"></div>{% endif %}
-                    <div class="hidden cursor{% if loop.first %} no-top-pad{% endif %}{% if row['is_hidden'] %} red lighten-5{% elif row['hidden_everywhere'] %} orange lighten-4{% else %} grey lighten-4{% endif %}"
+                    {% if not loop.first %}<div class="border-t border-gray-200"></div>{% endif %}
+                    <div class="hidden cursor-pointer{% if row['is_hidden'] %} bg-red-50{% elif row['hidden_everywhere'] %} bg-orange-50{% else %} bg-gray-50{% endif %} p-4"
                         id="full_{{ row['text_id'] }}">
-                        <span class="right" style="margin: 12px;">
-                            <a class="btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped{% if row['is_hidden'] or row['hidden_everywhere'] %} hidden{% endif %}"
-                                data-position="bottom" data-tooltip="{{ _('Hide this') }}"
-                                onclick="hide_one('{{ row['text_id'] }}', '{{ patient_id }}')">
-                                <i class="material-icons grey-text text-darken-4">remove_circle_outline</i>
-                            </a>
-                            <a class="btn-floating btn btn-to-hide btn-flat waves-light tooltipped{% if row['is_hidden'] or row['hidden_everywhere'] %} hidden{% endif %}"
-                                data-position="bottom" data-tooltip="{{ _('Hide all like this') }}"
-                                onclick="show_warnning('{{ _('This will hide all texts equal to') }} \'{{ row['short_text'] }}\'!\n\n{{ _('Do you want to continue?') }}', 'hide_all(\'{{ row['text'] }}\', \'{{ row['text_id'] }}\', \'{{ patient_id }}\');');">
-                                <i class=" material-icons grey-text text-darken-4">remove_circle</i>
-                            </a>
-                            <a class="btn-floating btn btn-to-show btn-flat waves-light tooltipped{% if not row['is_hidden'] %} hidden{% endif %}"
-                                data-position="bottom" data-tooltip="{{ _('Unhide') }}"
-                                onclick="unhide('{{ row['text_id'] }}', '{{ patient_id }}')">
-                                <i class=" material-icons grey-text text-darken-4">add_circle_outline</i>
-                            </a>
-                        </span>
-                        <div class="card-content btn-retract" onclick="toggle_pannel('{{ row['text_id'] }}')">
-                            <span class="card-title small-title">{{ row['text_type'] }}</span>
-                            <span class="text-entry">{{ row['text'] }}</span>
+                        <div class="float-right ml-3 flex space-x-1">
+                            <button class="btn-to-hide p-1 text-gray-400 hover:text-red-600 rounded-full hover:bg-gray-100{% if row['is_hidden'] or row['hidden_everywhere'] %} hidden{% endif %}"
+                                    onclick="hide_one('{{ row['text_id'] }}', '{{ patient_id }}')"
+                                    title="{{ _('Hide this') }}">
+                                <i class="bi bi-dash-circle text-sm"></i>
+                            </button>
+                            <button class="btn-to-hide p-1 text-gray-400 hover:text-red-600 rounded-full hover:bg-gray-100{% if row['is_hidden'] or row['hidden_everywhere'] %} hidden{% endif %}"
+                                    onclick="show_warnning('{{ _('This will hide all texts equal to') }} \'{{ row['short_text'] }}\'!\n\n{{ _('Do you want to continue?') }}', 'hide_all(\'{{ row['text'] }}\', \'{{ row['text_id'] }}\', \'{{ patient_id }}\');');"
+                                    title="{{ _('Hide all like this') }}">
+                                <i class="bi bi-dash-circle-fill text-sm"></i>
+                            </button>
+                            <button class="btn-to-show p-1 text-gray-400 hover:text-green-600 rounded-full hover:bg-gray-100{% if not row['is_hidden'] %} hidden{% endif %}"
+                                    onclick="unhide('{{ row['text_id'] }}', '{{ patient_id }}')"
+                                    title="{{ _('Unhide') }}">
+                                <i class="bi bi-plus-circle text-sm"></i>
+                            </button>
+                        </div>
+                        <div class="btn-retract" onclick="toggle_pannel('{{ row['text_id'] }}')">
+                            <div class="text-sm font-medium text-gray-600 mb-2">{{ row['text_type'] }}</div>
+                            <div class="text-entry text-gray-900">{{ row['text'] }}</div>
                         </div>
                     </div>
 
-                    <div class="card-content btn-expand cursor{% if loop.first %} no-top-pad{% endif %}{% if row['is_hidden'] %} red lighten-4{% elif row['hidden_everywhere'] %} orange lighten-3{% else %} grey lighten-3{% endif %}"
+                    <div class="btn-expand cursor-pointer p-4{% if row['is_hidden'] %} bg-red-100{% elif row['hidden_everywhere'] %} bg-orange-100{% else %} bg-gray-100{% endif %}"
                         id="short_{{ row['text_id'] }}" onclick="toggle_pannel('{{ row['text_id'] }}')">
-                        <span class="card-title small-title">
+                        <div class="text-sm font-medium">
                             {{ row['text_type'] }}:
-                            <span class="black-text text-entry">{{ row['short_text'] }}</span>
-                        </span>
+                            <span class="text-gray-900 text-entry">{{ row['short_text'] }}</span>
+                        </div>
                     </div>
                 </div>
             {% endfor %}

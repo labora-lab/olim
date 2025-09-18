@@ -1,0 +1,539 @@
+{% macro upload_form(projects=[], current_project_id=None) %}
+<!-- Upload Form -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="bi bi-cloud-upload-fill text-blue-600 mr-2"></i>
+            {{ _('Upload Dataset') }}
+        </h3>
+    </div>
+
+    <div class="p-6">
+        <form action="{{ url_for('upload_data') }}" method="post" enctype="multipart/form-data" class="space-y-6">
+            <!-- Dataset Name -->
+            <div>
+                <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
+                    <i class="bi bi-tag mr-1"></i>
+                    {{ _('Dataset name') }}
+                </label>
+                <input type="text" id="name" name="name" required
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                    placeholder="{{ _('Enter dataset name') }}">
+            </div>
+
+            <!-- Project Selection -->
+            <div>
+                <label class="block mb-2 text-sm font-medium text-gray-900">
+                    <i class="bi bi-folder mr-1"></i>
+                    {{ _('Link to Projects') }}
+                </label>
+                <div class="space-y-2 max-h-40 overflow-y-auto">
+                    {% for project in projects %}
+                    <div class="project-item flex items-center p-2 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                        data-project-id="{{ project.id }}">
+                        <input id="project-{{ project.id }}" type="checkbox" name="projects" value="{{ project.id }}"
+                            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                            {% if projects|length==1 or (current_project_id and project.id|string == current_project_id|string) %}checked{% endif %}>
+                        <label for="project-{{ project.id }}"
+                            class="ml-2 text-sm font-medium text-gray-900 cursor-pointer">
+                            {{ project.name }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div class="flex">
+                        <i class="bi bi-exclamation-triangle text-amber-600 mr-2 mt-0.5"></i>
+                        <p class="text-sm text-amber-800">
+                            <strong>{{ _('Warning:') }}</strong>
+                            {{ _('Datasets can only be linked to projects during upload. Make sure to select the desired
+                            projects.') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Format Selection -->
+            <div>
+                <label class="block mb-3 text-sm font-medium text-gray-900">
+                    <i class="bi bi-file-earmark-text mr-1"></i>
+                    {{ _('Data Format') }}
+                </label>
+                <div class="space-y-2">
+                    <div class="upload-option p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                        data-value="single_text">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input id="format-text" name="format" type="radio" value="single_text"
+                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
+                            </div>
+                            <div class="ml-3">
+                                <label for="format-text" class="text-sm font-medium text-gray-900 cursor-pointer">
+                                    {{ _('Text Format') }}
+                                </label>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    {{ _('Use this option if your CSV is composed of independent texts. You need to
+                                    specify which columns are equivalent to') }}
+                                    <strong>text</strong> {{ _('and') }} <strong>text_id</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="upload-option p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                        data-value="sample_data">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input id="format-sample" name="format" type="radio" value="sample_data"
+                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
+                            </div>
+                            <div class="ml-3">
+                                <label for="format-sample" class="text-sm font-medium text-gray-900 cursor-pointer">
+                                    {{ _('Sample Data') }}
+                                </label>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    {{ _('Upload built-in sample data in Text format.') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Upload Section -->
+            <div id="file-selector" class="space-y-4">
+                <div id="upload-container">
+                    <label for="large-file-input" class="block mb-2 text-sm font-medium text-gray-900">
+                        <i class="bi bi-file-arrow-up mr-1"></i>
+                        {{ _('Select File') }}
+                    </label>
+                    <div class="flex items-center justify-center w-full">
+                        <label for="large-file-input" id="drop-area"
+                            class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                            <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                <i class="bi bi-cloud-upload text-3xl text-gray-400 mb-2"></i>
+                                <p class="mb-2 text-sm text-gray-500">
+                                    <span class="font-semibold">{{ _('Click to upload or drag your file') }}</span>
+                                </p>
+                                <p class="text-xs text-gray-500">CSV files only</p>
+                            </div>
+                            <input id="large-file-input" name="file" type="file" class="hidden" accept=".csv">
+                        </label>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="progress hidden px-1 py-2">
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="determinate bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                                style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Upload Status -->
+                    <div id="upload-status" class="text-sm text-gray-600 px-2"></div>
+                </div>
+
+                <!-- Hidden Fields -->
+                <input type="hidden" name="filename" id="filename" value="">
+                <input type="hidden" name="file_id" id="file_id" value="">
+                <input type="hidden" name="upload_type" id="upload_type" value="single_text">
+
+                <!-- Additional Fields (Column Selection) -->
+                <div id="additional-fields" class="hidden space-y-4">
+                    <!-- Dynamic content will be added here -->
+                </div>
+            </div>
+
+            <!-- Info Message -->
+            <div class="p-3 bg-cyan-50 border border-cyan-200 rounded-lg">
+                <div class="flex">
+                    <i class="bi bi-info-circle text-cyan-600 mr-2 mt-0.5"></i>
+                    <p class="text-sm text-cyan-800">
+                        {{ _('After upload, keep an eye on the tasks in the sidebar for dataset processing status.') }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-end">
+                <button type="submit" id="send_btn" disabled
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-center text-white bg-gray-400 rounded-lg cursor-not-allowed transition-colors">
+                    <i class="bi bi-cloud-upload mr-2"></i>
+                    {{ _('Upload Dataset') }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro upload_scripts(CHUNK_SIZE) %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Form elements
+        const form = document.querySelector('form');
+        const nameField = document.getElementById('name');
+        const submitBtn = document.getElementById('send_btn');
+        const fileInput = document.getElementById('large-file-input');
+        const projectCheckboxes = document.querySelectorAll('input[name="projects"]');
+        const options = document.querySelectorAll('.upload-option');
+        const uploadType = document.getElementById('upload_type');
+        const addFields = document.getElementById('additional-fields');
+        const fileSelector = document.getElementById('file-selector');
+
+        // Validation function
+        window.validateForm = function validateForm() {
+            const isNameValid = nameField.value.trim() !== '';
+            const isProjectSelected = Array.from(projectCheckboxes).some(cb => cb.checked);
+            const isFormatSelected = uploadType.value !== '';
+            const isFileSelected = fileInput.files.length > 0 || uploadType.value === 'sample_data';
+
+            let isColumnSelectionValid = true;
+            if (uploadType.value === 'single_text' && fileInput.files.length > 0) {
+                const idColumn = document.getElementById('id_column');
+                const textColumn = document.getElementById('text_column');
+                isColumnSelectionValid = idColumn && textColumn && idColumn.value && textColumn.value;
+            }
+
+            const isFormValid = isNameValid && isProjectSelected && isFormatSelected && isFileSelected && isColumnSelectionValid;
+
+            // Update submit button state
+            if (isFormValid) {
+                submitBtn.disabled = false;
+                submitBtn.className = 'inline-flex items-center px-4 py-2 text-sm font-medium text-center text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-colors cursor-pointer';
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.className = 'inline-flex items-center px-4 py-2 text-sm font-medium text-center text-white bg-gray-400 rounded-lg cursor-not-allowed transition-colors';
+            }
+
+            // Visual feedback for required fields
+            updateFieldValidation(nameField, isNameValid);
+
+            return isFormValid;
+        };
+
+        function updateFieldValidation(field, isValid) {
+            if (field.value.trim() === '') {
+                // Reset to default state if empty
+                field.classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-500', 'border-green-300', 'focus:border-green-500', 'focus:ring-green-500');
+                field.classList.add('border-gray-300', 'focus:border-blue-500', 'focus:ring-blue-500');
+            } else if (isValid) {
+                field.classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-500', 'border-gray-300');
+                field.classList.add('border-green-300', 'focus:border-green-500', 'focus:ring-green-500');
+            } else {
+                field.classList.remove('border-green-300', 'focus:border-green-500', 'focus:ring-green-500', 'border-gray-300');
+                field.classList.add('border-red-300', 'focus:border-red-500', 'focus:ring-red-500');
+            }
+        }
+
+        // Event listeners for validation
+        nameField?.addEventListener('input', window.validateForm);
+        projectCheckboxes.forEach(cb => cb.addEventListener('change', window.validateForm));
+        fileInput?.addEventListener('change', window.validateForm);
+
+        // Upload-option handler
+        options.forEach((opt) => {
+            opt.addEventListener('click', () => {
+                // Remove active state from all options
+                options.forEach((o) => {
+                    o.classList.remove('border-blue-500', 'bg-blue-50')
+                    o.classList.add('border-gray-200')
+                    const radio = o.querySelector('input[type="radio"]')
+                    if (radio) radio.checked = false
+                })
+
+                // Add active state to clicked option
+                opt.classList.remove('border-gray-200')
+                opt.classList.add('border-blue-500', 'bg-blue-50')
+                const radio = opt.querySelector('input[type="radio"]')
+                if (radio) radio.checked = true
+
+                const val = opt.getAttribute('data-value')
+                uploadType.value = val
+
+                // Hide fields regardless of format when changing option
+                addFields.classList.add('hidden')
+                fileSelector.style.display = val === 'sample_data' ? 'none' : 'block'
+
+                // Validate form after format change
+                window.validateForm();
+            })
+        })
+
+        // Default selection
+        const defaultOption = document.querySelector('.upload-option[data-value="single_text"]')
+        if (defaultOption) {
+            defaultOption.click()
+        }
+
+        // Form submission validation
+        form?.addEventListener('submit', function (e) {
+            if (!window.validateForm()) {
+                e.preventDefault();
+
+                // Focus on first invalid field
+                if (!nameField.value.trim()) {
+                    nameField.focus();
+                } else if (!Array.from(projectCheckboxes).some(cb => cb.checked)) {
+                    projectCheckboxes[0]?.focus();
+                } else if (!uploadType.value) {
+                    document.querySelector('.upload-option')?.focus();
+                } else if (fileInput.files.length === 0 && uploadType.value !== 'sample_data') {
+                    fileInput.focus();
+                }
+
+                return false;
+            }
+        });
+
+        // Initial validation
+        window.validateForm();
+
+        // Project item click functionality
+        const projectItems = document.querySelectorAll('.project-item');
+        projectItems.forEach(item => {
+            item.addEventListener('click', function (e) {
+                // Don't trigger if clicking directly on checkbox or label
+                if (e.target.type === 'checkbox' || e.target.tagName === 'LABEL') {
+                    return;
+                }
+
+                // Find the checkbox in this item
+                const checkbox = this.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                    // Trigger validation after checkbox change
+                    window.validateForm();
+                }
+            });
+        });
+
+        // Drag and drop functionality
+        const dropArea = document.getElementById('drop-area');
+
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        // Highlight drop area when item is dragged over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        // Handle dropped files
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function highlight() {
+            dropArea.classList.add('border-blue-500', 'bg-blue-50');
+            dropArea.classList.remove('border-gray-300', 'bg-gray-50');
+        }
+
+        function unhighlight() {
+            dropArea.classList.remove('border-blue-500', 'bg-blue-50');
+            dropArea.classList.add('border-gray-300', 'bg-gray-50');
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files.length > 0) {
+                const file = files[0];
+
+                // Check if it's a CSV file
+                if (file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv')) {
+                    // Set the file to the input
+                    const fileInput = document.getElementById('large-file-input');
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    fileInput.files = dataTransfer.files;
+
+                    // Trigger the change event
+                    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                } else {
+                    // Show error for non-CSV files
+                    const status = document.getElementById('upload-status');
+                    status.textContent = '{{ _("Please select a CSV file only.") }}';
+                    status.className = 'text-sm text-red-600';
+                    setTimeout(() => {
+                        status.textContent = '';
+                        status.className = 'text-sm text-gray-600';
+                    }, 3000);
+                }
+            }
+        }
+    });
+    const CHUNK_SIZE = {{ CHUNK_SIZE }};
+
+    document.getElementById('large-file-input').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Hide additional fields and reset selects
+        const addFields = document.getElementById('additional-fields');
+
+        const progress = document.querySelector('.progress');
+        const progressBar = progress.querySelector('.determinate');
+        const status = document.getElementById('upload-status');
+
+        progress.classList.remove('hidden');
+        status.textContent = '{{ _("Preparing upload...") }}';
+
+        try {
+            const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+            const fileId = Math.random().toString(36).substring(2, 15);
+
+            for (let chunkNumber = 0; chunkNumber < totalChunks; chunkNumber++) {
+                const chunk = file.slice(chunkNumber * CHUNK_SIZE, (chunkNumber + 1) * CHUNK_SIZE);
+
+                const percent = Math.round((chunkNumber / totalChunks) * 100);
+                progressBar.style.width = `${percent}%`;
+                status.textContent = `{{ _("Uploading...") }} ${percent}%`;
+
+                const formData = new FormData();
+                formData.append('file', chunk);
+                formData.append('chunkNumber', chunkNumber);
+                formData.append('totalChunks', totalChunks);
+                formData.append('fileId', fileId);
+                formData.append('fileName', file.name);
+
+                const response = await fetch('{{url_for("handle_large_upload")}}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Project-ID': '{{ project_id }}'
+                    }
+                });
+
+                if (!response.ok) throw new Error('Upload failed');
+            }
+
+            progressBar.style.width = '100%';
+            status.textContent = '{{ _("Upload complete! Processing file...") }}';
+
+            // Finalize upload
+            const finalResponse = await fetch(`/upload/finalize/${fileId}?filename=${file.name}&total_chunks=${totalChunks}`, {
+                headers: {
+                    'X-Project-ID': '{{ project_id }}'
+                }
+            });
+
+            if (!finalResponse.ok) throw new Error('Finalization failed');
+
+            const result = await finalResponse.json();
+            if (result.success && result.columns) {
+                document.getElementById('filename').value = file.name;
+                document.getElementById('file_id').value = fileId;
+
+                // Clear any existing fields
+                addFields.innerHTML = '';
+
+                // Create ID column selector
+                const idDiv = document.createElement('div');
+
+                const idLabel = document.createElement('label');
+                idLabel.htmlFor = 'id_column';
+                idLabel.className = 'block mb-2 text-sm font-medium text-gray-900';
+                idLabel.innerHTML = '<i class="bi bi-hash mr-1"></i>{{ _("Text ID column") }}';
+                idDiv.appendChild(idLabel);
+
+                const idColumn = document.createElement('select');
+                idColumn.id = "id_column";
+                idColumn.name = "id_column";
+                idColumn.className = "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5";
+                idColumn.innerHTML = '<option value="" disabled selected>{{ _("Select Text ID column") }}</option>';
+                idDiv.appendChild(idColumn);
+
+                addFields.appendChild(idDiv);
+
+                // Create text column selector
+                const textDiv = document.createElement('div');
+
+                const textLabel = document.createElement('label');
+                textLabel.htmlFor = 'text_column';
+                textLabel.className = 'block mb-2 text-sm font-medium text-gray-900';
+                textLabel.innerHTML = '<i class="bi bi-file-text mr-1"></i>{{ _("Text column") }}';
+                textDiv.appendChild(textLabel);
+
+                const textColumn = document.createElement('select');
+                textColumn.id = "text_column";
+                textColumn.name = "text_column";
+                textColumn.className = "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5";
+                textColumn.innerHTML = '<option value="" disabled selected>{{ _("Select Text column") }}</option>';
+                textDiv.appendChild(textColumn);
+
+                addFields.appendChild(textDiv);
+
+                // Only show for single_text format
+                if (document.getElementById('upload_type').value === 'single_text') {
+                    // Populate dropdowns
+                    result.columns.forEach(col => {
+                        console.log(col);
+                        const option1 = document.createElement('option');
+                        option1.value = col;
+                        option1.textContent = col;
+                        idColumn.appendChild(option1);
+
+                        const option2 = document.createElement('option');
+                        option2.value = col;
+                        option2.textContent = col;
+                        textColumn.appendChild(option2);
+                    });
+
+                    // Show additional fields
+                    addFields.classList.remove('hidden');
+
+                    // Add validation listeners to column selectors
+                    idColumn.addEventListener('change', window.validateForm);
+                    textColumn.addEventListener('change', window.validateForm);
+
+                    // Trigger validation after fields are added
+                    window.validateForm();
+                }
+
+                // Replace upload area with file success display
+                const uploadContainer = document.getElementById('upload-container');
+                uploadContainer.innerHTML = `
+                    <div class="flex items-center justify-center w-full">
+                        <div class="flex items-center p-4 bg-green-50 border-2 border-green-300 rounded-lg w-full">
+                            <div class="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mr-4">
+                                <i class="bi bi-filetype-csv text-2xl text-green-600"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-medium text-green-900">${file.name}</div>
+                                <div class="text-sm text-green-700">{{ _('File uploaded successfully') }}</div>
+                            </div>
+                            <button type="button" onclick="location.reload()" 
+                                class="ml-4 inline-flex items-center px-3 py-2 text-sm font-medium text-green-600 bg-green-100 border border-green-300 rounded-lg hover:bg-green-200 focus:ring-4 focus:outline-none focus:ring-green-300 transition-colors">
+                                <i class="bi bi-arrow-clockwise mr-1"></i>
+                                {{ _('Change File') }}
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                status.textContent = '';
+            } else {
+                throw new Error('Finalization failed');
+            }
+
+            setTimeout(() => progress.classList.add('hidden'), 2000);
+
+        } catch (error) {
+            progressBar.style.backgroundColor = 'red';
+            status.textContent = `{{ _("Upload failed:") }} ${error.message}`;
+        }
+    });
+</script>
+{% endmacro %}

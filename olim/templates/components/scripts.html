@@ -1,0 +1,60 @@
+<script src="{{ url_for('static', filename='js/flowbite.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+<script>
+    // Show flash messages as toasts (uses Jinja variables)
+    function showFlashMessages() {
+        // Show success messages
+        {% with success_messages = get_flashed_messages(category_filter=["success"]) %}
+        {% if success_messages %}
+        {% for message in success_messages %}
+        showToast({{ message|tojson }}, 'success', 5000);
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        // Show warning messages
+        {% with warning_messages = get_flashed_messages(category_filter=["warning"]) %}
+        {% if warning_messages %}
+        {% for message in warning_messages %}
+        showToast({{ message|tojson }}, 'warning', 5000);
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        // Show error messages
+        {% with error_messages = get_flashed_messages(category_filter=["error"]) %}
+        {% if error_messages %}
+        {% for message in error_messages %}
+        showToast({{ message|tojson }}, 'error', 10000);
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        // Show info messages
+        {% with info_messages = get_flashed_messages(category_filter=["info"]) %}
+        {% if info_messages %}
+        {% for message in info_messages %}
+        showToast({{ message|tojson }}, 'info', 5000);
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+    }
+
+    // Error modal translations (uses Jinja variables)
+    function updateToggleButtonText(show) {
+        const toggleBtn = document.getElementById('toggleTechnicalDetails');
+        if (toggleBtn) {
+            if (show) {
+                toggleBtn.querySelector('span').innerHTML = '<i class="bi bi-code-square mr-3 text-gray-500"></i>{{ _("Hide Technical Details") }}';
+            } else {
+                toggleBtn.querySelector('span').innerHTML = '<i class="bi bi-code-square mr-3 text-gray-500"></i>{{ _("Show Technical Details") }}';
+            }
+        }
+    }
+
+    // Override the error message defaults with translations
+    window.errorTranslations = {
+        unknownError: '{{ _("Unknown error occurred") }}',
+        processingFailed: '{{ _("Processing failed") }}'
+    };
+</script>

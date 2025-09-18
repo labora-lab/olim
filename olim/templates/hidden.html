@@ -1,35 +1,206 @@
 {% extends "base.html" %}
-{% block title %}{{ _('Hidden Entry') }}{% endblock %}
+
+{% block title %}{{ _('Hidden Entries') }}{% endblock %}
 
 {% block content %}
-<div class="col s12">
-    <h4 class="center">{{ _('Hidden Entries') }}</h4>
-    <p class="center">{{ _('Texts on this page were marked with "Hide all as this".') }}</p>
-</div>
-{% if res %}
-{% for r in res %}
-{% set text_id = r['text_id'] %}
-{% set text = r['text'] %}
-<div class="col s12 m7" id="text_{{text_id}}">
-    <div class="card horizontal">
-        <div class="card-content">
-            <p>{{ text }}</p>
+<div class="space-y-6">
+    <!-- Page Header -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-eye-slash-fill text-red-600 mr-2"></i>
+                {{ _('Hidden Entries') }}
+            </h3>
+            <p class="text-sm text-gray-600 mt-1">
+                {{ _('Texts on this page were marked with "Hide all as this".') }}
+            </p>
         </div>
-        <div class="card-action">
-            <a class="btn-floating btn btn-to-hide btn-flat waves-ligh tooltipped right-align" data-position="bottom"
-                data-tooltip="{{ _('Remove from hidden entries') }}" onclick="remove_from_hidden('{{ text_id }}')">
-                <i class="material-icons red-text text-darken-4">remove_circle_outline</i>
+        
+        {% if res %}
+        <div class="px-6 py-3 bg-blue-50 border-b border-blue-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center text-blue-700">
+                    <i class="bi bi-info-circle mr-2"></i>
+                    <span class="text-sm font-medium">
+                        {{ _('Found {count} hidden entries').format(count=res|length) }}
+                    </span>
+                </div>
+                <button type="button" onclick="removeAllHidden()" 
+                        data-tooltip-target="tooltip-remove-all" data-tooltip-placement="top"
+                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 hover:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-200 transition-colors">
+                    <i class="bi bi-trash mr-2"></i>
+                    {{ _('Remove All') }}
+                </button>
+                <div id="tooltip-remove-all" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                    {{ _('Remover todas as entradas ocultas') }}
+                    <div class="tooltip-arrow" data-popper-arrow></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if res %}
+    <!-- Hidden Entries Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {% for r in res %}
+        {% set text_id = r['text_id'] %}
+        {% set text = r['text'] %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200" 
+             id="text_{{ text_id }}">
+            <div class="p-6">
+                <!-- Entry Content -->
+                <div class="mb-4">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-300">
+                                <i class="bi bi-eye-slash mr-1"></i>
+                                {{ _('Hidden') }}
+                            </span>
+                            <span class="text-xs text-gray-500">
+                                ID: {{ text_id }}
+                            </span>
+                        </div>
+                        <button type="button" onclick="removeFromHidden('{{ text_id }}')" 
+                                data-tooltip-target="tooltip-remove-{{ text_id }}" data-tooltip-placement="top"
+                                class="inline-flex items-center p-2 text-red-600 bg-red-50 border border-red-200 rounded-full hover:bg-red-100 hover:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-200 transition-colors">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        <div id="tooltip-remove-{{ text_id }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                            {{ _('Remover esta entrada das ocultas') }}
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+                    </div>
+                    
+                    <div class="prose prose-sm max-w-none">
+                        <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg text-gray-700">
+                            {{ text|truncate(200) }}
+                            {% if text|length > 200 %}
+                            <button type="button" onclick="toggleFullText('{{ text_id }}')" 
+                                    class="ml-2 text-cyan-600 hover:text-cyan-700 text-sm font-medium">
+                                {{ _('Show more...') }}
+                            </button>
+                            <div id="full-text-{{ text_id }}" class="hidden mt-3 pt-3 border-t border-gray-300">
+                                {{ text }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Entry Actions -->
+                <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                    <div class="flex items-center space-x-3">
+                        <button type="button" onclick="viewEntryDetails('{{ text_id }}')"
+                                data-tooltip-target="tooltip-view-{{ text_id }}" data-tooltip-placement="top"
+                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-cyan-700 bg-cyan-50 border border-cyan-200 rounded-lg hover:bg-cyan-100 hover:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-200 transition-colors">
+                            <i class="bi bi-eye mr-2"></i>
+                            {{ _('View Details') }}
+                        </button>
+                        <div id="tooltip-view-{{ text_id }}" role="tooltip" class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                            {{ _('Ver detalhes completos desta entrada') }}
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-xs text-gray-500">
+                        <i class="bi bi-calendar mr-1"></i>
+                        {{ _('Hidden entry') }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination/Load More (if needed in the future) -->
+    <div class="flex justify-center pt-6">
+        <button type="button" 
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors opacity-50 cursor-not-allowed"
+                disabled>
+            <i class="bi bi-arrow-clockwise mr-2"></i>
+            {{ _('Load More') }}
+            <span class="ml-2 text-xs">({{ _('Coming soon') }})</span>
+        </button>
+    </div>
+    
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-12 text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                <i class="bi bi-check-circle text-2xl text-green-600"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">
+                {{ _('No Hidden Entries') }}
+            </h3>
+            <p class="text-gray-500 mb-6 max-w-sm mx-auto">
+                {{ _('There are no texts marked as "Hide all as this". This means all entries are visible in the main view.') }}
+            </p>
+            <a href="{{ url_for('entry', project_id=project_id) }}" 
+               class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 transition-colors">
+                <i class="bi bi-arrow-left mr-2"></i>
+                {{ _('Back to Entries') }}
             </a>
         </div>
     </div>
+    {% endif %}
 </div>
-{% endfor %}
-{% else %}
-<h4 class="center">{{ _('There is not text marked "Hide all as this"') }}</h4>
-{% endif %}
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeConfirmModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="bi bi-exclamation-triangle text-red-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                            {{ _('Confirm Action') }}
+                        </h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500" id="modal-message">
+                                {{ _('Are you sure you want to remove this entry from hidden entries?') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="confirmButton" onclick="executeAction()"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                    {{ _('Remove') }}
+                </button>
+                <button type="button" onclick="closeConfirmModal()"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                    {{ _('Cancel') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
-{% block more_scripts %}
+{% block scripts %}
 <script>
+    // Set up global variables for hidden page functionality
+    window.translations = {
+        confirmRemoveSingle: '{{ _("Are you sure you want to remove this entry from hidden entries?") }}',
+        confirmRemoveAll: '{{ _("Are you sure you want to remove ALL entries from hidden entries? This action cannot be undone.") }}',
+        showLess: '{{ _("Show less...") }}',
+        showMore: '{{ _("Show more...") }}',
+        entryDetailsComingSoon: '{{ _("Entry details view coming soon!") }}',
+        entryRemovedSuccess: '{{ _("Entry removed successfully!") }}',
+        allEntriesRemovedSuccess: '{{ _("All entries removed successfully!") }}'
+    };
+
+    // Initialize hidden page when DOM is ready
+    document.addEventListener('DOMContentLoaded', function () {
+        initHiddenPage();
+    });
 </script>
 {% endblock %}

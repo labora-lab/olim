@@ -1,0 +1,87 @@
+{% macro labels_menu(label, entry, labels_rev, labels_values, hidden_labels, show_hidden, valid_entry) %}
+<div id="label_{{ label.id }}"
+    class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 {% if label.id in hidden_labels %}hidden-entry{% if not show_hidden %} hidden{% endif %}{% endif %}">
+    <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center space-x-3">
+            <h5 class="text-sm font-medium text-gray-900">{{ label.name }}</h5>
+            {% if valid_entry %}
+            {% endif %}
+        </div>
+        <div class="flex items-center space-x-2">
+            {% if valid_entry %}
+            <!-- Hide/Show Label Controls -->
+            <button type="button" onclick="hideLabel('{{ label.name }}', '{{ label.id }}')" id="hide_btn_{{ label.id }}"
+                data-tooltip-target="tooltip-hide-{{ label.id }}" data-tooltip-placement="top"
+                class="inline-flex items-center p-1.5 text-xs text-gray-500 hover:text-red-600 focus:outline-none transition-colors {% if label.id in hidden_labels %} hidden{% endif %}">
+                <i class="bi bi-eye-slash"></i>
+            </button>
+            <div id="tooltip-hide-{{ label.id }}" role="tooltip"
+                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                {{ _('Hide this label') }}
+                <div class="tooltip-arrow" data-popper-arrow></div>
+            </div>
+
+            <button type="button" onclick="unhideLabel('{{ label.name }}', '{{ label.id }}')"
+                id="unhide_btn_{{ label.id }}" data-tooltip-target="tooltip-show-{{ label.id }}"
+                data-tooltip-placement="top"
+                class="inline-flex items-center p-1.5 text-xs text-red-600 hover:text-red-700 focus:outline-none transition-colors {% if label.id not in hidden_labels %} hidden{% endif %}">
+                <i class="bi bi-eye"></i>
+            </button>
+            <div id="tooltip-show-{{ label.id }}" role="tooltip"
+                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                {{ _('Show this label') }}
+                <div class="tooltip-arrow" data-popper-arrow></div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% if valid_entry %}
+    {% if label.id in labels_values %}
+    {% set p_label = labels_values[label.id] %}
+    {% else %}
+    {% set p_label = 'none' %}
+    {% endif %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-2">
+        {% for label_str, type, icon, color in labels_rev %}
+        <!-- Selected State Button -->
+        <button type="button" onclick="addEntryLabel({{ entry.id }}, {{ label.id }}, '')"
+            id="{{ label_str | replace(' ', '_') }}_unsel_{{ label.id }}"
+            data-tooltip-target="tooltip-unsel-{{ label.id }}-{{ loop.index }}" data-tooltip-placement="top"
+            class="relative inline-flex items-center justify-center px-3 py-2.5 text-sm font-medium text-white bg-{{ color }}-600 border-2 border-{{ color }}-600 rounded-lg hover:bg-{{ color }}-700 hover:border-{{ color }}-700 focus:outline-none focus:ring-2 focus:ring-{{ color }}-200 transition-all duration-200 shadow-sm{% if p_label != label_str %} hidden{% endif %}">
+            {% if type == 'text' %}
+            <span class="font-bold mr-2">{{ icon }}</span>
+            {% else %}
+            <i class="bi bi-{{ icon }} mr-2"></i>
+            {% endif %}
+            <span>{{ label_str }}</span>
+        </button>
+        <div id="tooltip-unsel-{{ label.id }}-{{ loop.index }}" role="tooltip"
+            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+            {{ _('Click to unmark as "{label_str}"').format(label_str=label_str) }}
+            <div class="tooltip-arrow" data-popper-arrow></div>
+        </div>
+
+        <!-- Unselected State Button -->
+        <button type="button" onclick="addEntryLabel({{ entry.id }}, {{ label.id }}, '{{ label_str }}')"
+            id="{{ label_str | replace(' ', '_') }}_sel_{{ label.id }}"
+            data-tooltip-target="tooltip-sel-{{ label.id }}-{{ loop.index }}" data-tooltip-placement="top"
+            class="inline-flex items-center justify-center px-3 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-{{ color }}-50 hover:border-{{ color }}-300 hover:text-{{ color }}-700 focus:outline-none focus:ring-2 focus:ring-{{ color }}-200 transition-all duration-200 shadow-sm{% if p_label == label_str %} hidden{% endif %}">
+            {% if type == 'text' %}
+            <span class="font-bold mr-2 opacity-60">{{ icon }}</span>
+            {% else %}
+            <i class="bi bi-{{ icon }} mr-2 opacity-60"></i>
+            {% endif %}
+            <span>{{ label_str }}</span>
+            <i class="bi bi-circle ml-2 text-gray-400"></i>
+        </button>
+        <div id="tooltip-sel-{{ label.id }}-{{ loop.index }}" role="tooltip"
+            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+            {{ _('Click to mark as "{label_str}"').format(label_str=label_str) }}
+            <div class="tooltip-arrow" data-popper-arrow></div>
+        </div>
+        {% endfor %}
+
+    </div>
+    {% endif %}
+</div>
+{% endmacro %}

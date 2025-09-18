@@ -180,4 +180,7 @@ uploads/
 # Claude Code project instructions
 CLAUDE.md
 
-node_modules/*
+# Javascript stuffs
+node_modules/
+package-lock.json
+package.json

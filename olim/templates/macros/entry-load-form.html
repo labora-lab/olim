@@ -1,0 +1,73 @@
+{% macro entry_load_form(datasets, entry=none, show_title=true) %}
+{% if show_title %}
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="bi bi-file-text text-cyan-600 mr-2"></i>
+            {{ _('Entry Navigation') }}
+        </h3>
+    </div>
+    <div class="p-6">
+{% else %}
+<div>
+{% endif %}
+        {% if datasets|length > 1 %}
+        <!-- Multiple Dataset Form -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+                <label for="id" class="block mb-2 text-sm font-medium text-gray-900">
+                    <i class="bi bi-hash mr-1"></i>
+                    {{ _('Entry ID') }}
+                </label>
+                <input type="text" id="id" name="id" value="{{ entry.entry_id if entry else '' }}"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+            </div>
+            <div>
+                <label for="dataset_id" class="block mb-2 text-sm font-medium text-gray-900">
+                    <i class="bi bi-database mr-1"></i>
+                    {{ _('Dataset') }}
+                </label>
+                <select id="dataset_id"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                    {% for dataset in datasets %}
+                    <option value="{{ dataset.id }}" {% if entry and entry.dataset_id==dataset.id %}selected{% endif %}>
+                        {{ dataset.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button type="button" onclick="loadEntry()"
+                    class="w-full text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                    <i class="bi bi-box-arrow-in-right mr-2"></i>
+                    {{ _('Load Entry') }}
+                </button>
+            </div>
+        </div>
+        {% else %}
+        <!-- Single Dataset Form -->
+        <div class="flex gap-4 mb-4">
+            <div class="flex-1">
+                <label for="id" class="block mb-2 text-sm font-medium text-gray-900">
+                    <i class="bi bi-hash mr-1"></i>
+                    {{ _('Entry ID') }}
+                </label>
+                <input type="text" id="id" name="id" value="{{ entry.entry_id if entry else '' }}"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+            </div>
+            <div class="flex items-end">
+                <button type="button" onclick="loadEntry()"
+                    class="text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                    <i class="bi bi-box-arrow-in-right mr-2"></i>
+                    {{ _('Load Entry') }}
+                </button>
+            </div>
+        </div>
+        {% endif %}
+{% if show_title %}
+    </div>
+</div>
+{% else %}
+</div>
+{% endif %}
+{% endmacro %}

@@ -1,0 +1,114 @@
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-list-ol text-orange-600 mr-2"></i>
+                    {{ _('Queue Management') }}
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">{{ _('View and manage existing queues') }}</p>
+            </div>
+            <a href="/{{ project_id }}/create-queue"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 transition-colors">
+                <i class="bi bi-plus-circle mr-2"></i>
+                {{ _('Create Queue') }}
+            </a>
+        </div>
+    </div>
+    <div>
+        {% if queues and queues|length > 0 %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">
+                            <div class="flex items-center">
+                                <i class="bi bi-hash mr-2"></i>
+                                {{ _('Queue ID') }}
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            <div class="flex items-center">
+                                <i class="bi bi-card-text mr-2"></i>
+                                {{ _('Description') }}
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            <div class="flex items-center">
+                                <i class="bi bi-info-circle mr-2"></i>
+                                {{ _('Details') }}
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center">
+                            <div class="flex items-center justify-center">
+                                <i class="bi bi-gear mr-2"></i>
+                                {{ _('Actions') }}
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for queue_item in queues %}
+                    <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div
+                                    class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
+                                    {{ queue_item['id'][:2]|upper }}
+                                </div>
+                                <div class="font-mono text-gray-900">{{ queue_item['id'] }}</div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="font-medium text-gray-900">
+                                {{ queue_item.get('frontend_text', queue_item.get('fronend_text', _('Queue'))) }}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if queue_item.get('extra_data') %}
+                            <div class="space-y-1">
+                                {% for k, v in queue_item['extra_data'].items() %}
+                                <div class="text-xs text-gray-600">
+                                    <span class="font-medium">{{ k }}:</span>
+                                    {% if v is sequence and v is not string %}
+                                    {% for item in v %}{{ item }}{% if not loop.last %}, {% endif %}{% endfor %}
+                                    {% else %}
+                                    {{ v }}
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <span class="text-gray-400 italic">{{ _('No additional details') }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex items-center justify-center space-x-2">
+                                <a href="/{{project_id}}/list-queue/{{queue_item['id']}}"
+                                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 transition-colors"
+                                    title="{{ _('Open Queue') }}">
+                                    <i class="bi bi-box-arrow-up-right mr-1"></i>
+                                    {{ _('Open') }}
+                                </a>
+                                <button type="button" onclick="deleteQueue('{{queue_item['id']}}')"
+                                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 transition-colors"
+                                    title="{{ _('Delete Queue') }}">
+                                    <i class="bi bi-trash mr-1"></i>
+                                    {{ _('Delete') }}
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="bi bi-inbox text-gray-400 text-2xl mb-2"></i>
+            <p class="text-gray-500 text-sm">{{ _('No queues created yet') }}</p>
+            <p class="text-gray-400 text-xs">{{ _('Create a queue by searching or generating random entries') }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>

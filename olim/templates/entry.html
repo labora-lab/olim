@@ -1,157 +1,287 @@
 {% extends "base.html" %}
-{% block title %}{{ _('Entry ') }}{{ entry.entry_id }}{% endblock %}
+{% import "macros/entry-load-form.html" as entry_macro %}
+{% import "macros/highlights.html" as highlights_macro %}
+{% import "macros/labels-menu.html" as labels_macro %}
+
+{% block title %}{{ _('Entry ') }}{{ entry.entry_id if entry else '' }}{% endblock %}
+
 {% block content %}
-<div class="row">
-    <div class="col {% if valid_entry %}s9{% else %}s12{% endif %}">
-        <div class="card">
-            <div class="card-content row tight-bottom">
-                {% if datasets|length > 1 %}
-                <div class="input-field col m4 s12">
-                    <input id="id" name="id" type="text" class="validate" value="{{entry.entry_id}}">
-                    <label for="id">{{ _('Entry ID') }}</label>
-                </div>
-                <div class="input-field col m4 s12">
-                    <select id="dataset_id">
-                        {% for dataset in datasets %}
-                        <option value="{{ dataset.id }}" {% if entry and entry.dataset_id == dataset.id %}selected{% endif %}>{{ dataset.name }}</option>
-                        {% endfor %}
-                    </select>
-                    <label>{{ _('Dataset') }}</label>
-                </div>
-                <div class="input-field col m4 s12" style="height:55px;">
-                    <a class="btn waves-effect waves-light btn-wide"
-                        onclick="window.location.href = '/{{ project_id }}/entry/'+$('#dataset_id').val()+'/'+$('#id').val();">{{ _('Load Entry') }}
-                        <i class="material-icons right">assignment</i>
-                    </a>
-                </div>
-                {% else %}
-                <div class="input-field col m7 s12">
-                    <input id="id" name="id" type="text" class="validate" value="{{entry.entry_id}}">
-                    <label for="id">{{ _('Entry ID') }}</label>
-                </div>
-                <div class="input-field col m5 s12" style="height:55px;">
-                    <a class="btn waves-effect waves-light btn-wide"
-                        onclick="window.location.href = '/{{ project_id }}/entry/{% if datasets %}{{ datasets[0].id }}/{% endif %}'+$('#id').val();">{{ _('Load Entry') }}
-                        <i class="material-icons right">assignment</i>
-                    </a>
-                </div>
-                {% endif %}
-                {% if queue_id %}
-                <div class="col s4" style="height:50px;">
-                    <a class="waves-effect waves-light btn btn-wide{% if queue_pos == 1 %} disabled{% endif %}"
-                        href="{{url_for('entry', project_id=project_id, queue_id=queue_id, queue_pos=queue_pos-1)}}">
-                        <i class="material-icons left">arrow_back</i>{{ _('Previous') }}
-                    </a>
-                </div>
-                <div class="col s4" style="height:50px;">
-                    <a class="waves-effect waves-light btn btn-wide"
-                        href="{{url_for('queue', project_id=project_id, queue_id=queue_id)}}" target="_blank">
-                        {{ queue_pos }}/{{ queue_len }}
-                    </a>
-                </div>
-                <div class="col s4" style="height:50px;">
-                    <a class="waves-effect waves-light btn btn-wide{% if queue_pos == queue_len %} disabled{% endif %}"
-                        href="{{url_for('entry', project_id=project_id, queue_id=queue_id, queue_pos=queue_pos+1)}}">
-                        <i class="material-icons right">arrow_forward</i>{{ _('Next') }}
-                    </a>
-                </div>
-                {% endif %}
-            </div>
+<div class="space-y-6">
+    {% if not queue_id %}
+    <!-- Entry Navigation Card -->
+    {{ entry_macro.entry_load_form(datasets, entry, show_title=true) }}
+    {% else %}
+    <!-- Queue Navigation -->
+    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <div class="flex flex-col sm:flex-row w-full gap-3">
+            <button type="button" onclick="navigateEntryQueue(-1)"
+                class="flex-1 w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50 focus:ring-4 focus:outline-none focus:ring-purple-200 transition-colors {% if queue_pos == 1 %}opacity-50 cursor-not-allowed{% endif %}"
+                {% if queue_pos==1 %}disabled{% endif %}>
+                <i class="bi bi-arrow-left mr-2"></i>
+                {{ _('Previous') }}
+            </button>
+
+            <a href="{{ url_for('queue', project_id=project_id, queue_id=queue_id) }}" target="_blank"
+                class="flex-1 w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-purple-600 bg-purple-100 border border-purple-300 rounded-lg hover:bg-purple-200 focus:ring-4 focus:outline-none focus:ring-purple-300 transition-colors">
+                <i class="bi bi-list-ol mr-2"></i>
+                {{ queue_pos }}/{{ queue_len }}
+            </a>
+
+            <button type="button" onclick="navigateEntryQueue(1)"
+                class="flex-1 w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50 focus:ring-4 focus:outline-none focus:ring-purple-200 transition-colors {% if queue_pos == queue_len %}opacity-50 cursor-not-allowed{% endif %}"
+                {% if queue_pos==queue_len %}disabled{% endif %}>
+                {{ _('Next') }}
+                <i class="bi bi-arrow-right ml-2"></i>
+            </button>
         </div>
     </div>
+    {% endif %}
+
     {% if valid_entry %}
-    <div class="col s3">
-        <div class="toc-wrapper pinned labels-menu">
-            <h5>{{ _('Labels') }}</h5>
-            <div class="row" style="padding-top:15px;">
-                <div id="labels">
-                    {% if valid_entry %}
-                    <div id="apply_all" class="input-field col s12 tight-top">
-                        <span>{{_('Apply to all')}}</span>
-                        {% for label_str, type, icon, color in labels_rev %}
-                        {% if type == 'text'%}
-                        <a class="tooltipped right grey-text labels-text-icon cursor" data-position="bottom"
-                            data-tooltip="{{_('Unapply to all')}}"
-                            onclick="$('[id^={{label_str}}_unsel_]:visible').click();">
-                            <strong>{{icon}}</strong>
-                        </a>
-                        <a class="tooltipped right {{color}}-text labels-text-icon cursor" data-position="bottom"
-                            data-tooltip="{{_('Apply to all')}}"
-                            onclick="$('[id^={{label_str}}_sel_]:visible').click();">
-                            <strong>{{icon}}</strong>
-                        </a>
-                        {% else %}
-                        <a class="tooltipped right cursor" data-position="bottom" data-tooltip="{{_('Unapply to all')}}"
-                            onclick="$('[id^={{label_str}}_unsel_]:visible').click();">
-                            <i class="material-icons grey-text">{{icon}}</i>
-                        </a>
-                        <a class="tooltipped right cursor" data-position="bottom" data-tooltip="{{_('Apply to all')}}"
-                            onclick="$('[id^={{label_str}}_sel_]:visible').click();">
-                            <i class="material-icons {{color}}-text">{{icon}}</i>
-                        </a>
-                        {%endif%}
+    <!-- Main Content Area -->
+    <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Entry Content -->
+        <div class="flex-1 lg:w-2/3">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="bi bi-file-richtext text-green-600 mr-2"></i>
+                        {{ _('Entry Content') }}
+                        {% if entry %}
+                        <span
+                            class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            {{ entry.entry_id }}{% if datasets|length > 1 %} ({{ entry.dataset.name }}){% endif %}
+                        </span>
+                        {% endif %}
+                    </h3>
+                </div>
+
+                <div class="prose">
+                    {{ entry_html|safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Labels Sidebar -->
+        <div class="lg:w-1/3 lg:min-w-96">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 sticky top-4">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="bi bi-tags-fill text-blue-600 mr-2"></i>
+                        {{ _('Labels') }}
+                    </h3>
+                </div>
+
+                <div class="p-6 space-y-2">
+                    <!-- Apply to All Controls -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                            <i class="bi bi-lightning mr-2"></i>
+                            {{ _('Apply to all') }}
+                        </h4>
+                        <div class="flex flex-wrap gap-2">
+                            {% for label_str, type, icon, color in labels_rev %}
+                            <button type="button" onclick="applyToAll('{{ label_str }}', true)"
+                                id="apply_all_{{ label_str | replace(' ', '_') }}_{{ loop.index }}"
+                                data-tooltip-target="tooltip-apply-{{ loop.index }}" data-tooltip-placement="top"
+                                class="apply-all-btn inline-flex items-center px-2 py-1 text-xs font-medium text-{{ color }}-700 bg-{{ color }}-100 border border-{{ color }}-300 rounded hover:bg-{{ color }}-200 focus:outline-none focus:ring-2 focus:ring-{{ color }}-200 transition-colors">
+                                {% if type == 'text' %}
+                                <span class="font-bold mr-1">{{ icon }}</span>
+                                {% else %}
+                                <i class="bi bi-{{ icon }} mr-1"></i>
+                                {% endif %}
+                                {{ label_str }}
+                                <i class="bi bi-check-all ml-1"></i>
+                            </button>
+                            <div id="tooltip-apply-{{ loop.index }}" role="tooltip"
+                                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                                {{ _('Apply "{label_str}" to all visible labels').format(label_str=label_str)
+                                }}
+                                <div class="tooltip-arrow" data-popper-arrow></div>
+                            </div>
+
+                            <button type="button" onclick="applyToAll('{{ label_str }}', false)"
+                                id="remove_all_{{ label_str | replace(' ', '_') }}_{{ loop.index }}"
+                                data-tooltip-target="tooltip-remove-{{ loop.index }}" data-tooltip-placement="top"
+                                class="apply-all-btn inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors">
+                                {% if type == 'text' %}
+                                <span class="font-bold mr-1">{{ icon }}</span>
+                                {% else %}
+                                <i class="bi bi-{{ icon }} mr-1"></i>
+                                {% endif %}
+                                <i class="bi bi-x ml-1"></i>
+                            </button>
+                            <div id="tooltip-remove-{{ loop.index }}" role="tooltip"
+                                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                                {{ _('Remove "{label_str}" from all visible labels').format(label_str=label_str) }}
+                                <div class="tooltip-arrow" data-popper-arrow></div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Individual Labels -->
+                    <div id="labels" class="space-y-3">
+                        {% for label in labels %}
+                        {{ labels_macro.labels_menu(label, entry, labels_rev, labels_values, hidden_labels, show_hidden, valid_entry) }}
                         {% endfor %}
                     </div>
+
+                    <!-- Hidden Entries Controls -->
+                    <div class="pt-2">
+                        <button type="button" id="show_hidden_btn" onclick="toggleHidden(true)"
+                            data-tooltip-target="tooltip-show-hidden" data-tooltip-placement="top"
+                            class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors {% if show_hidden %}hidden{% endif %}">
+                            <i class="bi bi-eye mr-2"></i>
+                            {{ _('Show hidden labels') }}
+                        </button>
+                        <div id="tooltip-show-hidden" role="tooltip"
+                            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                            {{ _('Show labels that were marked as hidden') }}
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+
+                        <button type="button" id="hide_hidden_btn" onclick="toggleHidden(false)"
+                            data-tooltip-target="tooltip-hide-hidden" data-tooltip-placement="top"
+                            class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-300 rounded-lg hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-200 transition-colors {% if not show_hidden %}hidden{% endif %}">
+                            <i class="bi bi-eye-slash mr-2"></i>
+                            {{ _('Hide hidden labels') }}
+                        </button>
+                        <div id="tooltip-hide-hidden" role="tooltip"
+                            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                            {{ _('Hide labels that were marked as hidden') }}
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+                    </div>
+
+                    {% if entry.type == "patient" %}
+                    <!-- Patient-specific controls -->
+                    <div class="pt-4 border-t border-gray-200 space-y-2">
+                        <button type="button" onclick="expandAll(true)" data-tooltip-target="tooltip-expand-all"
+                            data-tooltip-placement="top"
+                            class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-300 rounded-lg hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-200 transition-colors">
+                            <i class="bi bi-plus-circle mr-2"></i>
+                            {{ _('Expand all') }}
+                        </button>
+                        <div id="tooltip-expand-all" role="tooltip"
+                            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                            {{ _('Expandir todas as seções retraídas do conteúdo') }}
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+
+                        <button type="button" onclick="retractAll(false)" data-tooltip-target="tooltip-retract-all"
+                            data-tooltip-placement="top"
+                            class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-orange-700 bg-orange-50 border border-orange-300 rounded-lg hover:bg-orange-100 focus:outline-none focus:ring-2 focus:ring-orange-200 transition-colors">
+                            <i class="bi bi-dash-circle mr-2"></i>
+                            {{ _('Retract all') }}
+                        </button>
+                        <div id="tooltip-retract-all" role="tooltip"
+                            class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                            {{ _('Retrair todas as seções expandidas do conteúdo') }}
+                            <div class="tooltip-arrow" data-popper-arrow></div>
+                        </div>
+                    </div>
                     {% endif %}
-                    {% for label in labels%}
-                    {% include 'labels-menu.html' %}
-                    {% endfor %}
-                </div>
-                <div class="input-field col s12 tight-top">
-                    <button id="show_hidden_btn"
-                        class="btn waves-effect waves-light btn-wide hidden-entry{% if show_hidden %} hidden{% endif %}"
-                        onclick='toggle_hidden(true)'>
-                        {{ _('Show hidden') }}
-                        <i class="material-icons right">remove_red_eye</i>
-                    </button>
-                    <button id="hidden_sel_btn"
-                        class="btn btn-hide waves-effect waves-light btn-wide red darken-4 hidden-entry{% if not show_hidden %} hidden{% endif %}"
-                        onclick='toggle_hidden(false)'>
-                        {{ _('Hide hidden') }}
-                        <i class="material-icons right">remove_red_eye</i>
-                    </button>
-                </div>
-                {% if entry.type == "patient" %}
-                <div class="input-field col s12 tight-top">
-                    <button class="btn waves-effect waves-light btn-wide" onclick='expand_all(true)'>
-                        {{ _('Expand all') }}
-                        <i class="material-icons right">add</i>
-                    </button>
-                </div>
-                <div class="input-field col s12 tight-top">
-                    <button class="btn waves-effect waves-light btn-wide" onclick='retract_all(false)'>
-                        {{ _('Retract all') }}
-                        <i class="material-icons right">remove</i>
-                    </button>
-                </div>
-                {% endif %}
-                <div class="input-field col s12 tight-top" id="highlights">
-                    <input style="width: max-content !important;" placeholder="{{ _('Add Highlight') }}">
+
+                    {{ highlights_macro.highlights_section() }}
                 </div>
             </div>
         </div>
     </div>
-    <div class="col s9">
-        <div class="row">
-            <div class="col s12">
-                {{ entry_html|safe }}
-            </div>
+    {% else %}
+    <!-- No Entry State -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-12 text-center">
+            <i class="bi bi-file-text text-4xl text-gray-400 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">{{ _('No entry loaded') }}</h3>
+            <p class="text-gray-500 mb-6">{{ _('Please enter an entry ID and dataset to view content.') }}</p>
         </div>
     </div>
     {% endif %}
 </div>
 {% endblock %}
-{% block scripts %}
-<script>
-    $(document).ready(function () {
-        init_picker('#start-date', "{{ start_date }}");
-        init_picker('#end-date', "{{ end_date }}");
 
-        {% if valid_entry %}
-        init_highlight({{ highlight| safe}});
+{% block scripts %}
+<style>
+    /* Prevent hide buttons from being added to apply-all buttons */
+    .apply-all-btn {
+        position: relative;
+    }
+
+    /* Hide only the actual hide button elements, not the X icons in remove buttons */
+    .apply-all-btn button[onclick*="hideLabel"],
+    .apply-all-btn button[onclick*="unhideLabel"],
+    .apply-all-btn button[id^="hide_btn_"],
+    .apply-all-btn button[id^="unhide_btn_"] {
+        display: none !important;
+    }
+</style>
+
+<script>
+    // Set up global variables for entry page functionality
+    window.projectId = {{ project_id }};
+    {% if datasets and datasets | length > 0 %}
+    window.defaultDatasetId = {{ datasets[0].id }};
     {% endif %}
+    {% if queue_id and queue_pos and queue_len %}
+    window.queueId = '{{ queue_id }}';
+    window.queuePos = {{ queue_pos }};
+    window.queueLen = {{ queue_len }};
+    {% endif %}
+    {% if valid_entry and highlight %}
+    window.highlightData = {{ highlight | safe }};
+    {% endif %}
+    window.translations = {
+        pleaseEnterEntryId: '{{ _("Please enter an entry ID") }}'
+    };
+
+    // Initialize entry page when DOM is ready
+    document.addEventListener('DOMContentLoaded', function () {
+        initEntryPage();
+
+        // Remove any hide buttons that might be added to apply-all buttons
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1) { // Element node
+                            // Remove hide buttons from apply-all buttons
+                            const applyAllBtns = node.querySelectorAll ? node.querySelectorAll('.apply-all-btn') : [];
+                            applyAllBtns.forEach(function(btn) {
+                                const hideButtons = btn.querySelectorAll('button[onclick*="hideLabel"], button[onclick*="unhideLabel"], button[id^="hide_btn_"], button[id^="unhide_btn_"]');
+                                hideButtons.forEach(function(hideBtn) {
+                                    hideBtn.remove();
+                                });
+                            });
+
+                            // Also check if the added node itself is a hide button inside apply-all
+                            if (node.closest && node.closest('.apply-all-btn') &&
+                                (node.onclick && (node.onclick.toString().includes('hideLabel') || node.onclick.toString().includes('unhideLabel')) ||
+                                 (node.id && (node.id.startsWith('hide_btn_') || node.id.startsWith('unhide_btn_'))))) {
+                                node.remove();
+                            }
+                        }
+                    });
+                }
+            });
+        });
+
+        // Start observing
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        // Also remove any existing hide buttons from apply-all buttons
+        document.querySelectorAll('.apply-all-btn').forEach(function(btn) {
+            const hideButtons = btn.querySelectorAll('button[onclick*="hideLabel"], button[onclick*="unhideLabel"], button[id^="hide_btn_"], button[id^="unhide_btn_"]');
+            hideButtons.forEach(function(hideBtn) {
+                hideBtn.remove();
+            });
+        });
     });
 
 </script>
-{% block more_scripts %}{% endblock %}
+
+{{ highlights_macro.highlights_script() }}
 {% endblock %}
