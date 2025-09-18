@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% import "macros/entry-load-form.html" as entry_macro %}
+{% import "macros/highlights.html" as highlights_macro %}
+{% import "macros/labels-menu.html" as labels_macro %}
 
 {% block title %}{{ _('Entry ') }}{{ entry.entry_id if entry else '' }}{% endblock %}
 
@@ -37,9 +39,9 @@
 
     {% if valid_entry %}
     <!-- Main Content Area -->
-    <div class="flex flex-col xl:flex-row gap-6">
+    <div class="flex flex-col lg:flex-row gap-6">
         <!-- Entry Content -->
-        <div class="flex-1 xl:w-2/3">
+        <div class="flex-1 lg:w-2/3">
             <div class="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <h3 class="text-lg font-semibold text-gray-900 flex items-center">
@@ -54,14 +56,14 @@
                     </h3>
                 </div>
 
-                <div>
+                <div class="prose">
                     {{ entry_html|safe }}
                 </div>
             </div>
         </div>
 
         <!-- Labels Sidebar -->
-        <div class="xl:w-1/3 xl:min-w-96">
+        <div class="lg:w-1/3 lg:min-w-96">
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 sticky top-4">
                 <div class="px-6 py-4 border-b border-gray-200">
                     <h3 class="text-lg font-semibold text-gray-900 flex items-center">
@@ -80,8 +82,9 @@
                         <div class="flex flex-wrap gap-2">
                             {% for label_str, type, icon, color in labels_rev %}
                             <button type="button" onclick="applyToAll('{{ label_str }}', true)"
+                                id="apply_all_{{ label_str | replace(' ', '_') }}_{{ loop.index }}"
                                 data-tooltip-target="tooltip-apply-{{ loop.index }}" data-tooltip-placement="top"
-                                class="inline-flex items-center px-2 py-1 text-xs font-medium text-{{ color }}-700 bg-{{ color }}-100 border border-{{ color }}-300 rounded hover:bg-{{ color }}-200 focus:outline-none focus:ring-2 focus:ring-{{ color }}-200 transition-colors">
+                                class="apply-all-btn inline-flex items-center px-2 py-1 text-xs font-medium text-{{ color }}-700 bg-{{ color }}-100 border border-{{ color }}-300 rounded hover:bg-{{ color }}-200 focus:outline-none focus:ring-2 focus:ring-{{ color }}-200 transition-colors">
                                 {% if type == 'text' %}
                                 <span class="font-bold mr-1">{{ icon }}</span>
                                 {% else %}
@@ -98,8 +101,9 @@
                             </div>
 
                             <button type="button" onclick="applyToAll('{{ label_str }}', false)"
+                                id="remove_all_{{ label_str | replace(' ', '_') }}_{{ loop.index }}"
                                 data-tooltip-target="tooltip-remove-{{ loop.index }}" data-tooltip-placement="top"
-                                class="inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors">
+                                class="apply-all-btn inline-flex items-center px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors">
                                 {% if type == 'text' %}
                                 <span class="font-bold mr-1">{{ icon }}</span>
                                 {% else %}
@@ -119,7 +123,7 @@
                     <!-- Individual Labels -->
                     <div id="labels" class="space-y-3">
                         {% for label in labels %}
-                        {% include 'labels-menu.html' %}
+                        {{ labels_macro.labels_menu(label, entry, labels_rev, labels_values, hidden_labels, show_hidden, valid_entry) }}
                         {% endfor %}
                     </div>
 
@@ -179,20 +183,7 @@
                     </div>
                     {% endif %}
 
-                    <!-- Highlights Section -->
-                    <div class="pt-4 border-t border-gray-200">
-                        <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                            <i class="bi bi-highlighter mr-2"></i>
-                            {{ _('Highlights') }}
-                        </h4>
-                        <div id="highlights-container">
-                            <input type="text" id="highlight-input" placeholder="{{ _('Add Highlight') }}"
-                                class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 p-2.5">
-                            <div id="highlights-list" class="mt-2 space-y-1">
-                                <!-- Dynamic highlight chips will be added here -->
-                            </div>
-                        </div>
-                    </div>
+                    {{ highlights_macro.highlights_section() }}
                 </div>
             </div>
         </div>
@@ -211,6 +202,21 @@
 {% endblock %}
 
 {% block scripts %}
+<style>
+    /* Prevent hide buttons from being added to apply-all buttons */
+    .apply-all-btn {
+        position: relative;
+    }
+
+    /* Hide only the actual hide button elements, not the X icons in remove buttons */
+    .apply-all-btn button[onclick*="hideLabel"],
+    .apply-all-btn button[onclick*="unhideLabel"],
+    .apply-all-btn button[id^="hide_btn_"],
+    .apply-all-btn button[id^="unhide_btn_"] {
+        display: none !important;
+    }
+</style>
+
 <script>
     // Set up global variables for entry page functionality
     window.projectId = {{ project_id }};
@@ -232,7 +238,50 @@
     // Initialize entry page when DOM is ready
     document.addEventListener('DOMContentLoaded', function () {
         initEntryPage();
+
+        // Remove any hide buttons that might be added to apply-all buttons
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1) { // Element node
+                            // Remove hide buttons from apply-all buttons
+                            const applyAllBtns = node.querySelectorAll ? node.querySelectorAll('.apply-all-btn') : [];
+                            applyAllBtns.forEach(function(btn) {
+                                const hideButtons = btn.querySelectorAll('button[onclick*="hideLabel"], button[onclick*="unhideLabel"], button[id^="hide_btn_"], button[id^="unhide_btn_"]');
+                                hideButtons.forEach(function(hideBtn) {
+                                    hideBtn.remove();
+                                });
+                            });
+
+                            // Also check if the added node itself is a hide button inside apply-all
+                            if (node.closest && node.closest('.apply-all-btn') &&
+                                (node.onclick && (node.onclick.toString().includes('hideLabel') || node.onclick.toString().includes('unhideLabel')) ||
+                                 (node.id && (node.id.startsWith('hide_btn_') || node.id.startsWith('unhide_btn_'))))) {
+                                node.remove();
+                            }
+                        }
+                    });
+                }
+            });
+        });
+
+        // Start observing
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        // Also remove any existing hide buttons from apply-all buttons
+        document.querySelectorAll('.apply-all-btn').forEach(function(btn) {
+            const hideButtons = btn.querySelectorAll('button[onclick*="hideLabel"], button[onclick*="unhideLabel"], button[id^="hide_btn_"], button[id^="unhide_btn_"]');
+            hideButtons.forEach(function(hideBtn) {
+                hideBtn.remove();
+            });
+        });
     });
 
 </script>
+
+{{ highlights_macro.highlights_script() }}
 {% endblock %}

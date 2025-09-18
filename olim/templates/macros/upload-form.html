@@ -1,4 +1,4 @@
-{% macro upload_form(projects=[]) %}
+{% macro upload_form(projects=[], current_project_id=None) %}
 <!-- Upload Form -->
 <div class="bg-white rounded-lg shadow-sm border border-gray-200">
     <div class="px-6 py-4 border-b border-gray-200">
@@ -27,13 +27,13 @@
                     <i class="bi bi-folder mr-1"></i>
                     {{ _('Link to Projects') }}
                 </label>
-                <div class="space-y-2 max-h-32 overflow-y-auto">
+                <div class="space-y-2 max-h-40 overflow-y-auto">
                     {% for project in projects %}
                     <div class="project-item flex items-center p-2 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
                         data-project-id="{{ project.id }}">
                         <input id="project-{{ project.id }}" type="checkbox" name="projects" value="{{ project.id }}"
                             class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                            {% if projects|length==1 %}checked{% endif %}>
+                            {% if projects|length==1 or (current_project_id and project.id|string == current_project_id|string) %}checked{% endif %}>
                         <label for="project-{{ project.id }}"
                             class="ml-2 text-sm font-medium text-gray-900 cursor-pointer">
                             {{ project.name }}
@@ -41,7 +41,7 @@
                     </div>
                     {% endfor %}
                 </div>
-                <div class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                     <div class="flex">
                         <i class="bi bi-exclamation-triangle text-amber-600 mr-2 mt-0.5"></i>
                         <p class="text-sm text-amber-800">

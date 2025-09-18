@@ -21,7 +21,7 @@
                     <a href="{{url_for('entry', project_id=project_id, queue_id=queue_id)}}"
                         class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 transition-colors">
                         <i class="bi bi-play-fill mr-2"></i>
-                        {{ _('Start Queue') }}
+                        {{ _('Go To Queue') }}
                     </a>
                 </div>
             </div>
@@ -91,15 +91,6 @@
         </div>
     </div>
 
-    {% else %}
-    <!-- No Queue Selected State -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div class="px-6 py-12 text-center">
-            <i class="bi bi-list-ol text-4xl text-gray-400 mb-4"></i>
-            <h3 class="text-lg font-medium text-gray-900 mb-2">{{ _('No queue selected') }}</h3>
-            <p class="text-gray-500 mb-6">{{ _('Please select a queue to view its contents.') }}</p>
-        </div>
-    </div>
     {% endif %}
 </div>
 

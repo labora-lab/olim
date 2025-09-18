@@ -63,7 +63,7 @@
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContent = document.getElementById('tab-content');
 
-        function switchTab(tabName) {
+        function switchTab(tabName, updateUrl = true) {
             // Update menu button states
             tabButtons.forEach(button => {
                 if (button.dataset.tab === tabName) {
@@ -74,6 +74,12 @@
                     button.classList.add('text-gray-600', 'bg-gray-50', 'border-gray-200');
                 }
             });
+
+            // Update URL without page reload
+            if (updateUrl) {
+                const newUrl = `/{{ project_id }}/data-navigation?section=${tabName}`;
+                window.history.pushState({ section: tabName }, '', newUrl);
+            }
 
             // Load content via HTMX
             htmx.ajax('GET', `/{{ project_id }}/data-navigation/component/${tabName}`, {
@@ -89,8 +95,21 @@
             });
         });
 
-        // Load initial tab
-        switchTab('entry-navigation');
+        // Handle browser back/forward navigation
+        window.addEventListener('popstate', function(event) {
+            if (event.state && event.state.section) {
+                switchTab(event.state.section, false); // Don't update URL again
+            } else {
+                // Parse section from current URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const section = urlParams.get('section') || 'entry-navigation';
+                switchTab(section, false);
+            }
+        });
+
+        // Load initial tab (from server parameter or default)
+        const activeSection = '{{ active_section }}' || 'entry-navigation';
+        switchTab(activeSection, false); // Don't update URL on initial load
 
         // Initialize page functionality
         if (typeof window.init === 'function') {

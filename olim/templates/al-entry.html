@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "macros/highlights.html" as highlights_macro %}
 
 {% block title %}
 {{ _('Active Learning - ') }} {{ label.name }}
@@ -9,7 +10,9 @@
   <!-- Main Content Area -->
   <div class="flex-1 lg:w-2/3">
     <div class="p-2 bg-white rounded-lg shadow-sm border border-gray-200">
-      {{ entry_html|safe }}
+      <div class="prose">
+        {{ entry_html|safe }}
+      </div>
     </div>
   </div>
 
@@ -87,6 +90,8 @@
           </div>
         </div>
         {% endif %}
+
+        {{ highlights_macro.highlights_section() }}
 
         <!-- Quick Actions -->
         <div class="mt-6 p-4 bg-gray-50 rounded-lg">
@@ -250,21 +255,9 @@
 {% block scripts %}
 <script>
   // Set up global variables for al-entry page functionality
-  // Render highlight inside a quoted string so formatters skip/mess less with Jinja.
-  // We'll attempt to JSON.parse it back into an object in JS.
-  window.alEntryData = {
-    highlight: {% if highlight %}"{{ highlight | tojson | replace('"', '\\"') | safe }}"{% else %} null{% endif %}
-  };
-
-  // If highlight was rendered as a JSON string, parse it back to an object.
-  try {
-    if (typeof window.alEntryData.highlight === 'string') {
-      window.alEntryData.highlight = JSON.parse(window.alEntryData.highlight);
-    }
-  } catch (e) {
-    // If parsing fails, leave the string as-is and log a warning.
-    console.warn('Failed to parse alEntryData.highlight as JSON', e);
-  }
+  {% if highlight %}
+  window.highlightData = {{ highlight | safe }};
+  {% endif %}
   window.translations = {
     scrollToTop: '{{ _("Scroll to top") }}'
   };
@@ -306,9 +299,21 @@
   document.addEventListener('DOMContentLoaded', function () {
     initMetricsCard();
     initAlEntryPage();
+
+    // Initialize highlights if highlight data is available
+    if (window.highlightData) {
+      try {
+        initEntryHighlight(window.highlightData);
+      } catch (e) {
+        console.warn('Highlight initialization failed:', e);
+      }
+    }
+
     if (typeof window.init === 'function') {
       window.init();
     }
   });
 </script>
+
+{{ highlights_macro.highlights_script() }}
 {% endblock %}

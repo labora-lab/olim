@@ -1,3 +1,4 @@
+{% macro labels_menu(label, entry, labels_rev, labels_values, hidden_labels, show_hidden, valid_entry) %}
 <div id="label_{{ label.id }}"
     class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 {% if label.id in hidden_labels %}hidden-entry{% if not show_hidden %} hidden{% endif %}{% endif %}">
     <div class="flex items-center justify-between mb-3">
@@ -9,10 +10,10 @@
         <div class="flex items-center space-x-2">
             {% if valid_entry %}
             <!-- Hide/Show Label Controls -->
-            <button type="button" onclick="hideLabel('{{ label.name }}', '{{ label.id }}')" id="hide_{{ label.id }}"
+            <button type="button" onclick="hideLabel('{{ label.name }}', '{{ label.id }}')" id="hide_btn_{{ label.id }}"
                 data-tooltip-target="tooltip-hide-{{ label.id }}" data-tooltip-placement="top"
                 class="inline-flex items-center p-1.5 text-xs text-gray-500 hover:text-red-600 focus:outline-none transition-colors {% if label.id in hidden_labels %} hidden{% endif %}">
-                <i class="bi bi-x-circle"></i>
+                <i class="bi bi-eye-slash"></i>
             </button>
             <div id="tooltip-hide-{{ label.id }}" role="tooltip"
                 class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
@@ -21,10 +22,10 @@
             </div>
 
             <button type="button" onclick="unhideLabel('{{ label.name }}', '{{ label.id }}')"
-                id="hide_sel_{{ label.id }}" data-tooltip-target="tooltip-show-{{ label.id }}"
+                id="unhide_btn_{{ label.id }}" data-tooltip-target="tooltip-show-{{ label.id }}"
                 data-tooltip-placement="top"
                 class="inline-flex items-center p-1.5 text-xs text-red-600 hover:text-red-700 focus:outline-none transition-colors {% if label.id not in hidden_labels %} hidden{% endif %}">
-                <i class="bi bi-x-circle-fill"></i>
+                <i class="bi bi-eye"></i>
             </button>
             <div id="tooltip-show-{{ label.id }}" role="tooltip"
                 class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
@@ -83,3 +84,4 @@
     </div>
     {% endif %}
 </div>
+{% endmacro %}

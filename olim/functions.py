@@ -25,10 +25,21 @@ def check_is_setup() -> bool:
         return False
 
 
-def get_highlights() -> list:
-    # Load highlight
+def get_highlights() -> list | dict:
+    # Load highlight data from session
     if "highlight" in session:
-        return session["highlight"]
+        highlight_data = session["highlight"]
+
+        # Handle both old format (list of terms) and new format (object with color data)
+        if isinstance(highlight_data, list):
+            # Legacy format: return as-is for backward compatibility
+            return highlight_data
+        elif isinstance(highlight_data, dict) and "terms" in highlight_data:
+            # New format: return the full object with color assignments
+            return highlight_data
+        else:
+            # Invalid format
+            return []
     else:
         return []
 

@@ -7,10 +7,12 @@ from .database import (
     get_celery_tasks,
     get_dataset_stats,
     get_datasets,
+    get_projects,
     link_dataset_to_project,
     new_dataset,
 )
 from .functions import check_is_setup
+from .project import update_session_project
 from .settings import ALLOWED_EXTENSIONS, CHUNK_SIZE, MAX_FILE_SIZE, UPLOAD_PATH
 from .tasks.upload_data import finalize_chunks_upload, save_chunk, upload_dataset
 
@@ -82,7 +84,8 @@ def finalize_upload(file_id) -> ...:
 
 
 @app.route("/upload-data", methods=["GET", "POST"])
-def upload_data() -> ...:
+@app.route("/upload-data/<int:project_id>", methods=["GET", "POST"])
+def upload_data(project_id: int | None = None) -> ...:
     """
     Handle file uploads and dataset creation using Celery tasks
 
@@ -97,6 +100,12 @@ def upload_data() -> ...:
     # If not setup and GET we need to go back to init-config
     if request.method == "GET" and not check_is_setup():
         return redirect(url_for("init_config"))
+
+    # Handle project_id parameter - check project and update session if provided
+    if project_id is not None:
+        res = update_session_project(project_id)
+        if res is not None:
+            return res
 
     if request.method == "POST":
         # Extract form data
@@ -193,4 +202,5 @@ def upload_data() -> ...:
         CHUNK_SIZE=CHUNK_SIZE,
         datasets=get_datasets(non_empty=True),
         stats=get_dataset_stats(),
+        projects=list(get_projects()),
     )

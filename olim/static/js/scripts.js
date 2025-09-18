@@ -115,124 +115,55 @@ function initEntryDatePickers() {
     }
 }
 
-// Highlight functionality for entry page
-function initEntryHighlight(highlightData) {
-    if (!highlightData || !Array.isArray(highlightData)) return;
+// Entry highlighting is now handled by macros/highlights.html macro
 
-    const container = document.getElementById('highlights-list');
-    const input = document.getElementById('highlight-input');
+// Mobile sidebar functionality
+function initMobileSidebar() {
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
 
-    if (!container || !input) return;
+    if (sidebarToggle && sidebar && backdrop) {
+        // Toggle sidebar on mobile
+        sidebarToggle.addEventListener('click', function() {
+            const isHidden = sidebar.classList.contains('-translate-x-full');
 
-    // Initialize existing highlights
-    highlightData.forEach(term => {
-        addHighlightChip(term);
-        highlightText(term);
-    });
-
-    // Handle adding new highlights
-    input.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter' && this.value.trim()) {
-            e.preventDefault();
-            const term = this.value.trim();
-            addHighlightChip(term);
-            highlightText(term);
-            updateHighlightSession();
-            this.value = '';
-        }
-    });
-}
-
-function addHighlightChip(term) {
-    const container = document.getElementById('highlights-list');
-    if (!container) return;
-
-    const chip = document.createElement('div');
-    chip.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-300';
-    chip.innerHTML = `
-        <span>${escapeHtml(term)}</span>
-        <button type="button" onclick="removeHighlight('${escapeHtml(term)}')" class="ml-2 text-yellow-600 hover:text-yellow-800">
-            <i class="bi bi-x"></i>
-        </button>
-    `;
-    chip.dataset.term = term;
-    container.appendChild(chip);
-}
-
-function removeHighlight(term) {
-    const container = document.getElementById('highlights-list');
-    const chip = container.querySelector(`[data-term="${term}"]`);
-    if (chip) {
-        chip.remove();
-        unhighlightText(term);
-        updateHighlightSession();
-    }
-}
-
-function highlightText(term) {
-    const contentArea = document.querySelector('.prose');
-    if (!contentArea || !term) return;
-
-    const regex = new RegExp(`(${escapeRegExp(term)})`, 'gi');
-    const walker = document.createTreeWalker(
-        contentArea,
-        NodeFilter.SHOW_TEXT,
-        null,
-        false
-    );
-
-    const textNodes = [];
-    let node;
-    while (node = walker.nextNode()) {
-        if (regex.test(node.textContent)) {
-            textNodes.push(node);
-        }
-    }
-
-    textNodes.forEach(textNode => {
-        const parent = textNode.parentNode;
-        if (parent.tagName !== 'MARK') {
-            const highlightedHTML = textNode.textContent.replace(regex, '<mark class="bg-yellow-300 text-yellow-900 px-1 rounded">$1</mark>');
-            const temp = document.createElement('div');
-            temp.innerHTML = highlightedHTML;
-
-            while (temp.firstChild) {
-                parent.insertBefore(temp.firstChild, textNode);
+            if (isHidden) {
+                // Show sidebar
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+                backdrop.classList.remove('hidden');
+            } else {
+                // Hide sidebar
+                sidebar.classList.add('-translate-x-full');
+                sidebar.classList.remove('translate-x-0');
+                backdrop.classList.add('hidden');
             }
-            parent.removeChild(textNode);
-        }
-    });
-}
+        });
 
-function unhighlightText(term) {
-    const contentArea = document.querySelector('.prose');
-    if (!contentArea) return;
+        // Hide sidebar when clicking backdrop
+        backdrop.addEventListener('click', function() {
+            sidebar.classList.add('-translate-x-full');
+            sidebar.classList.remove('translate-x-0');
+            backdrop.classList.add('hidden');
+        });
 
-    const highlights = contentArea.querySelectorAll('mark');
-    highlights.forEach(mark => {
-        if (mark.textContent.toLowerCase().includes(term.toLowerCase())) {
-            const parent = mark.parentNode;
-            parent.replaceChild(document.createTextNode(mark.textContent), mark);
-            parent.normalize();
-        }
-    });
-}
-
-function updateHighlightSession() {
-    const chips = document.querySelectorAll('#highlights-list [data-term]');
-    const data = Array.from(chips).map(chip => chip.dataset.term);
-
-    // Send update to server
-    fetch('/update-session', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            parameter: 'highlight',
-            data: data
-        })
-    }).catch(console.error);
+        // Hide sidebar on window resize to desktop size
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 640) { // sm breakpoint
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+                backdrop.classList.add('hidden');
+            } else {
+                // Reset to hidden state on mobile
+                if (!sidebar.classList.contains('-translate-x-full')) {
+                    sidebar.classList.add('-translate-x-full');
+                    sidebar.classList.remove('translate-x-0');
+                    backdrop.classList.add('hidden');
+                }
+            }
+        });
+    }
 }
 
 // Entry navigation functions
@@ -270,7 +201,24 @@ function applyToAll(labelStr, apply) {
     const buttons = document.querySelectorAll(selector);
 
     buttons.forEach(button => {
-        if (button.style.display !== 'none') {
+        // Check if the button and its label container are actually visible to the user
+        const labelContainer = button.closest('[id^="label_"]');
+
+        // Check if the label container is visible (considering both display and visibility)
+        const isContainerVisible = labelContainer &&
+            labelContainer.offsetWidth > 0 &&
+            labelContainer.offsetHeight > 0 &&
+            window.getComputedStyle(labelContainer).display !== 'none' &&
+            window.getComputedStyle(labelContainer).visibility !== 'hidden';
+
+        // Check if the button itself is visible
+        const isButtonVisible = button.style.display !== 'none' &&
+            window.getComputedStyle(button).display !== 'none' &&
+            button.offsetWidth > 0 &&
+            button.offsetHeight > 0;
+
+        // Only click if both button and container are actually visible
+        if (isButtonVisible && isContainerVisible) {
             button.click();
         }
     });
@@ -349,11 +297,11 @@ function hideById(id) {
     if (labelElement) {
         labelElement.classList.add('hidden-entry');
     }
-    const hideSelElement = document.getElementById('hide_sel_' + id);
-    if (hideSelElement) {
-        hideSelElement.classList.remove('hidden');
+    const unhideElement = document.getElementById('unhide_btn_' + id);
+    if (unhideElement) {
+        unhideElement.classList.remove('hidden');
     }
-    const hideElement = document.getElementById('hide_' + id);
+    const hideElement = document.getElementById('hide_btn_' + id);
     if (hideElement) {
         hideElement.classList.add('hidden');
     }
@@ -364,11 +312,11 @@ function unhideById(id) {
     if (labelElement) {
         labelElement.classList.remove('hidden-entry');
     }
-    const hideSelElement = document.getElementById('hide_sel_' + id);
-    if (hideSelElement) {
-        hideSelElement.classList.add('hidden');
+    const unhideElement = document.getElementById('unhide_btn_' + id);
+    if (unhideElement) {
+        unhideElement.classList.add('hidden');
     }
-    const hideElement = document.getElementById('hide_' + id);
+    const hideElement = document.getElementById('hide_btn_' + id);
     if (hideElement) {
         hideElement.classList.remove('hidden');
     }
@@ -381,9 +329,9 @@ function markLabel(labelId, value) {
         return;
     }
 
-    // Find all unsel and sel buttons for this label
-    const unselButtons = labelContainer.querySelectorAll('[id$="_unsel_' + labelId + '"]');
-    const selButtons = labelContainer.querySelectorAll('[id$="_sel_' + labelId + '"]');
+    // Find all unsel and sel buttons for this label - exclude apply-all buttons
+    const unselButtons = labelContainer.querySelectorAll('[id$="_unsel_' + labelId + '"]:not(.apply-all-btn)');
+    const selButtons = labelContainer.querySelectorAll('[id$="_sel_' + labelId + '"]:not(.apply-all-btn)');
 
     // Unselect all first (hide selected buttons, show unselected buttons)
     unselButtons.forEach(btn => btn.classList.add('hidden'));
@@ -1424,6 +1372,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof window.init === 'undefined') {
         window.init = function() {
             loadKaTeXIfNeeded();
+            initMobileSidebar();
             if (typeof showFlashMessages === 'function') {
                 showFlashMessages();
             }
@@ -1433,6 +1382,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.init = function() {
             originalInit();
             loadKaTeXIfNeeded();
+            initMobileSidebar();
             if (typeof showFlashMessages === 'function') {
                 showFlashMessages();
             }
@@ -1456,4 +1406,43 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Queue management functions
+    window.deleteQueue = function(queueId) {
+        if (!confirm('Are you sure you want to delete this queue? This action cannot be undone.')) {
+            return;
+        }
+
+        const projectId = window.projectId || document.querySelector('[data-project-id]')?.getAttribute('data-project-id');
+        if (!projectId) {
+            showToast('Project ID not found', 'error');
+            return;
+        }
+
+        fetch(`/${projectId}/data-navigation/queue/${queueId}/delete`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                // Refresh the queue management component if we're currently viewing it
+                const activeTab = document.querySelector('.tab-button.active');
+                if (activeTab && activeTab.dataset.tab === 'queue-management') {
+                    htmx.ajax('GET', `/${projectId}/data-navigation/component/queue-management`, {
+                        target: '#tab-content',
+                        swap: 'innerHTML'
+                    });
+                }
+                showToast('Queue deleted successfully', 'success');
+            } else {
+                showToast('Failed to delete queue', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting queue:', error);
+            showToast('Error deleting queue', 'error');
+        });
+    };
 });

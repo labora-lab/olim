@@ -1,10 +1,19 @@
 <div class="bg-white rounded-lg shadow-sm border border-gray-200">
     <div class="px-6 py-4 border-b border-gray-200">
-        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-            <i class="bi bi-list-ol text-orange-600 mr-2"></i>
-            {{ _('Queue Management') }}
-        </h3>
-        <p class="text-sm text-gray-600 mt-1">{{ _('View and manage existing queues') }}</p>
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-list-ol text-orange-600 mr-2"></i>
+                    {{ _('Queue Management') }}
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">{{ _('View and manage existing queues') }}</p>
+            </div>
+            <a href="/{{ project_id }}/create-queue"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 transition-colors">
+                <i class="bi bi-plus-circle mr-2"></i>
+                {{ _('Create Queue') }}
+            </a>
+        </div>
     </div>
     <div>
         {% if queues and queues|length > 0 %}
@@ -74,12 +83,20 @@
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 text-center">
-                            <a href="/{{project_id}}/list-queue/{{queue_item['id']}}"
-                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 transition-colors"
-                                title="{{ _('Open Queue') }}">
-                                <i class="bi bi-box-arrow-up-right mr-1"></i>
-                                {{ _('Open') }}
-                            </a>
+                            <div class="flex items-center justify-center space-x-2">
+                                <a href="/{{project_id}}/list-queue/{{queue_item['id']}}"
+                                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 transition-colors"
+                                    title="{{ _('Open Queue') }}">
+                                    <i class="bi bi-box-arrow-up-right mr-1"></i>
+                                    {{ _('Open') }}
+                                </a>
+                                <button type="button" onclick="deleteQueue('{{queue_item['id']}}')"
+                                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 transition-colors"
+                                    title="{{ _('Delete Queue') }}">
+                                    <i class="bi bi-trash mr-1"></i>
+                                    {{ _('Delete') }}
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}

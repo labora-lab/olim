@@ -1,4 +1,7 @@
 import json
+import shutil
+from datetime import datetime
+from io import StringIO
 
 import pandas as pd
 from flask import flash, redirect, render_template, request, session, url_for
@@ -20,8 +23,30 @@ from .functions import (
     get_highlights,
     render_entry,
 )
+from .settings import QUEUES_PATH
 from .utils.entry import get_all_hidden
-from .utils.queues import get_all_queues, get_queue, store_queue
+from .utils.queues import delete_queue, get_all_queues, get_queue, store_queue
+
+
+def backup_old_queue_folder(project_id: int) -> None:
+    """
+    Backup old queue folder if it exists for the given project ID.
+
+    Args:
+        project_id: The project ID to check and backup queues for
+    """
+    old_queue_path = QUEUES_PATH / str(project_id)
+
+    if old_queue_path.exists() and old_queue_path.is_dir():
+        # Create backup with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_path = QUEUES_PATH / f"{project_id}_backup_{timestamp}"
+
+        try:
+            shutil.move(str(old_queue_path), str(backup_path))
+            print(f"Backed up old queue folder {old_queue_path} to {backup_path}")
+        except Exception as e:
+            print(f"Failed to backup queue folder: {e}")
 
 
 @app.route("/")
@@ -32,14 +57,28 @@ def redirect_to_project() -> ...:
     return redirect(f"/{project_id}")
 
 
-def update_session_project(project_id: int) -> ...:
-    if session["project_id"] != project_id:
+def update_session_project(project_id: int, require_data: bool = False) -> ...:
+    """
+    Check if project exists and optionally if it has data.
+
+    Args:
+        project_id: The project ID to check
+        require_data: If True, redirect to upload if project has no datasets
+
+    Returns:
+        None if project is valid, redirect response otherwise
+    """
+    # First, check if project exists and update session
+    if session.get("project_id") != project_id:
         project = get_project(project_id)
-        if project is None:
+        print(f"Loaded project: {project}")
+        if project is None or project.is_deleted:
             flash(
-                _(f"Invalid project ID: {project_id}!"),
+                _("Invalid project ID: {project_id}!").format(project_id=project_id),
                 category="warning",
             )
+            session.pop("project_id", None)
+            session.pop("project_name", None)
             return redirect("/")
         else:
             session["project_id"] = project.id
@@ -48,7 +87,15 @@ def update_session_project(project_id: int) -> ...:
                 project_id=project.id,
                 project_name=project.name,
             )
-            return None
+
+    # AFTER confirming project exists, check if data is required
+    if require_data:
+        datasets = list(get_datasets(project_id, non_empty=True))
+        if not datasets:
+            flash(_("This project has no datasets. Please upload data first."), "warning")
+            return redirect(url_for("upload_data", project_id=project_id))
+
+    return None
 
 
 def update_queue_pos(queue_id: str, pos: int) -> None:
@@ -191,17 +238,11 @@ def search(project_id: int) -> ...:
         and len(not_must_phrases) == 0
     ):
         # Check if this is an HTMX request for search results only
-        if request.headers.get('HX-Request'):
+        if request.headers.get("HX-Request"):
             return ""  # Return empty content for HTMX
 
-        return render_template(
-            "search.html",
-            number=number,
-            include="[]",
-            exclude="[]",
-            highlight="[]",
-            n_results=-1,
-        )
+        # Redirect to data navigation for direct access
+        return redirect(url_for("data_navigation", project_id=project_id))
 
     session["highlight"] = must_terms + must_phrases
 
@@ -250,23 +291,15 @@ def search(project_id: int) -> ...:
         queue_id = None
 
     # Check if this is an HTMX request for search results only
-    if request.headers.get('HX-Request'):
+    if request.headers.get("HX-Request"):
         return render_template(
             "components/search-results.html",
             n_results=len(data),
             queue_id=queue_id,
         )
 
-    return render_template(
-        "search.html",
-        results=data,
-        n_results=len(data),
-        include=include,
-        exclude=exclude,
-        number=number,
-        highlight=highlight,
-        queue_id=queue_id,
-    )
+    # Redirect to data navigation for direct access
+    return redirect(url_for("data_navigation", project_id=project_id))
 
 
 # endregion
@@ -286,18 +319,24 @@ def queue(project_id: int, queue_id: str | None = None) -> ...:
 
     # If a we have a queue_id load that queue
     if queue_id is not None:
-        queue = get_queue(queue_id, project_id)
-        datasets = {
-            dataset.id: dataset.name
-            for dataset in get_datasets(project_id=project_id, non_empty=True)
-        }
-        datasets = datasets if len(datasets) > 1 else None
-        return render_template(
-            "queue.html",
-            queue=queue,
-            queue_id=queue_id,
-            datasets=datasets,
-        )
+        try:
+            queue = get_queue(queue_id, project_id)
+            datasets = {
+                dataset.id: dataset.name
+                for dataset in get_datasets(project_id=project_id, non_empty=True)
+            }
+            datasets = datasets if len(datasets) > 1 else None
+            return render_template(
+                "queue.html",
+                queue=queue,
+                queue_id=queue_id,
+                datasets=datasets,
+            )
+        except FileNotFoundError:
+            flash(_("Queue not found or has been deleted"), category="warning")
+            return redirect(
+                url_for("data_navigation", project_id=project_id, section="queue-management")
+            )
 
     # Check if we have a rquest
     type = request.form.get("type", "")
@@ -323,13 +362,11 @@ def queue(project_id: int, queue_id: str | None = None) -> ...:
     if len(queue) > 0:
         extra_data: dict = {"Randomly generated": True}
         queue_id = store_queue(queue, project_id, **extra_data)
-        print(url_for("queue", project_id=project_id, queue_id=queue_id))
-        return redirect(url_for("queue", project_id=project_id, queue_id=queue_id))
-    # If not render blank page
+        # Redirect to the first entry in the queue
+        return redirect(url_for("entry", project_id=project_id, queue_id=queue_id, queue_pos=1))
+    # If not redirect to data navigation
     else:
-        return render_template(
-            "queue.html", number=get_def_nentries(), queues=get_all_queues(project_id)
-        )
+        return redirect(url_for("data_navigation", project_id=project_id))
 
 
 # endregion
@@ -342,8 +379,8 @@ def queue(project_id: int, queue_id: str | None = None) -> ...:
 @app.route("/<int:project_id>/data-navigation", methods=["GET"])
 def data_navigation(project_id: int) -> ...:
     """Data navigation dashboard consolidating entry navigation, search, and queue management"""
-    # Check project_id
-    res = update_session_project(project_id)
+    # Check project_id and require data
+    res = update_session_project(project_id, require_data=True)
     if res is not None:
         return res
 
@@ -372,12 +409,16 @@ def data_navigation(project_id: int) -> ...:
         # If stats calculation fails, provide empty stats
         stats = None
 
+    # Get section parameter for directing to specific component
+    section = request.args.get("section", "entry-navigation")  # Default to entry navigation
+
     return render_template(
         "data-navigation.html",
         datasets=datasets,
         queues=queues,
         number=number,
         stats=stats,
+        active_section=section,
     )
 
 
@@ -390,7 +431,12 @@ def data_navigation_component(project_id: int, component_name: str) -> ...:
         return res
 
     # Validate component name
-    valid_components = ["entry-navigation", "text-search", "random-queue", "queue-management"]
+    valid_components = [
+        "entry-navigation",
+        "text-search",
+        "random-queue",
+        "queue-management",
+    ]
     if component_name not in valid_components:
         return "Invalid component", 404
 
@@ -416,6 +462,133 @@ def data_navigation_component(project_id: int, component_name: str) -> ...:
     return render_template(f"components/{component_name}.html", **context)
 
 
+@app.route("/<int:project_id>/data-navigation/queue/<queue_id>/delete", methods=["DELETE"])
+def delete_queue_route(project_id: int, queue_id: str) -> ...:
+    """Delete a queue"""
+    # Check project_id
+    res = update_session_project(project_id)
+    if res is not None:
+        return res
+
+    # Delete the queue
+    success = delete_queue(queue_id, project_id)
+
+    if success:
+        return "", 200
+    else:
+        return "", 404
+
+
+@app.route("/<int:project_id>/create-queue", methods=["GET", "POST"])
+def create_queue(project_id: int) -> ...:
+    """Create a queue manually from a list of entry IDs"""
+    # Check project_id
+    res = update_session_project(project_id)
+    if res is not None:
+        return res
+
+    # Get datasets
+    datasets = list(get_datasets(project_id))
+
+    if request.method == "GET":
+        return render_template("create-queue.html", project_id=project_id, datasets=datasets)
+
+    # Handle POST request
+    entry_ids_text = request.form.get("entry_ids", "").strip()
+    highlight_terms = request.form.get("highlight_terms", "").strip()
+
+    if not entry_ids_text:
+        flash(_("Please enter at least one entry ID"), "error")
+        return render_template("create-queue.html", project_id=project_id, datasets=datasets)
+
+    # Parse entry IDs
+    lines = [line.strip() for line in entry_ids_text.split("\n") if line.strip()]
+    queue_entries = []
+    errors = []
+
+    # Create dataset lookup
+    dataset_by_name = {dataset.name: dataset for dataset in datasets}
+
+    for line_num, line in enumerate(lines, 1):
+        if len(datasets) == 1:
+            # Single dataset: just entry ID
+            try:
+                entry_id = line.strip()
+                if entry_id:
+                    queue_entries.append((datasets[0].id, entry_id))
+            except Exception:
+                errors.append(
+                    _("Line {line_num}: Invalid entry ID '{line}'").format(
+                        line_num=line_num, line=line
+                    )
+                )
+        else:
+            # Multiple datasets: entry_id,dataset_name (with CSV parsing for quotes)
+            try:
+                # Use pandas to parse the line as CSV (handles quotes properly)
+                csv_io = StringIO(line)
+                df = pd.read_csv(csv_io, header=None, quoting=1)  # quoting=1 = QUOTE_ALL
+
+                if df.shape[1] != 2:
+                    errors.append(
+                        _(
+                            "Line {line_num}: Expected format 'entry_id,dataset_name', got '{line}'"
+                        ).format(line_num=line_num, line=line)
+                    )
+                    continue
+
+                entry_id = str(df.iloc[0, 0]).strip()
+                dataset_name = str(df.iloc[0, 1]).strip()
+
+                if dataset_name not in dataset_by_name:
+                    errors.append(
+                        _("Line {line_num}: Unknown dataset '{dataset_name}'").format(
+                            line_num=line_num, dataset_name=dataset_name
+                        )
+                    )
+                    continue
+
+                if entry_id:
+                    queue_entries.append((dataset_by_name[dataset_name].id, entry_id))
+
+            except Exception:
+                errors.append(
+                    _(
+                        "Line {line_num}: Invalid format '{line}'. Use 'entry_id,dataset_name'"
+                        " or 'entry_id,\"dataset name with spaces\"'"
+                    ).format(line_num=line_num, line=line)
+                )
+                continue
+
+    if errors:
+        for error in errors:
+            flash(error, "error")
+        return render_template("create-queue.html", project_id=project_id, datasets=datasets)
+
+    if not queue_entries:
+        flash(_("No valid entries found"), "error")
+        return render_template("create-queue.html", project_id=project_id, datasets=datasets)
+
+    # Parse highlight terms
+    highlights = None
+    if highlight_terms:
+        highlights = [term.strip() for term in highlight_terms.split(",") if term.strip()]
+
+    # Store the queue
+    try:
+        store_queue(queue_entries, project_id, highlight=highlights)
+        flash(
+            _("Queue created successfully with {count} entries").format(count=len(queue_entries)),
+            "success",
+        )
+        return redirect(
+            url_for("data_navigation", project_id=project_id) + "?section=queue-management"
+        )
+    except Exception as e:
+        flash(_("Failed to create queue: {error}").format(error=str(e)), "error")
+        return render_template("create-queue.html", project_id=project_id, datasets=datasets)
+
+
 # endregion
 
 
@@ -439,8 +612,14 @@ def create_project() -> ...:
     """Create new project"""
     project_name = request.form.get("name")
     if project_name:
-        new_project(project_name, session["user_id"])
+        project = new_project(project_name, session["user_id"])
+
+        # Backup any existing queue folder for this project ID
+        backup_old_queue_folder(project.id)
+
         flash(_("Project created successfully"), "success")
+        # Redirect to upload data page with new project selected
+        return redirect(url_for("upload_data", project_id=project.id))
     return redirect(url_for("projects"))
 
 

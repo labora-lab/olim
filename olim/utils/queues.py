@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
-from flask import flash, session
+from flask import session
 from flask_babel import _
 
 from ..settings import QUEUES_PATH
@@ -78,8 +78,41 @@ def get_queue(queue_id: str, project_id) -> list[tuple[int, str]]:
     with open(queue_file) as f:
         queue = json.load(f)
     if queue["highlight"] is not None:
-        session["highlight"] = queue["highlight"]
+        # Merge queue highlights with existing session highlights
+        existing_highlights = session.get("highlight", [])
+        queue_highlights = queue["highlight"]
+
+        # Only update if queue highlights are different from current session
+        # This prevents re-adding the same highlights when navigating within a queue
+        if set(queue_highlights) != set(existing_highlights):
+            # Combine highlights, preserving order and avoiding duplicates
+            merged_highlights = list(existing_highlights)
+            for highlight in queue_highlights:
+                if highlight not in merged_highlights:
+                    merged_highlights.append(highlight)
+
+            session["highlight"] = merged_highlights
     return queue["queue"]
+
+
+def delete_queue(queue_id: str, project_id: int) -> bool:
+    """Delete a queue file.
+
+    Args:
+        queue_id (str): Hash of the queue to delete
+        project_id (int): Project ID
+
+    Returns:
+        bool: True if deleted successfully, False otherwise
+    """
+    try:
+        queue_file = get_queue_path(queue_id, project_id)
+        if queue_file.exists():
+            queue_file.unlink()
+            return True
+        return False
+    except Exception:
+        return False
 
 
 def get_all_queues(project_id) -> list[dict]:
@@ -91,10 +124,9 @@ def get_all_queues(project_id) -> list[dict]:
                 with open(queue_file) as f:
                     queue = json.load(f)
             except Exception:
-                flash(
-                    _("Failed to read queue file {queue_file}.").format(queue_file=queue_file),
-                    category="error",
-                )
+                # Silently skip corrupted queue files to avoid duplicate flash messages
+                # This prevents double-flashing when redirecting from invalid queue IDs
+                pass
                 queue = None
             if queue is not None:
                 queue["frontend_text"] = _("Entries: {queue_length}").format(

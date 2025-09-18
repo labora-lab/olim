@@ -1,10 +1,12 @@
 <!-- Sidebar com controle de colapso -->
-<aside id="sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen transition-all duration-300" aria-label="Sidebar">
+<aside id="sidebar"
+    class="fixed top-0 left-0 z-40 w-64 h-screen transition-all duration-300 -translate-x-full sm:translate-x-0"
+    aria-label="Sidebar">
     <div class="h-full px-0 py-4 bg-gray-800 flex flex-col">
         <div class="px-3">
             <!-- Logo/Brand -->
             <div class="flex items-end mb-2 p-2">
-                <img src="{{ url_for('static', filename='classification.png') }}" alt="OLIM Logo" class="w-8 h-8 mr-3">
+                <img src="{{ url_for('static', filename='olim.svg') }}" alt="OLIM Logo" class="w-10 h-8 mr-3">
                 <span class="text-xl font-semibold text-white sidebar-item-text">OLIM</span>
             </div>
 
@@ -24,7 +26,7 @@
                         class="hidden absolute top-full left-0 right-0 mt-1 bg-gray-700 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
                         {% for project in projects %}
                         <a href="/{{ project.id }}"
-                            class="block px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white">
+                            class="block px-3 py-2 text-sm {% if project.id == project_id %}text-white bg-gray-600{% else %}text-gray-300{% endif %} hover:bg-gray-600 hover:text-white">
                             {{ project.name }}
                         </a>
                         {% endfor %}
@@ -52,30 +54,57 @@
             <ul class="space-y-1 font-medium">
                 {% if has_permission('labels') %}
                 <li class="border-t border-gray-600 pt-2 mt-2">
-                    <a href="{{ url_for('labels', project_id = project_id) }}"
-                        class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
-                        <i class="bi bi-grid text-gray-400 group-hover:text-white sidebar-item-icon"></i>
-                        <span class="ms-3 sidebar-item-text">{{ _('Dashboard') }}</span>
+                    <a href="{{ url_for('labels', project_id = project_id) }}" class="flex items-center p-2 rounded-lg group
+                        {% if request.endpoint == 'labels' %}
+                            bg-cyan-600 text-white
+                        {% else %}
+                            text-gray-300 hover:bg-gray-700
+                        {% endif %}">
+                        <i class="bi bi-tags sidebar-item-icon
+                        {% if request.endpoint == 'labels' %}
+                            text-white
+                        {% else %}
+                            text-gray-400 group-hover:text-white
+                        {% endif %}"></i>
+                        <span class="ms-3 sidebar-item-text">{{ _('Labels') }}</span>
                     </a>
                 </li>
                 {% endif %}
 
                 {% if has_permission('data_navigation') %}
                 <li>
-                    <a href="{{ url_for('data_navigation', project_id = project_id) }}"
-                        class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
-                        <i class="bi bi-compass text-gray-400 group-hover:text-white sidebar-item-icon"></i>
+                    <a href="{{ url_for('data_navigation', project_id = project_id) }}" class="flex items-center p-2 rounded-lg group
+                        {% if request.endpoint == 'data_navigation' %}
+                            bg-cyan-600 text-white
+                        {% else %}
+                            text-gray-300 hover:bg-gray-700
+                        {% endif %}">
+                        <i class="bi bi-compass sidebar-item-icon
+                        {% if request.endpoint == 'data_navigation' %}
+                            text-white
+                        {% else %}
+                            text-gray-400 group-hover:text-white
+                        {% endif %}"></i>
                         <span class="ms-3 sidebar-item-text">{{ _('Data Navigation') }}</span>
                     </a>
                 </li>
                 {% endif %}
 
-                
+
                 {% if have_hidden() and has_permission('hidden') %}
                 <li>
-                    <a href="{{ url_for('hidden', project_id = project_id) }}"
-                        class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
-                        <i class="bi bi-eye-slash text-gray-400 group-hover:text-white sidebar-item-icon"></i>
+                    <a href="{{ url_for('hidden', project_id = project_id) }}" class="flex items-center p-2 rounded-lg group
+                        {% if request.endpoint == 'hidden' %}
+                            bg-cyan-600 text-white
+                        {% else %}
+                            text-gray-300 hover:bg-gray-700
+                        {% endif %}">
+                        <i class="bi bi-eye-slash sidebar-item-icon
+                        {% if request.endpoint == 'hidden' %}
+                            text-white
+                        {% else %}
+                            text-gray-400 group-hover:text-white
+                        {% endif %}"></i>
                         <span class="ms-3 sidebar-item-text">{{ _('Hidden texts') }}</span>
                     </a>
                 </li>
@@ -96,9 +125,13 @@
             <!-- Contador de tasks centralizado quando colapsado -->
             <div class="task-counter-collapsed hidden justify-center items-center py-4">
                 {% set running_tasks = tasks|selectattr('status', 'equalto', 'STARTED')|list %}
-                <div class="relative" title="{{ _('Jobs') }} ({{ running_tasks|length }} {{ _('running') }})">
+                {% set completed_tasks = tasks|selectattr('status', 'equalto', 'SUCCESS')|list %}
+                {% set failed_tasks = tasks|selectattr('status', 'equalto', 'FAILURE')|list %}
+                {% set pending_tasks = tasks|selectattr('status', 'equalto', 'PENDING')|list %}
+                <div class="relative"
+                    title="{{ _('Jobs') }}: {{ running_tasks|length }} {{ _('running') }}, {{ completed_tasks|length }} {{ _('completed') }}, {{ (failed_tasks|length + pending_tasks|length) }} {{ _('pending/failed') }}">
                     <button onclick="expandSidebar()"
-                        class="w-12 h-12 {% if running_tasks|length > 0 %}bg-blue-600 hover:bg-blue-700{% else %}bg-gray-700 hover:bg-gray-600{% endif %} rounded-lg flex items-center justify-center text-white transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                        class="w-12 h-12 rounded-lg flex items-center justify-center text-white transition-colors shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
                         <i class="bi bi-clipboard-check text-lg"></i>
                     </button>
                     {% if running_tasks|length > 0 %}
@@ -129,7 +162,7 @@
             <!-- Settings Dropdown -->
             <div class="relative">
                 <button id="settings-dropdown-btn"
-                    class="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center text-gray-300 hover:bg-gray-600 hover:text-white transition-colors">
+                    class="w-10 h-10 {% if request.endpoint in ['users', 'user_settings', 'projects', 'upload_data'] %}bg-cyan-600 text-white{% else %}bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white{% endif %} rounded-lg flex items-center justify-center transition-colors">
                     <i class="bi bi-gear text-lg"></i>
                 </button>
                 <div id="settings-dropdown"
