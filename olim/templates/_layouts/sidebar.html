@@ -60,35 +60,16 @@
                 </li>
                 {% endif %}
 
-                <!-- {% if has_permission('entry') %}
+                {% if has_permission('data_navigation') %}
                 <li>
-                    <a href="{{ url_for('entry', project_id = project_id) }}"
+                    <a href="{{ url_for('data_navigation', project_id = project_id) }}"
                         class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
-                        <i class="bi bi-pencil-square text-gray-400 group-hover:text-white sidebar-item-icon"></i>
-                        <span class="ms-3 sidebar-item-text">{{ _('Annotation') }}</span>
-                    </a>
-                </li>
-                {% endif %} -->
-
-                {% if has_permission('search') %}
-                <li>
-                    <a href="{{ url_for('search', project_id = project_id) }}"
-                        class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
-                        <i class="bi bi-search text-gray-400 group-hover:text-white sidebar-item-icon"></i>
-                        <span class="ms-3 sidebar-item-text">{{ _('Search') }}</span>
+                        <i class="bi bi-compass text-gray-400 group-hover:text-white sidebar-item-icon"></i>
+                        <span class="ms-3 sidebar-item-text">{{ _('Data Navigation') }}</span>
                     </a>
                 </li>
                 {% endif %}
 
-                {% if has_permission('queue') %}
-                <li>
-                    <a href="{{ url_for('queue', project_id = project_id) }}"
-                        class="flex items-center p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
-                        <i class="bi bi-list-task text-gray-400 group-hover:text-white sidebar-item-icon"></i>
-                        <span class="ms-3 sidebar-item-text">{{ _('Queue') }}</span>
-                    </a>
-                </li>
-                {% endif %}
                 
                 {% if have_hidden() and has_permission('hidden') %}
                 <li>

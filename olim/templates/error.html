@@ -1,18 +1,9 @@
 {% extends "base.html" %}
 
-{#
-Tailwind CSS Safelist - Force compilation of all error color classes:
-bg-red-50 bg-red-100 bg-red-600 bg-red-700 border-red-500 text-red-600 text-red-900 focus:ring-red-300 focus:ring-red-500 focus:border-red-500 hover:bg-red-700
-bg-blue-50 bg-blue-100 bg-blue-600 bg-blue-700 border-blue-500 text-blue-600 text-blue-900 focus:ring-blue-300 focus:ring-blue-500 focus:border-blue-500 hover:bg-blue-700
-bg-yellow-50 bg-yellow-100 bg-yellow-600 bg-yellow-700 border-yellow-500 text-yellow-600 text-yellow-900 focus:ring-yellow-300 focus:ring-yellow-500 focus:border-yellow-500 hover:bg-yellow-700
-bg-amber-50 bg-amber-100 bg-amber-600 bg-amber-700 border-amber-500 text-amber-600 text-amber-900 focus:ring-amber-300 focus:ring-amber-500 focus:border-amber-500 hover:bg-amber-700
-bg-orange-50 bg-orange-100 bg-orange-600 bg-orange-700 border-orange-500 text-orange-600 text-orange-900 focus:ring-orange-300 focus:ring-orange-500 focus:border-orange-500 hover:bg-orange-700
-bg-green-50 bg-green-100 bg-green-600 bg-green-700 border-green-500 text-green-600 text-green-900 focus:ring-green-300 focus:ring-green-500 focus:border-green-500 hover:bg-green-700
-#}
-
 {% block title %}{{ error_code }} - {{ error_title }}{% endblock %}
 
 {% block sidebar %}{% endblock %}
+{% set suppress_sidebar = true %}
 {% block mobile_backdrop %}{% endblock %}
 {% block main_wrapper_classes %}{% endblock %}
 

@@ -190,6 +190,10 @@ def search(project_id: int) -> ...:
         and len(not_must_terms) == 0
         and len(not_must_phrases) == 0
     ):
+        # Check if this is an HTMX request for search results only
+        if request.headers.get('HX-Request'):
+            return ""  # Return empty content for HTMX
+
         return render_template(
             "search.html",
             number=number,
@@ -244,6 +248,14 @@ def search(project_id: int) -> ...:
         )
     else:
         queue_id = None
+
+    # Check if this is an HTMX request for search results only
+    if request.headers.get('HX-Request'):
+        return render_template(
+            "components/search-results.html",
+            n_results=len(data),
+            queue_id=queue_id,
+        )
 
     return render_template(
         "search.html",
@@ -318,6 +330,90 @@ def queue(project_id: int, queue_id: str | None = None) -> ...:
         return render_template(
             "queue.html", number=get_def_nentries(), queues=get_all_queues(project_id)
         )
+
+
+# endregion
+
+
+# region Data Navigation route
+# --------------------------------
+
+
+@app.route("/<int:project_id>/data-navigation", methods=["GET"])
+def data_navigation(project_id: int) -> ...:
+    """Data navigation dashboard consolidating entry navigation, search, and queue management"""
+    # Check project_id
+    res = update_session_project(project_id)
+    if res is not None:
+        return res
+
+    # Get datasets
+    datasets = list(get_datasets(project_id))
+
+    # Get queues
+    queues = get_all_queues(project_id)
+
+    # Get number of entries from session or default
+    number = session.get("number_of_entries", get_def_nentries())
+
+    # Calculate basic stats
+    stats = {}
+    try:
+        project = get_project(project_id)
+        if project:
+            total_entries = sum(len(dataset.entries) for dataset in project.datasets)
+            labeled_entries = sum(len(dataset.labels) for dataset in project.datasets)
+            stats = {
+                "total_entries": total_entries,
+                "labeled_entries": labeled_entries,
+                "active_queues": len(queues) if queues else 0,
+            }
+    except Exception:
+        # If stats calculation fails, provide empty stats
+        stats = None
+
+    return render_template(
+        "data-navigation.html",
+        datasets=datasets,
+        queues=queues,
+        number=number,
+        stats=stats,
+    )
+
+
+@app.route("/<int:project_id>/data-navigation/component/<component_name>", methods=["GET"])
+def data_navigation_component(project_id: int, component_name: str) -> ...:
+    """Load individual data navigation components via HTMX"""
+    # Check project_id
+    res = update_session_project(project_id)
+    if res is not None:
+        return res
+
+    # Validate component name
+    valid_components = ["entry-navigation", "text-search", "random-queue", "queue-management"]
+    if component_name not in valid_components:
+        return "Invalid component", 404
+
+    # Get required data based on component
+    context = {}
+
+    # Always include project_id in context
+    context["project_id"] = project_id
+
+    if component_name in ["entry-navigation", "text-search", "random-queue"]:
+        context["datasets"] = list(get_datasets(project_id))
+
+    if component_name == "random-queue":
+        context["number"] = session.get("number_of_entries", get_def_nentries())
+
+    if component_name == "queue-management":
+        try:
+            context["queues"] = get_all_queues(project_id)
+        except Exception as e:
+            print(f"Error getting queues: {e}")
+            context["queues"] = []
+
+    return render_template(f"components/{component_name}.html", **context)
 
 
 # endregion

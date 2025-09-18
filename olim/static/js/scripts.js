@@ -42,7 +42,9 @@ function run_command(cmd, args) {
         .then(response => response.json())
         .then((data) => {
             if (data.type == 'OK') {
-                //M.toast({ html: data.text, displayLength: 2000, classes: 'teal darken-3' });
+                if (data.text && data.text.trim()) {
+                    showToast(data.text, 'success', 2000);
+                }
                 if (data.callback) {
                     eval(data.callback);
                 }
@@ -54,7 +56,7 @@ function run_command(cmd, args) {
                 }
             }
             else {
-                M.toast({ html: "ERROR: " + data.text, displayLength: 20000, classes: 'red darken-4' });
+                showToast("ERROR: " + data.text, 'error', 20000);
                 if (data.fail_callback) {
                     eval(data.fail_callback);
                 }
@@ -987,3 +989,471 @@ function closeDeleteModal() {
     }
     deleteUrl = '';
 }
+
+// =============================================================================
+// BASE LAYOUT FUNCTIONALITY (moved from scripts.html)
+// =============================================================================
+
+// Sidebar functionality
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const collapseBtn = document.getElementById('collapse-btn');
+    const collapseIcon = collapseBtn.querySelector('.collapse-icon');
+    const mainContent = document.getElementById('main-content');
+
+    sidebar.classList.toggle('w-64');
+    sidebar.classList.toggle('w-16');
+    sidebar.classList.toggle('sidebar-collapsed');
+
+    // Ajusta a margem do conteúdo principal
+    if (sidebar.classList.contains('sidebar-collapsed')) {
+        mainContent.classList.remove('sm:ml-64');
+        mainContent.classList.add('sm:ml-16');
+    } else {
+        mainContent.classList.remove('sm:ml-16');
+        mainContent.classList.add('sm:ml-64');
+    }
+
+    // Alterna o ícone
+    if (sidebar.classList.contains('sidebar-collapsed')) {
+        collapseIcon.classList.remove('bi-chevron-bar-left');
+        collapseIcon.classList.add('bi-chevron-bar-right');
+    } else {
+        collapseIcon.classList.remove('bi-chevron-bar-right');
+        collapseIcon.classList.add('bi-chevron-bar-left');
+    }
+
+    // Salva o estado no localStorage
+    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('sidebar-collapsed'));
+}
+
+function expandSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const collapseBtn = document.getElementById('collapse-btn');
+    const collapseIcon = collapseBtn?.querySelector('.collapse-icon');
+    const mainContent = document.getElementById('main-content');
+
+    sidebar.classList.remove('sidebar-collapsed', 'w-16');
+    sidebar.classList.add('w-64');
+
+    // Ajusta a margem do conteúdo principal
+    if (mainContent) {
+        mainContent.classList.remove('sm:ml-16');
+        mainContent.classList.add('sm:ml-64');
+    }
+
+    if (collapseIcon) {
+        collapseIcon.classList.remove('bi-chevron-bar-right');
+        collapseIcon.classList.add('bi-chevron-bar-left');
+    }
+
+    localStorage.setItem('sidebarCollapsed', 'false');
+}
+
+// Function to update task counter
+function updateTaskCounter() {
+    const taskList = document.getElementById('task-list');
+    const taskCounterButton = document.querySelector('.task-counter-collapsed button');
+    const taskCounterContainer = document.querySelector('.task-counter-collapsed .relative');
+    const sidebar = document.getElementById('sidebar');
+
+    if (taskList && taskCounterButton && taskCounterContainer) {
+        const runningCount = parseInt(taskList.querySelector('[data-running-count]')?.getAttribute('data-running-count') || '0');
+        const isCollapsed = sidebar.classList.contains('sidebar-collapsed');
+
+        // Remove existing badge
+        const existingBadge = taskCounterContainer.querySelector('.absolute');
+        if (existingBadge) {
+            existingBadge.remove();
+        }
+
+        // Update colors and badge based on running jobs count
+        if (runningCount > 0) {
+            // With running jobs - blue background and show badge
+            taskCounterButton.className = taskCounterButton.className
+                .replace(/bg-gray-\d+/g, 'bg-blue-600')
+                .replace(/hover:bg-gray-\d+/g, 'hover:bg-blue-700');
+
+            // Create new badge
+            const badge = document.createElement('div');
+            badge.className = 'absolute -top-2 -right-2 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 border-2 border-gray-800 rounded-full';
+            badge.textContent = runningCount;
+            taskCounterContainer.appendChild(badge);
+        } else {
+            // No running jobs - gray background and no badge
+            taskCounterButton.className = taskCounterButton.className
+                .replace(/bg-blue-\d+/g, 'bg-gray-700')
+                .replace(/hover:bg-blue-\d+/g, 'hover:bg-gray-600');
+        }
+    }
+}
+
+// Toast notification system (replaces M.toast)
+function showToast(message, type = 'success', duration = 3000) {
+    // Get or create toast container
+    let container = document.querySelector('.fixed.top-20');
+    if (!container) {
+        container = document.createElement('div');
+        container.className = 'fixed top-20 sm:top-4 right-4 z-50 w-96 space-y-2';
+        document.body.appendChild(container);
+    }
+
+    // Create toast element
+    const toast = document.createElement('div');
+    const toastId = 'toast-' + Date.now();
+    toast.id = toastId;
+
+    const styles = {
+        success: {
+            classes: 'text-green-800 border-green-300 bg-green-50',
+            icon: 'bi-check-circle-fill',
+            buttonClasses: 'bg-green-50 text-green-500 hover:bg-green-200 focus:ring-green-400'
+        },
+        error: {
+            classes: 'text-red-800 border-red-300 bg-red-50',
+            icon: 'bi-exclamation-circle-fill',
+            buttonClasses: 'bg-red-50 text-red-500 hover:bg-red-200 focus:ring-red-400'
+        },
+        warning: {
+            classes: 'text-yellow-800 border-yellow-300 bg-yellow-50',
+            icon: 'bi-exclamation-triangle-fill',
+            buttonClasses: 'bg-yellow-50 text-yellow-500 hover:bg-yellow-200 focus:ring-yellow-400'
+        },
+        info: {
+            classes: 'text-blue-800 border-blue-300 bg-blue-50',
+            icon: 'bi-info-circle-fill',
+            buttonClasses: 'bg-blue-50 text-blue-500 hover:bg-blue-200 focus:ring-blue-400'
+        }
+    };
+
+    const style = styles[type] || styles.success;
+
+    toast.className = `flex items-center p-4 mb-4 text-sm border rounded-lg ${style.classes} opacity-0 transition-opacity duration-300`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <i class="bi ${style.icon} flex-shrink-0 inline w-4 h-4 me-3"></i>
+        <div class="flex-1">
+            <p class="mb-0">${message}</p>
+        </div>
+        <button type="button" onclick="
+            this.parentElement.style.opacity = '0';
+            this.parentElement.style.transition = 'opacity 0.3s ease-out';
+            setTimeout(() => this.parentElement.remove(), 300);
+        "
+            class="ms-auto -mx-1.5 -my-1.5 rounded-lg focus:ring-2 p-1.5 inline-flex items-center justify-center h-8 w-8 ${style.buttonClasses}"
+            aria-label="Close">
+            <span class="sr-only">Close</span>
+            <i class="bi bi-x text-lg"></i>
+        </button>
+    `;
+
+    container.appendChild(toast);
+
+    // Fade in
+    setTimeout(() => {
+        toast.style.opacity = '1';
+    }, 10);
+
+    // Auto remove after duration
+    if (duration > 0) {
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, duration);
+    }
+}
+
+// LaTeX rendering with KaTeX
+function loadKaTeXIfNeeded() {
+    const content = document.querySelectorAll('.latex-content');
+    let hasLatex = false;
+
+    content.forEach(el => {
+        if (el.textContent.includes('$$') || el.textContent.includes('\\(')) {
+            hasLatex = true;
+        }
+    });
+
+    if (hasLatex) {
+        // Load KaTeX CSS
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css';
+        document.head.appendChild(link);
+
+        // Load KaTeX JS
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js';
+        script.onload = () => renderLatex();
+        document.head.appendChild(script);
+    }
+}
+
+function renderLatex() {
+    document.querySelectorAll('.latex-content').forEach(el => {
+        let html = el.textContent;
+
+        // Replace $$ display math
+        html = html.replace(/\$\$(.*?)\$\$/g, (match, formula) => {
+            try {
+                return katex.renderToString(formula, {displayMode: true});
+            } catch (e) {
+                return match; // fallback to original text
+            }
+        });
+
+        // Replace \( \) inline math
+        html = html.replace(/\\\((.*?)\\\)/g, (match, formula) => {
+            try {
+                return katex.renderToString(formula, {displayMode: false});
+            } catch (e) {
+                return match; // fallback to original text
+            }
+        });
+
+        el.innerHTML = html;
+    });
+}
+
+// Error modal functions (without translations - those stay in template)
+function showErrorModalFromData(element) {
+    const taskName = element.getAttribute('data-task-name');
+    const errorText = element.getAttribute('data-error-text');
+    showErrorModal(taskName, errorText);
+}
+
+function showErrorModal(taskName, errorText) {
+    // Parse error text to separate user message from technical details
+    const { userMessage, technicalDetails } = parseErrorMessage(errorText);
+
+    // Set task name
+    document.getElementById('modalTaskName').textContent = taskName;
+
+    // Set user-friendly error message
+    document.getElementById('modalErrorMessage').textContent = userMessage;
+
+    // Handle technical details
+    const technicalSection = document.getElementById('technicalDetailsSection');
+    const technicalContent = document.getElementById('modalTechnicalDetails');
+
+    if (technicalDetails && technicalDetails.trim()) {
+        technicalContent.textContent = technicalDetails;
+        technicalSection.classList.remove('hidden');
+    } else {
+        technicalSection.classList.add('hidden');
+    }
+
+    // Reset technical details to collapsed state
+    document.getElementById('technicalDetailsContent').classList.add('hidden');
+    document.getElementById('technicalChevron').classList.remove('rotate-180');
+    if (typeof updateToggleButtonText === 'function') {
+        updateToggleButtonText(false);
+    }
+
+    // Show modal
+    document.getElementById('errorModal').classList.remove('hidden');
+
+    // Prevent body scroll
+    document.body.style.overflow = 'hidden';
+}
+
+function closeErrorModal() {
+    document.getElementById('errorModal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+function toggleTechnicalDetails() {
+    const content = document.getElementById('technicalDetailsContent');
+    const chevron = document.getElementById('technicalChevron');
+
+    if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        chevron.classList.add('rotate-180');
+        if (typeof updateToggleButtonText === 'function') {
+            updateToggleButtonText(true);
+        }
+    } else {
+        content.classList.add('hidden');
+        chevron.classList.remove('rotate-180');
+        if (typeof updateToggleButtonText === 'function') {
+            updateToggleButtonText(false);
+        }
+    }
+}
+
+function parseErrorMessage(errorText) {
+    const translations = window.errorTranslations || {};
+
+    if (!errorText || !errorText.trim()) {
+        return { userMessage: translations.unknownError || 'Unknown error occurred', technicalDetails: '' };
+    }
+
+    // Check if it contains traceback/technical information
+    const hasTraceback = errorText.includes('Traceback') ||
+        errorText.includes('File "') ||
+        errorText.includes('.py:') ||
+        errorText.includes('  File ') ||
+        errorText.includes('line ');
+
+    if (!hasTraceback) {
+        // It's already a clean user message
+        return { userMessage: errorText.trim(), technicalDetails: '' };
+    }
+
+    // Try to extract user message from the end of the traceback
+    const lines = errorText.split('\n');
+    let userMessage = translations.processingFailed || 'Processing failed';
+
+    // Look for the final exception message (usually after "Exception:" or similar)
+    for (let i = lines.length - 1; i >= 0; i--) {
+        const line = lines[i].trim();
+        if (line && !line.startsWith(' ') && line.includes(':')) {
+            const parts = line.split(':', 2);
+            if (parts.length === 2) {
+                const message = parts[1].trim();
+                // Check if it looks like a user message (not technical)
+                if (message && !message.includes('File "') && !message.includes('.py') && !message.includes('line ')) {
+                    userMessage = message;
+                    break;
+                }
+            }
+        }
+    }
+
+    return {
+        userMessage: userMessage,
+        technicalDetails: errorText
+    };
+}
+
+// Initialize base functionality when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Sidebar initialization
+    const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    const sidebar = document.getElementById('sidebar');
+    const collapseBtn = document.getElementById('collapse-btn');
+
+    if (sidebar && collapseBtn) {
+        const collapseIcon = collapseBtn.querySelector('.collapse-icon');
+
+        if (isCollapsed) {
+            const mainContent = document.getElementById('main-content');
+
+            // Remove preload class and apply full collapsed state
+            document.documentElement.classList.remove('sidebar-preload-collapsed');
+
+            // Disable transitions temporarily
+            sidebar.style.transition = 'none';
+            if (mainContent) {
+                mainContent.style.transition = 'none';
+            }
+
+            sidebar.classList.add('w-16', 'sidebar-collapsed');
+            sidebar.classList.remove('w-64');
+            collapseIcon.classList.remove('bi-chevron-bar-left');
+            collapseIcon.classList.add('bi-chevron-bar-right');
+
+            // Adjust main content margin
+            if (mainContent) {
+                mainContent.classList.remove('sm:ml-64');
+                mainContent.classList.add('sm:ml-16');
+            }
+
+            // Re-enable transitions after a small delay
+            setTimeout(() => {
+                sidebar.style.transition = '';
+                if (mainContent) {
+                    mainContent.style.transition = '';
+                }
+            }, 50);
+        } else {
+            // Remove preload class if not collapsed
+            document.documentElement.classList.remove('sidebar-preload-collapsed');
+        }
+
+        // Add event listener to collapse button
+        collapseBtn.addEventListener('click', toggleSidebar);
+    }
+
+    // Dropdown functionality
+    const projectDropdownBtn = document.getElementById('project-dropdown-btn');
+    const projectDropdown = document.getElementById('project-dropdown');
+
+    projectDropdownBtn?.addEventListener('click', () => {
+        projectDropdown.classList.toggle('hidden');
+    });
+
+    const settingsDropdownBtn = document.getElementById('settings-dropdown-btn');
+    const settingsDropdown = document.getElementById('settings-dropdown');
+
+    settingsDropdownBtn?.addEventListener('click', () => {
+        settingsDropdown.classList.toggle('hidden');
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', (event) => {
+        if (projectDropdownBtn && projectDropdown &&
+            !projectDropdownBtn.contains(event.target) &&
+            !projectDropdown.contains(event.target)) {
+            projectDropdown.classList.add('hidden');
+        }
+
+        if (settingsDropdownBtn && settingsDropdown &&
+            !settingsDropdownBtn.contains(event.target) &&
+            !settingsDropdown.contains(event.target)) {
+            settingsDropdown.classList.add('hidden');
+        }
+    });
+
+    // Auto close flash messages after 5 seconds
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('[role="alert"]');
+        alerts.forEach(alert => {
+            if (alert.style.display !== 'none') {
+                alert.style.opacity = '0';
+                alert.style.transition = 'opacity 0.3s ease-out';
+                setTimeout(() => alert.style.display = 'none', 300);
+            }
+        });
+    }, 5000);
+
+    // Initialize base window.init function
+    if (typeof window.init === 'undefined') {
+        window.init = function() {
+            loadKaTeXIfNeeded();
+            if (typeof showFlashMessages === 'function') {
+                showFlashMessages();
+            }
+        };
+    } else {
+        const originalInit = window.init;
+        window.init = function() {
+            originalInit();
+            loadKaTeXIfNeeded();
+            if (typeof showFlashMessages === 'function') {
+                showFlashMessages();
+            }
+        };
+    }
+
+    // Error modal event listeners
+    const errorModal = document.getElementById('errorModal');
+    if (errorModal) {
+        // Close modal when clicking outside
+        errorModal.addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeErrorModal();
+            }
+        });
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeErrorModal();
+            }
+        });
+    }
+});

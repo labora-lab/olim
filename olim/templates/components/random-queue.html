@@ -1,0 +1,44 @@
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="bi bi-shuffle text-purple-600 mr-2"></i>
+            {{ _('Random Queue') }}
+        </h3>
+        <p class="text-sm text-gray-600 mt-1">{{ _('Generate random selection of entries') }}</p>
+    </div>
+    <div class="p-6">
+        <form action="{{url_for('queue', project_id=project_id)}}" method="POST" class="space-y-4">
+            <input type="hidden" name="type" value="random">
+            <div>
+                <label for="random-number" class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="bi bi-hash mr-1"></i>
+                    {{ _('Number of Entries') }}
+                </label>
+                <input type="number" id="random-number" name="number" value="{{ number or 1000 }}" min="1" max="1000"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+            </div>
+
+            {% if datasets|length > 1 %}
+            <div>
+                <label for="random-dataset" class="block text-sm font-medium text-gray-700 mb-2">
+                    <i class="bi bi-database mr-1"></i>
+                    {{ _('Dataset') }}
+                </label>
+                <select id="random-dataset" name="dataset_id"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    <option value="">{{ _('All Datasets') }}</option>
+                    {% for dataset in datasets %}
+                    <option value="{{ dataset.id }}">{{ dataset.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <button type="submit"
+                    class="w-full px-4 py-2 text-white bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors">
+                <i class="bi bi-shuffle mr-2"></i>
+                {{ _('Generate Random Queue') }}
+            </button>
+        </form>
+    </div>
+</div>

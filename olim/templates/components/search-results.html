@@ -1,0 +1,38 @@
+{% if n_results is defined %}
+    {% if n_results > 0 %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-check-circle text-green-600 mr-2"></i>
+                {{ _('Search Results') }}
+            </h3>
+        </div>
+
+        <div class="p-6">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-full text-lg font-medium">
+                    <i class="bi bi-check-circle-fill mr-2"></i>
+                    {{ _('Found {number} results').format(number=n_results) }}
+                </div>
+            </div>
+
+            <div class="text-center">
+                <a href="{{url_for('queue', project_id=project_id, queue_id=queue_id)}}"
+                   class="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 transition-colors">
+                    <i class="bi bi-send mr-2"></i>
+                    {{ _('Open Queue') }}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% elif n_results == 0 %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-12 text-center">
+            <i class="bi bi-search text-4xl text-gray-400 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">{{ _('No results for the search') }}</h3>
+            <p class="text-gray-500">{{ _('Try adjusting your search terms or criteria.') }}</p>
+        </div>
+    </div>
+    {% endif %}
+{% endif %}

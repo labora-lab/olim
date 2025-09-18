@@ -134,6 +134,8 @@ PERMISSIONS = {
         "queue",
         "catch_queue",
         "search",
+        "data_navigation",
+        "data_navigation_component",
         "user_settings",
         "edit_password",
         "edit_language",

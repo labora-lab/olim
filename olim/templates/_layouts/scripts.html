@@ -1,306 +1,60 @@
 <script src="{{ url_for('static', filename='js/flowbite.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
 <script>
-    function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const collapseBtn = document.getElementById('collapse-btn');
-        const collapseIcon = collapseBtn.querySelector('.collapse-icon');
-        const mainContent = document.getElementById('main-content');
+    // Show flash messages as toasts (uses Jinja variables)
+    function showFlashMessages() {
+        // Show success messages
+        {% with success_messages = get_flashed_messages(category_filter=["success"]) %}
+        {% if success_messages %}
+        {% for message in success_messages %}
+        showToast({{ message|tojson }}, 'success', 5000);
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
 
-        sidebar.classList.toggle('w-64');
-        sidebar.classList.toggle('w-16');
-        sidebar.classList.toggle('sidebar-collapsed');
+        // Show warning messages
+        {% with warning_messages = get_flashed_messages(category_filter=["warning"]) %}
+        {% if warning_messages %}
+        {% for message in warning_messages %}
+        showToast({{ message|tojson }}, 'warning', 5000);
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
 
-        // Ajusta a margem do conteúdo principal
-        if (sidebar.classList.contains('sidebar-collapsed')) {
-            mainContent.classList.remove('sm:ml-64');
-            mainContent.classList.add('sm:ml-16');
-        } else {
-            mainContent.classList.remove('sm:ml-16');
-            mainContent.classList.add('sm:ml-64');
-        }
+        // Show error messages
+        {% with error_messages = get_flashed_messages(category_filter=["error"]) %}
+        {% if error_messages %}
+        {% for message in error_messages %}
+        showToast({{ message|tojson }}, 'error', 10000);
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
 
-        // Alterna o ícone
-        if (sidebar.classList.contains('sidebar-collapsed')) {
-            collapseIcon.classList.remove('bi-chevron-bar-left');
-            collapseIcon.classList.add('bi-chevron-bar-right');
-        } else {
-            collapseIcon.classList.remove('bi-chevron-bar-right');
-            collapseIcon.classList.add('bi-chevron-bar-left');
-        }
-
-        // Salva o estado no localStorage
-        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('sidebar-collapsed'));
+        // Show info messages
+        {% with info_messages = get_flashed_messages(category_filter=["info"]) %}
+        {% if info_messages %}
+        {% for message in info_messages %}
+        showToast({{ message|tojson }}, 'info', 5000);
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
     }
 
-    function expandSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const collapseBtn = document.getElementById('collapse-btn');
-        const collapseIcon = collapseBtn?.querySelector('.collapse-icon');
-        const mainContent = document.getElementById('main-content');
-
-        sidebar.classList.remove('sidebar-collapsed', 'w-16');
-        sidebar.classList.add('w-64');
-
-        // Ajusta a margem do conteúdo principal
-        if (mainContent) {
-            mainContent.classList.remove('sm:ml-16');
-            mainContent.classList.add('sm:ml-64');
-        }
-
-        if (collapseIcon) {
-            collapseIcon.classList.remove('bi-chevron-bar-right');
-            collapseIcon.classList.add('bi-chevron-bar-left');
-        }
-
-        localStorage.setItem('sidebarCollapsed', 'false');
-    }
-
-    // Check saved state on page load
-    document.addEventListener('DOMContentLoaded', () => {
-        const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-        const sidebar = document.getElementById('sidebar');
-        const collapseBtn = document.getElementById('collapse-btn');
-        const collapseIcon = collapseBtn.querySelector('.collapse-icon');
-
-        if (isCollapsed) {
-            const mainContent = document.getElementById('main-content');
-            
-            // Remove preload class and apply full collapsed state
-            document.documentElement.classList.remove('sidebar-preload-collapsed');
-            
-            // Disable transitions temporarily
-            sidebar.style.transition = 'none';
-            if (mainContent) {
-                mainContent.style.transition = 'none';
-            }
-            
-            sidebar.classList.add('w-16', 'sidebar-collapsed');
-            sidebar.classList.remove('w-64');
-            collapseIcon.classList.remove('bi-chevron-bar-left');
-            collapseIcon.classList.add('bi-chevron-bar-right');
-
-            // Adjust main content margin
-            if (mainContent) {
-                mainContent.classList.remove('sm:ml-64');
-                mainContent.classList.add('sm:ml-16');
-            }
-            
-            // Re-enable transitions after a small delay
-            setTimeout(() => {
-                sidebar.style.transition = '';
-                if (mainContent) {
-                    mainContent.style.transition = '';
-                }
-            }, 50);
-        } else {
-            // Remove preload class if not collapsed
-            document.documentElement.classList.remove('sidebar-preload-collapsed');
-        }
-
-        // Add event listener to collapse button
-        collapseBtn.addEventListener('click', toggleSidebar);
-    });
-
-    // Function to update task counter
-    function updateTaskCounter() {
-        const taskList = document.getElementById('task-list');
-        const taskCounterButton = document.querySelector('.task-counter-collapsed button');
-        const taskCounterContainer = document.querySelector('.task-counter-collapsed .relative');
-        const sidebar = document.getElementById('sidebar');
-        
-        if (taskList && taskCounterButton && taskCounterContainer) {
-            const runningCount = parseInt(taskList.querySelector('[data-running-count]')?.getAttribute('data-running-count') || '0');
-            const isCollapsed = sidebar.classList.contains('sidebar-collapsed');
-            
-            // Remove existing badge
-            const existingBadge = taskCounterContainer.querySelector('.absolute');
-            if (existingBadge) {
-                existingBadge.remove();
-            }
-            
-            // Update colors and badge based on running jobs count
-            if (runningCount > 0) {
-                // With running jobs - blue background and show badge
-                taskCounterButton.className = taskCounterButton.className
-                    .replace(/bg-gray-\d+/g, 'bg-blue-600')
-                    .replace(/hover:bg-gray-\d+/g, 'hover:bg-blue-700');
-                
-                // Create new badge
-                const badge = document.createElement('div');
-                badge.className = 'absolute -top-2 -right-2 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 border-2 border-gray-800 rounded-full';
-                badge.textContent = runningCount;
-                taskCounterContainer.appendChild(badge);
+    // Error modal translations (uses Jinja variables)
+    function updateToggleButtonText(show) {
+        const toggleBtn = document.getElementById('toggleTechnicalDetails');
+        if (toggleBtn) {
+            if (show) {
+                toggleBtn.querySelector('span').innerHTML = '<i class="bi bi-code-square mr-3 text-gray-500"></i>{{ _("Hide Technical Details") }}';
             } else {
-                // No running jobs - gray background and no badge
-                taskCounterButton.className = taskCounterButton.className
-                    .replace(/bg-blue-\d+/g, 'bg-gray-700')
-                    .replace(/hover:bg-blue-\d+/g, 'hover:bg-gray-600');
+                toggleBtn.querySelector('span').innerHTML = '<i class="bi bi-code-square mr-3 text-gray-500"></i>{{ _("Show Technical Details") }}';
             }
         }
     }
 
-    // Project dropdown functionality
-    const projectDropdownBtn = document.getElementById('project-dropdown-btn');
-    const projectDropdown = document.getElementById('project-dropdown');
-
-    projectDropdownBtn?.addEventListener('click', () => {
-        projectDropdown.classList.toggle('hidden');
-    });
-
-    // Settings dropdown functionality
-    const settingsDropdownBtn = document.getElementById('settings-dropdown-btn');
-    const settingsDropdown = document.getElementById('settings-dropdown');
-
-    settingsDropdownBtn?.addEventListener('click', () => {
-        settingsDropdown.classList.toggle('hidden');
-    });
-
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', (event) => {
-        if (projectDropdownBtn && projectDropdown &&
-            !projectDropdownBtn.contains(event.target) &&
-            !projectDropdown.contains(event.target)) {
-            projectDropdown.classList.add('hidden');
-        }
-
-        if (settingsDropdownBtn && settingsDropdown &&
-            !settingsDropdownBtn.contains(event.target) &&
-            !settingsDropdown.contains(event.target)) {
-            settingsDropdown.classList.add('hidden');
-        }
-    });
-
-    // Auto close flash messages after 5 seconds
-    setTimeout(() => {
-        const alerts = document.querySelectorAll('[role="alert"]');
-        alerts.forEach(alert => {
-            if (alert.style.display !== 'none') {
-                alert.style.opacity = '0';
-                alert.style.transition = 'opacity 0.3s ease-out';
-                setTimeout(() => alert.style.display = 'none', 300);
-            }
-        });
-    }, 5000);
-</script>
-
-<script>
-    // Global Error Modal Functions
-    function showErrorModalFromData(element) {
-        const taskName = element.getAttribute('data-task-name');
-        const errorText = element.getAttribute('data-error-text');
-        showErrorModal(taskName, errorText);
-    }
-
-    function showErrorModal(taskName, errorText) {
-        // Parse error text to separate user message from technical details
-        const { userMessage, technicalDetails } = parseErrorMessage(errorText);
-
-        // Set task name
-        document.getElementById('modalTaskName').textContent = taskName;
-
-        // Set user-friendly error message
-        document.getElementById('modalErrorMessage').textContent = userMessage;
-
-        // Handle technical details
-        const technicalSection = document.getElementById('technicalDetailsSection');
-        const technicalContent = document.getElementById('modalTechnicalDetails');
-
-        if (technicalDetails && technicalDetails.trim()) {
-            technicalContent.textContent = technicalDetails;
-            technicalSection.classList.remove('hidden');
-        } else {
-            technicalSection.classList.add('hidden');
-        }
-
-        // Reset technical details to collapsed state
-        document.getElementById('technicalDetailsContent').classList.add('hidden');
-        document.getElementById('technicalChevron').classList.remove('rotate-180');
-        const toggleBtn = document.getElementById('toggleTechnicalDetails');
-        toggleBtn.querySelector('span').innerHTML = '<i class="bi bi-code-square mr-3 text-gray-500"></i>{{ _("Show Technical Details") }}';
-
-        // Show modal
-        document.getElementById('errorModal').classList.remove('hidden');
-
-        // Prevent body scroll
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeErrorModal() {
-        document.getElementById('errorModal').classList.add('hidden');
-        document.body.style.overflow = '';
-    }
-
-    function toggleTechnicalDetails() {
-        const content = document.getElementById('technicalDetailsContent');
-        const chevron = document.getElementById('technicalChevron');
-        const toggleBtn = document.getElementById('toggleTechnicalDetails');
-
-        if (content.classList.contains('hidden')) {
-            content.classList.remove('hidden');
-            chevron.classList.add('rotate-180');
-            toggleBtn.querySelector('span').innerHTML = '<i class="bi bi-code-square mr-3 text-gray-500"></i>{{ _("Hide Technical Details") }}';
-        } else {
-            content.classList.add('hidden');
-            chevron.classList.remove('rotate-180');
-            toggleBtn.querySelector('span').innerHTML = '<i class="bi bi-code-square mr-3 text-gray-500"></i>{{ _("Show Technical Details") }}';
-        }
-    }
-
-    function parseErrorMessage(errorText) {
-        if (!errorText || !errorText.trim()) {
-            return { userMessage: '{{ _("Unknown error occurred") }}', technicalDetails: '' };
-        }
-
-        // Check if it contains traceback/technical information
-        const hasTraceback = errorText.includes('Traceback') ||
-            errorText.includes('File "') ||
-            errorText.includes('.py:') ||
-            errorText.includes('  File ') ||
-            errorText.includes('line ');
-
-        if (!hasTraceback) {
-            // It's already a clean user message
-            return { userMessage: errorText.trim(), technicalDetails: '' };
-        }
-
-        // Try to extract user message from the end of the traceback
-        const lines = errorText.split('\n');
-        let userMessage = '{{ _("Processing failed") }}';
-
-        // Look for the final exception message (usually after "Exception:" or similar)
-        for (let i = lines.length - 1; i >= 0; i--) {
-            const line = lines[i].trim();
-            if (line && !line.startsWith(' ') && line.includes(':')) {
-                const parts = line.split(':', 2);
-                if (parts.length === 2) {
-                    const message = parts[1].trim();
-                    // Check if it looks like a user message (not technical)
-                    if (message && !message.includes('File "') && !message.includes('.py') && !message.includes('line ')) {
-                        userMessage = message;
-                        break;
-                    }
-                }
-            }
-        }
-
-        return {
-            userMessage: userMessage,
-            technicalDetails: errorText
-        };
-    }
-
-    // Close modal when clicking outside
-    document.getElementById('errorModal')?.addEventListener('click', function (e) {
-        if (e.target === this) {
-            closeErrorModal();
-        }
-    });
-
-    // Close modal with Escape key
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-            closeErrorModal();
-        }
-    });
+    // Override the error message defaults with translations
+    window.errorTranslations = {
+        unknownError: '{{ _("Unknown error occurred") }}',
+        processingFailed: '{{ _("Processing failed") }}'
+    };
 </script>

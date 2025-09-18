@@ -1,0 +1,340 @@
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="bi bi-search text-green-600 mr-2"></i>
+            {{ _('Text Search') }}
+        </h3>
+        <p class="text-sm text-gray-600 mt-1">{{ _('Search entries by text content') }}</p>
+    </div>
+    <div class="p-6">
+        <div id="search-form" class="space-y-6">
+                <!-- Inclusion Terms -->
+                <div class="space-y-3">
+                    <div class="flex items-center">
+                        <i class="bi bi-check-circle-fill text-green-600 mr-2"></i>
+                        <h4 class="text-lg font-medium text-gray-900">{{ _('Inclusion of terms') }}</h4>
+                    </div>
+                    <div id="include-container" class="relative">
+                        <div class="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500 min-h-12" id="include-field">
+                            <!-- Chips will be inserted here -->
+                            <input type="text" id="include-input"
+                                   class="flex-1 min-w-32 border-0 p-0 focus:ring-0 focus:outline-none bg-transparent"
+                                   placeholder="{{ _('Add terms (type and press ENTER)') }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exclusion Terms -->
+                <div class="space-y-3">
+                    <div class="flex items-center">
+                        <i class="bi bi-x-circle-fill text-red-600 mr-2"></i>
+                        <h4 class="text-lg font-medium text-gray-900">{{ _('Exclusion of terms') }}</h4>
+                    </div>
+                    <div id="exclude-container" class="relative">
+                        <div class="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg bg-white focus-within:ring-2 focus-within:ring-red-500 focus-within:border-red-500 min-h-12" id="exclude-field">
+                            <!-- Chips will be inserted here -->
+                            <input type="text" id="exclude-input"
+                                   class="flex-1 min-w-32 border-0 p-0 focus:ring-0 focus:outline-none bg-transparent"
+                                   placeholder="{{ _('Add terms (type and press ENTER)') }}">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search Options -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="number" class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="bi bi-inbox mr-1"></i>
+                            {{ _('Number of Entries') }}
+                        </label>
+                        <input type="text" id="number" name="number"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                               value="{{ number or 1000 }}"
+                               title="{{ _('Number of Entries') }}">
+                    </div>
+
+                    <div class="flex items-end">
+                        <button type="button" onclick="performSearch()"
+                                class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 transition-colors">
+                            <i class="bi bi-search mr-2"></i>
+                            {{ _('Search') }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hidden fields for form submission -->
+                <input type="hidden" name="include" id="include_field">
+                <input type="hidden" name="exclude" id="exclude_field">
+        </div>
+    </div>
+
+    <!-- Search Results -->
+    <div id="search-results" class="hidden mt-6"></div>
+</div>
+
+<style>
+.search-highlight {
+    background-color: #fef08a;
+    color: #365314;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
+/* Chip animation */
+.chip-enter {
+    opacity: 0;
+    transform: scale(0.8);
+}
+
+.chip-enter-active {
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 200ms, transform 200ms;
+}
+
+.chip-exit {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.chip-exit-active {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 200ms, transform 200ms;
+}
+
+/* Hover effects */
+.search-chip {
+    transition: all 0.2s ease;
+}
+
+.search-chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Inline field styling */
+#include-field {
+    transition: all 0.2s ease;
+}
+
+#exclude-field {
+    transition: all 0.2s ease;
+}
+
+/* Chip styling for inline display */
+.search-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    margin: 2px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: default;
+    user-select: none;
+}
+
+.search-chip.include-chip {
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.search-chip.exclude-chip {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.search-chip .remove-btn {
+    margin-left: 6px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.search-chip .remove-btn:hover {
+    opacity: 1;
+}
+</style>
+
+<script>
+// Initialize search functionality immediately when script loads
+(function() {
+    // Initialize search data
+    window.searchData = {
+        include: [],
+        exclude: [],
+        highlight: []
+    };
+
+    // Initialize inline chip functionality when DOM is ready
+    function initWhenReady() {
+        if (document.getElementById('include-input') && document.getElementById('exclude-input')) {
+            initInlineChips();
+        } else {
+            // Try again in 50ms if elements not ready
+            setTimeout(initWhenReady, 50);
+        }
+    }
+
+    // Start initialization
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initWhenReady);
+    } else {
+        initWhenReady();
+    }
+})();
+
+function performSearch() {
+    // Update hidden fields with chip data
+    const includeField = document.getElementById('include_field');
+    const excludeField = document.getElementById('exclude_field');
+    const numberField = document.getElementById('number');
+
+    if (window.searchData) {
+        includeField.value = JSON.stringify(window.searchData.include);
+        excludeField.value = JSON.stringify(window.searchData.exclude);
+    }
+
+    // Create form data
+    const params = new URLSearchParams();
+    params.append('include', includeField.value);
+    params.append('exclude', excludeField.value);
+    params.append('number', numberField.value);
+
+    // Get the search URL from the project ID
+    const searchUrl = `/${window.projectId}/search`;
+
+    // Submit search with HTMX
+    fetch(searchUrl + '?' + params.toString(), {
+        method: 'GET',
+        headers: {
+            'HX-Request': 'true',
+            'HX-Target': '#search-results'
+        }
+    })
+    .then(response => response.text())
+    .then(html => {
+        const resultsContainer = document.getElementById('search-results');
+        resultsContainer.innerHTML = html;
+        resultsContainer.classList.remove('hidden');
+
+        // Scroll to results
+        resultsContainer.scrollIntoView({ behavior: 'smooth' });
+    })
+    .catch(error => {
+        console.error('Search error:', error);
+        if (typeof showToast === 'function') {
+            showToast('Search failed. Please try again.', 'error');
+        }
+    });
+}
+
+function initInlineChips() {
+    const includeInput = document.getElementById('include-input');
+    const excludeInput = document.getElementById('exclude-input');
+    const includeField = document.getElementById('include-field');
+    const excludeField = document.getElementById('exclude-field');
+
+    console.log('Initializing chips...', { includeInput, excludeInput, includeField, excludeField });
+
+    // Handle include input
+    if (includeInput) {
+        includeInput.addEventListener('keydown', function(e) {
+            console.log('Include input keydown:', e.key, this.value);
+            if (e.key === 'Enter' && this.value.trim()) {
+                e.preventDefault();
+                addChip(this.value.trim(), 'include');
+                this.value = '';
+            } else if (e.key === 'Backspace' && !this.value && window.searchData.include.length > 0) {
+                // Remove last chip when backspace on empty input
+                removeChip(window.searchData.include.length - 1, 'include');
+            }
+        });
+    }
+
+    // Handle exclude input
+    if (excludeInput) {
+        excludeInput.addEventListener('keydown', function(e) {
+            console.log('Exclude input keydown:', e.key, this.value);
+            if (e.key === 'Enter' && this.value.trim()) {
+                e.preventDefault();
+                addChip(this.value.trim(), 'exclude');
+                this.value = '';
+            } else if (e.key === 'Backspace' && !this.value && window.searchData.exclude.length > 0) {
+                // Remove last chip when backspace on empty input
+                removeChip(window.searchData.exclude.length - 1, 'exclude');
+            }
+        });
+    }
+}
+
+// Define functions globally so they can be called from onclick handlers
+window.addChip = function(text, type) {
+    console.log('Adding chip:', text, type);
+    if (!text.trim()) return;
+
+    const terms = type === 'include' ? window.searchData.include : window.searchData.exclude;
+
+    // Check if term already exists
+    if (terms.includes(text)) return;
+
+    // Add to data
+    terms.push(text);
+
+    // Update display
+    updateChipsDisplay(type);
+};
+
+window.removeChip = function(index, type) {
+    console.log('Removing chip:', index, type);
+    const terms = type === 'include' ? window.searchData.include : window.searchData.exclude;
+
+    if (index >= 0 && index < terms.length) {
+        terms.splice(index, 1);
+        updateChipsDisplay(type);
+    }
+};
+
+function updateChipsDisplay(type) {
+    console.log('Updating chips display for:', type, window.searchData[type]);
+    const field = type === 'include' ? document.getElementById('include-field') : document.getElementById('exclude-field');
+    const input = type === 'include' ? document.getElementById('include-input') : document.getElementById('exclude-input');
+    const terms = type === 'include' ? window.searchData.include : window.searchData.exclude;
+
+    console.log('Elements found:', { field, input });
+    if (!field || !input) return;
+
+    // Clear existing chips
+    const existingChips = field.querySelectorAll('.search-chip');
+    existingChips.forEach(chip => chip.remove());
+
+    // Add chips before the input
+    terms.forEach((term, index) => {
+        const chip = document.createElement('span');
+        chip.className = `search-chip ${type}-chip`;
+        chip.innerHTML = `
+            ${term}
+            <span class="remove-btn" onclick="window.removeChip(${index}, '${type}')">&times;</span>
+        `;
+
+        field.insertBefore(chip, input);
+    });
+
+    // Update placeholder
+    if (terms.length > 0) {
+        input.placeholder = '';
+    } else {
+        input.placeholder = input.getAttribute('data-original-placeholder') ||
+                           (type === 'include' ? 'Add terms (type and press ENTER)' : 'Add terms (type and press ENTER)');
+    }
+
+    // Store original placeholder if not stored
+    if (!input.getAttribute('data-original-placeholder')) {
+        input.setAttribute('data-original-placeholder', input.placeholder);
+    }
+}
+</script>

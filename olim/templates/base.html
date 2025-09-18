@@ -252,7 +252,6 @@
             </div>
         </div>
 
-        {% include '_layouts/flash_messages.html' %}
 
         <!-- Main Content -->
         <main class="p-4 flex-grow">
@@ -273,6 +272,15 @@
 
     {% include '_layouts/error_modal.html' %}
     {% include '_layouts/scripts.html' %}
+
+    <script>
+        // Initialize base functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof window.init === 'function') {
+                window.init();
+            }
+        });
+    </script>
 
     {% block scripts %}{% endblock %}
 </body>
