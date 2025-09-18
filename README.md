@@ -3,7 +3,9 @@
 # OLIM
 ### Open Labeller for Iterative Machine learning
 
-OLIM is a simple labelling interface aimed to be used by personal without data science specific knowledge. Currently OLIM supports the labelling of patients from medical texts relative to that patient. In future versions we expect to expand the possibilities of the data shape.
+OLIM is a simple labelling interface aimed to be used by personal without data science specific knowledge. Currently OLIM supports text labelling. In future versions we expect to expand the possibilities of the data shape.
+
+!["OLIM Interface"](docs/images/olim-labeling.png)
 
 
 ## Installation
