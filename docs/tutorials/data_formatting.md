@@ -1,5 +1,8 @@
 # Data Formatting
 
+!!! warning
+    This information is out of date!
+
 OLIM supports two types of structured data: **simple text entries** and **patient sheet entries**.  
 This page explains how to format your dataset and upload it properly.
 

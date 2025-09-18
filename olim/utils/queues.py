@@ -79,19 +79,32 @@ def get_queue(queue_id: str, project_id) -> list[tuple[int, str]]:
         queue = json.load(f)
     if queue["highlight"] is not None:
         # Merge queue highlights with existing session highlights
-        existing_highlights = session.get("highlight", [])
+        existing_highlights = session.get(
+            "highlight", {"terms": [], "colorAssignments": {}, "colorCounter": 0}
+        )
         queue_highlights = queue["highlight"]
 
         # Only update if queue highlights are different from current session
         # This prevents re-adding the same highlights when navigating within a queue
-        if set(queue_highlights) != set(existing_highlights):
+        if set(queue_highlights) != set(existing_highlights["terms"]):
             # Combine highlights, preserving order and avoiding duplicates
-            merged_highlights = list(existing_highlights)
-            for highlight in queue_highlights:
-                if highlight not in merged_highlights:
-                    merged_highlights.append(highlight)
+            merged_terms = list(existing_highlights["terms"])
+            merged_color_assignments = existing_highlights["colorAssignments"].copy()
+            color_counter = existing_highlights["colorCounter"]
 
-            session["highlight"] = merged_highlights
+            for highlight in queue_highlights:
+                if highlight not in merged_terms:
+                    merged_terms.append(highlight)
+                    if highlight not in merged_color_assignments:
+                        # Assign a new color, avoiding repetition and staying within the limit
+                        merged_color_assignments[highlight] = color_counter % 8
+                        color_counter += 1
+
+            session["highlight"] = {
+                "terms": merged_terms,
+                "colorAssignments": merged_color_assignments,
+                "colorCounter": color_counter,
+            }
     return queue["queue"]
 
 

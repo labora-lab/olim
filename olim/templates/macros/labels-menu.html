@@ -41,7 +41,7 @@
     {% else %}
     {% set p_label = 'none' %}
     {% endif %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-2">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-2">
         {% for label_str, type, icon, color in labels_rev %}
         <!-- Selected State Button -->
         <button type="button" onclick="addEntryLabel({{ entry.id }}, {{ label.id }}, '')"
