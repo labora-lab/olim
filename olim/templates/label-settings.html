@@ -2,344 +2,488 @@
 {% block title %}{{ _('Label Settings') }}{% endblock %}
 
 {% block content %}
-<div class="container" style="max-width: 95%; width: 95%;">
-    <div class="row">
-        <div class="col s12">
-            <h4 class="center-align">{{ _('Label Settings') }} - Label Id: {{ label.id }}</h4>
+<div class="max-w-7xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                    <i class="bi bi-gear-fill text-cyan-600 mr-3"></i>
+                    {{ _('Label Settings') }}
+                </h1>
+                <p class="text-gray-600 mt-1">{{ _('Label ID') }}: {{ label.id }} - {{ label.name }}</p>
+            </div>
+            <a href="../.."
+                class="text-white bg-gray-600 hover:bg-gray-700 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors">
+                <i class="bi bi-arrow-left mr-2"></i>{{ _('Back') }}
+            </a>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col s12{% if label.metrics %} m6{% endif %}">
-            <ul class="collapsible">
-                <li class="active">
-                    <div class="collapsible-header">
-                        <h5><i class="material-icons">info</i>Label: {{ label.name }}</h5>
-                    </div>
-                    <div class="collapsible-body">
-                        <div class="row">
-                            <div class="col s12">
-                                <p><strong>{{ _('Creator') }}:</strong> {{ label.creator.name }}</p>
-                                <p><strong>{{ _('Username') }}:</strong> {{ label.creator.username }}</p>
-                                <p><strong>{{ _('AL Key') }}:</strong> {{ label.al_key if label.al_key else _('Not Set')
-                                    }}</p>
-                                <p><strong>{{ _('Created At') }}:</strong> {{ label.created.strftime('%Y-%m-%d
-                                    %H:%M:%S') if label.created else '' }}</p>
-                                <p><strong>{{ _('Total Labeled Entries') }}:</strong> {{ label.entries|length }}</p>
-                            </div>
-                        </div>
+    <div class="grid grid-cols-1 {% if label.metrics %}lg:grid-cols-2{% endif %} gap-6 mb-6">
+        <!-- Label Information -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-info-circle-fill text-blue-600 mr-2"></i>
+                    {{ _('Label Information') }}
+                </h3>
+            </div>
 
-                        <div class="divider"></div>
-                        <div class="section">
-                            <a href="javascript:void(0);"
-                                onclick="show_warnning('{{ _('This permanent! Are you sure that you want to delete label {label_name}?').format(label_name=label.name) }}','window.location.href = \'{{url_for('delete_label', label_id=label.id)}}\'');"
-                                class="btn-flat waves-effect red-text">
-                                <i class="material-icons left">remove_circle_outline</i>
-                                {{ _('Remove Label') }}
-                            </a>
-                            {%if has_permition('extract_labels')%}
-                            <a href="{{url_for('extract_labels', label_id=label.id)}}"
-                                class="btn-flat waves-effect green-text">
-                                <i class="material-icons left">file_download</i>
-                                {{ _('Download Labeled Data') }}
-                            </a>
-                            {% endif %}
-                            {%if has_permition('gen_predictions')%}
-                            <a href="{{url_for('gen_predictions', label_id=label.id)}}"
-                                class="btn-flat waves-effect green-text">
-                                <i class="material-icons left">autorenew</i>
-                                {{ _('Generate Predictions') }}
-                            </a>
-                            {% endif %}
-                            {%if has_permition('catch_queue')%}
-                            <a href="{{url_for('catch_queue', label_id=label.id)}}"
-                                class="btn-flat waves-effect orange-text">
-                                <i class="material-icons left">send</i>{{ _('Open Queue') }}
-                            </a>
-                            {% endif %}
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="flex items-center">
+                        <div
+                            class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white text-lg font-bold mr-4">
+                            {{ label.name[0]|upper }}
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold text-gray-900">{{ label.name }}</h4>
+                            <p class="text-gray-600">{{ _('Label ID') }}: {{ label.id }}</p>
                         </div>
                     </div>
-                </li>
-            </ul>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Creator') }}</label>
+                            <p class="text-gray-900">{{ label.creator.name }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Username') }}</label>
+                            <p class="text-gray-900">{{ label.creator.username }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('AL Key') }}</label>
+                            <p class="text-gray-900">{{ label.al_key if label.al_key else _('Not Set') }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Created At') }}</label>
+                            <p class="text-gray-900">{{ label.created.strftime('%Y-%m-%d %H:%M:%S') if label.created
+                                else '' }}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Total Labeled Entries')
+                            }}</label>
+                        <span
+                            class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                            {{ label.entries|length }}
+                        </span>
+                    </div>
+                </div>
+
+                <hr class="my-6">
+
+                <!-- Actions -->
+                <div class="space-y-3">
+                    <h4 class="text-lg font-medium text-gray-900 mb-3">{{ _('Actions') }}</h4>
+                    <div class="flex flex-wrap gap-3">
+                        <button
+                            onclick="confirmDelete('{{ label.name }}', '{{ url_for('delete_label', label_id=label.id) }}')"
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-300 transition-colors">
+                            <i class="bi bi-trash mr-2"></i>{{ _('Remove Label') }}
+                        </button>
+
+                        {%if has_permission('extract_labels')%}
+                        <a href="{{url_for('extract_labels', label_id=label.id)}}"
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:ring-green-300 transition-colors">
+                            <i class="bi bi-download mr-2"></i>{{ _('Download Labeled Data') }}
+                        </a>
+                        {% endif %}
+
+                        {%if has_permission('gen_predictions')%}
+                        <a href="{{url_for('gen_predictions', label_id=label.id)}}"
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:ring-4 focus:ring-purple-300 transition-colors">
+                            <i class="bi bi-arrow-repeat mr-2"></i>{{ _('Generate Predictions') }}
+                        </a>
+                        {% endif %}
+
+                        {%if has_permission('catch_queue')%}
+                        <a href="{{url_for('catch_queue', label_id=label.id)}}"
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 focus:ring-4 focus:ring-orange-300 transition-colors">
+                            <i class="bi bi-send mr-2"></i>{{ _('Open Queue') }}
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
         </div>
 
         {% if label.metrics %}
-        <div class="col s12 m6">
-            <ul class="collapsible">
-                <li class="active">
-                    <div class="collapsible-header">
-                        <h5><i class="material-icons">assessment</i> Model Metrics</h5>
-                    </div>
-                    <div class="collapsible-body">
-                        {% for metric_str in label.metrics %}
-                        <p style="font-size: 0.9em;">{{metric_str}}</p>
-                        {% endfor %}
-                    </div>
-                </li>
-            </ul>
+        <!-- Model Metrics -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-bar-chart-fill text-green-600 mr-2"></i>
+                    {{ _('Model Metrics') }}
+                </h3>
+            </div>
+
+            <div class="p-6">
+                <div class="space-y-2">
+                    {% for metric_str in label.metrics %}
+                    <p class="text-sm text-gray-700 font-mono bg-gray-50 p-2 rounded latex-content">
+                        {{ metric_str }}
+                    </p>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
         {% endif %}
     </div>
 
+    {% if session.role == 'admin' %}
+    <!-- Advanced Parameters Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-sliders text-purple-600 mr-2"></i>
+                {{ _('Advanced Parameters') }}
+            </h3>
+        </div>
 
-    <div class="row">
-        {% if session.role == 'admin' %}
-        <!-- Advanced Parameters Section - s12 -->
-        <div class="col s12">
-            <ul class="collapsible">
-                <li>
-                    <div class="collapsible-header">
-                        <h5><i class="material-icons">settings</i>
-                            Advanced Parameters</h5>
-                    </div>
-                    <div class="collapsible-body">
+        <div class="p-6">
+            <!-- Learner Parameters -->
+            <div class="mb-8">
+                <h4 class="text-lg font-medium text-gray-900 mb-4">{{ _('Learner Parameters') }}</h4>
 
-                        <h5>{{ _('Learner Parameters') }}</h5>
-                        <form id="learner-params-form" method="POST"
-                            action="{{url_for('update_learner_parameters', label_id=label.id)}}">
-                            <div id="parameters-container">
-                                {% if label.learner_parameters %}
-                                {% for key, value in label.learner_parameters.items() %}
-                                {% set is_list = value.__class__.__name__ == 'list' %}
-                                {% set base_type = 'str' %}
-                                {% if is_list and value|length > 0 %}
-                                {% set base_type = value[0].__class__.__name__ %}
-                                {% elif not is_list %}
-                                {% set base_type = value.__class__.__name__ %}
-                                {% endif %}
-                                <div class="parameter-row row" style="margin-bottom: 10px;">
-                                    <div class="input-field col s3">
-                                        <input type="text" name="param_names[]" value="{{key}}">
-                                        <label class="active">Parameter Name</label>
-                                    </div>
-                                    <div class="col s2" style="padding-top: 20px;">
-                                        <label>
-                                            <input type="checkbox" name="param_is_list[]" value="1" {% if is_list
-                                                %}checked{% endif %}>
-                                            <span>List of</span>
-                                        </label>
-                                    </div>
-                                    <div class="input-field col s2">
-                                        <select name="param_types[]">
-                                            <option value="str" {% if base_type=='str' %}selected{% endif %}>String
-                                            </option>
-                                            <option value="int" {% if base_type=='int' %}selected{% endif %}>Integer
-                                            </option>
-                                            <option value="float" {% if base_type=='float' %}selected{% endif %}>Float
-                                            </option>
-                                            <option value="bool" {% if base_type=='bool' %}selected{% endif %}>Boolean
-                                            </option>
-                                        </select>
-                                        <label>Base Type</label>
-                                    </div>
-                                    <div class="input-field col s4">
-                                        {% if is_list %}
-                                        <input type="text" name="param_values[]" value="{{value|join(',')}}">
-                                        {% else %}
-                                        <input type="text" name="param_values[]" value="{{value}}">
-                                        {% endif %}
-                                        <label class="active">Value</label>
-                                    </div>
-                                    <div class="col s1">
-                                        <a href="#!" class="btn-flat red-text remove-param" style="margin-top: 15px;">
-                                            <i class="material-icons">remove</i>
-                                        </a>
-                                    </div>
+                <form id="learner-params-form" method="POST"
+                    action="{{url_for('update_learner_parameters', label_id=label.id)}}">
+                    <div id="parameters-container" class="space-y-4">
+                        {% if label.learner_parameters %}
+                        {% for key, value in label.learner_parameters.items() %}
+                        {% set is_list = value.__class__.__name__ == 'list' %}
+                        {% set base_type = 'str' %}
+                        {% if is_list and value|length > 0 %}
+                        {% set base_type = value[0].__class__.__name__ %}
+                        {% elif not is_list %}
+                        {% set base_type = value.__class__.__name__ %}
+                        {% endif %}
+                        <div class="parameter-row grid grid-cols-1 md:grid-cols-6 gap-4 p-4 bg-gray-50 rounded-lg">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Parameter Name')
+                                    }}</label>
+                                <input type="text" name="param_names[]" value="{{key}}"
+                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                            </div>
+                            <div class="flex items-center">
+                                <div class="flex items-center h-5 mt-6">
+                                    <input type="checkbox" name="param_is_list[]" value="1" {% if is_list %}checked{%
+                                        endif %}
+                                        class="w-4 h-4 text-cyan-600 bg-gray-100 border-gray-300 rounded focus:ring-cyan-500 focus:ring-2">
+                                    <label class="ms-2 text-sm font-medium text-gray-700">{{ _('List of') }}</label>
                                 </div>
-                                {% endfor %}
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Base Type') }}</label>
+                                <select name="param_types[]"
+                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                                    <option value="str" {% if base_type=='str' %}selected{% endif %}>String</option>
+                                    <option value="int" {% if base_type=='int' %}selected{% endif %}>Integer</option>
+                                    <option value="float" {% if base_type=='float' %}selected{% endif %}>Float</option>
+                                    <option value="bool" {% if base_type=='bool' %}selected{% endif %}>Boolean</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Value') }}</label>
+                                {% if is_list %}
+                                <input type="text" name="param_values[]" value="{{value|join(',')}}"
+                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                                {% else %}
+                                <input type="text" name="param_values[]" value="{{value}}"
+                                    class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
                                 {% endif %}
                             </div>
-
-                            <div class="row">
-                                <div class="col s12">
-                                    <a href="#!" class="btn-flat green-text" id="add-param">
-                                        <i class="material-icons left">add</i>Add Parameter
-                                    </a>
-                                    <button type="submit" class="btn waves-effect waves-light right">
-                                        <i class="material-icons left">save</i>Save Parameters
-                                    </button>
-                                </div>
+                            <div class="flex items-end">
+                                <button type="button" class="remove-param text-red-600 hover:text-red-800 p-2">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </div>
-                        </form>
-
-                        <div class="divider"></div>
-                        <h5>{{ _('Auto-Label Data Upload') }}</h5>
-                        <p class="grey-text">
-                            <strong>{{ _('Warning:') }}</strong> {{ _('This is a debug tool for model testing
-                            purposes. This data will NOT be directly used for learning. For training data, upload it as
-                            regular labels. Auto-labels are automatically applied during active learning to speed up
-                            model debug process.') }}
-                        </p>
-                        <p class="grey-text">
-                            {{ _('Multiple auto-label files can be uploaded on the same label.') }}
-                        </p>
-                        <form id="auto-label-form" method="POST" enctype="multipart/form-data"
-                            action="{{url_for('upload_auto_labels', label_id=label.id)}}">
-                            <div class="file-field input-field">
-                                <div class="btn">
-                                    <span>{{ _('Browse') }}</span>
-                                    <input type="file" name="auto_label_file" accept=".csv" required>
-                                </div>
-                                <div class="file-path-wrapper">
-                                    <input class="file-path validate" type="text"
-                                        placeholder="{{ _('Select CSV file with dataset_id, entry_id, value columns') }}">
-                                </div>
-                            </div>
-                            <p class="grey-text" style="font-size: 0.9em;">
-                                {{ _('Required columns: dataset_id, entry_id, value') }}
-                            </p>
-                            <button type="submit" class="btn waves-effect waves-light">
-                                <i class="material-icons left">file_upload</i>{{ _('Upload Auto-Labels') }}
-                            </button>
-                        </form>
-                        {% if label.auto_labels %}
-                        <p class="green-text" style="margin-top: 10px;">
-                            <i class="material-icons tiny">check_circle</i>
-                            {{ label.auto_labels|length }} {{ _('auto-labels loaded') }}
-                        </p>
+                        </div>
+                        {% endfor %}
                         {% endif %}
                     </div>
-                </li>
-            </ul>
-        </div>
-        {% endif %}
 
-        <!-- Debug Information Card -->
-        {% if debug %}
-        <div class="col s12">
-            <ul class="collapsible">
-                <li>
-                    <div class="collapsible-header">
-                        <h5><i class="material-icons">bug_report</i>
-                            Debug Information</h5>
+                    <div class="flex justify-between items-center mt-6">
+                        <button type="button" id="add-param" class="text-green-600 hover:text-green-800 font-medium">
+                            <i class="bi bi-plus-circle mr-2"></i>{{ _('Add Parameter') }}
+                        </button>
+                        <button type="submit"
+                            class="text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors">
+                            <i class="bi bi-save mr-2"></i>{{ _('Save Parameters') }}
+                        </button>
                     </div>
-                    <div class="collapsible-body">
-                        <div
-                            style="max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 12px; line-height: 1.4;">
-                            <p><strong>id:</strong> {{ label.id }}</p>
-                            <p><strong>name:</strong> {{ label.name }}</p>
-                            <p><strong>al_key:</strong> {{ label.al_key if label.al_key else 'None' }}</p>
-                            <p><strong>created:</strong> {{ label.created.isoformat() if label.created else 'None' }}
-                            </p>
-                            <p><strong>training_counter:</strong> {{ label.training_counter if label.training_counter is
-                                not none else 'None' }}</p>
-                            <p><strong>project_id:</strong> {{ label.project_id }}</p>
-                            <p><strong>creator_id:</strong> {{ label.creator_id if label.creator_id is not none else
-                                'None' }}</p>
-                            <p><strong>learner_parameters:</strong> {{ label.learner_parameters if
-                                label.learner_parameters else 'None' }}</p>
-                            <p><strong>auto_labels:</strong> {{ label.auto_labels if label.auto_labels else 'None' }}
-                            </p>
-                            <p><strong>metrics:</strong> {{ label.metrics if label.metrics else '[]' }}</p>
-                            <p><strong>cache:</strong> {{ label.cache if label.cache else '[]' }}</p>
-                            <p><strong>entries_count:</strong> {{ label.entries|length }}</p>
-                            {% if label.creator %}
-                            <p><strong>creator.name:</strong> {{ label.creator.name }}</p>
-                            <p><strong>creator.username:</strong> {{ label.creator.username }}</p>
-                            {% endif %}
-                            {% if label.project %}
-                            <p><strong>project.name:</strong> {{ label.project.name if label.project.name else 'None' }}
-                            </p>
-                            {% endif %}
+                </form>
+            </div>
+
+            <hr class="mb-8">
+
+            <!-- Auto-Label Upload -->
+            <div>
+                <h4 class="text-lg font-medium text-gray-900 mb-4">{{ _('Auto-Label Data Upload') }}</h4>
+
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-start">
+                        <i class="bi bi-exclamation-triangle text-yellow-600 mr-2 mt-0.5"></i>
+                        <div class="text-sm text-yellow-800">
+                            <p class="font-semibold mb-1">{{ _('Warning:') }}</p>
+                            <p>{{ _('This is a debug tool for model testing purposes. This data will NOT be directly
+                                used for learning. For training data, upload it as regular labels. Auto-labels are
+                                automatically applied during active learning to speed up model debug process.') }}</p>
+                            <p class="mt-2">{{ _('Multiple auto-label files can be uploaded on the same label.') }}</p>
                         </div>
                     </div>
-                </li>
-            </ul>
-        </div>
-        {% endif %}
-    </div>
+                </div>
 
+                <form id="auto-label-form" method="POST" enctype="multipart/form-data"
+                    action="{{url_for('upload_auto_labels', label_id=label.id)}}" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-900 mb-2">{{ _('Auto-Label File') }}</label>
+                        <input type="file" name="auto_label_file" accept=".csv" required
+                            class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none">
+                        <p class="mt-1 text-sm text-gray-500">{{ _('Select CSV file with dataset_id, entry_id, value
+                            columns') }}</p>
+                        <p class="text-xs text-gray-500">{{ _('Required columns: dataset_id, entry_id, value') }}</p>
+                    </div>
+
+                    <button type="submit"
+                        class="text-white bg-purple-600 hover:bg-purple-700 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors">
+                        <i class="bi bi-cloud-upload mr-2"></i>{{ _('Upload Auto-Labels') }}
+                    </button>
+                </form>
+
+                {% if label.auto_labels %}
+                <div class="mt-4 flex items-center text-green-600">
+                    <i class="bi bi-check-circle mr-2"></i>
+                    <span class="text-sm font-medium">{{ label.auto_labels|length }} {{ _('auto-labels loaded')
+                        }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Debug Information -->
+    {% if debug %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-bug-fill text-red-600 mr-2"></i>
+                {{ _('Debug Information') }}
+            </h3>
+        </div>
+
+        <div class="p-6">
+            <div class="bg-gray-900 text-gray-100 rounded-lg p-4 max-h-96 overflow-y-auto text-sm font-mono">
+                <div class="space-y-1">
+                    <p><span class="text-cyan-400">id:</span> {{ label.id }}</p>
+                    <p><span class="text-cyan-400">name:</span> {{ label.name }}</p>
+                    <p><span class="text-cyan-400">al_key:</span> {{ label.al_key if label.al_key else 'None' }}</p>
+                    <p><span class="text-cyan-400">created:</span> {{ label.created.isoformat() if label.created else
+                        'None' }}</p>
+                    <p><span class="text-cyan-400">training_counter:</span> {{ label.training_counter if
+                        label.training_counter is not none else 'None' }}</p>
+                    <p><span class="text-cyan-400">project_id:</span> {{ label.project_id }}</p>
+                    <p><span class="text-cyan-400">creator_id:</span> {{ label.creator_id if label.creator_id is not
+                        none else 'None' }}</p>
+                    <p><span class="text-cyan-400">learner_parameters:</span> {{ label.learner_parameters if
+                        label.learner_parameters else 'None' }}</p>
+                    <p><span class="text-cyan-400">auto_labels:</span> {{ label.auto_labels if label.auto_labels else
+                        'None' }}</p>
+                    <p><span class="text-cyan-400">metrics:</span> {{ label.metrics if label.metrics else '[]' }}</p>
+                    <p><span class="text-cyan-400">cache:</span> {{ label.cache if label.cache else '[]' }}</p>
+                    <p><span class="text-cyan-400">entries_count:</span> {{ label.entries|length }}</p>
+                    {% if label.creator %}
+                    <p><span class="text-cyan-400">creator.name:</span> {{ label.creator.name }}</p>
+                    <p><span class="text-cyan-400">creator.username:</span> {{ label.creator.username }}</p>
+                    {% endif %}
+                    {% if label.project %}
+                    <p><span class="text-cyan-400">project.name:</span> {{ label.project.name if label.project.name else
+                        'None' }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Export Tasks -->
     {% if export_tasks %}
-    <div class="card hoverable">
-        <div class="card-content">
-            <span class="card-title">Exported predictions</span>
-            <table>
-                <thead>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-download text-green-600 mr-2"></i>
+                {{ _('Exported Predictions') }}
+            </h3>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                     <tr>
-                        <th>Created</th>
-                        <th>Status</th>
-                        <th>Download</th>
+                        <th scope="col" class="px-6 py-3">{{ _('Created') }}</th>
+                        <th scope="col" class="px-6 py-3">{{ _('Status') }}</th>
+                        <th scope="col" class="px-6 py-3">{{ _('Download') }}</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for task in export_tasks %}
-                    <tr>
-                        <td>{{task.created}}</td>
-                        <td>{{task.status}}</td>
-                        <td>
+                    <tr class="bg-white border-b hover:bg-gray-50">
+                        <td class="px-6 py-4 text-gray-900">{{ task.created }}</td>
+                        <td class="px-6 py-4">
                             {% if task.status == "SUCCESS" %}
-                            <a class="btn waves-effect waves-light tooltipped"
-                                href="{{url_for('get_predictions', label_id=label.id, task_id=task.id)}}"
-                                data-tooltip="{{_('Download')}}">
-                                <i class="material-icons">file_download</i>
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="bi bi-check-circle mr-1"></i>{{ task.status }}
+                            </span>
+                            {% elif task.status == "FAILURE" %}
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <i class="bi bi-x-circle mr-1"></i>{{ task.status }}
+                            </span>
+                            {% else %}
+                            <span
+                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                <i class="bi bi-clock mr-1"></i>{{ task.status }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if task.status == "SUCCESS" %}
+                            <a href="{{url_for('get_predictions', label_id=label.id, task_id=task.id)}}"
+                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:ring-green-300 transition-colors"
+                                title="{{_('Download')}}">
+                                <i class="bi bi-download mr-2"></i>{{ _('Download') }}
                             </a>
+                            {% else %}
+                            <span class="text-gray-400">{{ _('Not available') }}</span>
                             {% endif %}
                         </td>
                     </tr>
-
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
     {% endif %}
-    <div class="row center-align">
-        <a class="btn waves-effect waves-light" href="../..">{{ _('Back') }}</a>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div
+            class="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div
+                        class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="bi bi-exclamation-triangle text-red-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                            {{ _('Delete Label') }}
+                        </h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500" id="deleteMessage"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="confirmDeleteBtn"
+                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    {{ _('Delete') }}
+                </button>
+                <button type="button" onclick="closeDeleteModal()"
+                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    {{ _('Cancel') }}
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // Initialize collapsible elements
-        var collapsibleElems = document.querySelectorAll('.collapsible');
-        M.Collapsible.init(collapsibleElems);
+    let deleteUrl = '';
 
-        // Initialize select elements
-        var selectElems = document.querySelectorAll('select');
-        M.FormSelect.init(selectElems);
+    // Delete confirmation modal functions
+    function confirmDelete(labelName, url) {
+        deleteUrl = url;
+        document.getElementById('deleteMessage').textContent =
+            "{{ _('This is permanent! Are you sure that you want to delete label') }} \"" + labelName + "\"?";
+        document.getElementById('deleteModal').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+        deleteUrl = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Confirm delete button event
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+            if (deleteUrl) {
+                window.location.href = deleteUrl;
+            }
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('deleteModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeDeleteModal();
+            }
+        });
 
         // Add parameter functionality
         const addButton = document.getElementById('add-param');
         if (addButton) {
-            addButton.addEventListener('click', function () {
+            addButton.addEventListener('click', function (e) {
+                e.preventDefault();
                 const container = document.getElementById('parameters-container');
                 const newRow = document.createElement('div');
-                newRow.className = 'parameter-row row';
-                newRow.style.marginBottom = '10px';
+                newRow.className = 'parameter-row grid grid-cols-1 md:grid-cols-6 gap-4 p-4 bg-gray-50 rounded-lg';
                 newRow.innerHTML = `
-                <div class="input-field col s3">
-                    <input type="text" name="param_names[]">
-                    <label>Parameter Name</label>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Parameter Name') }}</label>
+                    <input type="text" name="param_names[]" 
+                           class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
                 </div>
-                <div class="col s2" style="padding-top: 20px;">
-                    <label>
-                        <input type="checkbox" name="param_is_list[]" value="1">
-                        <span>List of</span>
-                    </label>
+                <div class="flex items-center">
+                    <div class="flex items-center h-5 mt-6">
+                        <input type="checkbox" name="param_is_list[]" value="1"
+                               class="w-4 h-4 text-cyan-600 bg-gray-100 border-gray-300 rounded focus:ring-cyan-500 focus:ring-2">
+                        <label class="ms-2 text-sm font-medium text-gray-700">{{ _('List of') }}</label>
+                    </div>
                 </div>
-                <div class="input-field col s2">
-                    <select name="param_types[]">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Base Type') }}</label>
+                    <select name="param_types[]" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
                         <option value="str">String</option>
                         <option value="int">Integer</option>
                         <option value="float">Float</option>
                         <option value="bool">Boolean</option>
                     </select>
-                    <label>Base Type</label>
                 </div>
-                <div class="input-field col s4">
-                    <input type="text" name="param_values[]">
-                    <label>Value</label>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Value') }}</label>
+                    <input type="text" name="param_values[]"
+                           class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
                 </div>
-                <div class="col s1">
-                    <a href="#!" class="btn-flat red-text remove-param" style="margin-top: 15px;">
-                        <i class="material-icons">remove</i>
-                    </a>
+                <div class="flex items-end">
+                    <button type="button" class="remove-param text-red-600 hover:text-red-800 p-2">
+                        <i class="bi bi-trash"></i>
+                    </button>
                 </div>
             `;
                 container.appendChild(newRow);
-
-                // Reinitialize select for new row
-                M.FormSelect.init(document.querySelectorAll('select'));
             });
         }
 

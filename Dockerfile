@@ -14,12 +14,16 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
-# Copy the project into the image
+COPY pyproject.toml pyproject.toml
+
+COPY uv.lock uv.lock
+
+RUN uv sync --frozen
+
 COPY . /app
 
 # Sync the project into a new environment, using the frozen lockfile
 WORKDIR /app
-RUN uv sync --frozen
 
 # Add entrypoint script
 COPY entrypoint.sh /entrypoint.sh

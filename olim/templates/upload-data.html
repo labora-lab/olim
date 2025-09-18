@@ -1,43 +1,76 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Upload Data') }}{% endblock %}
 
-{% import "upload-macro.html" as upload %}
+{% import "macros/upload-form.html" as upload %}
 
 {% block content %}
-<div class="container">
-  <div class="row">
-
-    {{upload.upload_form(projects=projects)}}
-
-    <div class="col card s12">
-      <table>
-        <thead>
-          <tr>
-            <th>{{ _('Dataset Name') }}</th>
-            <th class="center">{{ _('Total Enties') }}</th>
-            <th class="center">{{ _('Projects') }}</th>
-            <th class="center">{{ _('Creator') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for dataset in datasets %}
-          <tr>
-            <td>{{ dataset.name }}</td>
-            <td class="center">{{ stats[dataset.id]['entry_count'] }}</td>
-            <td class="center">{{ ", ".join(stats[dataset.id]['projects']) }}</td>
-            <td class="center">{{ dataset.creator.name }}</td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="5" class="center">{{ _('No datasets found') }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <!-- Upload Form -->
+    <div class="xl:col-span-2">
+        {{upload.upload_form(projects=projects, current_project_id=session.get('project_id'))}}
     </div>
-  </div>
-  {% endblock %}
 
-  {% block scripts %}
-  {{ upload.upload_scripts(CHUNK_SIZE) }}
-  {% endblock %}
+    <!-- Datasets List -->
+    <div class="xl:col-span-1">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-database-fill text-purple-600 mr-2"></i>
+                    {{ _('Existing Datasets') }}
+                </h3>
+            </div>
+
+            <div class="max-h-96 overflow-y-auto">
+                {% for dataset in datasets %}
+                <div class="px-6 py-4 border-b border-gray-100 last:border-b-0">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center">
+                                <div
+                                    class="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
+                                    {{ dataset.name[0]|upper }}
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-900">{{ dataset.name }}</div>
+                                    <div class="text-sm text-gray-500">
+                                        <i class="bi bi-file-text mr-1"></i>
+                                        {{ stats[dataset.id]['entry_count'] }} {{ _('entries') }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <div class="text-xs text-gray-600">
+                                    <i class="bi bi-person mr-1"></i>
+                                    {{ dataset.creator.name if dataset.creator.name else dataset.creator.username }}
+                                </div>
+                                {% if stats[dataset.id]['projects'] %}
+                                <div class="flex flex-wrap gap-1 mt-1">
+                                    {% for project in stats[dataset.id]['projects'] %}
+                                    <span
+                                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                        <i class="bi bi-folder mr-1"></i>
+                                        {{ project }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="px-6 py-12 text-center">
+                    <i class="bi bi-database text-4xl text-gray-400 mb-4"></i>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">{{ _('No datasets found') }}</h3>
+                    <p class="text-gray-500">{{ _('Upload your first dataset to get started.') }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ upload.upload_scripts(CHUNK_SIZE) }}
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}{{ error_code }} - {{ error_title }}{% endblock %}
+
+{% block sidebar %}{% endblock %}
+{% set suppress_sidebar = true %}
+{% block mobile_backdrop %}{% endblock %}
+{% block main_wrapper_classes %}{% endblock %}
+
+{% block navbar %}
+<nav class="bg-gray-800 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-center h-16">
+            <div class="flex items-center">
+                <img src="{{ url_for('static', filename='olim.svg') }}" alt="OLIM Logo" class="w-12 h-12 mr-3">
+                <h1 class="text-3xl font-bold text-white">OLIM</h1>
+            </div>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-[50vh] flex items-center justify-center py-8">
+    <div class="max-w-2xl mx-auto text-center px-4">
+        <!-- Error Icon and Code -->
+        <div class="mb-4">
+            <div
+                class="flex items-center justify-center w-20 h-20 bg-{{ error_color|default('red') }}-100 rounded-full mx-auto mb-4">
+                <i class="bi bi-{{ error_icon }} text-{{ error_color|default('red') }}-600 text-3xl"></i>
+            </div>
+            <div class="text-8xl font-bold text-{{ error_color|default('red') }}-600 mb-2">{{ error_code }}</div>
+            <h1 class="text-4xl font-bold text-gray-900 mb-3">{{ error_title }}</h1>
+        </div>
+
+        <!-- Error Message -->
+        <div class="mb-4">
+            <p class="text-base text-gray-700">{{ error_message }}</p>
+        </div>
+
+        <!-- Error Message Box (styled like task modal) -->
+        {% if error %}
+        <div class="mb-4">
+            <div
+                class="p-4 bg-{{ error_color|default('red') }}-50 border-l-4 border-{{ error_color|default('red') }}-500 rounded-lg text-{{ error_color|default('red') }}-900 font-medium leading-relaxed">
+                {{ error }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Technical Details (styled like task modal) -->
+        {% if traceback_info %}
+        <div class="mb-4">
+            <details class="border border-gray-300 rounded-lg overflow-hidden">
+                <summary
+                    class="flex items-center justify-between w-full p-4 bg-gray-50 hover:bg-gray-100 cursor-pointer text-gray-700 focus:outline-none focus:ring-2 focus:ring-{{ error_color|default('red') }}-500 focus:border-{{ error_color|default('red') }}-500 transition-all">
+                    <span class="flex items-center font-medium">
+                        <i class="bi bi-code-square mr-3 text-gray-500"></i>
+                        {{ _('Technical Details') }}
+                    </span>
+                    <i class="bi bi-chevron-down transform transition-transform duration-200 text-gray-500"></i>
+                </summary>
+                <div class="border-t border-gray-300">
+                    <div class="p-4 bg-gray-900 max-h-60 overflow-auto">
+                        <pre
+                            class="text-xs text-gray-300 font-mono whitespace-pre-wrap break-words leading-relaxed">{{ traceback_info }}</pre>
+                    </div>
+                </div>
+            </details>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            {% if show_retry %}
+            <!-- Retry Button -->
+            <button onclick="location.reload()"
+                class="inline-flex items-center px-6 py-3 text-sm font-medium text-white bg-{{ error_color|default('red') }}-600 hover:bg-{{ error_color|default('red') }}-700 focus:ring-4 focus:outline-none focus:ring-{{ error_color|default('red') }}-300 rounded-lg transition-colors">
+                <i class="bi bi-arrow-clockwise mr-2"></i>
+                {{ _('Try Again') }}
+            </button>
+            {% endif %}
+
+            <!-- Go Back Button -->
+            <button onclick="history.back()"
+                class="inline-flex items-center px-6 py-3 text-sm font-medium text-white bg-{{ error_color|default('red') }}-600 hover:bg-{{ error_color|default('red') }}-700 focus:ring-4 focus:outline-none focus:ring-{{ error_color|default('red') }}-300 rounded-lg transition-colors">
+                <i class="bi bi-arrow-left mr-2"></i>
+                {{ _('Go Back') }}
+            </button>
+
+            <!-- Home Button -->
+            <a href="{{ url_for('login') if session.get('user_id') == 'guest' else url_for('redirect_to_project') }}"
+                class="inline-flex items-center px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg transition-colors">
+                <i class="bi bi-house mr-2"></i>
+                {{ _('Go Home') }}
+            </a>
+
+            <!-- Login Button (if not logged in) -->
+            {% if session.get('user_id') == 'guest' %}
+            <a href="{{ url_for('login') }}"
+                class="inline-flex items-center px-6 py-3 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg transition-colors">
+                <i class="bi bi-box-arrow-in-right mr-2"></i>
+                {{ _('Login') }}
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Help Section -->
+        <div class="mt-6 pt-4 border-t border-gray-200">
+            <p class="text-sm text-gray-500 mb-3">{{ _('If this problem persists, please report it to the developers.')
+                }}</p>
+            {% if has_help %}
+            <a href="{{ url_for('get_help') }}"
+                class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors">
+                <i class="bi bi-question-circle mr-2"></i>
+                {{ _('Report a Problem') }}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -26,8 +26,8 @@ from .utils.queues import store_queue
 @app.route("/<int:project_id>", methods=["GET"])
 @app.route("/<int:project_id>/labels", methods=["GET"])
 def labels(project_id: int) -> ...:
-    # Check project_id
-    res = update_session_project(project_id)
+    # Check project_id and require data
+    res = update_session_project(project_id, require_data=True)
     if res is not None:
         return res
 

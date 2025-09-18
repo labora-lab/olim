@@ -1,110 +1,425 @@
 {% extends "base.html" %}
-{% block title %}{{ _('Labels') }}{% endblock %}
+{% block title %}{{ _('Queue Management') }}{% endblock %}
 
 {% block content %}
-<div class="row">
+<div class="space-y-6">
     {% if queue %}
-    <div class="col card s12">
-        <div class="card-content">
-            <a class="btn btn-wide" href="{{url_for('entry', project_id=project_id, queue_id=queue_id)}}"><i
-                    class="material-icons right">send</i>{{ _('Go to Queue') }}</a>
+    <!-- Active Queue Display -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-list-ol text-cyan-600 mr-2"></i>
+                    {{ _('Active Queue') }}
+                </h3>
+                <div class="flex items-center space-x-3">
+                    <span
+                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">
+                        <i class="bi bi-hash mr-1"></i>
+                        {{ queue|length }} {{ _('entries') }}
+                    </span>
+                    <a href="{{url_for('entry', project_id=project_id, queue_id=queue_id)}}"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 transition-colors">
+                        <i class="bi bi-play-fill mr-2"></i>
+                        {{ _('Go To Queue') }}
+                    </a>
+                </div>
+            </div>
         </div>
-        <div class="card-content" style="line-height: 50px;">
-            <span class="card-title">{{ _('Entry') }}</span>
-            {% for dataset_id, entry_id in queue %}
-            <a class="btn" href="{{url_for('entry', project_id=project_id, queue_id=queue_id, queue_pos=loop.index)}}"
-                target="_blank">{% if datasets %}{{datasets[dataset_id]}} - {% endif %}{{entry_id}}</a>
-            {% endfor %}
-        </div>
-    </div>
-    {% else %}
-    <!-- <div class="col card s12">
-        <div class="card-content">
-            <div class="row">
-                <span class="card-title col s12">
-                    {{ _('Random Generate') }}
-                </span>
-                <form method="post">
-                    <div class="input-field col s12">
-                        <input id="number" name="number" type="text" class="validate" value="{{number}}">
-                        <label for="number">{{ _('Number of entries') }}</label>
+
+        <div class="p-6">
+            <div class="mb-4">
+                <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                    <i class="bi bi-lightning mr-2"></i>
+                    {{ _('Quick Actions') }}
+                </h4>
+                <div class="flex items-center space-x-2">
+                    <button type="button" onclick="copyQueueIds()"
+                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors"
+                        title="{{ _('Copy all entry IDs (Ctrl+C)') }}">
+                        <i class="bi bi-clipboard mr-2"></i>
+                        {{ _('Copy IDs') }}
+                        <kbd class="ml-2 px-1 py-0.5 text-xs bg-gray-200 rounded">Ctrl+C</kbd>
+                    </button>
+                    <button type="button" onclick="selectAllEntries()"
+                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors"
+                        title="{{ _('Select all entries (Ctrl+A)') }}">
+                        <i class="bi bi-check-square mr-2"></i>
+                        {{ _('Select All') }}
+                        <kbd class="ml-2 px-1 py-0.5 text-xs bg-gray-200 rounded">Ctrl+A</kbd>
+                    </button>
+                    <button type="button" onclick="exportQueue()"
+                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors">
+                        <i class="bi bi-download mr-2"></i>
+                        {{ _('Export Queue') }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Queue Entries Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {% for dataset_id, entry_id in queue %}
+                <div class="group border border-gray-200 rounded-lg p-3 hover:border-cyan-300 hover:bg-cyan-50 transition-all duration-200 cursor-pointer queue-entry"
+                    data-entry-id="{{ entry_id }}" data-dataset-id="{{ dataset_id }}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <div
+                                class="w-8 h-8 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600 font-medium text-sm group-hover:bg-cyan-200">
+                                {{ loop.index }}
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                {% if datasets %}
+                                <p class="text-xs text-gray-500 truncate">{{ datasets[dataset_id] }}</p>
+                                {% endif %}
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ entry_id }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <a href="{{url_for('entry', project_id=project_id, queue_id=queue_id, queue_pos=loop.index)}}"
+                                class="inline-flex items-center p-1.5 text-xs text-cyan-600 hover:text-cyan-700 focus:outline-none"
+                                title="{{ _('Open Entry') }}" target="_blank">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                            <kbd
+                                class="px-1.5 py-0.5 text-xs font-semibold text-gray-600 bg-gray-200 border border-gray-300 rounded">{{
+                                loop.index }}</kbd>
+                        </div>
                     </div>
-                    <input type="hidden" name="type" value="random">
-                    <div class="col s12">
-                        <button class="btn btn-wide waves-effect waves-light" type="submit" name="action">{{ _('Generate
-                            queue') }}
-                            <i class="material-icons right">send</i>
-                        </button>
-                    </div>
-                </form>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
-    <div class="col card s12">
-        <div class="card-content">
-            <div class="row">
-                <span class="card-title col s12">
-                    {{ _('Generate by IDs') }}
-                </span>
-                <form method="post">
-                    <div class="input-field col s12">
-                        <textarea id="textarea1" name="text" class="materialize-textarea tooltipped"
-                            data-tooltip="{{ _('Separated by comma, spaces, semicolon or line break') }}"></textarea>
-                        <label for="textarea1">{{ _('IDs by Queue') }}</label>
+
+    {% endif %}
+</div>
+
+<!-- Keyboard Shortcuts Help -->
+<div class="fixed bottom-4 right-4">
+    <button type="button" onclick="toggleShortcutsModal()"
+        class="w-12 h-12 bg-purple-600 text-white rounded-full shadow-lg hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-300 transition-all opacity-80 hover:opacity-100"
+        title="{{ _('Keyboard Shortcuts (Press ?)') }}">
+        <i class="bi bi-keyboard"></i>
+    </button>
+</div>
+
+<!-- Shortcuts Modal -->
+<div id="shortcutsModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+            onclick="closeShortcutsModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div
+            class="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="flex items-start">
+                    <div
+                        class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="bi bi-keyboard text-purple-600"></i>
                     </div>
-                    <input type="hidden" name="type" value="list">
-                    <div class="col s12">
-                        <button class="btn btn-wide waves-effect waves-light" type="submit" name="action">{{ _('Generate
-                            queue') }}
-                            <i class="material-icons right">send</i>
-                        </button>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                            {{ _('Keyboard Shortcuts') }}
+                        </h3>
+                        <div class="mt-4 space-y-3">
+                            <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="bi bi-clipboard text-gray-500 mr-2"></i>
+                                    <span class="text-sm text-gray-700">{{ _('Copy Queue IDs') }}</span>
+                                </div>
+                                <kbd
+                                    class="px-2 py-1 text-xs font-semibold text-gray-800 bg-white border border-gray-300 rounded shadow-sm">Ctrl+C</kbd>
+                            </div>
+                            <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="bi bi-check-square text-gray-500 mr-2"></i>
+                                    <span class="text-sm text-gray-700">{{ _('Select All Entries') }}</span>
+                                </div>
+                                <kbd
+                                    class="px-2 py-1 text-xs font-semibold text-gray-800 bg-white border border-gray-300 rounded shadow-sm">Ctrl+A</kbd>
+                            </div>
+                            <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="bi bi-box-arrow-up-right text-gray-500 mr-2"></i>
+                                    <span class="text-sm text-gray-700">{{ _('Quick Entry Access') }}</span>
+                                </div>
+                                <div class="flex space-x-1">
+                                    <kbd
+                                        class="px-2 py-1 text-xs font-semibold text-gray-800 bg-white border border-gray-300 rounded shadow-sm">1-9</kbd>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="bi bi-question-circle text-gray-500 mr-2"></i>
+                                    <span class="text-sm text-gray-700">{{ _('Show This Help') }}</span>
+                                </div>
+                                <kbd
+                                    class="px-2 py-1 text-xs font-semibold text-gray-800 bg-white border border-gray-300 rounded shadow-sm">?</kbd>
+                            </div>
+                        </div>
                     </div>
-                </form>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="closeShortcutsModal()"
+                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-purple-600 text-base font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                    {{ _('Got it!') }}
+                </button>
             </div>
         </div>
-    </div> -->
-    {% if queues %}
-    <div class="col s12 card" style="padding:0px;">
-        <div class="card-content" style="display:block;">
-            <span class="card-title">{{ _('Generated Queues') }}</span>
-        </div>
-        {% for queue in queues %}
-        <div class="card-content blue-grey white-text patient-header" style="display:block;">
-            <a href="{{url_for('queue', project_id=project_id, queue_id=queue['id'])}}" class="btn btn-float right"
-                target="_blank">{{ _('Open queue') }}</a>
-            <p><b>{{queue['id']}}</b></p>
-            <p><span class="small-title">
-                    {{ queue.fronend_text }}
-                </span></p>
-            {% if queue['extra_data'] %}
-            <p>
-                <span class="small-title">
-                    {% for k in queue['extra_data'].keys() %}
-                    {% if queue['extra_data'][k] is sequence %}
-                    {{k}}: {% for v in queue['extra_data'][k] %}{{v}}{% if not loop.last %}, {% endif %}{% endfor %}
-                    {% else %}
-                    {{k}}: {{queue['extra_data'][k]}}
-                    {% endif %}
-                    {% if not loop.last %} - {% endif %}
-                    {% endfor %}
-                </span>
-            </p>
-            {% endif %}
-        </div>
-        {% endfor %}
     </div>
-    {% else %}
-    <div class="col s12 card" style="padding:0px;">
-        <div class="card-content" style="display:block;">
-            <span class="card-title">{{ _('No queues') }}</span>
-        </div>
-    </div>
-    {% endif %}
-    {% endif %}
 </div>
 {% endblock %}
 
-{% block more_scripts %}
+{% block scripts %}
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function (e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+            // Number keys 1-9 for quick entry access
+            if (e.key >= '1' && e.key <= '9') {
+                const index = parseInt(e.key);
+                const entries = document.querySelectorAll('.queue-entry');
+                if (entries[index - 1]) {
+                    e.preventDefault();
+                    const entry = entries[index - 1];
+                    const link = entry.querySelector('a');
+                    if (link) {
+                        window.open(link.href, '_blank');
+                    }
+                }
+            }
+
+            // Ctrl+C to copy queue IDs
+            if (e.ctrlKey && e.key === 'c') {
+                e.preventDefault();
+                copyQueueIds();
+            }
+
+            // Ctrl+A to select all entries
+            if (e.ctrlKey && e.key === 'a') {
+                e.preventDefault();
+                selectAllEntries();
+            }
+
+            // ? to show help
+            if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+                e.preventDefault();
+                toggleShortcutsModal();
+            }
+        });
+
+        // Entry hover effects
+        const entries = document.querySelectorAll('.queue-entry');
+        entries.forEach((entry, index) => {
+            entry.addEventListener('mouseenter', function () {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+            });
+
+            entry.addEventListener('mouseleave', function () {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '';
+            });
+
+            // Click to open entry
+            entry.addEventListener('click', function (e) {
+                if (e.target.tagName !== 'A') {
+                    const link = this.querySelector('a');
+                    if (link) {
+                        window.open(link.href, '_blank');
+                    }
+                }
+            });
+        });
+    });
+
+    // Queue management functions
+    function copyQueueIds() {
+        const entries = document.querySelectorAll('.queue-entry');
+        const ids = Array.from(entries).map(entry => entry.dataset.entryId).join(', ');
+
+        navigator.clipboard.writeText(ids).then(() => {
+            showNotification('{{ _("Queue IDs copied to clipboard!") }}', 'success');
+        }).catch(() => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = ids;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showNotification('{{ _("Queue IDs copied to clipboard!") }}', 'success');
+        });
+    }
+
+    function selectAllEntries() {
+        const entries = document.querySelectorAll('.queue-entry');
+        entries.forEach(entry => {
+            entry.classList.add('bg-cyan-100', 'border-cyan-400');
+        });
+        showNotification(`{{ _("Selected {count} entries").replace('{count}', '') }}${entries.length}`, 'info');
+    }
+
+    function exportQueue() {
+        const entries = document.querySelectorAll('.queue-entry');
+        const queueData = Array.from(entries).map((entry, index) => ({
+            position: index + 1,
+            entry_id: entry.dataset.entryId,
+            dataset_id: entry.dataset.datasetId
+        }));
+
+        const csvContent = "data:text/csv;charset=utf-8,"
+            + "Position,Entry ID,Dataset ID\n"
+            + queueData.map(row => `${row.position},${row.entry_id},${row.dataset_id}`).join("\n");
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `queue_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showNotification('{{ _("Queue exported successfully!") }}', 'success');
+    }
+
+    function showCreateQueueModal() {
+        showNotification('{{ _("Create queue functionality coming soon!") }}', 'info');
+    }
+
+    // Modal functions
+    function toggleShortcutsModal() {
+        const modal = document.getElementById('shortcutsModal');
+        if (modal) {
+            modal.classList.toggle('hidden');
+        }
+    }
+
+    function closeShortcutsModal() {
+        const modal = document.getElementById('shortcutsModal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    // Notification system
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        const colors = {
+            success: 'bg-green-100 border-green-500 text-green-700',
+            error: 'bg-red-100 border-red-500 text-red-700',
+            info: 'bg-blue-100 border-blue-500 text-blue-700',
+            warning: 'bg-yellow-100 border-yellow-500 text-yellow-700'
+        };
+
+        notification.className = `fixed top-4 right-4 px-4 py-3 border-l-4 rounded shadow-lg ${colors[type] || colors.info} transform transition-all duration-300 translate-x-full opacity-0 z-50`;
+        notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="bi bi-check-circle mr-2"></i>
+            <span class="text-sm font-medium">${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-current hover:text-gray-600">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    `;
+
+        document.body.appendChild(notification);
+
+        // Animate in
+        setTimeout(() => {
+            notification.classList.remove('translate-x-full', 'opacity-0');
+        }, 100);
+
+        // Auto remove after 4 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 300);
+            }
+        }, 4000);
+    }
+
+    // Custom highlight functionality (replacing jQuery)
+    function highlightText(element, searchText, className = 'highlight') {
+        if (!searchText || !element) return;
+
+        const walker = document.createTreeWalker(
+            element,
+            NodeFilter.SHOW_TEXT,
+            null,
+            false
+        );
+
+        const textNodes = [];
+        let node;
+
+        while (node = walker.nextNode()) {
+            textNodes.push(node);
+        }
+
+        textNodes.forEach(textNode => {
+            const parent = textNode.parentNode;
+            const text = textNode.textContent;
+            const regex = new RegExp(`(${searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+
+            if (regex.test(text)) {
+                const highlightedHTML = text.replace(regex, `<mark class="${className}">$1</mark>`);
+                const temp = document.createElement('div');
+                temp.innerHTML = highlightedHTML;
+
+                while (temp.firstChild) {
+                    parent.insertBefore(temp.firstChild, textNode);
+                }
+                parent.removeChild(textNode);
+            }
+        });
+    }
+
+    function removeHighlight(element, className = 'highlight') {
+        const highlights = element.querySelectorAll(`mark.${className}`);
+        highlights.forEach(highlight => {
+            const parent = highlight.parentNode;
+            parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+            parent.normalize();
+        });
+    }
 </script>
+
+<style>
+    .highlight {
+        background-color: #fef08a;
+        color: #365314;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-weight: 500;
+    }
+
+    .queue-entry {
+        transition: all 0.2s ease;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: .7;
+        }
+    }
+
+    .pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+</style>
 {% endblock %}

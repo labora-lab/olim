@@ -89,6 +89,7 @@ from . import auth  # noqa
 from . import cli  # noqa
 from . import commands  # noqa
 from . import database  # noqa
+from . import error_handlers  # noqa
 from . import issue  # noqa
 from . import labels  # noqa
 from . import project  # noqa
@@ -98,7 +99,7 @@ from .utils.entry import have_hidden  # noqa
 # Global variables to templates
 app.jinja_env.globals.update(
     have_hidden=have_hidden,
-    has_permition=auth.role_has_permission,
+    has_permission=auth.role_has_permission,
     labels_types=LABELS,
     labels_rev=LABELS[::-1],
     labels_array=json.dumps([label_values[0].replace(" ", "_") for label_values in LABELS]),

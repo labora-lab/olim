@@ -1,33 +1,99 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Initial configuration') }}{% endblock %}
-{% block menu %}{% endblock %}
-{% block menuicon %}{% endblock %}
+{% set suppress_sidebar = true %}
 
-{% import "upload-macro.html" as upload %}
+{% block navbar %}
+<nav class="bg-gray-800 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-center h-16">
+            <div class="flex items-center">
+                <img src="{{ url_for('static', filename='olim.svg') }}" alt="OLIM Logo" class="w-12 h-12 mr-3">
+                <h1 class="text-3xl font-bold text-white">OLIM</h1>
+            </div>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% import "macros/upload-form.html" as upload %}
+{% import "macros/new-user-form.html" as user_macro %}
 
 {% block content %}
-<div class="row">
+<style>
+    /* Page-specific override: ensure no left margin or reserved space when sidebar is not present */
+    #main-content,
+    nav,
+    footer {
+        margin-left: 0 !important;
+        max-width: 100vw !important;
+        width: 100vw !important;
+    }
+
+    /* Override preload collapsed behavior only for this page */
+    .sidebar-preload-collapsed #main-content,
+    .sidebar-preload-collapsed nav,
+    .sidebar-preload-collapsed footer {
+        margin-left: 0 !important;
+    }
+
+    /* Prevent horizontal scrolling caused by 100vw on presence of scrollbars */
+    #main-content,
+    nav,
+    footer {
+        box-sizing: border-box;
+    }
+</style>
+<div class="max-w-4xl mx-auto">
     <!-- Progress Indicator Card -->
-    <div class="col s12 m8 offset-m2">
-        <div class="card">
-            <div class="card-content">
-                <span class="card-title">{{ _('Initial setup') }}</span>
-                <div class="row">
-                    <div class="col s4 center-align">
-                        <span class="{% if step == 'add-user' %}blue-text text-darken-2{% else %}grey-text{% endif %}">
+    <div class="mb-8">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-gear-fill text-blue-600 mr-2"></i>
+                    {{ _('Initial setup') }}
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex flex-col items-center text-center">
+                        <div
+                            class="flex items-center justify-center w-10 h-10 rounded-full mb-2
+                            {% if step == 'add-user' %}bg-blue-100 text-blue-600{% else %}bg-gray-100 text-gray-400{% endif %}">
+                            <i class="bi bi-person-plus text-lg"></i>
+                        </div>
+                        <span class="text-sm font-medium
+                            {% if step == 'add-user' %}text-blue-600{% else %}text-gray-500{% endif %}">
                             {{ _('User creation') }}
                         </span>
-                        <i class="material-icons grey-text text-lighten-1 right">chevron_right</i>
                     </div>
-                    <div class="col s4 center-align">
-                        <span
-                            class="{% if step == 'add-project' %}blue-text text-darken-2{% else %}grey-text{% endif %}">
+                    <div class="flex-1 h-0.5 mx-4 bg-gray-200">
+                        <div class="h-full bg-blue-600 transition-all duration-300"
+                            style="width: {% if step == 'add-project' or step == 'add-data' %}100{% else %}0{% endif %}%">
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-center text-center">
+                        <div
+                            class="flex items-center justify-center w-10 h-10 rounded-full mb-2
+                            {% if step == 'add-project' %}bg-blue-100 text-blue-600{% else %}bg-gray-100 text-gray-400{% endif %}">
+                            <i class="bi bi-folder-plus text-lg"></i>
+                        </div>
+                        <span class="text-sm font-medium
+                            {% if step == 'add-project' %}text-blue-600{% else %}text-gray-500{% endif %}">
                             {{ _('Project setup') }}
                         </span>
-                        <i class="material-icons grey-text text-lighten-1 right">chevron_right</i>
                     </div>
-                    <div class="col s4 center-align">
-                        <span class="{% if step == 'add-data' %}blue-text text-darken-2{% else %}grey-text{% endif %}">
+                    <div class="flex-1 h-0.5 mx-4 bg-gray-200">
+                        <div class="h-full bg-blue-600 transition-all duration-300"
+                            style="width: {% if step == 'add-data' %}100{% else %}0{% endif %}%"></div>
+                    </div>
+                    <div class="flex flex-col items-center text-center">
+                        <div
+                            class="flex items-center justify-center w-10 h-10 rounded-full mb-2
+                            {% if step == 'add-data' %}bg-blue-100 text-blue-600{% else %}bg-gray-100 text-gray-400{% endif %}">
+                            <i class="bi bi-cloud-upload text-lg"></i>
+                        </div>
+                        <span class="text-sm font-medium
+                            {% if step == 'add-data' %}text-blue-600{% else %}text-gray-500{% endif %}">
                             {{ _('Dataset upload') }}
                         </span>
                     </div>
@@ -36,98 +102,142 @@
         </div>
     </div>
     {% if step == "add-user" %}
-    <div class="col s12 m8 offset-m2 card">
-        <div class="card-content">
-            <span class="card-title">{{ _('Create admin account') }}</span>
-            <form method="POST" action="{{ url_for('init_config') }}">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-person-plus-fill text-green-600 mr-2"></i>
+                {{ _('Create admin account') }}
+            </h3>
+        </div>
+        <div class="p-6">
+            <form method="POST" action="{{ url_for('init_config') }}" class="space-y-6">
                 <input id="step" type="hidden" name="step" value="{{step}}" />
-                <div class="input-field">
-                    <input id="username" type="text" name="username" required>
-                    <label for="username">{{ _('Username') }}</label>
+
+                <!-- Username -->
+                <div>
+                    <label for="username" class="block mb-2 text-sm font-medium text-gray-900">
+                        <i class="bi bi-at mr-1"></i>
+                        {{ _('Username') }}
+                    </label>
+                    <input type="text" id="username" name="username" required
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                        placeholder="{{ _('Enter username') }}">
                 </div>
-                <div class="input-field">
-                    <input id="name" type="text" name="name">
-                    <label for="name">{{ _('Name') }}</label>
+
+                <!-- Name -->
+                <div>
+                    <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
+                        <i class="bi bi-person mr-1"></i>
+                        {{ _('Name') }}
+                    </label>
+                    <input type="text" id="name" name="name"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                        placeholder="{{ _('Enter full name') }}">
                 </div>
-                <div id="new" class="input-field">
-                    <input id="new_password" type="password" name="new_password" required>
-                    <label for="new_password">{{ _('New Password') }}</label>
-                </div>
-                <div id="text" class="input-field hidden">
-                    <input id="new_password_text" type="text" name="new_password_text">
-                    <label for="new_password_text">{{ _('New Password') }}</label>
-                </div>
-                <div id="check" class="input-field ">
-                    <input id="password_check" type="password" name="password_check" required>
-                    <label for="password_check">{{ _('Confirm Password') }}</label>
-                </div>
-                <div id="random">
-                    <button class="btn btn-wide waves-effect waves-light grey darken-2" style="margin-bottom: 15px;"
-                        type="button" onclick="generateRandomPassword()">
-                        {{ _('Generate Random Password') }}<i class="material-icons right">loop</i>
-                    </button>
-                </div>
-                <button class="btn btn-wide waves-effect waves-light" type="submit" name="action">{{ _('Create User') }}
-                    <i class="material-icons right">add_box</i>
+
+                <!-- Password Section -->
+                {{ user_macro.password_form(show_current=false) }}
+
+                <!-- Submit Button -->
+                <button type="submit" name="action"
+                    class="w-full text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                    <i class="bi bi-person-plus mr-2"></i>
+                    {{ _('Create User') }}
                 </button>
             </form>
         </div>
     </div>
     {% elif step == "add-project" %}
-    <div class="col s12 m8 offset-m2 card">
-        <div class="card-content">
-            <span class="card-title">{{ _('Setup Project') }}</span>
-            <form method="POST" action="{{ url_for('init_config') }}">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-folder-plus text-blue-600 mr-2"></i>
+                {{ _('Setup Project') }}
+            </h3>
+        </div>
+        <div class="p-6">
+            <form method="POST" action="{{ url_for('init_config') }}" class="space-y-6">
                 <input id="step" type="hidden" name="step" value="{{step}}" />
-                <div class="input-field">
-                    <input id="name" type="text" name="name" required>
-                    <label for="name">{{ _('Project name') }}</label>
+
+                <!-- Project Name -->
+                <div>
+                    <label for="name" class="block mb-2 text-sm font-medium text-gray-900">
+                        <i class="bi bi-folder mr-1"></i>
+                        {{ _('Project name') }}
+                    </label>
+                    <input type="text" id="name" name="name" required
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                        placeholder="{{ _('Enter project name') }}">
                 </div>
-                <h6>Project Labels</h6>
-                <div class="labels-container">
-                    <div class="label-group input-field">
-                        <input type="text" name="labels" class="label-input">
-                        <button type="button" class="btn waves-effect waves-light grey darken-2 remove-label">
-                            <i class="material-icons">indeterminate_check_box</i>
+
+                <!-- Project Labels -->
+                <div>
+                    <label class="block mb-3 text-sm font-medium text-gray-900">
+                        <i class="bi bi-tags mr-1"></i>
+                        {{ _('Project Labels') }}
+                    </label>
+                    <div class="labels-container space-y-3">
+                        <div class="label-group flex items-center space-x-2">
+                            <input type="text" name="labels"
+                                class="label-input bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block flex-1 p-2.5"
+                                placeholder="{{ _('Enter label name') }}">
+                            <button type="button"
+                                class="remove-label inline-flex items-center px-3 py-2 text-sm font-medium text-red-600 bg-red-100 border border-red-300 rounded-lg hover:bg-red-200 focus:ring-4 focus:outline-none focus:ring-red-300 transition-colors">
+                                <i class="bi bi-dash-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Add More Labels Button -->
+                    <div class="mt-3">
+                        <button type="button"
+                            class="add-label inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-lg hover:bg-blue-200 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-colors">
+                            <i class="bi bi-plus-circle mr-2"></i>
+                            {{ _('More labels') }}
                         </button>
-                        <label>{{ _('Label') }}</label>
                     </div>
                 </div>
-                <div>
-                    <button class="btn btn-wide waves-effect waves-light grey darken-2 add-label" type="button">
-                        {{ _('More labels') }}
-                        <i class="material-icons right">add_box</i>
-                    </button>
-                </div>
-                <button class="btn btn-wide waves-effect waves-light" type="submit" name="action">
+
+                <!-- Submit Button -->
+                <button type="submit" name="action"
+                    class="w-full text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                    <i class="bi bi-plus-circle mr-2"></i>
                     {{ _('Create Project') }}
-                    <i class="material-icons right">add_box</i>
                 </button>
             </form>
         </div>
     </div>
     {% elif step == "add-data" %}
-    {{upload.upload_form(projects)}}
+    {{upload.upload_form(projects, current_project_id=session.get('project_id'))}}
     {% endif %}
 </div>
 {% endblock %}
 
 {% block scripts %}
+{% if step == "add-user" %}
+{{ user_macro.password_scripts() }}
+{% endif %}
 {% if step == "add-project" %}
 <script>
-    $(document).ready(function () {
+    document.addEventListener('DOMContentLoaded', function () {
+        const addBtn = document.querySelector('.add-label');
+        const labelsContainer = document.querySelector('.labels-container');
+
         // Add label field
-        $('.add-label').click(function () {
-            const lastGroup = $('.label-group:last');
-            const newGroup = lastGroup.clone();
-            newGroup.find('input').val('');  // Clear input value
-            $('.labels-container').append(newGroup);
+        addBtn?.addEventListener('click', function () {
+            const lastGroup = labelsContainer.querySelector('.label-group:last-child');
+            const newGroup = lastGroup.cloneNode(true);
+            newGroup.querySelector('input').value = '';  // Clear input value
+            labelsContainer.appendChild(newGroup);
         });
 
         // Remove label field
-        $(document).on('click', '.remove-label', function () {
-            if ($('.label-group').length > 1) {  // Keep at least one field
-                $(this).closest('.label-group').remove();
+        labelsContainer?.addEventListener('click', function (e) {
+            if (e.target.closest('.remove-label')) {
+                const labelGroups = labelsContainer.querySelectorAll('.label-group');
+                if (labelGroups.length > 1) {  // Keep at least one field
+                    e.target.closest('.label-group').remove();
+                }
             }
         });
     });

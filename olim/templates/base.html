@@ -1,234 +1,314 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <!-- Import Google Icon Font -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- Import materialize.css -->
-    <link type="text/css" rel="stylesheet" href="{{url_for('static', filename='css/materialize.min.css')}}" />
-    <link type="text/css" rel="stylesheet" href="{{url_for('static', filename='css/styles.css')}}" />
-    <!-- Import Mathjax -->
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    {% if suppress_sidebar %}
+    <style>
+        .no-sidebar #main-content,
+        .no-sidebar nav,
+        .no-sidebar footer {
+            margin-left: 0 !important;
+            max-width: 100vw !important;
+            width: 100vw !important;
+            box-sizing: border-box;
+        }
+    </style>
+    {% endif %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='olim.svg') }}" type="image/svg+xml">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    {% if not suppress_sidebar %}
+    <script>
+        // Apply collapsed state immediately if needed to prevent flash
+        (function () {
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                document.documentElement.classList.add('sidebar-preload-collapsed');
+            }
+        })();
+    </script>
+    {% endif %}
+    <style>
+        .htmx-indicator {
+            opacity: 0;
+            transition: opacity 200ms ease-in;
+        }
 
-    <!-- Let browser know website is optimized for mobile -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        .htmx-request .htmx-indicator {
+            opacity: 1;
+        }
 
-    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+        .htmx-request.htmx-indicator {
+            opacity: 1;
+        }
 
-    {% block head%}{% endblock %}
+        .sidebar-collapsed .sidebar-item-text {
+            display: none;
+        }
 
-    <title>{% block title %}{% endblock %} - {{ _('OLIM - Open Labeller for Iterative Machine learning')}}</title>
+        .sidebar-collapsed .project-name-header {
+            display: none;
+        }
+
+        .sidebar-collapsed .task-section-title {
+            display: none;
+        }
+
+        .sidebar-collapsed .task-counter {
+            display: flex;
+        }
+
+        .sidebar-collapsed .task-list {
+            display: none;
+        }
+
+        .sidebar-collapsed .task-counter-collapsed {
+            display: flex !important;
+        }
+
+        .sidebar-collapsed .bottom-icons {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .sidebar-collapsed .bottom-icons>* {
+            margin-right: 0;
+        }
+
+        /* Navigation items when collapsed - only override inactive items */
+        .sidebar-collapsed ul.space-y-1 li a.text-gray-300 {
+            background-color: transparent !important;
+        }
+
+        .sidebar-collapsed ul.space-y-1 li a.text-gray-300:hover {
+            background-color: #374151 !important; /* gray-700 */
+        }
+
+        /* Keep active items highlighted - no override needed for bg-cyan-600 */
+
+        /* Project dropdown button when collapsed */
+        .sidebar-collapsed #project-dropdown-btn {
+            background-color: transparent !important;
+        }
+
+        .sidebar-collapsed #project-dropdown-btn:hover {
+            background-color: #374151 !important; /* gray-700 */
+        }
+
+        .sidebar-collapsed .sidebar-item-icon {
+            margin-right: 0;
+        }
+
+        .sidebar-collapsed .flex.items-center {
+            justify-content: center;
+        }
+
+        .sidebar-collapsed .sidebar-item-text {
+            display: none;
+        }
+
+        .sidebar-collapsed .px-2.py-2.mb-2 {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0.5rem;
+        }
+
+        .sidebar-collapsed .task-section-icon {
+            display: none;
+        }
+
+        .sidebar-collapsed .bottom-icons {
+            right: 50%;
+            transform: translateX(50%);
+        }
+
+        .task-counter {
+            display: none;
+        }
+
+        .sidebar-collapsed .task-counter {
+            display: flex;
+        }
+
+        .sidebar-collapsed #project-dropdown-btn span {
+            display: none;
+        }
+
+        .sidebar-collapsed #project-dropdown-btn i {
+            margin-left: 0.5rem;
+        }
+
+        .sidebar-collapsed .sidebar-item-icon {
+            margin-right: 0;
+        }
+
+        .sidebar-collapsed #project-dropdown {
+            left: 4rem;
+            top: 0;
+            width: 200px;
+        }
+
+        .sidebar-collapsed #settings-dropdown {
+            left: 4rem;
+            bottom: -1rem;
+            width: 220px;
+        }
+
+        .sidebar-collapsed .border-t.border-b.border-gray-600.bg-gray-700 {
+            background-color: transparent !important;
+            border-top: none !important;
+            border-bottom: none !important;
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+
+        .sidebar-collapsed .task-counter-collapsed {
+            margin-top: -2rem !important;
+        }
+
+        /* Task counter styling when collapsed */
+        .sidebar-collapsed .task-counter-collapsed button {
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        .sidebar-collapsed .task-counter-collapsed button:hover {
+            background-color: #374151 !important;
+        }
+
+        /* Task counter when running jobs */
+        .sidebar-collapsed .task-counter-collapsed button.bg-blue-600 {
+            background-color: #2563eb !important;
+        }
+
+        .sidebar-collapsed .task-counter-collapsed button.bg-blue-600:hover {
+            background-color: #1d4ed8 !important;
+        }
+
+        .sidebar-collapsed .border-t.border-gray-600.pt-2.mt-2 {
+            border-top: none !important;
+            padding-top: 0 !important;
+            margin-top: -0.5rem !important;
+        }
+
+        .sidebar-collapsed .flex.items-center.p-2 {
+            padding: 0.5rem !important;
+            justify-content: center !important;
+        }
+
+        .sidebar-collapsed .sidebar-item-icon {
+            margin: 0 !important;
+        }
+
+        .task-counter {
+            display: none;
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.75rem;
+            text-align: center;
+            line-height: 20px;
+            font-weight: bold;
+        }
+
+        /* Preload collapsed state to prevent flash */
+        .sidebar-preload-collapsed #sidebar {
+            width: 4rem !important;
+        }
+
+        .sidebar-preload-collapsed #main-content {
+            margin-left: 4rem !important;
+        }
+
+        @media (max-width: 640px) {
+            .sidebar-preload-collapsed #main-content {
+                margin-left: 0 !important;
+            }
+        }
+    </style>
+    <title>{% block title %}{% endblock %} - {{ _('OLIM - Open Labeller for Iterative Machine learning') }}</title>
 </head>
 
-<body>
-    <header>
-        {% block menu %}
-        <ul id="slide-out" class="sidenav">
-            {% if has_permition('redirect_to_project') %}
-            <ul id="projects-dropdown-2" class="dropdown-content" style="margin-top: 40px;">
-                {% for project in projects %}
-                <li><a href="/{{ project.id }}">{{ project.name }}</a></li>
-                {% endfor %}
-            </ul>
-            <li>
-                <a class="dropdown-trigger" href="#" data-target="projects-dropdown-2">
-                    <i class="material-icons">arrow_drop_down</i> {{project_name}}
-                </a>
-            </li>
-            <li style="padding: 10px 20px;">
-                <h5>{{_('Project: {project_name}'.format(project_name=project_name))}}</h5>
-            </li>
-            {% if has_permition('labels') %}
-            <li><a href="{{ url_for('labels', project_id = project_id) }}">{{ _('Labels') }}</a></li>
-            {% endif %}
-            {% if has_permition('search') %}
-            <li><a href="{{ url_for('search', project_id = project_id) }}">{{ _('Search') }}</a></li>
-            {% endif %}
-            <!-- {% if has_permition('entry') %}
-            <li><a href="{{ url_for('entry', project_id = project_id) }}">{{ _('Open Entries') }}</a></li>
-            {% endif %} -->
-            {% if has_permition('queue') %}
-            <li><a href="{{ url_for('queue', project_id = project_id) }}">{{ _('Queues') }}</a></li>
-            {% endif %}
-            {% if have_hidden() and has_permition('hidden') %}
-            <li><a href="{{ url_for('hidden', project_id = project_id) }}">{{ _('Hidden texts') }}</a></li>
-            {% endif %}
-            {% endif %}
-            <li style="padding: 10px 20px;">
-                <h5>{{_('Settings')}}</h5>
-            </li>
-            {% if has_permition('users') %}
-            <li><a href="{{ url_for('users') }}">{{ _('Users') }}</a></li>
-            {% endif %}
-            {% if has_permition('user_settings') %}
-            <li><a href="{{ url_for('user_settings') }}">{{ _('account_settings_1') }}</a></li>
-            {% endif %}
-            {% if has_permition('projects') %}
-            <li><a href="{{ url_for('projects') }}">{{_("Manage Projects")}}</a></li>
-            {% endif %}
-            {% if has_permition('upload_data') %}
-            <li><a href="{{ url_for('upload_data') }}">{{_("Upload Data")}}</a></li>
-            {% endif %}
-            {% if session['user_id'] == 'guest' %}
-            <li><a href="{{ url_for('login') }}">{{ _('Login') }}</a></li>
-            {% else %}
-            <li><a href="{{ url_for('logout') }}">{{ _('Logout') }}</a></li>
-            {% endif %}
-            <li style="padding: 10px 20px;">
-                <h5>{{_('Jobs')}}</h5>
-            </li>
-            <li id="task-list">
-                {% include "task-list.html"%}
-            </li>
-        </ul>
-        {% endblock %}
-        <nav>
-            <div class="nav-wrapper cyan darken-4">
-                <div class="center">
-                    <span class="brand-logo tooltipped" style="margin: 0 -40px;"
-                        data-tooltip="{{ _('Open Labeller for Iterative Machine learning') }}">
-                        OLIM
-                    </span>
-                </div>
-                {% block menuicon %}
-                {% if has_permition('redirect_to_project') %}
-                <div class="nav-mobile left">
-                    <span data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></span>
-                </div>
-                <ul id="projects-dropdown" class="dropdown-content" style="margin-top: 40px;">
-                    {% for project in projects %}
-                    <li><a href="/{{ project.id }}">{{ project.name }}</a></li>
-                    {% endfor %}
-                </ul>
-                <div class="left hide-on-med-and-down">
-                    <a class="btn waves-effect waves-light teal darken-2 dropdown-trigger"
-                        data-target="projects-dropdown">
-                        <i class="material-icons left" style="margin: -15px 0 0 -10px;">arrow_drop_down</i>
-                        {{project_name}}
-                    </a>
-                </div>
-                {% endif %}
-                {% endblock %}
-            </div>
-        </nav>
-    </header>
-    <div id="warning" class="modal">
-        <div class="modal-content">
-            <h4 id="warning-title"><i class="material-icons red-text text-darken-2">warning</i> {{
-                _('Warning') }}</h4>
-            <p id="warning-text">{{ _('A buch of text') }}</p>
-        </div>
-        <div class="modal-footer">
-            <a class="modal-close red darken-3 btn waves-effect waves-red" id="warning-close">{{ _('Continue') }}</a>
-            <a class="modal-close btn waves-effect waves-green">{{ _('Close') }}</a>
-        </div>
-    </div>
-    <div class="container" style="margin-bottom: -30px;">
-        <div class="row">
-            <!-- Flash message divs -->
-            {% with warning_messages = get_flashed_messages(category_filter=["warning"]) %}
-            {% if warning_messages %}
-            <div class="card orange lighten-5 col s12" id="warning-div">
-                <div class="card-content">
-                    <span class="right msg_close">
-                        <a class='btn-flat tooltipped' data-position="bottom" data-tooltip="{{ _('Close') }}"
-                            onclick="$('#warning-div').hide();">
-                            <i class="material-icons grey-text text-darken-4">clear</i>
-                        </a>
-                    </span>
-                    <!-- <span class="card-title orange-text">{{ _('Warning') }}</span> -->
-                    {% for message in warning_messages %}
-                    <p class="orange-text">{{ message }}</p>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-            {% endwith %}
+<body class="bg-gray-50 min-h-screen flex flex-col{% if suppress_sidebar %} no-sidebar{% endif %}">
 
-            {% with success_messages = get_flashed_messages(category_filter=["success"]) %}
-            {% if success_messages %}
-            <div class="card green lighten-5 col s12" id="success-div">
-                <div class="card-content">
-                    <span class="right msg_close">
-                        <a class='btn-flat tooltipped' data-position="bottom" data-tooltip="{{ _('Close') }}"
-                            onclick="$('#success-div').hide();">
-                            <i class="material-icons grey-text text-darken-4">clear</i>
-                        </a>
-                    </span>
-                    <!-- <span class="card-title green-text">{{ _('Success') }}</span> -->
-                    {% for message in success_messages %}
-                    <p class="green-text">{{ message }}</p>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-            {% endwith %}
+    {% if not suppress_sidebar %}
+    {% block sidebar %}
+    {% include 'components/sidebar.html' %}
+    {% endblock %}
+    {% endif %}
 
-            {% with error_messages = get_flashed_messages(category_filter=["error"]) %}
-            {% if error_messages %}
-            <div class="card red lighten-5 col s12" id="error-div">
-                <div class="card-content">
-                    <span class="right msg_close">
-                        <a class='btn-flat tooltipped' data-position="bottom" data-tooltip="{{ _('Close') }}"
-                            onclick="$('#error-div').hide();">
-                            <i class="material-icons grey-text text-darken-4">clear</i>
-                        </a>
-                    </span>
-                    <!-- <span class="card-title red-text">{{ _('Error') }}</span> -->
-                    {% for message in error_messages %}
-                    <p class="red-text">{{ message }}</p>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-            {% endwith %}
-        </div>
-    </div>
-    <main>
-        <div class="container" style="margin-top: 20px;">
-            {% block content %}{{content}}{% endblock %}
-        </div>
-    </main>
-    <footer class="page-footer cyan darken-3">
-        <div class="row">
-            <div class="col s12 center">
-                <a class="grey-text text-lighten-4" href="https://gitlab.com/nanogennari/olim">
-                    {{ _('OLIM - Open Labeller for Iterative Machine learning') }} - v{{ version }}
-                </a>
-                {% if has_help %}
-                <a class="grey-text text-lighten-4 right tooltipped" href="{{ url_for('get_help') }}"
-                    data-tooltip="{{_('Report a problem with this page')}}">
-                    <i class="material-icons">help</i>
-                </a>
-                {% endif %}
-            </div>
-        </div>
-    </footer>
-    <!-- JavaScript at end of body for optimized loading -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/jquery.highlight.js')}}"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/materialize.min.js')}}"></script>
-    <script type="text/javascript" src="{{url_for('static', filename='js/scripts.js')}}"></script>
-    <script type="text/javascript">
-        document.addEventListener('DOMContentLoaded', function () {
-            $('.sidenav').sidenav();
 
-            function refreshTaskList() {
-                $.get('{{url_for("check_task_status")}}', function (data) {
-                    $('#task-list').html(data);
-                    // Reinitialize only task-list components, not chips
-                    $('#task-list .dropdown-trigger').dropdown();
-                    $('#task-list .tooltipped').tooltip();
-                })
-                    .fail(function () {
-                        $('#task-list').html('{{_("Error loading tasks")}}');
-                    });
+    {% if not suppress_sidebar %}
+    {% block mobile_backdrop %}
+    <!-- Mobile sidebar backdrop -->
+    <div id="sidebar-backdrop" class="fixed inset-0 z-30 bg-gray-900/50 hidden sm:hidden"></div>
+    {% endblock %}
+    {% endif %}
+
+    <!-- Main Content Wrapper -->
+    <div id="main-content"
+        class="flex flex-col min-h-screen transition-all duration-300 {% if suppress_sidebar %}w-full max-w-none{% else %}{% block main_wrapper_classes %}sm:ml-64{% endblock %}{% endif %}">
+        {# Remove sm:ml-64 if suppress_sidebar is true #}
+        {% if suppress_sidebar %}
+        {# Remove any margin-left classes forcibly #}
+        <style>
+            #main-content {
+                margin-left: 0 !important;
             }
-            // Optional: Auto-refresh every 30 seconds
-            setInterval(refreshTaskList, 10000);
+        </style>
+        {% endif %}
+        {% block navbar %}{% endblock %}
+        <!-- Mobile Header -->
+        <div class="sm:hidden bg-gray-800 p-4 flex items-center justify-between">
+            <button id="sidebar-toggle" class="text-gray-300 hover:text-white">
+                <i class="bi bi-list text-xl"></i>
+            </button>
+            <div class="flex items-center">
+                <img src="{{ url_for('static', filename='olim.svg') }}" alt="OLIM Logo" class="w-6 h-6 mr-2">
+                <span class="text-lg font-semibold text-white">OLIM</span>
+            </div>
+        </div>
+
+
+        <!-- Main Content -->
+        <main class="p-4 flex-grow">
+            {% block content %}
+            <div class="h-96 flex justify-center items-center">
+                <div class="text-center">
+                    <img src="{{ url_for('static', filename='olim.svg') }}" alt="OLIM Logo"
+                        class="w-24 h-24 mb-4 mx-auto">
+                    <h1 class="text-4xl font-bold text-gray-800 mb-2">OLIM</h1>
+                    <p class="text-gray-600">{{ _('Open Labeller for Iterative Machine learning') }}</p>
+                </div>
+            </div>
+            {% endblock %}
+        </main>
+
+        {% include 'components/footer.html' %}
+    </div>
+
+    {% include 'components/error_modal.html' %}
+    {% include 'components/scripts.html' %}
+
+    <script>
+        // Initialize base functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof window.init === 'function') {
+                window.init();
+            }
         });
-        LABELS = {{ labels_array | safe }}
     </script>
+
     {% block scripts %}{% endblock %}
 </body>
 

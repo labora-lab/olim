@@ -1,31 +1,96 @@
 {% extends "base.html" %}
 {% block title %}{{ _('User Management') }}{% endblock %}
+
+{% import "macros/new-user-form.html" as user_macro %}
+
 {% block content %}
-<div class="row">
-    <div class="col {% if session.role == 'admin' %}s8{% else %}s12{% endif %}">
-        <div class="card">
-            <div class="card-content">
-                <span class="card-title">{{ _('User Management') }}</span>
-                <table>
-                    <thead>
+<div class="grid grid-cols-1 {% if session.role == 'admin' %}lg:grid-cols-3{% endif %} gap-6">
+    <!-- Users List -->
+    <div class="{% if session.role == 'admin' %}lg:col-span-2{% endif %}">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="bi bi-people-fill text-cyan-600 mr-2"></i>
+                        {{ _('User Management') }}
+                    </h3>
+
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                         <tr>
-                            <th>{{ _('Name') }}</th>
-                            <th>{{ _('Username') }}</th>
-                            <th>{{ _('Role') }}</th>
-                            <th>{{ _('Actions') }}</th>
+                            <th scope="col" class="px-6 py-3">
+                                <div class="flex items-center">
+                                    <i class="bi bi-person mr-2"></i>
+                                    {{ _('Name') }}
+                                </div>
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                <div class="flex items-center">
+                                    <i class="bi bi-at mr-2"></i>
+                                    {{ _('Username') }}
+                                </div>
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                <div class="flex items-center">
+                                    <i class="bi bi-shield-check mr-2"></i>
+                                    {{ _('Role') }}
+                                </div>
+                            </th>
+                            <th scope="col" class="px-6 py-3">
+                                <div class="flex items-center">
+                                    <i class="bi bi-gear mr-2"></i>
+                                    {{ _('Actions') }}
+                                </div>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for user in users %}
-                        <tr>
-                            <td>{{ user.name }}</td>
-                            <td>{{ user.username }}</td>
-                            <td>{{ user.role }}</td>
-                            <td>
+                        <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div
+                                        class="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
+                                        {{ user.name[0]|upper if user.name else user.username[0]|upper }}
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-gray-900">
+                                            {{ user.name if user.name else _('No name') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="font-mono text-gray-700">{{ user.username }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {% if user.role == 'admin' %}bg-red-100 text-red-800
+                                    {% elif user.role == 'user' %}bg-blue-100 text-blue-800
+                                    {% elif user.role == 'annotator' %}bg-green-100 text-green-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {% if user.role == 'admin' %}
+                                    <i class="bi bi-shield-fill-exclamation mr-1"></i>
+                                    {% elif user.role == 'user' %}
+                                    <i class="bi bi-person-fill mr-1"></i>
+                                    {% elif user.role == 'annotator' %}
+                                    <i class="bi bi-pencil-fill mr-1"></i>
+                                    {% else %}
+                                    <i class="bi bi-question-circle-fill mr-1"></i>
+                                    {% endif %}
+                                    {{ user.role|title }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
                                 <a href="{{ url_for('user_settings', user_id=user.id) }}"
-                                    class="btn waves-effect waves-light tooltipped"
-                                    data-tooltip="{{ _('Change Password') }}">
-                                    <i class="material-icons">edit</i>
+                                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 transition-colors"
+                                    title="{{ _('Change Password') }}">
+                                    <i class="bi bi-pencil-square mr-1"></i>
+                                    {{ _('Edit') }}
                                 </a>
                             </td>
                         </tr>
@@ -33,58 +98,38 @@
                     </tbody>
                 </table>
             </div>
+
+            {% if not users %}
+            <div class="text-center py-12">
+                <i class="bi bi-people text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">{{ _('No users found') }}</h3>
+                <p class="text-gray-500">{{ _('There are no users registered in the system yet.') }}</p>
+            </div>
+            {% endif %}
         </div>
     </div>
+
+    <!-- Add User Form (Admin only) -->
     {% if session.role == 'admin' %}
-    <div class="col s4">
-        <div class="card">
-            <div class="card-content">
-                <span class="card-title">{{ _('Add User') }}</span>
-                <form method="post" action="{{ url_for('users') }}">
-                    <div class="input-field">
-                        <input id="username" type="text" name="username" required>
-                        <label for="username">{{ _('Username') }}</label>
-                    </div>
-                    <div id="new" class="input-field">
-                        <input id="new_password" type="password" name="new_password" required>
-                        <label for="new_password">{{ _('New Password') }}</label>
-                    </div>
-                    <div id="text" class="input-field hidden">
-                        <input id="new_password_text" type="text" name="new_password_text">
-                        <label for="new_password_text">{{ _('New Password') }}</label>
-                    </div>
-                    <div id="check" class="input-field ">
-                        <input id="password_check" type="password" name="password_check" required>
-                        <label for="password_check">{{ _('Confirm Password') }}</label>
-                    </div>
-                    <div id="random">
-                        <button class="btn btn-wide waves-effect waves-light" type="button"
-                            onclick="generateRandomPassword()">
-                            {{ _('Generate Random Password') }}<i class="material-icons right">loop</i>
-                        </button>
-                    </div>
-                    <div class="input-field">
-                        <input id="name" type="text" name="name">
-                        <label for="name">{{ _('Name') }}</label>
-                    </div>
-                    <div class="input-field">
-                        <select id="role" name="role" required>
-                            <option value="" disabled selected>{{ _('Select a Role') }}</option>
-                            {% for role in roles %}
-                            {% if role != 'guest'%}
-                            <option value="{{ role }}">{{ role }}</option>
-                            {% endif %}
-                            {% endfor %}
-                        </select>
-                        <label for="role">{{ _('Role') }}</label>
-                    </div>
-                    <button class="btn waves-effect waves-light" type="submit" name="action">{{ _('Add User') }}
-                        <i class="material-icons right">person_add</i>
-                    </button>
-                </form>
+    <div class="lg:col-span-1">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-person-plus-fill text-green-600 mr-2"></i>
+                    {{ _('Add User') }}
+                </h3>
+            </div>
+
+            <div class="p-6">
+                {{ user_macro.user_form(roles=roles, show_role=true, form_action=url_for('users'), button_text='Add
+                User', button_icon='bi-person-plus') }}
             </div>
         </div>
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ user_macro.password_scripts() }}
 {% endblock %}
