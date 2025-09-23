@@ -1,0 +1,99 @@
+<div class="p-6 text-entry">
+    <div class="text-lg font-semibold text-gray-900 mb-4">
+        {{res['_source']['text']}}
+    </div>
+
+    <!-- PDF Viewer Section -->
+    {% if res['_source'].get('pdf_url') %}
+    <div class="mt-6">
+        <h4 class="mb-3 flex items-center">
+            <i class="bi bi-file-earmark-pdf mr-2 text-red-600"></i>
+            {{ _('PDF Document') }}
+        </h4>
+        <div class="border border-gray-300 rounded-lg overflow-hidden bg-white shadow-sm" style="margin-left: -1.5rem; margin-right: -1.5rem; margin-bottom: -1.5rem;">
+            <iframe
+                id="pdf-viewer"
+                src="{{ res['_source']['pdf_url'] }}"
+                width="100%"
+                height="600px"
+                style="border: none; min-height: 400px; margin: 0; padding: 0; display: block;">
+                <p class="p-4 text-gray-600">
+                    <i class="bi bi-exclamation-triangle mr-2"></i>
+                    {{ _('Your browser does not support PDF viewing. ') }}
+                    <a href="{{ res['_source']['pdf_url'] }}" target="_blank" class="text-blue-600 hover:underline">
+                        {{ _('Click here to open the PDF in a new tab') }}
+                    </a>
+                </p>
+            </iframe>
+        </div>
+    </div>
+
+    <script>
+        function resizePdfViewer() {
+            const pdfViewer = document.getElementById('pdf-viewer');
+            if (!pdfViewer) return;
+
+            // Get the current scroll position and viewport height
+            const viewportHeight = window.innerHeight;
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+            // Get the position of the PDF viewer relative to the viewport
+            const pdfViewerRect = pdfViewer.getBoundingClientRect();
+            const pdfViewerTop = pdfViewerRect.top + scrollTop;
+
+            // Calculate available space from the top of the PDF viewer to the bottom of the viewport
+            // Leave some space (100px) for the footer to remain visible
+            const footerSpace = 100;
+            const availableHeight = viewportHeight - (pdfViewerTop - scrollTop) - footerSpace;
+
+            // Set minimum height of 400px, maximum of available space
+            const minHeight = 400;
+            const maxHeight = Math.max(minHeight, availableHeight);
+
+            // Only update if the calculated height is different and reasonable
+            if (maxHeight >= minHeight && maxHeight <= viewportHeight) {
+                pdfViewer.style.height = maxHeight + 'px';
+            }
+        }
+
+        // Resize on page load and window resize
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', resizePdfViewer);
+        } else {
+            resizePdfViewer();
+        }
+
+        window.addEventListener('resize', resizePdfViewer);
+        window.addEventListener('scroll', resizePdfViewer);
+    </script>
+    {% endif %}
+</div>
+
+<!-- Additional Information Section -->
+{% if show_metadata %}
+<div class="px-6 pb-6 text-entry">
+    <h4 class="mb-2">
+        <i class="bi bi-info-circle mr-2"></i>
+        {{ _('Additional Information') }}
+    </h4>
+    <ul class="space-y-2">
+        {% for key in res['_source'].keys() %}
+        {% if key not in ['text', 'pdf_url'] %}
+        <li class="text-sm">
+            <span class="font-bold text-gray-700">{{key}}</span>:
+            <span class="text-gray-600">{{res['_source'][key]}}</span>
+        </li>
+        {% endif %}
+        {% endfor %}
+
+        {% if res['_source'].get('pdf_url') %}
+        <li class="text-sm">
+            <span class="font-bold text-gray-700">pdf_url</span>:
+            <a href="{{ res['_source']['pdf_url'] }}" target="_blank" class="text-blue-600 hover:underline">
+                {{res['_source']['pdf_url']}}
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</div>
+{% endif %}

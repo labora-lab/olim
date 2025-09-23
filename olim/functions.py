@@ -46,7 +46,9 @@ def get_highlights() -> list | dict:
         return []
 
 
-def render_entry(entry_id: str | None, dataset_id: int | None, data: dict | None = None) -> dict:
+def render_entry(
+    entry_id: str | None, dataset_id: int | None, data: dict | None = None
+) -> dict:
     if data is None:
         data = {}
     if entry_id is not None and dataset_id is not None:
@@ -142,7 +144,9 @@ class ESManager:
         return self.es.search(index=index, query={"match_all": {}}, size=size)
 
     def get_head_documents(self, index, n=10) -> dict:
-        return self.es.search(index=index, query={"query": {"match_all": {}}, "from": 0, "size": n})
+        return self.es.search(
+            index=index, query={"query": {"match_all": {}}, "from": 0, "size": n}
+        )
 
     def search(self, **kwargs) -> dict:
         return self.es.search(**kwargs)

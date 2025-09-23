@@ -81,6 +81,25 @@
                     </div>
 
                     <div class="upload-option p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                        data-value="text_pdf_url">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <input id="format-text-pdf" name="format" type="radio" value="text_pdf_url"
+                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
+                            </div>
+                            <div class="ml-3">
+                                <label for="format-text-pdf" class="text-sm font-medium text-gray-900 cursor-pointer">
+                                    {{ _('Text + PDF URL') }}
+                                </label>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    {{ _('Use this option if your CSV contains text content and PDF URLs. You need to specify which columns are equivalent to') }}
+                                    <strong>text</strong>, <strong>text_id</strong>, {{ _('and') }} <strong>pdf_url</strong>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="upload-option p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-colors"
                         data-value="sample_data">
                         <div class="flex items-start">
                             <div class="flex items-center h-5">
@@ -181,24 +200,16 @@
         const addFields = document.getElementById('additional-fields');
         const fileSelector = document.getElementById('file-selector');
 
-        // Validation function
+        // Validation function - now enables button after file upload
         window.validateForm = function validateForm() {
-            const isNameValid = nameField.value.trim() !== '';
-            const isProjectSelected = Array.from(projectCheckboxes).some(cb => cb.checked);
             const isFormatSelected = uploadType.value !== '';
             const isFileSelected = fileInput.files.length > 0 || uploadType.value === 'sample_data';
 
-            let isColumnSelectionValid = true;
-            if (uploadType.value === 'single_text' && fileInput.files.length > 0) {
-                const idColumn = document.getElementById('id_column');
-                const textColumn = document.getElementById('text_column');
-                isColumnSelectionValid = idColumn && textColumn && idColumn.value && textColumn.value;
-            }
-
-            const isFormValid = isNameValid && isProjectSelected && isFormatSelected && isFileSelected && isColumnSelectionValid;
+            // Enable button once file is uploaded and format is selected
+            const canSubmit = isFormatSelected && isFileSelected;
 
             // Update submit button state
-            if (isFormValid) {
+            if (canSubmit) {
                 submitBtn.disabled = false;
                 submitBtn.className = 'inline-flex items-center px-4 py-2 text-sm font-medium text-center text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-colors cursor-pointer';
             } else {
@@ -206,10 +217,95 @@
                 submitBtn.className = 'inline-flex items-center px-4 py-2 text-sm font-medium text-center text-white bg-gray-400 rounded-lg cursor-not-allowed transition-colors';
             }
 
-            // Visual feedback for required fields
-            updateFieldValidation(nameField, isNameValid);
+            return canSubmit;
+        };
 
-            return isFormValid;
+        // Validation check for form submission
+        window.validateFormForSubmission = function validateFormForSubmission() {
+            const isNameValid = nameField.value.trim() !== '';
+            const isProjectSelected = Array.from(projectCheckboxes).some(cb => cb.checked);
+            const isFormatSelected = uploadType.value !== '';
+            const isFileSelected = fileInput.files.length > 0 || uploadType.value === 'sample_data';
+
+            let isColumnSelectionValid = true;
+            if ((uploadType.value === 'single_text' || uploadType.value === 'text_pdf_url') && fileInput.files.length > 0) {
+                const idColumn = document.getElementById('id_column');
+                const textColumn = document.getElementById('text_column');
+
+                if (uploadType.value === 'text_pdf_url') {
+                    const pdfUrlColumn = document.getElementById('pdf_url_column');
+                    isColumnSelectionValid = !!(idColumn && textColumn && pdfUrlColumn &&
+                                              idColumn.value && textColumn.value && pdfUrlColumn.value);
+                } else {
+                    isColumnSelectionValid = !!(idColumn && textColumn && idColumn.value && textColumn.value);
+                }
+            }
+
+            return {
+                isValid: isNameValid && isProjectSelected && isFormatSelected && isFileSelected && isColumnSelectionValid,
+                isNameValid,
+                isProjectSelected,
+                isColumnSelectionValid
+            };
+        };
+
+        // Function to reset upload container to original state
+        function resetUploadContainer() {
+            const uploadContainer = document.getElementById('upload-container');
+            uploadContainer.innerHTML = `
+                <label for="large-file-input" class="block mb-2 text-sm font-medium text-gray-900">
+                    <i class="bi bi-file-arrow-up mr-1"></i>
+                    {{ _('Select File') }}
+                </label>
+                <div class="flex items-center justify-center w-full">
+                    <label for="large-file-input" id="drop-area"
+                        class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i class="bi bi-cloud-upload text-3xl text-gray-400 mb-2"></i>
+                            <p class="mb-2 text-sm text-gray-500">
+                                <span class="font-semibold">{{ _('Click to upload') }}</span> {{ _('or drag and drop') }}
+                            </p>
+                            <p class="text-xs text-gray-500">{{ _('CSV files only') }}</p>
+                        </div>
+                        <input id="large-file-input" name="large-file-input" type="file" accept=".csv" class="hidden" />
+                    </label>
+                </div>
+                <div id="upload-status" class="text-sm text-gray-600 mt-2"></div>
+            `;
+
+            // Re-attach event listeners for the new file input
+            const newFileInput = document.getElementById('large-file-input');
+            newFileInput?.addEventListener('change', window.validateForm);
+
+            // Re-attach drag and drop listeners
+            const newDropArea = document.getElementById('drop-area');
+            if (newDropArea) {
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    newDropArea.addEventListener(eventName, highlight, false);
+                });
+                ['dragleave', 'drop'].forEach(eventName => {
+                    newDropArea.addEventListener(eventName, unhighlight, false);
+                });
+                newDropArea.addEventListener('drop', handleDrop, false);
+            }
+        }
+
+        // Function to change file without resetting entry type
+        window.changeFile = function changeFile() {
+            // Clear the current file
+            fileInput.value = '';
+
+            // Hide additional fields
+            addFields.classList.add('hidden');
+
+            // Reset upload container
+            resetUploadContainer();
+
+            // Update global reference to new file input
+            fileInput = document.getElementById('large-file-input');
+
+            // Validate form after file change
+            window.validateForm();
         };
 
         function updateFieldValidation(field, isValid) {
@@ -251,6 +347,15 @@
                 const val = opt.getAttribute('data-value')
                 uploadType.value = val
 
+                // Reset file upload when changing entry type
+                if (fileInput.files.length > 0) {
+                    // Clear the file input
+                    fileInput.value = '';
+
+                    // Reset upload container to original state
+                    resetUploadContainer();
+                }
+
                 // Hide fields regardless of format when changing option
                 addFields.classList.add('hidden')
                 fileSelector.style.display = val === 'sample_data' ? 'none' : 'block'
@@ -268,18 +373,33 @@
 
         // Form submission validation
         form?.addEventListener('submit', function (e) {
-            if (!window.validateForm()) {
+            const validation = window.validateFormForSubmission();
+            if (!validation.isValid) {
                 e.preventDefault();
 
                 // Focus on first invalid field
                 if (!nameField.value.trim()) {
                     nameField.focus();
-                } else if (!Array.from(projectCheckboxes).some(cb => cb.checked)) {
+                    nameField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else if (!validation.isProjectSelected) {
                     projectCheckboxes[0]?.focus();
-                } else if (!uploadType.value) {
-                    document.querySelector('.upload-option')?.focus();
-                } else if (fileInput.files.length === 0 && uploadType.value !== 'sample_data') {
-                    fileInput.focus();
+                    projectCheckboxes[0]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else if (!validation.isColumnSelectionValid) {
+                    // Focus on first empty column selector
+                    const idColumn = document.getElementById('id_column');
+                    const textColumn = document.getElementById('text_column');
+                    const pdfUrlColumn = document.getElementById('pdf_url_column');
+
+                    if (idColumn && !idColumn.value) {
+                        idColumn.focus();
+                        idColumn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (textColumn && !textColumn.value) {
+                        textColumn.focus();
+                        textColumn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (pdfUrlColumn && !pdfUrlColumn.value) {
+                        pdfUrlColumn.focus();
+                        pdfUrlColumn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
                 }
 
                 return false;
@@ -475,8 +595,29 @@
 
                 addFields.appendChild(textDiv);
 
-                // Only show for single_text format
-                if (document.getElementById('upload_type').value === 'single_text') {
+                const uploadTypeValue = document.getElementById('upload_type').value;
+
+                // Show for single_text and text_pdf_url formats
+                if (uploadTypeValue === 'single_text' || uploadTypeValue === 'text_pdf_url') {
+                    // Create PDF URL column selector for text_pdf_url format
+                    if (uploadTypeValue === 'text_pdf_url') {
+                        const pdfUrlDiv = document.createElement('div');
+                        const pdfUrlLabel = document.createElement('label');
+                        pdfUrlLabel.htmlFor = 'pdf_url_column';
+                        pdfUrlLabel.className = 'block mb-2 text-sm font-medium text-gray-900';
+                        pdfUrlLabel.innerHTML = '<i class="bi bi-file-earmark-pdf mr-1"></i>{{ _("PDF URL column") }}';
+                        pdfUrlDiv.appendChild(pdfUrlLabel);
+
+                        const pdfUrlColumn = document.createElement('select');
+                        pdfUrlColumn.id = "pdf_url_column";
+                        pdfUrlColumn.name = "pdf_url_column";
+                        pdfUrlColumn.className = "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5";
+                        pdfUrlColumn.innerHTML = '<option value="" disabled selected>{{ _("Select PDF URL column") }}</option>';
+                        pdfUrlDiv.appendChild(pdfUrlColumn);
+
+                        addFields.appendChild(pdfUrlDiv);
+                    }
+
                     // Populate dropdowns
                     result.columns.forEach(col => {
                         console.log(col);
@@ -489,6 +630,15 @@
                         option2.value = col;
                         option2.textContent = col;
                         textColumn.appendChild(option2);
+
+                        // Add option to PDF URL dropdown if text_pdf_url format
+                        if (uploadTypeValue === 'text_pdf_url') {
+                            const pdfUrlColumn = document.getElementById('pdf_url_column');
+                            const option3 = document.createElement('option');
+                            option3.value = col;
+                            option3.textContent = col;
+                            pdfUrlColumn.appendChild(option3);
+                        }
                     });
 
                     // Show additional fields
@@ -497,6 +647,11 @@
                     // Add validation listeners to column selectors
                     idColumn.addEventListener('change', window.validateForm);
                     textColumn.addEventListener('change', window.validateForm);
+
+                    if (uploadTypeValue === 'text_pdf_url') {
+                        const pdfUrlColumn = document.getElementById('pdf_url_column');
+                        pdfUrlColumn.addEventListener('change', window.validateForm);
+                    }
 
                     // Trigger validation after fields are added
                     window.validateForm();
@@ -514,7 +669,7 @@
                                 <div class="font-medium text-green-900">${file.name}</div>
                                 <div class="text-sm text-green-700">{{ _('File uploaded successfully') }}</div>
                             </div>
-                            <button type="button" onclick="location.reload()" 
+                            <button type="button" onclick="changeFile()"
                                 class="ml-4 inline-flex items-center px-3 py-2 text-sm font-medium text-green-600 bg-green-100 border border-green-300 rounded-lg hover:bg-green-200 focus:ring-4 focus:outline-none focus:ring-green-300 transition-colors">
                                 <i class="bi bi-arrow-clockwise mr-1"></i>
                                 {{ _('Change File') }}

@@ -4,11 +4,12 @@ services:
   olim:
     volumes:
       - .:/app
-
+  worker:
+    volumes:
+      - .:/app
   db:
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
-
   es:
     ports:
       - '9200:9200'

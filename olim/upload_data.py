@@ -43,7 +43,10 @@ def handle_large_upload() -> ...:
         return jsonify(error="Invalid request"), 400
 
     # Security checks
-    if "." in file_name and file_name.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS:
+    if (
+        "." in file_name
+        and file_name.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS
+    ):
         return jsonify(error="Invalid file type"), 400
 
     if total_chunks * CHUNK_SIZE > MAX_FILE_SIZE:
@@ -150,6 +153,10 @@ def upload_data(project_id: int | None = None) -> ...:
             "text_column": request.form.get("text_column"),
         }
 
+        # Add PDF URL column for text_pdf_url format
+        if upload_type == "text_pdf_url":
+            upload_params["pdf_url_column"] = request.form.get("pdf_url_column")
+
         # Handle sample data specially
         if upload_type == "sample_data":
             upload_type = "single_text"
@@ -176,12 +183,24 @@ def upload_data(project_id: int | None = None) -> ...:
                     flash(_("ID and Text columns are required"), "error")
                     return redirect(request.url)
 
+            # Validate required columns for text_pdf_url format
+            if upload_type == "text_pdf_url":
+                if (
+                    not upload_params["id_column"]
+                    or not upload_params["text_column"]
+                    or not upload_params["pdf_url_column"]
+                ):
+                    flash(_("ID, Text, and PDF URL columns are required"), "error")
+                    return redirect(request.url)
+
         # Start upload task chain
         try:
             filename = "_".join(upload_params.get("filename", "").split("/")[-1].split("_")[1:])  # type: ignore
             launch_task_with_tracking(
                 upload_dataset,
-                description=_("Uploading and processing file {filename}").format(filename=filename),
+                description=_("Uploading and processing file {filename}").format(
+                    filename=filename
+                ),
                 upload_type=upload_type,
                 upload_params=upload_params,
                 dataset_id=dataset.id,

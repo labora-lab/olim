@@ -54,6 +54,12 @@ if RANDOM_SEED is not None:
 HELP_URL = os.getenv("HELP_URL", "")
 """URL to the API help page"""
 
+SHOW_APPLY_TO_ALL = False  # os.getenv("SHOW_APPLY_TO_ALL", "true").lower() == "true"
+"""Whether to show the 'Apply to all' controls in the entry labeling interface"""
+
+SHOW_HIGHLIGHTS = os.getenv("SHOW_HIGHLIGHTS", "true").lower() == "true"
+"""Whether to show the highlights section in the entry labeling interface"""
+
 
 class LabelTypes:
     SIM_NAO: ClassVar = [
@@ -91,7 +97,9 @@ if "LABELS_TYPES" in labels:
 try:
     LABELS = eval(labels)
 except (TypeError, NameError):
-    print(f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!")
+    print(
+        f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!"
+    )
     LABELS = LabelTypes.YES_NO
 
 """List of endpoints that need a setup backend."""
