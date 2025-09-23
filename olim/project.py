@@ -393,21 +393,8 @@ def data_navigation(project_id: int) -> ...:
     # Get number of entries from session or default
     number = session.get("number_of_entries", get_def_nentries())
 
-    # Calculate basic stats
-    stats = {}
-    try:
-        project = get_project(project_id)
-        if project:
-            total_entries = sum(len(dataset.entries) for dataset in project.datasets)
-            labeled_entries = sum(len(dataset.labels) for dataset in project.datasets)
-            stats = {
-                "total_entries": total_entries,
-                "labeled_entries": labeled_entries,
-                "active_queues": len(queues) if queues else 0,
-            }
-    except Exception:
-        # If stats calculation fails, provide empty stats
-        stats = None
+    # No stats calculation needed for data navigation page
+    stats = None
 
     # Get section parameter for directing to specific component
     section = request.args.get("section", "entry-navigation")  # Default to entry navigation

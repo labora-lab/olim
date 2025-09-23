@@ -110,8 +110,15 @@ def label_upload(
                 continue
 
             # Submit through active learning pipeline (suppress individual flashes)
+            skip_train = processed_count < len(group) - 1  # Skip training until the last value
             submit_label_value(
-                label, entry, value, user_id, is_auto_label=False, suppress_flash=True
+                label,
+                entry,
+                value,
+                user_id,
+                is_auto_label=False,
+                suppress_flash=True,
+                skip_train=skip_train,
             )
             processed_count += 1
 

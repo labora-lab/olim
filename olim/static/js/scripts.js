@@ -69,15 +69,11 @@ function initEntryPage() {
     // Initialize date pickers if they exist
     initEntryDatePickers();
 
-    // Initialize highlights if highlight data is available
-    if (window.highlightData) {
-        try {
-            if (window.highlightData) {
-                initEntryHighlight(window.highlightData);
-            }
-        } catch (e) {
-            console.warn('Highlight initialization failed:', e);
-        }
+    // Initialize highlights (always initialize, even with empty data)
+    try {
+        initEntryHighlight(window.highlightData || []);
+    } catch (e) {
+        console.warn('Highlight initialization failed:', e);
     }
 
     // Add keyboard shortcuts
@@ -1142,6 +1138,11 @@ function loadKaTeXIfNeeded() {
 
 function renderLatex() {
     document.querySelectorAll('.latex-content').forEach(el => {
+        // Skip if already processed
+        if (el.dataset.latexProcessed === 'true') {
+            return;
+        }
+
         let html = el.textContent;
 
         // Replace $$ display math
@@ -1163,6 +1164,8 @@ function renderLatex() {
         });
 
         el.innerHTML = html;
+        // Mark as processed
+        el.dataset.latexProcessed = 'true';
     });
 }
 
@@ -1446,3 +1449,107 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 });
+
+// Label Settings page specific functionality
+let labelDeleteUrl = '';
+
+function initLabelSettingsPage() {
+    // Set up delete confirmation handlers
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const deleteModal = document.getElementById('deleteModal');
+
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', function() {
+            if (labelDeleteUrl) {
+                window.location.href = labelDeleteUrl;
+            }
+        });
+    }
+
+    // Close modal when clicking outside
+    if (deleteModal) {
+        deleteModal.addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeLabelDeleteModal();
+            }
+        });
+    }
+
+    // Add parameter functionality
+    const addButton = document.getElementById('add-param');
+    if (addButton) {
+        addButton.addEventListener('click', function (e) {
+            e.preventDefault();
+            const container = document.getElementById('parameters-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'parameter-row grid grid-cols-1 md:grid-cols-6 gap-4 p-4 bg-gray-50 rounded-lg';
+            newRow.innerHTML = `
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Parameter Name</label>
+                    <input type="text" name="param_names[]"
+                           class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                </div>
+                <div class="flex items-center">
+                    <div class="flex items-center h-5 mt-6">
+                        <input type="checkbox" name="param_is_list[]" value="1"
+                               class="w-4 h-4 text-cyan-600 bg-gray-100 border-gray-300 rounded focus:ring-cyan-500 focus:ring-2">
+                        <label class="ms-2 text-sm font-medium text-gray-700">List of</label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Base Type</label>
+                    <select name="param_types[]" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                        <option value="str">String</option>
+                        <option value="int">Integer</option>
+                        <option value="float">Float</option>
+                        <option value="bool">Boolean</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Value</label>
+                    <input type="text" name="param_values[]"
+                           class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                </div>
+                <div class="flex items-end">
+                    <button type="button" class="remove-param text-red-600 hover:text-red-800 p-2">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+        });
+    }
+
+    // Remove parameter functionality
+    document.addEventListener('click', function (e) {
+        if (e.target.closest('.remove-param')) {
+            e.preventDefault();
+            e.target.closest('.parameter-row').remove();
+        }
+    });
+}
+
+// Label delete confirmation modal functions
+function confirmLabelDelete(labelName, url) {
+    labelDeleteUrl = url;
+    const messageElement = document.getElementById('deleteMessage');
+    if (messageElement) {
+        messageElement.textContent = `This is permanent! Are you sure that you want to delete label "${labelName}"?`;
+    }
+    const modal = document.getElementById('deleteModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+    }
+}
+
+function closeLabelDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+    labelDeleteUrl = '';
+}
+
+// Make functions globally available
+window.confirmLabelDelete = confirmLabelDelete;
+window.closeLabelDeleteModal = closeLabelDeleteModal;

@@ -130,7 +130,7 @@ class ActiveLearningBackend:
         if policy is None:
             policy = ConformalUnsertantyPolicy()
         if subsample_size is None:
-            subsample_size = [5_000, 1_000, 20]
+            subsample_size = [1_000, 20]  # [5_000, 1_000, 20]
 
         self.messages = []
         self.msg_lock = Lock()

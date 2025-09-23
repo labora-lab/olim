@@ -79,9 +79,26 @@ def get_queue(queue_id: str, project_id) -> list[tuple[int, str]]:
         queue = json.load(f)
     if queue["highlight"] is not None:
         # Merge queue highlights with existing session highlights
-        existing_highlights = session.get(
+        raw_highlights = session.get(
             "highlight", {"terms": [], "colorAssignments": {}, "colorCounter": 0}
         )
+
+        # Handle both old format (list) and new format (dict)
+        if isinstance(raw_highlights, list):
+            # Old format: convert to new format
+            existing_highlights = {
+                "terms": raw_highlights,
+                "colorAssignments": {},
+                "colorCounter": len(raw_highlights),
+            }
+        else:
+            # New format: use as-is, but ensure all keys exist
+            existing_highlights = {
+                "terms": raw_highlights.get("terms", []),
+                "colorAssignments": raw_highlights.get("colorAssignments", {}),
+                "colorCounter": raw_highlights.get("colorCounter", 0),
+            }
+
         queue_highlights = queue["highlight"]
 
         # Only update if queue highlights are different from current session
