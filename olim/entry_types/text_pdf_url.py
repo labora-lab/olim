@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from olim.settings import ES_INDEX
 from olim.utils.es import es_search
+
 from .single_text import extract_texts, search  # noqa: F401
 
 ENTRY_TYPE = "text_pdf_url"
@@ -17,7 +18,9 @@ def render(entry_id: str, dataset_id: int, **pars) -> str:
     query = {"bool": {"must": [{"terms": {"_id": [entry_id]}}]}}
     res = es_search(query=query, index=ES_INDEX.format(dataset_id=dataset_id))["hits"]["hits"][0]
 
-    return render_template("entry_types/text_pdf_url.html", res=res, show_metadata=SHOW_METADATA, **pars)
+    return render_template(
+        "entry_types/text_pdf_url.html", res=res, show_metadata=SHOW_METADATA, **pars
+    )
 
 
 def generate_upload_batches(
@@ -91,11 +94,7 @@ def generate_upload_batches(
 
             # Create structured entry
             batch_entries.append(
-                {
-                    "id": str(record_id),
-                    "text": str(text_content),
-                    "metadata": metadata
-                }
+                {"id": str(record_id), "text": str(text_content), "metadata": metadata}
             )
 
         yield batch_entries

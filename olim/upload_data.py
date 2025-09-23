@@ -43,10 +43,7 @@ def handle_large_upload() -> ...:
         return jsonify(error="Invalid request"), 400
 
     # Security checks
-    if (
-        "." in file_name
-        and file_name.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS
-    ):
+    if "." in file_name and file_name.rsplit(".", 1)[1].lower() not in ALLOWED_EXTENSIONS:
         return jsonify(error="Invalid file type"), 400
 
     if total_chunks * CHUNK_SIZE > MAX_FILE_SIZE:
@@ -198,9 +195,7 @@ def upload_data(project_id: int | None = None) -> ...:
             filename = "_".join(upload_params.get("filename", "").split("/")[-1].split("_")[1:])  # type: ignore
             launch_task_with_tracking(
                 upload_dataset,
-                description=_("Uploading and processing file {filename}").format(
-                    filename=filename
-                ),
+                description=_("Uploading and processing file {filename}").format(filename=filename),
                 upload_type=upload_type,
                 upload_params=upload_params,
                 dataset_id=dataset.id,
