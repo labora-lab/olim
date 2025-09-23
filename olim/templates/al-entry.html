@@ -300,17 +300,11 @@
     initMetricsCard();
     initAlEntryPage();
 
-    // Initialize highlights if highlight data is available
-    if (window.highlightData) {
-      try {
-        initEntryHighlight(window.highlightData);
-      } catch (e) {
-        console.warn('Highlight initialization failed:', e);
-      }
-    }
-
-    if (typeof window.init === 'function') {
-      window.init();
+    // Initialize highlights (always initialize, even with empty data)
+    try {
+      initEntryHighlight(window.highlightData || []);
+    } catch (e) {
+      console.warn('Highlight initialization failed:', e);
     }
   });
 </script>

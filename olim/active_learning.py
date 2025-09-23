@@ -31,7 +31,13 @@ def new_al(label: Label) -> None:
 
 
 def submit_label_value(
-    label, entry, value_str, user_id, is_auto_label=False, suppress_flash=False
+    label,
+    entry,
+    value_str,
+    user_id,
+    is_auto_label=False,
+    suppress_flash=False,
+    skip_train=False,
 ) -> list[str]:
     """Helper function to submit a label value and handle all associated tasks"""
     # Add the label to the database
@@ -81,7 +87,7 @@ def submit_label_value(
     ]
 
     # Check train
-    if label.training_counter >= 4 and not pending_tasks:
+    if label.training_counter >= 4 and not pending_tasks and not skip_train:
         launch_task_with_tracking(
             train_model,
             description=_("Training for label {label_name}").format(label_name=label.name),

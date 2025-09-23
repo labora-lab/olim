@@ -1959,7 +1959,7 @@ msgstr ""
 
 #: olim/templates/components/sidebar.html:181
 msgid "account_settings_1"
-msgstr ""
+msgstr "Account Settings"
 
 #: olim/templates/components/sidebar.html:211
 msgid "Logout"

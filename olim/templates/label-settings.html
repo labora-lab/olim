@@ -80,7 +80,7 @@
                     <h4 class="text-lg font-medium text-gray-900 mb-3">{{ _('Actions') }}</h4>
                     <div class="flex flex-wrap gap-3">
                         <button
-                            onclick="confirmDelete('{{ label.name }}', '{{ url_for('delete_label', label_id=label.id) }}')"
+                            onclick="confirmLabelDelete('{{ label.name }}', '{{ url_for('delete_label', label_id=label.id) }}')"
                             class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:ring-red-300 transition-colors">
                             <i class="bi bi-trash mr-2"></i>{{ _('Remove Label') }}
                         </button>
@@ -402,7 +402,7 @@
                     class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
                     {{ _('Delete') }}
                 </button>
-                <button type="button" onclick="closeDeleteModal()"
+                <button type="button" onclick="closeLabelDeleteModal()"
                     class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                     {{ _('Cancel') }}
                 </button>
@@ -412,88 +412,8 @@
 </div>
 
 <script>
-    let deleteUrl = '';
-
-    // Delete confirmation modal functions
-    function confirmDelete(labelName, url) {
-        deleteUrl = url;
-        document.getElementById('deleteMessage').textContent =
-            "{{ _('This is permanent! Are you sure that you want to delete label') }} \"" + labelName + "\"?";
-        document.getElementById('deleteModal').classList.remove('hidden');
-    }
-
-    function closeDeleteModal() {
-        document.getElementById('deleteModal').classList.add('hidden');
-        deleteUrl = '';
-    }
-
     document.addEventListener('DOMContentLoaded', function () {
-        // Confirm delete button event
-        document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
-            if (deleteUrl) {
-                window.location.href = deleteUrl;
-            }
-        });
-
-        // Close modal when clicking outside
-        document.getElementById('deleteModal').addEventListener('click', function (e) {
-            if (e.target === this) {
-                closeDeleteModal();
-            }
-        });
-
-        // Add parameter functionality
-        const addButton = document.getElementById('add-param');
-        if (addButton) {
-            addButton.addEventListener('click', function (e) {
-                e.preventDefault();
-                const container = document.getElementById('parameters-container');
-                const newRow = document.createElement('div');
-                newRow.className = 'parameter-row grid grid-cols-1 md:grid-cols-6 gap-4 p-4 bg-gray-50 rounded-lg';
-                newRow.innerHTML = `
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Parameter Name') }}</label>
-                    <input type="text" name="param_names[]" 
-                           class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
-                </div>
-                <div class="flex items-center">
-                    <div class="flex items-center h-5 mt-6">
-                        <input type="checkbox" name="param_is_list[]" value="1"
-                               class="w-4 h-4 text-cyan-600 bg-gray-100 border-gray-300 rounded focus:ring-cyan-500 focus:ring-2">
-                        <label class="ms-2 text-sm font-medium text-gray-700">{{ _('List of') }}</label>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Base Type') }}</label>
-                    <select name="param_types[]" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
-                        <option value="str">String</option>
-                        <option value="int">Integer</option>
-                        <option value="float">Float</option>
-                        <option value="bool">Boolean</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Value') }}</label>
-                    <input type="text" name="param_values[]"
-                           class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
-                </div>
-                <div class="flex items-end">
-                    <button type="button" class="remove-param text-red-600 hover:text-red-800 p-2">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            `;
-                container.appendChild(newRow);
-            });
-        }
-
-        // Remove parameter functionality
-        document.addEventListener('click', function (e) {
-            if (e.target.closest('.remove-param')) {
-                e.preventDefault();
-                e.target.closest('.parameter-row').remove();
-            }
-        });
+        initLabelSettingsPage();
     });
 </script>
 {% endblock %}

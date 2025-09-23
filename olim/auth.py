@@ -42,7 +42,7 @@ def login() -> ...:
     if not check_is_setup():
         return redirect(url_for("init_config"))
     redirect_url = request.args.get("redirect", "/")
-    user_id = session["user_id"] if session.get("user_id") != "guest" else None
+    user_id = session.get("user_id") if session.get("user_id") != "guest" else None
     if user_id is not None:
         return redirect("/")
     elif request.method == "POST":

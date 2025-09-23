@@ -8,7 +8,7 @@ from flask import flash, session
 from flask_babel import _
 
 from . import entry_types
-from .database import get_entry
+from .database import get_entry, get_setup_step
 from .utils.es import get_es_conn
 
 
@@ -18,11 +18,13 @@ def ensure_dir(path) -> None:
 
 def check_is_setup() -> bool:
     """Check if server is configured."""
-    if "is_setup" in session:
-        return session["is_setup"]
-    else:
-        session["is_setup"] = False
-        return False
+    # Check actual setup status from database, not just session
+    setup_step = get_setup_step()
+    is_setup = setup_step is None
+
+    # Update session with current status
+    session["is_setup"] = is_setup
+    return is_setup
 
 
 def get_highlights() -> list | dict:
