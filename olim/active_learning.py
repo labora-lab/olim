@@ -121,6 +121,15 @@ def catch_al(label_id: int) -> ...:
         flash(_("Label not found."), category="error")
         return redirect("/")
 
+    # Check if label is open text type - active learning is not available
+    from olim.label_types import is_open_text_label
+    if is_open_text_label(label.label_type):
+        flash(
+            _("Active Learning is not available for open text labels. Use regular labeling instead."),
+            category="warning"
+        )
+        return redirect(url_for("labels", project_id=label.project_id))
+
     # Create learner if it doen't exists
     if label.al_key is None:
         launch_task_with_tracking(

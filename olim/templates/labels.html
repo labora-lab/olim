@@ -23,7 +23,7 @@
                                     {{ _('Label') }}
                                 </div>
                             </th>
-                            <!-- Dynamic label type columns will be generated based on actual label values -->
+                            <!-- Dynamic columns based on label values -->
                             {% for value in possible_values %}
                             {% if value != "Total" %}
                             <th scope="col" class="px-6 py-3 text-center">
@@ -69,16 +69,29 @@
                                     <div class="font-medium text-gray-900">{{ label.name }}</div>
                                 </div>
                             </td>
-                            {% for value in possible_values %}
-                            {% if value != "Total" %}
-                            <td class="px-6 py-4 text-center">
-                                <span
-                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    {%if value in values[label.id]%}{{ values[label.id][value] }}{%else%}0{%endif%}
-                                </span>
-                            </td>
+                            <!-- Show value counts only for regular labels -->
+                            {% if not is_open_text_label(label.label_type) %}
+                                {% for value in possible_values %}
+                                {% if value != "Total" %}
+                                <td class="px-6 py-4 text-center">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        {%if value in values[label.id]%}{{ values[label.id][value] }}{%else%}0{%endif%}
+                                    </span>
+                                </td>
+                                {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <!-- For open text labels, show dashes in all value columns -->
+                                {% for value in possible_values %}
+                                {% if value != "Total" %}
+                                <td class="px-6 py-4 text-center">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-400">
+                                        -
+                                    </span>
+                                </td>
+                                {% endif %}
+                                {% endfor %}
                             {% endif %}
-                            {% endfor %}
                             <td class="px-6 py-4 text-center">
                                 <span
                                     class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -132,7 +145,11 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="{% if has_permission('delete_label') or has_permission('extract_labels') or has_permission('catch_queue') %}{{ 5 + (possible_values|length - 1) }}{% else %}{{ 4 + (possible_values|length - 1) }}{% endif %}"
+                            {% set column_count = 2 + (possible_values|length - 1) %}  <!-- Label + Value Columns + Total -->
+                            {% if has_permission('delete_label') or has_permission('extract_labels') or has_permission('catch_queue') %}
+                                {% set column_count = column_count + 1 %}
+                            {% endif %}
+                            <td colspan="{{ column_count }}"
                                 class="px-6 py-12 text-center">
                                 <i class="bi bi-tags text-4xl text-gray-400 mb-4"></i>
                                 <h3 class="text-lg font-medium text-gray-900 mb-2">{{ _('No labels found') }}</h3>

@@ -1,6 +1,6 @@
-from . import check, sim_nao, sim_nao_ns, yes_no, yes_no_idk, yes_no_unknown
+from . import check, open_text, sim_nao, sim_nao_ns, yes_no, yes_no_idk, yes_no_unknown
 
-__all__ = ["check", "sim_nao", "sim_nao_ns", "yes_no", "yes_no_idk", "yes_no_unknown"]
+__all__ = ["check", "open_text", "sim_nao", "sim_nao_ns", "yes_no", "yes_no_idk", "yes_no_unknown"]
 
 
 def get_label_type_module(label_type):
@@ -17,6 +17,8 @@ def get_label_type_module(label_type):
         return yes_no_unknown
     elif label_type == "yes_no_idk":
         return yes_no_idk
+    elif label_type == "open_text":
+        return open_text
     else:
         # Default fallback
         return sim_nao
@@ -31,4 +33,13 @@ def get_available_label_types():
         ("check", "Check"),
         ("yes_no_unknown", "Yes/No/Unknown"),
         ("yes_no_idk", "Yes/No/Don't Know"),
-    ] 
+        ("open_text", "Open Text"),
+    ]
+
+
+def is_open_text_label(label_type):
+    """Check if a label type is open text"""
+    if label_type == "open_text":
+        module = get_label_type_module(label_type)
+        return hasattr(module, 'is_open_text') and module.is_open_text()
+    return False 
