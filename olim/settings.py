@@ -61,44 +61,8 @@ SHOW_HIGHLIGHTS = os.getenv("SHOW_HIGHLIGHTS", "true").lower() == "true"
 """Whether to show the highlights section in the entry labeling interface"""
 
 
-class LabelTypes:
-    SIM_NAO: ClassVar = [
-        ("sim", "icon", "check-circle-fill", "green"),
-        ("não", "icon", "x-circle-fill", "red"),
-    ]
-    SIM_NAO_NS: ClassVar = [
-        ("sim", "icon", "check-circle-fill", "green"),
-        ("não", "icon", "x-circle-fill", "red"),
-        ("não sei", "text", "?", "orange"),
-    ]
-    YES_NO: ClassVar = [
-        ("yes", "icon", "check-circle-fill", "green"),
-        ("no", "icon", "x-circle-fill", "red"),
-    ]
-    CHECK: ClassVar = [
-        ("check", "icon", "check-circle-fill", "green"),
-    ]
-    YES_NO_UNKNOWN: ClassVar = [
-        ("yes", "icon", "check-circle-fill", "green"),
-        ("no", "icon", "x-circle-fill", "red"),
-        ("unknown", "text", "?", "orange"),
-    ]
-    YES_NO_IDK: ClassVar = [
-        ("yes", "icon", "check-circle-fill", "green"),
-        ("no", "icon", "x-circle-fill", "red"),
-        ("don't know", "text", "?", "orange"),
-    ]
-
-
-labels = os.getenv("LABELS", "LabelTypes.YES_NO")
-if "LABELS_TYPES" in labels:
-    labels = labels.replace("LABELS_TYPES", "LabelTypes")
-    print("WARNING: LABELS_TYPES is deprecated, replace it with LabelTypes!")
-try:
-    LABELS = eval(labels)
-except (TypeError, NameError):
-    print(f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!")
-    LABELS = LabelTypes.YES_NO
+# Label types are now configured at the individual label level
+# See olim.label_types module for available label types
 
 """List of endpoints that need a setup backend."""
 NEED_LEARNER = [

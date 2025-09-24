@@ -64,7 +64,8 @@ def create_label(project_id: int) -> ...:
         return res
 
     label_name = request.form.get("label")
-    label = new_label(label_name, session["user_id"], project_id)
+    label_type = request.form.get("label_type") or None
+    label = new_label(label_name, session["user_id"], project_id, label_type=label_type)
     launch_task_with_tracking(
         create_label_al,
         project_id=project_id,

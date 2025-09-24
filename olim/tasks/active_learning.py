@@ -145,7 +145,14 @@ def instanciate_al(project_id, label_id) -> ActiveLearningBackend:
         label = get_label(label_id)
         learner_params = label.learner_parameters if label and label.learner_parameters else {}
 
-    labels = [label[0] for label in settings.LABELS]
+        # Get label values from the label's type configuration
+        if label and label.label_type:
+            from olim.label_types import get_label_type_module
+            label_module = get_label_type_module(label.label_type)
+            labels = [option[0] for option in label_module.get_label_options()]
+        else:
+            # Default fallback to sim/não if no label type is configured
+            labels = ["sim", "não"]
 
     # Base parameters for ActiveLearningBackend
     base_params = {

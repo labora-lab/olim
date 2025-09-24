@@ -146,7 +146,16 @@ def catch_al(label_id: int) -> ...:
 
     # Assign label value if given
     if request.method == "POST":
-        value_str = settings.LABELS[-1 - int(request.form["value"])][0]
+        # Get label values from the label's type configuration
+        if label.label_type:
+            from olim.label_types import get_label_type_module
+            label_module = get_label_type_module(label.label_type)
+            label_options = label_module.get_label_options()
+        else:
+            # Default fallback to sim/não if no label type is configured
+            label_options = [("sim", "icon", "check-circle-fill", "green"), ("não", "icon", "x-circle-fill", "red")]
+
+        value_str = label_options[-1 - int(request.form["value"])][0]
         entry_id = request.form["entry_id"]
         entry = get_entry(request.form["entry_id"], by="id")
         if entry is None:
