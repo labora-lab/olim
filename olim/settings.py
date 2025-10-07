@@ -100,6 +100,9 @@ except (TypeError, NameError):
     print(f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!")
     LABELS = LabelTypes.YES_NO
 
+# Label types are now configured at the individual label level
+# See olim.label_types module for available label types
+
 """List of endpoints that need a setup backend."""
 NEED_LEARNER = [
     "active_learning",

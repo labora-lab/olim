@@ -141,6 +141,10 @@ class Label(db.Model, CreationControl):
     priority: Mapped[float] = db.mapped_column(default=1.0, nullable=False)
     project_id: Mapped[int] = db.mapped_column(db.ForeignKey("projects.id"), nullable=False)
 
+    # Label type configuration
+    label_type: Mapped[str] = db.mapped_column(nullable=True)  # string identifier for the label type
+    label_settings: Mapped[dict] = db.mapped_column(db.JSON, nullable=True)  # JSON with type-specific configuration
+
     metrics: Mapped[list] = db.mapped_column(db.JSON, nullable=True)
     cache: Mapped[list] = db.mapped_column(db.JSON, nullable=True)
     training_counter: Mapped[int] = db.mapped_column(db.Integer, default=0)
@@ -803,7 +807,7 @@ def is_dataset_linked(dataset_id: int, project_id: int) -> bool:
 
 # region Label Management
 # ----------------------
-def new_label(label, user_id, project_id, al_id=None) -> Label:
+def new_label(label, user_id, project_id, al_id=None, label_type=None, label_settings=None) -> Label:
     """Create new classification label.
 
     Args:
@@ -811,6 +815,8 @@ def new_label(label, user_id, project_id, al_id=None) -> Label:
         user_id: ID of creating user
         project_id: Associated project ID
         al_id: Active learning identifier (optional)
+        label_type: Type identifier for the label (optional)
+        label_settings: JSON settings specific to the label type (optional)
 
     Returns:
         New Label object
@@ -822,6 +828,8 @@ def new_label(label, user_id, project_id, al_id=None) -> Label:
         created=datetime.now(),
         is_deleted=False,
         al_key=al_id,
+        label_type=label_type,
+        label_settings=label_settings or {},
     )
     db.session.add(label)
     db.session.commit()
