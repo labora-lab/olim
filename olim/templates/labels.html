@@ -94,7 +94,8 @@
                             <td class="px-6 py-4 text-center">
                                 <div class="flex items-center justify-center space-x-2">
                                     <!-- Hide/Show Label Controls -->
-                                    <button type="button" onclick="hideLabel('{{ label.name }}', '{{ label.id }}')" id="hide_btn_{{ label.id }}"
+                                    <button type="button" onclick="hideLabel('{{ label.name }}', '{{ label.id }}')"
+                                        id="hide_btn_{{ label.id }}"
                                         class="inline-flex items-center p-1.5 text-xs text-gray-500 hover:text-red-600 focus:outline-none transition-colors {% if label.id in hidden_labels %} hidden{% endif %}"
                                         title="{{ _('Hide this label in entry forms') }}">
                                         <i class="bi bi-eye-slash"></i>
@@ -114,7 +115,7 @@
                                         <i class="bi bi-gear-fill"></i>
                                     </a>
                                     {% endif %}
-                                    {% if label.al_key != "setup" %}
+                                    {% if settings.show_active_learning %}
                                     <a href="{{ url_for('catch_al', label_id=label.id) }}"
                                         class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 transition-colors"
                                         title="{{ _('Open active learning queue') }}">

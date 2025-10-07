@@ -24,8 +24,7 @@ from .settings import (
     SESSION_PERMANENT,
     SESSION_TYPE,
     SESSION_USE_SIGNER,
-    SHOW_APPLY_TO_ALL,
-    SHOW_HIGHLIGHTS,
+    INTERFACE_SETTINGS,
     VERSION,
 )
 
@@ -108,6 +107,5 @@ app.jinja_env.globals.update(
     version=VERSION,
     has_help=HELP_URL is not None,
     debug=DEBUG,
-    show_apply_to_all=SHOW_APPLY_TO_ALL,
-    show_highlights=SHOW_HIGHLIGHTS,
+    settings=INTERFACE_SETTINGS,
 )

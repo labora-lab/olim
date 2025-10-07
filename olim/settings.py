@@ -39,6 +39,13 @@ QUEUES_PATH = Path("/app/queues")
 
 UPLOAD_BATCH_SIZE = 1000
 
+INTERFACE_SETTINGS = {
+    "show_apply_to_all": False,
+    "show_highlights": False,
+    "show_hidden_options": False,
+    "show_al": False,
+}
+
 WORK_PATH = Path(os.getenv("WORK_FOLDER", "/app/work"))
 
 UPLOAD_PATH = WORK_PATH / "uploads"
@@ -53,13 +60,6 @@ if RANDOM_SEED is not None:
 
 HELP_URL = os.getenv("HELP_URL", "")
 """URL to the API help page"""
-
-SHOW_APPLY_TO_ALL = False  # os.getenv("SHOW_APPLY_TO_ALL", "true").lower() == "true"
-"""Whether to show the 'Apply to all' controls in the entry labeling interface"""
-
-SHOW_HIGHLIGHTS = os.getenv("SHOW_HIGHLIGHTS", "true").lower() == "true"
-"""Whether to show the highlights section in the entry labeling interface"""
-
 
 class LabelTypes:
     SIM_NAO: ClassVar = [

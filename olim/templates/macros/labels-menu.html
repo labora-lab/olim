@@ -10,6 +10,7 @@
         <div class="flex items-center space-x-2">
             {% if valid_entry %}
             <!-- Hide/Show Label Controls -->
+            {% if settings.show_hidden_options %}
             <button type="button" onclick="hideLabel('{{ label.name }}', '{{ label.id }}')" id="hide_btn_{{ label.id }}"
                 data-tooltip-target="tooltip-hide-{{ label.id }}" data-tooltip-placement="top"
                 class="inline-flex items-center p-1.5 text-xs text-gray-500 hover:text-red-600 focus:outline-none transition-colors {% if label.id in hidden_labels %} hidden{% endif %}">
@@ -32,6 +33,7 @@
                 {{ _('Show this label') }}
                 <div class="tooltip-arrow" data-popper-arrow></div>
             </div>
+            {% endif %}
             {% endif %}
         </div>
     </div>
