@@ -40,10 +40,10 @@ QUEUES_PATH = Path("/app/queues")
 UPLOAD_BATCH_SIZE = 1000
 
 INTERFACE_SETTINGS = {
-    "show_apply_to_all": False,
-    "show_highlights": False,
-    "show_hidden_options": False,
-    "show_al": False,
+    "show_apply_to_all": True,
+    "show_highlights": True,
+    "show_hidden_options": True,
+    "show_al": True,
 }
 
 WORK_PATH = Path(os.getenv("WORK_FOLDER", "/app/work"))
