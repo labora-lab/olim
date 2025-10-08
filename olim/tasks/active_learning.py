@@ -238,16 +238,16 @@ def create_label_al(
 ) -> dict[str, Any]:
     """Create new active learning for label"""
 
-    # Check if label is open text type - if so, skip active learning
+    # Check if label is free text type - if so, skip active learning
     with flask_app.app_context():
         from olim.database import get_label
-        from olim.label_types import is_open_text_label
+        from olim.label_types import is_free_text_label
 
         label = get_label(label_id)
-        if label and is_open_text_label(label.label_type):
-            # For open text labels, just mark as set up without creating AL
-            update_label(label_id, al_key="open_text_disabled")
-            return {"success": True, "errors": None, "message": "Active learning disabled for open text labels"}
+        if label and is_free_text_label(label.label_type):
+            # For free text labels, just mark as set up without creating AL
+            update_label(label_id, al_key="free_text_disabled")
+            return {"success": True, "errors": None, "message": "Active learning disabled for free text labels"}
 
     learner_path = get_label_path(project_id, label_id, check=False)
     with learner_lock(learner_path):  # type: ignore

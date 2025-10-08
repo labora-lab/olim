@@ -70,7 +70,7 @@
                                 </div>
                             </td>
                             <!-- Show value counts only for regular labels -->
-                            {% if not is_open_text_label(label.label_type) %}
+                            {% if not is_free_text_label(label.label_type) %}
                                 {% for value in possible_values %}
                                 {% if value != "Total" %}
                                 <td class="px-6 py-4 text-center">
@@ -81,7 +81,7 @@
                                 {% endif %}
                                 {% endfor %}
                             {% else %}
-                                <!-- For open text labels, show dashes in all value columns -->
+                                <!-- For free text labels, show dashes in all value columns -->
                                 {% for value in possible_values %}
                                 {% if value != "Total" %}
                                 <td class="px-6 py-4 text-center">

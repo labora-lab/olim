@@ -1,27 +1,43 @@
-from . import check, open_text, sim_nao, sim_nao_ns, yes_no, yes_no_idk, yes_no_unknown
+"""Label type modules for OLIM."""
 
-__all__ = ["check", "open_text", "sim_nao", "sim_nao_ns", "yes_no", "yes_no_idk", "yes_no_unknown"]
+from . import (
+    check,
+    free_text,
+    multiple_choice,
+    sim_nao,
+    sim_nao_ns,
+    yes_no,
+    yes_no_idk,
+    yes_no_unknown,
+)
+
+__all__ = [
+    "check",
+    "free_text",
+    "multiple_choice",
+    "sim_nao",
+    "sim_nao_ns",
+    "yes_no",
+    "yes_no_idk",
+    "yes_no_unknown",
+]
+
+# Mapping of label type identifiers to their modules
+_LABEL_TYPE_MAP = {
+    "sim_nao": sim_nao,
+    "sim_nao_ns": sim_nao_ns,
+    "yes_no": yes_no,
+    "check": check,
+    "yes_no_unknown": yes_no_unknown,
+    "yes_no_idk": yes_no_idk,
+    "free_text": free_text,
+    "multiple_choice": multiple_choice,
+}
 
 
 def get_label_type_module(label_type):
     """Get the module for a specific label type"""
-    if label_type == "sim_nao":
-        return sim_nao
-    elif label_type == "sim_nao_ns":
-        return sim_nao_ns
-    elif label_type == "yes_no":
-        return yes_no
-    elif label_type == "check":
-        return check
-    elif label_type == "yes_no_unknown":
-        return yes_no_unknown
-    elif label_type == "yes_no_idk":
-        return yes_no_idk
-    elif label_type == "open_text":
-        return open_text
-    else:
-        # Default fallback
-        return sim_nao
+    return _LABEL_TYPE_MAP.get(label_type, sim_nao)
 
 
 def get_available_label_types():
@@ -33,13 +49,14 @@ def get_available_label_types():
         ("check", "Check"),
         ("yes_no_unknown", "Yes/No/Unknown"),
         ("yes_no_idk", "Yes/No/Don't Know"),
-        ("open_text", "Open Text"),
+        ("free_text", "Free Text"),
+        ("multiple_choice", "Multiple Choice"),
     ]
 
 
-def is_open_text_label(label_type):
-    """Check if a label type is open text"""
-    if label_type == "open_text":
+def is_free_text_label(label_type):
+    """Check if a label type is free text"""
+    if label_type == "free_text":
         module = get_label_type_module(label_type)
-        return hasattr(module, 'is_open_text') and module.is_open_text()
-    return False 
+        return hasattr(module, 'is_free_text') and module.is_free_text()
+    return False
