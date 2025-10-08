@@ -95,7 +95,7 @@ from . import labels  # noqa
 from . import project  # noqa
 from . import upload_data  # noqa
 from .utils.entry import have_hidden  # noqa
-from .label_types import get_label_type_module, get_available_label_types, is_open_text_label  # noqa
+from .label_types import get_label_type_module, get_available_label_types, is_free_text_label  # noqa
 
 # Global variables to templates
 app.jinja_env.globals.update(
@@ -103,7 +103,7 @@ app.jinja_env.globals.update(
     has_permission=auth.role_has_permission,
     get_label_type_module=get_label_type_module,
     get_available_label_types=get_available_label_types,
-    is_open_text_label=is_open_text_label,
+    is_free_text_label=is_free_text_label,
     has_learner=True,
     version=VERSION,
     has_help=HELP_URL is not None,

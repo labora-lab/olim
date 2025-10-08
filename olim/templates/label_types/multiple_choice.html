@@ -1,0 +1,155 @@
+<!-- Multiple Choice label template -->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-2">
+    {% for option_value, type, icon, color in label_config %}
+    {% set is_selected = option_value in selected_values %}
+
+    <!-- Option Button -->
+    <button type="button"
+        onclick="toggleMultipleChoice({{ entry.id }}, {{ label.id }}, '{{ option_value }}')"
+        id="{{ option_value | replace(' ', '_') }}_{{ label.id }}"
+        data-option-value="{{ option_value }}"
+        data-color="{{ color }}"
+        data-selected="{{ 'true' if is_selected else 'false' }}"
+        data-tooltip-target="tooltip-{{ label.id }}-{{ loop.index }}"
+        data-tooltip-placement="top"
+        class="mc-option relative inline-flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-lg border-2 transition-all duration-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-{{ color }}-200 {% if is_selected %}text-white bg-{{ color }}-600 border-{{ color }}-600 hover:bg-{{ color }}-700 hover:border-{{ color }}-700{% else %}text-gray-700 bg-white border-gray-300 hover:bg-{{ color }}-50 hover:border-{{ color }}-300 hover:text-{{ color }}-700{% endif %}">
+        {% if type == 'text' %}
+        <span class="mc-main-icon font-bold mr-2{% if not is_selected %} opacity-60{% endif %}">{{ icon }}</span>
+        {% else %}
+        <i class="mc-main-icon bi bi-{{ icon }} mr-2{% if not is_selected %} opacity-60{% endif %}"></i>
+        {% endif %}
+        <span>{{ option_value }}</span>
+        <i class="mc-check-icon bi bi-check-circle-fill ml-2{% if not is_selected %} hidden{% endif %}"></i>
+        <i class="mc-circle-icon bi bi-circle ml-2 text-gray-400{% if is_selected %} hidden{% endif %}"></i>
+    </button>
+
+    <!-- Tooltip -->
+    <div id="tooltip-{{ label.id }}-{{ loop.index }}" role="tooltip"
+        class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+        {% if is_selected %}
+        {{ _('Click to unselect "{option}"').format(option=option_value) }}
+        {% else %}
+        {{ _('Click to select "{option}"').format(option=option_value) }}
+        {% endif %}
+        <div class="tooltip-arrow" data-popper-arrow></div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Clear All Button -->
+<div class="mt-3">
+    <button type="button"
+        onclick="clearMultipleChoice({{ entry.id }}, {{ label.id }})"
+        class="text-xs text-gray-500 hover:text-red-600 transition-colors duration-200">
+        <i class="bi bi-x-circle mr-1"></i>
+        {{ _('Clear all') }}
+    </button>
+</div>
+
+<script>
+// Multiple choice selection handler
+function toggleMultipleChoice(entryId, labelId, optionValue) {
+    const labelContainer = document.getElementById('label_' + labelId);
+    if (!labelContainer) return;
+
+    // Get all buttons for this label
+    const allButtons = labelContainer.querySelectorAll('[data-option-value]');
+
+    // Collect currently selected values by checking data-selected attribute
+    let selectedValues = [];
+    allButtons.forEach(btn => {
+        const value = btn.getAttribute('data-option-value');
+        const isSelected = btn.getAttribute('data-selected') === 'true';
+
+        // If this is the clicked button, toggle its state
+        if (value === optionValue) {
+            if (!isSelected) {
+                selectedValues.push(value);
+            }
+            // If it was selected, we don't add it (thus deselecting it)
+        } else {
+            // For other buttons, keep their current state
+            if (isSelected) {
+                selectedValues.push(value);
+            }
+        }
+    });
+
+    // Serialize to JSON and send to backend
+    const valueJson = JSON.stringify(selectedValues);
+
+    run_command('add-label', [
+        'entry_id=' + entryId,
+        'label_id=' + labelId,
+        'value=' + encodeURIComponent(valueJson),
+        'callback=updateMultipleChoiceUI(' + labelId + ', ' + JSON.stringify(selectedValues) + ');'
+    ]);
+}
+
+// Clear all selections
+function clearMultipleChoice(entryId, labelId) {
+    run_command('add-label', [
+        'entry_id=' + entryId,
+        'label_id=' + labelId,
+        'value=',
+        'callback=updateMultipleChoiceUI(' + labelId + ', []);'
+    ]);
+}
+
+// Update UI after backend confirms the change
+function updateMultipleChoiceUI(labelId, selectedValues) {
+    const labelContainer = document.getElementById('label_' + labelId);
+    if (!labelContainer) return;
+
+    const allButtons = labelContainer.querySelectorAll('[data-option-value]');
+
+    allButtons.forEach(btn => {
+        const value = btn.getAttribute('data-option-value');
+        const color = btn.getAttribute('data-color') || 'blue';
+        const isSelected = selectedValues.includes(value);
+
+        // Update the data-selected attribute
+        btn.setAttribute('data-selected', isSelected ? 'true' : 'false');
+
+        // Build the class list based on selection state
+        const baseClasses = 'mc-option relative inline-flex items-center justify-center px-3 py-2.5 text-sm font-medium rounded-lg border-2 transition-all duration-200 shadow-sm focus:outline-none';
+
+        if (isSelected) {
+            // Selected state
+            btn.className = `${baseClasses} text-white bg-${color}-600 border-${color}-600 hover:bg-${color}-700 hover:border-${color}-700 focus:ring-2 focus:ring-${color}-200`;
+        } else {
+            // Unselected state
+            btn.className = `${baseClasses} text-gray-700 bg-white border-gray-300 hover:bg-${color}-50 hover:border-${color}-300 hover:text-${color}-700 focus:ring-2 focus:ring-${color}-200`;
+        }
+
+        // Update icons visibility
+        const checkIcon = btn.querySelector('.mc-check-icon');
+        const circleIcon = btn.querySelector('.mc-circle-icon');
+        const mainIcon = btn.querySelector('.mc-main-icon');
+
+        if (checkIcon) {
+            if (isSelected) {
+                checkIcon.classList.remove('hidden');
+            } else {
+                checkIcon.classList.add('hidden');
+            }
+        }
+
+        if (circleIcon) {
+            if (isSelected) {
+                circleIcon.classList.add('hidden');
+            } else {
+                circleIcon.classList.remove('hidden');
+            }
+        }
+
+        if (mainIcon) {
+            if (isSelected) {
+                mainIcon.classList.remove('opacity-60');
+            } else {
+                mainIcon.classList.add('opacity-60');
+            }
+        }
+    });
+}
+</script>
