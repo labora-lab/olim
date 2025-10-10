@@ -17,15 +17,13 @@ from .settings import (
     DB_USER,
     DEBUG,
     HELP_URL,
-    LABELS,
     LANGUAGES,
     PERMANENT_SESSION_LIFETIME,
     SECRET_KEY,
     SESSION_PERMANENT,
     SESSION_TYPE,
     SESSION_USE_SIGNER,
-    SHOW_APPLY_TO_ALL,
-    SHOW_HIGHLIGHTS,
+    INTERFACE_SETTINGS,
     VERSION,
 )
 
@@ -97,18 +95,18 @@ from . import project  # noqa
 from . import settings_routes  # noqa
 from . import upload_data  # noqa
 from .utils.entry import have_hidden  # noqa
+from .label_types import get_label_type_module, get_available_label_types, is_free_text_label  # noqa
 
 # Global variables to templates
 app.jinja_env.globals.update(
     have_hidden=have_hidden,
     has_permission=auth.role_has_permission,
-    labels_types=LABELS,
-    labels_rev=LABELS[::-1],
-    labels_array=json.dumps([label_values[0].replace(" ", "_") for label_values in LABELS]),
+    get_label_type_module=get_label_type_module,
+    get_available_label_types=get_available_label_types,
+    is_free_text_label=is_free_text_label,
     has_learner=True,
     version=VERSION,
     has_help=HELP_URL is not None,
     debug=DEBUG,
-    show_apply_to_all=SHOW_APPLY_TO_ALL,
-    show_highlights=SHOW_HIGHLIGHTS,
+    settings=INTERFACE_SETTINGS,
 )

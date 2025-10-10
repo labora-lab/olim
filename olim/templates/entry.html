@@ -74,7 +74,7 @@
 
                 <div class="p-6 space-y-2">
                     <!-- Apply to All Controls -->
-                    {% if show_apply_to_all %}
+                    {% if settings.show_apply_to_all %}
                     <div class="bg-gray-50 rounded-lg p-4">
                         <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
                             <i class="bi bi-lightning mr-2"></i>
@@ -131,6 +131,7 @@
                     </div>
 
                     <!-- Hidden Entries Controls -->
+                    {% if settings.show_hidden_options %}
                     <div class="pt-2">
                         <button type="button" id="show_hidden_btn" onclick="toggleHidden(true)"
                             data-tooltip-target="tooltip-show-hidden" data-tooltip-placement="top"
@@ -156,6 +157,7 @@
                             <div class="tooltip-arrow" data-popper-arrow></div>
                         </div>
                     </div>
+                    {% endif %}
 
                     {% if entry.type == "patient" %}
                     <!-- Patient-specific controls -->
@@ -185,8 +187,9 @@
                         </div>
                     </div>
                     {% endif %}
-
+                    {% if settings.show_highlights %}
                     {{ highlights_macro.highlights_section() }}
+                    {% endif %}
                 </div>
             </div>
         </div>

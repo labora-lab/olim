@@ -193,7 +193,7 @@
         const form = document.querySelector('form');
         const nameField = document.getElementById('name');
         const submitBtn = document.getElementById('send_btn');
-        const fileInput = document.getElementById('large-file-input');
+        let fileInput = document.getElementById('large-file-input');
         const projectCheckboxes = document.querySelectorAll('input[name="projects"]');
         const options = document.querySelectorAll('.upload-option');
         const uploadType = document.getElementById('upload_type');
@@ -270,6 +270,15 @@
                         <input id="large-file-input" name="large-file-input" type="file" accept=".csv" class="hidden" />
                     </label>
                 </div>
+
+                <!-- Progress Bar -->
+                <div class="progress hidden px-1 py-2">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="determinate bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                            style="width: 0%"></div>
+                    </div>
+                </div>
+
                 <div id="upload-status" class="text-sm text-gray-600 mt-2"></div>
             `;
 
@@ -303,6 +312,13 @@
 
             // Update global reference to new file input
             fileInput = document.getElementById('large-file-input');
+            
+            // Reattach event listeners to the new file input
+            if (fileInput) {
+                fileInput.addEventListener('change', window.validateForm);
+                // Reattach the chunked upload listener
+                window.attachChunkedUpload(fileInput);
+            }
 
             // Validate form after file change
             window.validateForm();
@@ -487,8 +503,10 @@
                     status.textContent = '{{ _("Please select a CSV file only.") }}';
                     status.className = 'text-sm text-red-600';
                     setTimeout(() => {
-                        status.textContent = '';
-                        status.className = 'text-sm text-gray-600';
+                        if (status) {
+                            status.textContent = '';
+                            status.className = 'text-sm text-gray-600';
+                        }
                     }, 3000);
                 }
             }
@@ -496,7 +514,9 @@
     });
     const CHUNK_SIZE = {{ CHUNK_SIZE }};
 
-    document.getElementById('large-file-input').addEventListener('change', async (e) => {
+    // Function to attach chunked upload listener
+    window.attachChunkedUpload = function(inputElement) {
+        inputElement.addEventListener('change', async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -504,11 +524,15 @@
         const addFields = document.getElementById('additional-fields');
 
         const progress = document.querySelector('.progress');
-        const progressBar = progress.querySelector('.determinate');
+        const progressBar = progress?.querySelector('.determinate');
         const status = document.getElementById('upload-status');
 
-        progress.classList.remove('hidden');
-        status.textContent = '{{ _("Preparing upload...") }}';
+        if (progress) {
+            progress.classList.remove('hidden');
+        }
+        if (status) {
+            status.textContent = '{{ _("Preparing upload...") }}';
+        }
 
         try {
             const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
@@ -518,8 +542,12 @@
                 const chunk = file.slice(chunkNumber * CHUNK_SIZE, (chunkNumber + 1) * CHUNK_SIZE);
 
                 const percent = Math.round((chunkNumber / totalChunks) * 100);
-                progressBar.style.width = `${percent}%`;
-                status.textContent = `{{ _("Uploading...") }} ${percent}%`;
+                if (progressBar) {
+                    progressBar.style.width = `${percent}%`;
+                }
+                if (status) {
+                    status.textContent = `{{ _("Uploading...") }} ${percent}%`;
+                }
 
                 const formData = new FormData();
                 formData.append('file', chunk);
@@ -539,8 +567,12 @@
                 if (!response.ok) throw new Error('Upload failed');
             }
 
-            progressBar.style.width = '100%';
-            status.textContent = '{{ _("Upload complete! Processing file...") }}';
+            if (progressBar) {
+                progressBar.style.width = '100%';
+            }
+            if (status) {
+                status.textContent = '{{ _("Upload complete! Processing file...") }}';
+            }
 
             // Finalize upload
             const finalResponse = await fetch(`/upload/finalize/${fileId}?filename=${file.name}&total_chunks=${totalChunks}`, {
@@ -678,17 +710,34 @@
                     </div>
                 `;
 
-                status.textContent = '';
+                if (status) {
+                    status.textContent = '';
+                }
             } else {
                 throw new Error('Finalization failed');
             }
 
-            setTimeout(() => progress.classList.add('hidden'), 2000);
+            setTimeout(() => {
+                if (progress) {
+                    progress.classList.add('hidden');
+                }
+            }, 2000);
 
         } catch (error) {
-            progressBar.style.backgroundColor = 'red';
-            status.textContent = `{{ _("Upload failed:") }} ${error.message}`;
+            if (progressBar) {
+                progressBar.style.backgroundColor = 'red';
+            }
+            if (status) {
+                status.textContent = `{{ _("Upload failed:") }} ${error.message}`;
+            }
         }
-    });
+        });
+    };
+
+    // Attach to the initial file input
+    const initialFileInput = document.getElementById('large-file-input');
+    if (initialFileInput) {
+        window.attachChunkedUpload(initialFileInput);
+    }
 </script>
 {% endmacro %}

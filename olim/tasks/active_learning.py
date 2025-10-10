@@ -145,7 +145,14 @@ def instanciate_al(project_id, label_id) -> ActiveLearningBackend:
         label = get_label(label_id)
         learner_params = label.learner_parameters if label and label.learner_parameters else {}
 
-    labels = [label[0] for label in settings.LABELS]
+        # Get label values from the label's type configuration
+        if label and label.label_type:
+            from olim.label_types import get_label_type_module
+            label_module = get_label_type_module(label.label_type)
+            labels = [option[0] for option in label_module.get_label_options()]
+        else:
+            # Default fallback to sim/não if no label type is configured
+            labels = ["sim", "não"]
 
     # Base parameters for ActiveLearningBackend
     base_params = {
@@ -230,6 +237,18 @@ def create_label_al(
     **__,
 ) -> dict[str, Any]:
     """Create new active learning for label"""
+
+    # Check if label is free text type - if so, skip active learning
+    with flask_app.app_context():
+        from olim.database import get_label
+        from olim.label_types import is_free_text_label
+
+        label = get_label(label_id)
+        if label and is_free_text_label(label.label_type):
+            # For free text labels, just mark as set up without creating AL
+            update_label(label_id, al_key="free_text_disabled")
+            return {"success": True, "errors": None, "message": "Active learning disabled for free text labels"}
+
     learner_path = get_label_path(project_id, label_id, check=False)
     with learner_lock(learner_path):  # type: ignore
         learner = instanciate_al(project_id, label_id)

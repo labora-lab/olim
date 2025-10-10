@@ -39,6 +39,13 @@ QUEUES_PATH = Path("/app/queues")
 
 UPLOAD_BATCH_SIZE = 1000
 
+INTERFACE_SETTINGS = {
+    "show_apply_to_all": True,
+    "show_highlights": True,
+    "show_hidden_options": True,
+    "show_al": True,
+}
+
 WORK_PATH = Path(os.getenv("WORK_FOLDER", "/app/work"))
 
 UPLOAD_PATH = WORK_PATH / "uploads"
@@ -53,13 +60,6 @@ if RANDOM_SEED is not None:
 
 HELP_URL = os.getenv("HELP_URL", "")
 """URL to the API help page"""
-
-SHOW_APPLY_TO_ALL = False  # os.getenv("SHOW_APPLY_TO_ALL", "true").lower() == "true"
-"""Whether to show the 'Apply to all' controls in the entry labeling interface"""
-
-SHOW_HIGHLIGHTS = os.getenv("SHOW_HIGHLIGHTS", "true").lower() == "true"
-"""Whether to show the highlights section in the entry labeling interface"""
-
 
 class LabelTypes:
     SIM_NAO: ClassVar = [
@@ -99,6 +99,9 @@ try:
 except (TypeError, NameError):
     print(f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!")
     LABELS = LabelTypes.YES_NO
+
+# Label types are now configured at the individual label level
+# See olim.label_types module for available label types
 
 """List of endpoints that need a setup backend."""
 NEED_LEARNER = [

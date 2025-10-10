@@ -34,14 +34,20 @@ def labels(project_id: int) -> ...:
     labels_values = {label.id: {} for label in get_labels(project_id)}
     possible_values = []
     for label in get_labels(project_id):
+        # Check if this label is free text type
+        from olim.label_types import is_free_text_label
+        is_free_text = is_free_text_label(label.label_type)
+
         for entry in label.entries:
             if not entry.is_deleted:
                 if entry.value in labels_values[label.id]:
                     labels_values[label.id][entry.value] += 1
                 else:
                     labels_values[label.id][entry.value] = 1
-            if entry.value not in possible_values:
-                possible_values.append(entry.value)
+
+                # Only add to possible_values if it's NOT from a free text label
+                if not is_free_text and entry.value not in possible_values:
+                    possible_values.append(entry.value)
     possible_values.append("Total")
     for label_id in labels_values:
         labels_values[label_id]["Total"] = sum(labels_values[label_id].values())
@@ -64,7 +70,8 @@ def create_label(project_id: int) -> ...:
         return res
 
     label_name = request.form.get("label")
-    label = new_label(label_name, session["user_id"], project_id)
+    label_type = request.form.get("label_type") or None
+    label = new_label(label_name, session["user_id"], project_id, label_type=label_type)
     launch_task_with_tracking(
         create_label_al,
         project_id=project_id,

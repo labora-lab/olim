@@ -121,6 +121,15 @@ def catch_al(label_id: int) -> ...:
         flash(_("Label not found."), category="error")
         return redirect("/")
 
+    # Check if label is free text type - active learning is not available
+    from olim.label_types import is_free_text_label
+    if is_free_text_label(label.label_type):
+        flash(
+            _("Active Learning is not available for free text labels. Use regular labeling instead."),
+            category="warning"
+        )
+        return redirect(url_for("labels", project_id=label.project_id))
+
     # Create learner if it doen't exists
     if label.al_key is None:
         launch_task_with_tracking(
@@ -146,7 +155,16 @@ def catch_al(label_id: int) -> ...:
 
     # Assign label value if given
     if request.method == "POST":
-        value_str = settings.LABELS[-1 - int(request.form["value"])][0]
+        # Get label values from the label's type configuration
+        if label.label_type:
+            from olim.label_types import get_label_type_module
+            label_module = get_label_type_module(label.label_type)
+            label_options = label_module.get_label_options()
+        else:
+            # Default fallback to sim/não if no label type is configured
+            label_options = [("sim", "icon", "check-circle-fill", "green"), ("não", "icon", "x-circle-fill", "red")]
+
+        value_str = label_options[-1 - int(request.form["value"])][0]
         entry_id = request.form["entry_id"]
         entry = get_entry(request.form["entry_id"], by="id")
         if entry is None:
