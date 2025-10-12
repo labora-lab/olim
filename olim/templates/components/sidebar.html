@@ -195,6 +195,13 @@
                         {{ _('Upload Data') }}
                     </a>
                     {% endif %}
+                    {% if has_permission('admin_settings') %}
+                    <a href="{{ url_for('admin_settings') }}"
+                        class="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white">
+                        <i class="bi bi-sliders mr-2"></i>
+                        {{ _('Global Settings') }}
+                    </a>
+                    {% endif %}
                 </div>
             </div>
 

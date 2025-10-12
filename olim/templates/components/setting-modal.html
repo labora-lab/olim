@@ -1,0 +1,208 @@
+<!-- Create/Edit Setting Modal -->
+<div id="setting-modal" tabindex="-1" aria-hidden="true" class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+    <div class="relative p-4 w-full max-w-2xl max-h-full flex items-center justify-center">
+        <!-- Modal content -->
+        <div class="relative bg-white rounded-lg shadow-sm dark:bg-gray-700">
+            <!-- Modal header -->
+            <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600 border-gray-200">
+                <h3 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center" id="modal-title">
+                    {% if is_edit %}
+                        <i class="bi bi-pencil text-cyan-600 mr-2"></i>
+                        {{ _('Edit Setting') }}
+                    {% else %}
+                        <i class="bi bi-plus-circle text-cyan-600 mr-2"></i>
+                        {{ _('Create Setting') }}
+                    {% endif %}
+                </h3>
+                <button type="button" class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="setting-modal">
+                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                    </svg>
+                    <span class="sr-only">{{ _('Close modal') }}</span>
+                </button>
+            </div>
+            <!-- Modal body -->
+            <div class="p-4 md:p-5">
+                <form id="setting-form" method="POST" action="{{ url_for('admin_settings') }}" class="space-y-4">
+                    <input type="hidden" name="action" id="form-action" value="{% if is_edit %}update{% else %}create{% endif %}">
+                    <input type="hidden" name="setting_key" id="hidden-setting-key" value="">
+
+                    <!-- Key Field -->
+                    <div>
+                        <label for="setting-key" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                            <i class="bi bi-key mr-1"></i>
+                            {{ _('Setting Key') }} <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               id="setting-key" 
+                               name="key" 
+                               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" 
+                               placeholder="e.g., default_label_format"
+                               value="{% if setting %}{{ setting.key }}{% endif %}"
+                               {% if is_edit %}disabled{% else %}required{% endif %}>
+                        <p class="text-xs text-gray-500 mt-1">{{ _('Unique identifier for the setting (lowercase, underscores)') }}</p>
+                    </div>
+
+                    <!-- Display Name Field -->
+                    <div>
+                        <label for="setting-display-name" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                            <i class="bi bi-tag mr-1"></i>
+                            {{ _('Display Name') }} <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" 
+                               id="setting-display-name" 
+                               name="display_name" 
+                               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" 
+                               placeholder="e.g., Default Label Format"
+                               value="{% if setting %}{{ setting.display_name }}{% endif %}"
+                               required>
+                    </div>
+
+                    <!-- Type and Category Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="setting-type" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                <i class="bi bi-list-ul mr-1"></i>
+                                {{ _('Data Type') }} <span class="text-red-500">*</span>
+                            </label>
+                            <select id="setting-type" 
+                                    name="type" 
+                                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white"
+                                    required>
+                                <option value="str" {% if setting and setting.type == 'str' %}selected{% endif %}>{{ _('String') }}</option>
+                                <option value="int" {% if setting and setting.type == 'int' %}selected{% endif %}>{{ _('Integer') }}</option>
+                                <option value="float" {% if setting and setting.type == 'float' %}selected{% endif %}>{{ _('Float') }}</option>
+                                <option value="bool" {% if setting and setting.type == 'bool' %}selected{% endif %}>{{ _('Boolean') }}</option>
+                                <option value="json" {% if setting and setting.type == 'json' %}selected{% endif %}>{{ _('JSON') }}</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="setting-category" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                <i class="bi bi-folder mr-1"></i>
+                                {{ _('Category') }}
+                            </label>
+                            <input type="text" 
+                                   id="setting-category" 
+                                   name="category" 
+                                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" 
+                                   placeholder="{{ _('General') }}"
+                                   value="{% if setting %}{{ setting.category or '' }}{% endif %}">
+                        </div>
+                    </div>
+
+                    <!-- Value and Default Value Row -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="setting-value" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                <i class="bi bi-check-circle mr-1"></i>
+                                {{ _('Current Value') }} <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="setting-value" 
+                                   name="value" 
+                                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" 
+                                   value="{% if setting %}{{ setting.value }}{% endif %}"
+                                   required>
+                        </div>
+
+                        <div>
+                            <label for="setting-default-value" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                                <i class="bi bi-arrow-clockwise mr-1"></i>
+                                {{ _('Default Value') }} <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" 
+                                   id="setting-default-value" 
+                                   name="default_value" 
+                                   class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" 
+                                   value="{% if setting %}{{ setting.default_value }}{% endif %}"
+                                   required>
+                        </div>
+                    </div>
+
+                    <!-- Description Field -->
+                    <div>
+                        <label for="setting-description" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">
+                            <i class="bi bi-chat-text mr-1"></i>
+                            {{ _('Description') }}
+                        </label>
+                        <textarea id="setting-description" 
+                                  name="description" 
+                                  rows="3"
+                                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white resize-none"
+                                  placeholder="{{ _('Optional description of this setting') }}">{% if setting %}{{ setting.description or '' }}{% endif %}</textarea>
+                    </div>
+
+                    <!-- Modal footer -->
+                    <div class="flex items-center p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600">
+                        <button type="submit" 
+                                class="text-white bg-cyan-700 hover:bg-cyan-800 focus:ring-4 focus:outline-none focus:ring-cyan-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-cyan-600 dark:hover:bg-cyan-700 dark:focus:ring-cyan-800">
+                            <i class="bi bi-check mr-1"></i>{{ _('Save Setting') }}
+                        </button>
+                        <button type="button" 
+                                data-modal-hide="setting-modal"
+                                class="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-cyan-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">
+                            {{ _('Cancel') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Create form function
+window.showCreateForm = function() {
+    document.getElementById('modal-title').innerHTML = '<i class="bi bi-plus-circle text-cyan-600 mr-2"></i>{{ _("Create Setting") }}';
+    document.getElementById('form-action').value = 'create';
+    document.getElementById('setting-form').reset();
+    document.getElementById('setting-key').disabled = false;
+    document.getElementById('setting-key').required = true;
+    
+    // Clear hidden key field for create
+    document.getElementById('hidden-setting-key').value = '';
+    
+    // Show modal
+    const modal = document.getElementById('setting-modal');
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+};
+
+// Auto-fill function
+window.autoFillValueFromDefault = function() {
+    const defaultValue = document.getElementById('setting-default-value').value;
+    const currentValue = document.getElementById('setting-value');
+    
+    // Only auto-fill if current value is empty and default value exists
+    if (!currentValue.value && defaultValue) {
+        currentValue.value = defaultValue;
+    }
+};
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle type changes to show appropriate input
+    const typeField = document.getElementById('setting-type');
+    if (typeField) {
+        typeField.addEventListener('change', function() {
+            updateInputTypes(this.value);
+        });
+    }
+    
+    // Auto-fill current value when default value changes
+    const defaultField = document.getElementById('setting-default-value');
+    if (defaultField) {
+        defaultField.addEventListener('input', autoFillValueFromDefault);
+    }
+    
+    // Show create form when button is clicked
+    const createBtn = document.getElementById('create-setting-btn');
+    if (createBtn) {
+        createBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            showCreateForm();
+        });
+    }
+});
+</script>

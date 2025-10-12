@@ -162,6 +162,24 @@ class Label(db.Model, CreationControl):
     project: Mapped["Project"] = db.relationship(back_populates="labels")
 
 
+class GlobalSetting(db.Model, CreationControl):
+    """Global system settings table"""
+
+    __tablename__ = "global_settings"
+    __table_args__ = (db.Index("ix_global_settings_category", "category"),)
+
+    # Columns
+    key: Mapped[str] = db.mapped_column(db.String(128), primary_key=True)
+    display_name: Mapped[str] = db.mapped_column(db.String(256), nullable=False)
+    value: Mapped[str] = db.mapped_column(db.Text, nullable=False)
+    default_value: Mapped[str] = db.mapped_column(db.Text, nullable=False)
+    type: Mapped[str] = db.mapped_column(
+        db.String(16), nullable=False
+    )  # 'str', 'int', 'float', 'bool', 'json'
+    description: Mapped[str | None] = db.mapped_column(db.Text, nullable=True)
+    category: Mapped[str | None] = db.mapped_column(db.String(64), nullable=True)
+
+
 class CeleryTaskStatus(db.TypeDecorator):
     """Enum for Celery task states"""
 
@@ -1119,6 +1137,140 @@ def get_celery_tasks(n=10) -> list[TaskStatus]:
                 }
             )
     return tasks
+
+
+# endregion
+
+
+# region Global Settings Management
+# --------------------------------
+def get_setting(key: str) -> GlobalSetting | None:
+    """Retrieve a global setting by key.
+
+    Args:
+        key: Setting key to retrieve
+
+    Returns:
+        GlobalSetting object if found, None otherwise
+    """
+    return get_by(GlobalSetting, "key", key, True)
+
+
+def get_settings(category: str | None = None) -> list[GlobalSetting]:
+    """Retrieve all global settings with optional category filtering.
+
+    Args:
+        category: Optional category to filter by
+
+    Returns:
+        List of GlobalSetting objects ordered by category, then key
+    """
+    query = db.select(GlobalSetting).filter_by(is_deleted=False)
+
+    if category is not None:
+        query = query.filter_by(category=category)
+
+    return list(
+        db.session.execute(query.order_by(GlobalSetting.category, GlobalSetting.key)).scalars()
+    )
+
+
+def set_setting(
+    key: str,
+    value: str,
+    display_name: str,
+    setting_type: str,
+    default_value: str,
+    description: str | None = None,
+    category: str | None = None,
+    user_id: int | None = None,
+) -> GlobalSetting:
+    """Create or update a global setting.
+
+    Args:
+        key: Setting key (unique identifier)
+        value: Setting value (stored as string)
+        display_name: Human-readable name for UI
+        setting_type: Type of the setting ('str', 'int', 'float', 'bool', 'json')
+        default_value: Default value (stored as string)
+        description: Optional description
+        category: Optional category for grouping
+        user_id: ID of user creating/updating (defaults to session user)
+
+    Returns:
+        Created or updated GlobalSetting object
+    """
+    if user_id is None:
+        from flask import session
+
+        user_id = session.get("user_id", 1)  # Fallback to user 1 if no session
+
+    setting = get_setting(key)
+    if setting:
+        # Update existing setting
+        setting.value = value
+        setting.display_name = display_name
+        setting.type = setting_type
+        setting.default_value = default_value
+        setting.description = description
+        setting.category = category
+        db.session.commit()
+        return setting
+    else:
+        # Create new setting
+        setting = GlobalSetting(
+            key=key,
+            display_name=display_name,
+            value=value,
+            default_value=default_value,
+            type=setting_type,
+            description=description,
+            category=category,
+            created=datetime.now(),
+            created_by=user_id,
+            is_deleted=False,
+        )
+        db.session.add(setting)
+        db.session.commit()
+        return setting
+
+
+def delete_setting(key: str, user_id: int | None = None) -> GlobalSetting | None:
+    """Soft-delete a global setting.
+
+    Args:
+        key: Setting key to delete
+        user_id: ID of user performing deletion
+
+    Returns:
+        Deleted GlobalSetting object or None if not found
+    """
+    if user_id is None:
+        from flask import session
+
+        user_id = session.get("user_id", 1)
+
+    setting = get_setting(key)
+    if setting:
+        del_controled(setting, user_id)
+        return setting
+    return None
+
+
+def get_setting_value(key: str, default: str | None = None) -> str | None:
+    """Get the raw string value of a setting.
+
+    Args:
+        key: Setting key
+        default: Default value if setting not found
+
+    Returns:
+        Setting value as string or default
+    """
+    setting = get_setting(key)
+    if setting:
+        return setting.value
+    return default
 
 
 # endregion

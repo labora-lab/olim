@@ -92,6 +92,7 @@ from . import error_handlers  # noqa
 from . import issue  # noqa
 from . import labels  # noqa
 from . import project  # noqa
+from . import settings_routes  # noqa
 from . import upload_data  # noqa
 from .utils.entry import have_hidden  # noqa
 from .label_types import get_label_type_module, get_available_label_types, is_free_text_label  # noqa

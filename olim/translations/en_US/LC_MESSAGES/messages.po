@@ -2,13 +2,13 @@
 # Copyright (C) 2025 OLIM
 # This file is distributed under the same license as the  project.
 # Nano Gennari <me@nngn.net>, 2025, Felipe Adeildo
-# <felipe.adeildo@proton.me>, 2023.
+# <contato@felipeadeildo.com>, 2023.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2025-09-18 15:26+0000\n"
+"POT-Creation-Date: 2025-10-09 21:56-0300\n"
 "PO-Revision-Date: 2025-03-20 20:21+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: en_US\n"
@@ -19,56 +19,56 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: olim/active_learning.py:87
+#: olim/active_learning.py:93
 #, python-brace-format
 msgid "Training for label {label_name}"
 msgstr ""
 
-#: olim/active_learning.py:101
+#: olim/active_learning.py:107
 #, python-brace-format
 msgid "Added value \"{value_str}\" for entry {entry_id}."
 msgstr ""
 
-#: olim/active_learning.py:115 olim/active_learning.py:218
-#: olim/active_learning.py:258
+#: olim/active_learning.py:121 olim/active_learning.py:224
+#: olim/active_learning.py:264
 msgid "Label not found."
 msgstr ""
 
-#: olim/active_learning.py:122
+#: olim/active_learning.py:128
 #, python-brace-format
 msgid "Creating Active Learning for {label_name}"
 msgstr ""
 
-#: olim/active_learning.py:134
+#: olim/active_learning.py:140
 #, python-brace-format
 msgid ""
 "Seting up Active Learning pipeline for label {label_name}, please wait a "
 "few minutes and try again."
 msgstr ""
 
-#: olim/active_learning.py:148
+#: olim/active_learning.py:154
 #, python-brace-format
 msgid "Error on active learning for label {label_name} report to developers."
 msgstr ""
 
-#: olim/active_learning.py:230
+#: olim/active_learning.py:236
 #, python-brace-format
 msgid "Already processing export of predictions for label {label_name}"
 msgstr ""
 
-#: olim/active_learning.py:238
+#: olim/active_learning.py:244
 #, python-brace-format
 msgid ""
 "Processing export of predictions for label {label_name}, please wait a "
 "few minutes."
 msgstr ""
 
-#: olim/active_learning.py:248
+#: olim/active_learning.py:254
 #, python-brace-format
 msgid "Generating predictions for {label_name}"
 msgstr ""
 
-#: olim/active_learning.py:300
+#: olim/active_learning.py:306
 #, python-brace-format
 msgid "Error exporting predictions: {error}"
 msgstr ""
@@ -231,7 +231,7 @@ msgstr ""
 msgid "The request could not be understood by the server due to malformed syntax."
 msgstr ""
 
-#: olim/error_handlers.py:53
+#: olim/error_handlers.py:53 olim/settings_routes.py:225
 msgid "Unauthorized"
 msgstr ""
 
@@ -323,12 +323,12 @@ msgstr ""
 msgid "An unexpected error occurred."
 msgstr ""
 
-#: olim/functions.py:73
+#: olim/functions.py:75
 #, python-brace-format
 msgid "Error rendering entry {entry_id}!"
 msgstr ""
 
-#: olim/functions.py:79
+#: olim/functions.py:81
 #, python-brace-format
 msgid "Entry {entry_id} not found"
 msgstr ""
@@ -435,52 +435,121 @@ msgstr ""
 msgid "Invalid number of entries"
 msgstr ""
 
-#: olim/project.py:501
+#: olim/project.py:488
 msgid "Please enter at least one entry ID"
 msgstr ""
 
-#: olim/project.py:521
+#: olim/project.py:508
 #, python-brace-format
 msgid "Line {line_num}: Invalid entry ID '{line}'"
 msgstr ""
 
-#: olim/project.py:535
+#: olim/project.py:522
 #, python-brace-format
 msgid "Line {line_num}: Expected format 'entry_id,dataset_name', got '{line}'"
 msgstr ""
 
-#: olim/project.py:545
+#: olim/project.py:532
 #, python-brace-format
 msgid "Line {line_num}: Unknown dataset '{dataset_name}'"
 msgstr ""
 
-#: olim/project.py:557
+#: olim/project.py:544
 #, python-brace-format
 msgid ""
 "Line {line_num}: Invalid format '{line}'. Use 'entry_id,dataset_name' or "
 "'entry_id,\"dataset name with spaces\"'"
 msgstr ""
 
-#: olim/project.py:569
+#: olim/project.py:556
 msgid "No valid entries found"
 msgstr ""
 
-#: olim/project.py:581
+#: olim/project.py:568
 #, python-brace-format
 msgid "Queue created successfully with {count} entries"
 msgstr ""
 
-#: olim/project.py:588
+#: olim/project.py:575
 #, python-brace-format
 msgid "Failed to create queue: {error}"
 msgstr ""
 
-#: olim/project.py:620
+#: olim/project.py:607
 msgid "Project created successfully"
 msgstr ""
 
-#: olim/project.py:632
+#: olim/project.py:619
 msgid "Project deleted successfully"
+msgstr ""
+
+#: olim/settings_routes.py:46 olim/templates/components/setting-modal.html:89
+msgid "General"
+msgstr ""
+
+#: olim/settings_routes.py:63 olim/settings_routes.py:130
+#: olim/settings_routes.py:179 olim/settings_routes.py:200
+#: olim/settings_routes.py:229
+msgid "Setting not found"
+msgstr ""
+
+#: olim/settings_routes.py:85 olim/settings_routes.py:174
+#: olim/settings_routes.py:195
+msgid "Setting key is required"
+msgstr ""
+
+#: olim/settings_routes.py:89 olim/settings_routes.py:143
+msgid "Display name is required"
+msgstr ""
+
+#: olim/settings_routes.py:94 olim/settings_routes.py:148
+#, python-brace-format
+msgid "Invalid value for type {type}"
+msgstr ""
+
+#: olim/settings_routes.py:99
+#, python-brace-format
+msgid "Setting with key '{key}' already exists"
+msgstr ""
+
+#: olim/settings_routes.py:113
+#, python-brace-format
+msgid "Setting '{key}' created successfully"
+msgstr ""
+
+#: olim/settings_routes.py:116
+#, python-brace-format
+msgid "Error creating setting: {error}"
+msgstr ""
+
+#: olim/settings_routes.py:162
+#, python-brace-format
+msgid "Setting '{key}' updated successfully"
+msgstr ""
+
+#: olim/settings_routes.py:165
+#, python-brace-format
+msgid "Error updating setting: {error}"
+msgstr ""
+
+#: olim/settings_routes.py:183
+#, python-brace-format
+msgid "Setting '{key}' deleted successfully"
+msgstr ""
+
+#: olim/settings_routes.py:186
+#, python-brace-format
+msgid "Error deleting setting: {error}"
+msgstr ""
+
+#: olim/settings_routes.py:214
+#, python-brace-format
+msgid "Setting '{key}' reset to default value"
+msgstr ""
+
+#: olim/settings_routes.py:217
+#, python-brace-format
+msgid "Error resetting setting: {error}"
 msgstr ""
 
 #: olim/upload_data.py:120
@@ -496,24 +565,28 @@ msgstr ""
 msgid "Error creating dataset: {error}"
 msgstr ""
 
-#: olim/upload_data.py:167
+#: olim/upload_data.py:171
 msgid "File upload incomplete"
 msgstr ""
 
-#: olim/upload_data.py:176
+#: olim/upload_data.py:180
 msgid "ID and Text columns are required"
 msgstr ""
 
-#: olim/upload_data.py:184
+#: olim/upload_data.py:190
+msgid "ID, Text, and PDF URL columns are required"
+msgstr ""
+
+#: olim/upload_data.py:198
 #, python-brace-format
 msgid "Uploading and processing file {filename}"
 msgstr ""
 
-#: olim/upload_data.py:192
+#: olim/upload_data.py:206
 msgid "Document processing started successfully"
 msgstr ""
 
-#: olim/upload_data.py:196
+#: olim/upload_data.py:210
 #, python-brace-format
 msgid "Error starting upload: {error}"
 msgstr ""
@@ -795,6 +868,120 @@ msgstr ""
 msgid "Update your password to keep your account secure"
 msgstr ""
 
+#: olim/templates/admin-settings.html:2 olim/templates/admin-settings.html:13
+#: olim/templates/components/sidebar.html:202
+msgid "Global Settings"
+msgstr ""
+
+#: olim/templates/admin-settings.html:15
+msgid "Manage global system configuration"
+msgstr ""
+
+#: olim/templates/admin-settings.html:21
+msgid "Add Setting"
+msgstr ""
+
+#: olim/templates/admin-settings.html:38
+#, fuzzy
+msgid "settings"
+msgstr "Account Settings"
+
+#: olim/templates/admin-settings.html:50
+msgid "Setting"
+msgstr ""
+
+#: olim/templates/admin-settings.html:56
+msgid "Type"
+msgstr ""
+
+#: olim/templates/admin-settings.html:62
+#: olim/templates/components/setting-modal.html:99
+msgid "Current Value"
+msgstr ""
+
+#: olim/templates/admin-settings.html:68
+#: olim/templates/components/setting-modal.html:112
+msgid "Default Value"
+msgstr ""
+
+#: olim/templates/admin-settings.html:74
+#: olim/templates/components/queue-management.html:45
+#: olim/templates/label-settings.html:80 olim/templates/labels.html:51
+#: olim/templates/projects.html:41 olim/templates/users.html:46
+msgid "Actions"
+msgstr ""
+
+#: olim/templates/admin-settings.html:165
+#: olim/templates/admin-settings.html:309
+#: olim/templates/components/setting-modal.html:11
+msgid "Edit Setting"
+msgstr ""
+
+#: olim/templates/admin-settings.html:170
+msgid "Reset to Default"
+msgstr ""
+
+#: olim/templates/admin-settings.html:175
+#: olim/templates/admin-settings.html:381
+msgid "Delete Setting"
+msgstr ""
+
+#: olim/templates/admin-settings.html:195
+msgid "No settings configured"
+msgstr ""
+
+#: olim/templates/admin-settings.html:196
+msgid "Get started by creating your first global setting"
+msgstr ""
+
+#: olim/templates/admin-settings.html:200
+#: olim/templates/components/setting-modal.html:14
+#: olim/templates/components/setting-modal.html:157
+msgid "Create Setting"
+msgstr ""
+
+#: olim/templates/admin-settings.html:241
+#: olim/templates/components/confirmation-modal.html:16
+msgid "Are you sure?"
+msgstr ""
+
+#: olim/templates/admin-settings.html:242
+#: olim/templates/components/confirmation-modal.html:19
+#: olim/templates/projects.html:189
+msgid "This action cannot be undone."
+msgstr ""
+
+#: olim/templates/admin-settings.html:243
+#: olim/templates/components/confirmation-modal.html:24
+msgid "Yes, I am sure"
+msgstr ""
+
+#: olim/templates/admin-settings.html:346
+msgid "Error loading setting data"
+msgstr ""
+
+#: olim/templates/admin-settings.html:352
+msgid "Reset Setting"
+msgstr ""
+
+#: olim/templates/admin-settings.html:353
+msgid "Are you sure you want to reset this setting to its default value?"
+msgstr ""
+
+#: olim/templates/admin-settings.html:354
+msgid "Yes, reset it"
+msgstr ""
+
+#: olim/templates/admin-settings.html:382
+msgid ""
+"Are you sure you want to delete this setting? This action cannot be "
+"undone."
+msgstr ""
+
+#: olim/templates/admin-settings.html:383
+msgid "Yes, delete it"
+msgstr ""
+
 #: olim/templates/al-entry.html:5
 msgid "Active Learning - "
 msgstr ""
@@ -1033,61 +1220,61 @@ msgstr ""
 msgid "Labels"
 msgstr ""
 
-#: olim/templates/entry.html:80
+#: olim/templates/entry.html:81
 msgid "Apply to all"
 msgstr ""
 
-#: olim/templates/entry.html:98
+#: olim/templates/entry.html:99
 #, python-brace-format
 msgid "Apply \"{label_str}\" to all visible labels"
 msgstr ""
 
-#: olim/templates/entry.html:116
+#: olim/templates/entry.html:117
 #, python-brace-format
 msgid "Remove \"{label_str}\" from all visible labels"
 msgstr ""
 
-#: olim/templates/entry.html:136
+#: olim/templates/entry.html:139
 msgid "Show hidden labels"
 msgstr ""
 
-#: olim/templates/entry.html:140
+#: olim/templates/entry.html:143
 msgid "Show labels that were marked as hidden"
 msgstr ""
 
-#: olim/templates/entry.html:148
+#: olim/templates/entry.html:151
 msgid "Hide hidden labels"
 msgstr ""
 
-#: olim/templates/entry.html:152
+#: olim/templates/entry.html:155
 msgid "Hide labels that were marked as hidden"
 msgstr ""
 
-#: olim/templates/entry.html:164
+#: olim/templates/entry.html:167
 msgid "Expand all"
 msgstr ""
 
-#: olim/templates/entry.html:168
+#: olim/templates/entry.html:171
 msgid "Expandir todas as seções retraídas do conteúdo"
 msgstr "Expand all collapsed sections of the content"
 
-#: olim/templates/entry.html:176
+#: olim/templates/entry.html:179
 msgid "Retract all"
 msgstr ""
 
-#: olim/templates/entry.html:180
+#: olim/templates/entry.html:183
 msgid "Retrair todas as seções expandidas do conteúdo"
 msgstr "Retract all expanded sections of the content"
 
-#: olim/templates/entry.html:196
+#: olim/templates/entry.html:199
 msgid "No entry loaded"
 msgstr ""
 
-#: olim/templates/entry.html:197
+#: olim/templates/entry.html:200
 msgid "Please enter an entry ID and dataset to view content."
 msgstr ""
 
-#: olim/templates/entry.html:235
+#: olim/templates/entry.html:238
 msgid "Please enter an entry ID"
 msgstr ""
 
@@ -1103,7 +1290,7 @@ msgstr ""
 msgid "Go Home"
 msgstr ""
 
-#: olim/templates/components/sidebar.html:205 olim/templates/error.html:103
+#: olim/templates/components/sidebar.html:212 olim/templates/error.html:103
 #: olim/templates/login.html:2
 msgid "Login"
 msgstr ""
@@ -1241,6 +1428,7 @@ msgstr ""
 msgid "Remove"
 msgstr ""
 
+#: olim/templates/components/setting-modal.html:145
 #: olim/templates/hidden.html:180 olim/templates/label-settings.html:407
 #: olim/templates/projects.html:176
 msgid "Cancel"
@@ -1379,12 +1567,6 @@ msgstr ""
 msgid "Total Labeled Entries"
 msgstr ""
 
-#: olim/templates/components/queue-management.html:45
-#: olim/templates/label-settings.html:80 olim/templates/labels.html:51
-#: olim/templates/projects.html:41 olim/templates/users.html:46
-msgid "Actions"
-msgstr ""
-
 #: olim/templates/label-settings.html:85
 msgid "Remove Label"
 msgstr ""
@@ -1416,22 +1598,18 @@ msgid "Learner Parameters"
 msgstr ""
 
 #: olim/templates/label-settings.html:165
-#: olim/templates/label-settings.html:455
 msgid "Parameter Name"
 msgstr ""
 
 #: olim/templates/label-settings.html:175
-#: olim/templates/label-settings.html:463
 msgid "List of"
 msgstr ""
 
 #: olim/templates/label-settings.html:179
-#: olim/templates/label-settings.html:467
 msgid "Base Type"
 msgstr ""
 
 #: olim/templates/label-settings.html:189
-#: olim/templates/label-settings.html:476
 msgid "Value"
 msgstr ""
 
@@ -1522,10 +1700,6 @@ msgstr ""
 #: olim/templates/label-settings.html:403 olim/templates/projects.html:89
 #: olim/templates/projects.html:172
 msgid "Delete"
-msgstr ""
-
-#: olim/templates/label-settings.html:421
-msgid "This is permanent! Are you sure that you want to delete label"
 msgstr ""
 
 #: olim/templates/labels.html:23
@@ -1657,10 +1831,6 @@ msgstr ""
 
 #: olim/templates/projects.html:188
 msgid "Are you sure you want to delete project"
-msgstr ""
-
-#: olim/templates/projects.html:189
-msgid "This action cannot be undone."
 msgstr ""
 
 #: olim/templates/queue.html:13
@@ -1800,6 +1970,15 @@ msgstr ""
 msgid "Add User"
 msgstr ""
 
+#: olim/templates/components/confirmation-modal.html:9
+#: olim/templates/components/setting-modal.html:21
+msgid "Close modal"
+msgstr ""
+
+#: olim/templates/components/confirmation-modal.html:27
+msgid "No, cancel"
+msgstr ""
+
 #: olim/templates/components/entry-navigation.html:7
 msgid "Direct Entry Access"
 msgstr ""
@@ -1848,6 +2027,7 @@ msgid "Queue ID"
 msgstr ""
 
 #: olim/templates/components/queue-management.html:33
+#: olim/templates/components/setting-modal.html:127
 msgid "Description"
 msgstr ""
 
@@ -1923,6 +2103,54 @@ msgstr ""
 msgid "Try adjusting your search terms or criteria."
 msgstr ""
 
+#: olim/templates/components/setting-modal.html:34
+msgid "Setting Key"
+msgstr ""
+
+#: olim/templates/components/setting-modal.html:43
+msgid "Unique identifier for the setting (lowercase, underscores)"
+msgstr ""
+
+#: olim/templates/components/setting-modal.html:50
+msgid "Display Name"
+msgstr ""
+
+#: olim/templates/components/setting-modal.html:66
+msgid "Data Type"
+msgstr ""
+
+#: olim/templates/components/setting-modal.html:72
+msgid "String"
+msgstr ""
+
+#: olim/templates/components/setting-modal.html:73
+msgid "Integer"
+msgstr ""
+
+#: olim/templates/components/setting-modal.html:74
+msgid "Float"
+msgstr ""
+
+#: olim/templates/components/setting-modal.html:75
+msgid "Boolean"
+msgstr ""
+
+#: olim/templates/components/setting-modal.html:76
+msgid "JSON"
+msgstr ""
+
+#: olim/templates/components/setting-modal.html:83
+msgid "Category"
+msgstr ""
+
+#: olim/templates/components/setting-modal.html:133
+msgid "Optional description of this setting"
+msgstr ""
+
+#: olim/templates/components/setting-modal.html:140
+msgid "Save Setting"
+msgstr ""
+
 #: olim/templates/components/sidebar.html:38
 #: olim/templates/components/sidebar.html:188
 msgid "Manage Projects"
@@ -1961,7 +2189,7 @@ msgstr ""
 msgid "account_settings_1"
 msgstr "Account Settings"
 
-#: olim/templates/components/sidebar.html:211
+#: olim/templates/components/sidebar.html:218
 msgid "Logout"
 msgstr ""
 
@@ -2032,7 +2260,20 @@ msgid "Unhide"
 msgstr ""
 
 #: olim/templates/entry_types/single_text.html:7
+#: olim/templates/entry_types/text_pdf_url.html:77
 msgid "Additional Information"
+msgstr ""
+
+#: olim/templates/entry_types/text_pdf_url.html:11
+msgid "PDF Document"
+msgstr ""
+
+#: olim/templates/entry_types/text_pdf_url.html:22
+msgid "Your browser does not support PDF viewing. "
+msgstr ""
+
+#: olim/templates/entry_types/text_pdf_url.html:24
+msgid "Click here to open the PDF in a new tab"
 msgstr ""
 
 #: olim/templates/macros/entry-load-form.html:7
@@ -2049,11 +2290,11 @@ msgstr ""
 msgid "Load Entry"
 msgstr ""
 
-#: olim/templates/macros/highlights.html:6
+#: olim/templates/macros/highlights.html:7
 msgid "Highlights"
 msgstr ""
 
-#: olim/templates/macros/highlights.html:9
+#: olim/templates/macros/highlights.html:10
 msgid "Add Highlight"
 msgstr ""
 
@@ -2144,7 +2385,7 @@ msgid "Passwords match"
 msgstr ""
 
 #: olim/templates/macros/upload-form.html:7
-#: olim/templates/macros/upload-form.html:162
+#: olim/templates/macros/upload-form.html:181
 msgid "Upload Dataset"
 msgstr ""
 
@@ -2184,72 +2425,104 @@ msgid ""
 msgstr ""
 
 #: olim/templates/macros/upload-form.html:77
+#: olim/templates/macros/upload-form.html:96
 msgid "and"
 msgstr ""
 
 #: olim/templates/macros/upload-form.html:92
-msgid "Sample Data"
+msgid "Text + PDF URL"
 msgstr ""
 
 #: olim/templates/macros/upload-form.html:95
+msgid ""
+"Use this option if your CSV contains text content and PDF URLs. You need "
+"to specify which columns are equivalent to"
+msgstr ""
+
+#: olim/templates/macros/upload-form.html:111
+msgid "Sample Data"
+msgstr ""
+
+#: olim/templates/macros/upload-form.html:114
 msgid "Upload built-in sample data in Text format."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:108
+#: olim/templates/macros/upload-form.html:127
+#: olim/templates/macros/upload-form.html:258
 msgid "Select File"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:116
+#: olim/templates/macros/upload-form.html:135
 msgid "Click to upload or drag your file"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:152
+#: olim/templates/macros/upload-form.html:171
 msgid ""
 "After upload, keep an eye on the tasks in the sidebar for dataset "
 "processing status."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:367
+#: olim/templates/macros/upload-form.html:266
+msgid "Click to upload"
+msgstr ""
+
+#: olim/templates/macros/upload-form.html:266
+msgid "or drag and drop"
+msgstr ""
+
+#: olim/templates/macros/upload-form.html:268
+msgid "CSV files only"
+msgstr ""
+
+#: olim/templates/macros/upload-form.html:487
 msgid "Please select a CSV file only."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:391
+#: olim/templates/macros/upload-form.html:511
 msgid "Preparing upload..."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:402
+#: olim/templates/macros/upload-form.html:522
 msgid "Uploading..."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:423
+#: olim/templates/macros/upload-form.html:543
 msgid "Upload complete! Processing file..."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:448
+#: olim/templates/macros/upload-form.html:568
 msgid "Text ID column"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:455
+#: olim/templates/macros/upload-form.html:575
 msgid "Select Text ID column"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:466
+#: olim/templates/macros/upload-form.html:586
 msgid "Text column"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:473
+#: olim/templates/macros/upload-form.html:593
 msgid "Select Text column"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:515
+#: olim/templates/macros/upload-form.html:608
+msgid "PDF URL column"
+msgstr ""
+
+#: olim/templates/macros/upload-form.html:615
+msgid "Select PDF URL column"
+msgstr ""
+
+#: olim/templates/macros/upload-form.html:670
 msgid "File uploaded successfully"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:520
+#: olim/templates/macros/upload-form.html:675
 msgid "Change File"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:535
+#: olim/templates/macros/upload-form.html:690
 msgid "Upload failed:"
 msgstr ""
 
@@ -2263,18 +2536,21 @@ msgstr ""
 msgid "Entry check: {existing}/{total} entries found"
 msgstr ""
 
-#: olim/utils/label.py:120
+#: olim/utils/label.py:127
 #, python-brace-format
 msgid "Successfully processed {count} labels through active learning pipeline"
 msgstr ""
 
-#: olim/utils/queues.py:132
+#: olim/utils/queues.py:162
 #, python-brace-format
 msgid "Entries: {queue_length}"
 msgstr ""
 
-#: olim/utils/queues.py:136
+#: olim/utils/queues.py:166
 #, python-brace-format
 msgid "Highlight: {highlight}"
 msgstr ""
+
+#~ msgid "This is permanent! Are you sure that you want to delete label"
+#~ msgstr ""
 

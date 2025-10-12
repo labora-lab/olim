@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Global Settings') }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    <!-- Page Header -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                        <i class="bi bi-sliders text-cyan-600 mr-3"></i>
+                        {{ _('Global Settings') }}
+                    </h1>
+                    <p class="text-gray-600 mt-1">{{ _('Manage global system configuration') }}</p>
+                </div>
+                <button id="create-setting-btn"
+                    data-modal-target="setting-modal" 
+                    data-modal-toggle="setting-modal"
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:ring-4 focus:ring-cyan-300 transition-colors">
+                    <i class="bi bi-plus-circle mr-2"></i>{{ _('Add Setting') }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings by Category -->
+    {% for category, settings in settings_by_category.items() %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-folder text-blue-600 mr-2"></i>
+                    {{ category }}
+                </h3>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <i class="bi bi-hash mr-1"></i>
+                    {{ settings|length }} {{ _('settings') }}
+                </span>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">
+                            <div class="flex items-center">
+                                <i class="bi bi-gear mr-2"></i>
+                                {{ _('Setting') }}
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            <div class="flex items-center">
+                                <i class="bi bi-tag mr-2"></i>
+                                {{ _('Type') }}
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            <div class="flex items-center">
+                                <i class="bi bi-check-circle mr-2"></i>
+                                {{ _('Current Value') }}
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            <div class="flex items-center">
+                                <i class="bi bi-arrow-clockwise mr-2"></i>
+                                {{ _('Default Value') }}
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center">
+                            <div class="flex items-center justify-center">
+                                <i class="bi bi-gear mr-2"></i>
+                                {{ _('Actions') }}
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for setting in settings %}
+                    <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0">
+                                    <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center text-white text-sm font-medium">
+                                        <i class="bi bi-sliders"></i>
+                                    </div>
+                                </div>
+                                <div class="ml-4 min-w-0 flex-1">
+                                    <div class="font-medium text-gray-900">{{ setting.display_name }}</div>
+                                    <div class="text-sm text-gray-500 font-mono">{{ setting.key }}</div>
+                                    {% if setting.description %}
+                                    <div class="text-xs text-gray-400 mt-1">{{ setting.description }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if setting.type == 'str' %}bg-blue-100 text-blue-800
+                                {% elif setting.type == 'int' %}bg-green-100 text-green-800
+                                {% elif setting.type == 'float' %}bg-yellow-100 text-yellow-800
+                                {% elif setting.type == 'bool' %}bg-purple-100 text-purple-800
+                                {% elif setting.type == 'json' %}bg-indigo-100 text-indigo-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {% if setting.type == 'str' %}<i class="bi bi-type mr-1"></i>
+                                {% elif setting.type == 'int' %}<i class="bi bi-hash mr-1"></i>
+                                {% elif setting.type == 'float' %}<i class="bi bi-percent mr-1"></i>
+                                {% elif setting.type == 'bool' %}<i class="bi bi-toggle-on mr-1"></i>
+                                {% elif setting.type == 'json' %}<i class="bi bi-braces mr-1"></i>
+                                {% else %}<i class="bi bi-question-circle mr-1"></i>{% endif %}
+                                {{ setting.type|upper }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="max-w-xs">
+                                {% if setting.type == 'bool' %}
+                                <div class="flex items-center">
+                                    <div class="w-4 h-4 rounded border-2 flex items-center justify-center mr-2
+                                        {% if setting.value.lower() in ['true', '1', 'yes', 'on', 'enabled'] %}bg-cyan-600 border-cyan-600{% else %}border-gray-300{% endif %}">
+                                        {% if setting.value.lower() in ['true', '1', 'yes', 'on', 'enabled'] %}
+                                        <i class="bi bi-check text-white text-xs"></i>
+                                        {% endif %}
+                                    </div>
+                                    <span class="text-sm font-mono text-gray-700">{{ setting.value }}</span>
+                                </div>
+                                {% elif setting.type == 'json' %}
+                                <div class="bg-gray-50 rounded p-2 max-h-20 overflow-y-auto">
+                                    <pre class="text-xs text-gray-700 whitespace-pre-wrap">{{ setting.value }}</pre>
+                                </div>
+                                {% else %}
+                                <div class="text-sm font-mono text-gray-700 truncate" title="{{ setting.value }}">
+                                    {{ setting.value }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="max-w-xs">
+                                {% if setting.type == 'bool' %}
+                                <div class="flex items-center">
+                                    <div class="w-4 h-4 rounded border-2 flex items-center justify-center mr-2
+                                        {% if setting.default_value.lower() in ['true', '1', 'yes', 'on', 'enabled'] %}bg-gray-400 border-gray-400{% else %}border-gray-300{% endif %}">
+                                        {% if setting.default_value.lower() in ['true', '1', 'yes', 'on', 'enabled'] %}
+                                        <i class="bi bi-check text-white text-xs"></i>
+                                        {% endif %}
+                                    </div>
+                                    <span class="text-sm font-mono text-gray-500">{{ setting.default_value }}</span>
+                                </div>
+                                {% elif setting.type == 'json' %}
+                                <div class="bg-gray-100 rounded p-2 max-h-20 overflow-y-auto">
+                                    <pre class="text-xs text-gray-500 whitespace-pre-wrap">{{ setting.default_value }}</pre>
+                                </div>
+                                {% else %}
+                                <div class="text-sm font-mono text-gray-500 truncate" title="{{ setting.default_value }}">
+                                    {{ setting.default_value }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex items-center justify-center space-x-2">
+                                <button onclick="editSetting('{{ setting.key }}')"
+                                        class="inline-flex items-center p-2 text-sm text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 rounded-lg transition-colors"
+                                        title="{{ _('Edit Setting') }}">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button onclick="resetSetting('{{ setting.key }}')"
+                                    class="inline-flex items-center p-2 text-sm text-orange-600 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition-colors"
+                                    title="{{ _('Reset to Default') }}">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                                <button onclick="deleteSetting('{{ setting.key }}')"
+                                    class="inline-flex items-center p-2 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="{{ _('Delete Setting') }}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Empty State -->
+    {% if not settings_by_category %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="text-center py-12">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="bi bi-gear text-3xl text-gray-400"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">{{ _('No settings configured') }}</h3>
+            <p class="text-gray-500 mb-6">{{ _('Get started by creating your first global setting') }}</p>
+            <button data-modal-target="setting-modal" 
+                    data-modal-toggle="setting-modal"
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:ring-4 focus:ring-cyan-300 transition-colors">
+                <i class="bi bi-plus-circle mr-2"></i>{{ _('Create Setting') }}
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Include Setting Modal Component -->
+{% include 'components/setting-modal.html' %}
+
+<!-- Include Confirmation Modal Component -->
+{% include 'components/confirmation-modal.html' %}
+
+<script>
+// Global functions for settings management
+window.showModal = function() {
+    const modal = document.getElementById('setting-modal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+};
+
+window.hideModal = function() {
+    const modal = document.getElementById('setting-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+};
+
+window.hideConfirmationModal = function() {
+    const modal = document.getElementById('confirmation-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+    }
+};
+
+window.showConfirmationModal = function(options) {
+    const {
+        title = '{{ _("Are you sure?") }}',
+        message = '{{ _("This action cannot be undone.") }}',
+        confirmText = '{{ _("Yes, I am sure") }}',
+        confirmClass = 'bg-red-600 hover:bg-red-800 focus:ring-red-300 dark:focus:ring-red-800',
+        onConfirm = null
+    } = options;
+
+    // Update modal content
+    document.getElementById('confirmation-title').textContent = title;
+    document.getElementById('confirmation-message').textContent = message;
+    document.getElementById('confirmation-confirm-text').textContent = confirmText;
+    
+    // Update confirm button styling
+    const confirmBtn = document.getElementById('confirmation-confirm');
+    confirmBtn.className = `text-white ${confirmClass} focus:ring-4 focus:outline-none font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center`;
+    
+    // Store callback
+    confirmBtn.onclick = function() {
+        if (onConfirm) {
+            onConfirm();
+        }
+        hideConfirmationModal();
+    };
+
+    // Show modal
+    const modal = document.getElementById('confirmation-modal');
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+};
+
+window.updateInputTypes = function(type) {
+    const valueInput = document.getElementById('setting-value');
+    const defaultInput = document.getElementById('setting-default-value');
+    
+    if (type === 'bool') {
+        valueInput.type = 'text';
+        defaultInput.type = 'text';
+        valueInput.placeholder = 'true/false, yes/no, 1/0';
+        defaultInput.placeholder = 'true/false, yes/no, 1/0';
+    } else if (type === 'json') {
+        valueInput.type = 'text';
+        defaultInput.type = 'text';
+        valueInput.placeholder = '{"key": "value"}';
+        defaultInput.placeholder = '{"key": "value"}';
+    } else if (type === 'int') {
+        valueInput.type = 'number';
+        defaultInput.type = 'number';
+        valueInput.step = '1';
+        defaultInput.step = '1';
+        valueInput.placeholder = '';
+        defaultInput.placeholder = '';
+    } else if (type === 'float') {
+        valueInput.type = 'number';
+        defaultInput.type = 'number';
+        valueInput.step = 'any';
+        defaultInput.step = 'any';
+        valueInput.placeholder = '';
+        defaultInput.placeholder = '';
+    } else {
+        valueInput.type = 'text';
+        defaultInput.type = 'text';
+        valueInput.placeholder = '';
+        defaultInput.placeholder = '';
+    }
+};
+
+window.showEditForm = function(settingData) {
+    // Update modal title
+    document.getElementById('modal-title').innerHTML = '<i class="bi bi-pencil text-cyan-600 mr-2"></i>{{ _("Edit Setting") }}';
+    
+    // Set form action to update
+    document.getElementById('form-action').value = 'update';
+    
+    // Fill form fields
+    document.getElementById('setting-key').value = settingData.key;
+    document.getElementById('setting-key').disabled = true;
+    document.getElementById('setting-key').required = false;
+    
+    // Set hidden key field for form submission
+    document.getElementById('hidden-setting-key').value = settingData.key;
+    
+    document.getElementById('setting-display-name').value = settingData.display_name;
+    document.getElementById('setting-type').value = settingData.type;
+    document.getElementById('setting-category').value = settingData.category || '';
+    document.getElementById('setting-value').value = settingData.value;
+    document.getElementById('setting-default-value').value = settingData.default_value;
+    document.getElementById('setting-description').value = settingData.description || '';
+    
+    // Update input types based on setting type
+    updateInputTypes(settingData.type);
+    
+    // Show modal
+    showModal();
+};
+
+window.editSetting = async function(key) {
+    try {
+        const response = await fetch(`/api/settings/${key}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch setting data');
+        }
+        const settingData = await response.json();
+        showEditForm(settingData);
+    } catch (error) {
+        console.error('Error fetching setting:', error);
+        alert('{{ _("Error loading setting data") }}');
+    }
+};
+
+window.resetSetting = function(key) {
+    showConfirmationModal({
+        title: '{{ _("Reset Setting") }}',
+        message: '{{ _("Are you sure you want to reset this setting to its default value?") }}',
+        confirmText: '{{ _("Yes, reset it") }}',
+        confirmClass: 'bg-orange-600 hover:bg-orange-700 focus:ring-orange-300 dark:focus:ring-orange-800',
+        onConfirm: function() {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url_for("admin_settings") }}';
+            
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'reset';
+            
+            const keyInput = document.createElement('input');
+            keyInput.type = 'hidden';
+            keyInput.name = 'key';
+            keyInput.value = key;
+            
+            form.appendChild(actionInput);
+            form.appendChild(keyInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+};
+
+window.deleteSetting = function(key) {
+    showConfirmationModal({
+        title: '{{ _("Delete Setting") }}',
+        message: '{{ _("Are you sure you want to delete this setting? This action cannot be undone.") }}',
+        confirmText: '{{ _("Yes, delete it") }}',
+        confirmClass: 'bg-red-600 hover:bg-red-800 focus:ring-red-300 dark:focus:ring-red-800',
+        onConfirm: function() {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url_for("admin_settings") }}';
+            
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'delete';
+            
+            const keyInput = document.createElement('input');
+            keyInput.type = 'hidden';
+            keyInput.name = 'key';
+            keyInput.value = key;
+            
+            form.appendChild(actionInput);
+            form.appendChild(keyInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+};
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize confirmation modal
+    const confirmationModal = document.getElementById('confirmation-modal');
+    if (confirmationModal) {
+        confirmationModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideConfirmationModal();
+            }
+        });
+        
+        const closeButtons = confirmationModal.querySelectorAll('[data-modal-hide="confirmation-modal"]');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', hideConfirmationModal);
+        });
+    }
+    
+    // Initialize setting modal
+    const settingModal = document.getElementById('setting-modal');
+    if (settingModal) {
+        settingModal.addEventListener('click', function(e) {
+            if (e.target === this || e.target.closest('[data-modal-hide]')) {
+                hideModal();
+            }
+        });
+        
+        const closeButtons = settingModal.querySelectorAll('[data-modal-hide="setting-modal"]');
+        closeButtons.forEach(button => {
+            button.addEventListener('click', hideModal);
+        });
+    }
+});
+</script>
+{% endblock %}

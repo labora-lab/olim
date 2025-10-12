@@ -36,7 +36,7 @@ dev = [
     "mkdocs-material>=9.6.11",
     "mkdocstrings-python>=1.16.8",
     "pre-commit>=4.1.0",
-    "pyright[nodejs]>=1.1.399",
+    "pyright[nodejs]>=1.1.406",
     "pytest>=8.4.1",
     "ruff>=0.11.0",
 ]
@@ -100,7 +100,7 @@ docstring-code-format = true
 
 [tool.pyright]
 include = ["olim"]
-exclude = ["**/__pycache__", "migrations"]
+exclude = ["**/__pycache__", "migrations", "olim/learner"]
 reportMissingImports = true
 reportMissingTypeStubs = false
 pythonVersion = "3.13"
