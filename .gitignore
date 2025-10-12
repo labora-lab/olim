@@ -56,6 +56,7 @@ coverage.xml
 cover/
 
 # Translations
+*.mo
 *.pot
 
 # Django stuff:
@@ -184,3 +185,8 @@ CLAUDE.md
 node_modules/
 package-lock.json
 package.json
+
+# Nixos stuffs
+.evvrc
+shell.nix
+.direnv/
