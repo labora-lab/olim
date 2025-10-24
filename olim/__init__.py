@@ -1,10 +1,10 @@
-import json
-
 from flask import Flask, request, session
 from flask_babel import Babel
 from flask_migrate import Migrate
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+
+from .label_types import get_available_label_types, get_label_type_module, is_free_text_label
 
 # from werkzeug.middleware.profiler import ProfilerMiddleware
 from .settings import (
@@ -17,13 +17,13 @@ from .settings import (
     DB_USER,
     DEBUG,
     HELP_URL,
+    INTERFACE_SETTINGS,
     LANGUAGES,
     PERMANENT_SESSION_LIFETIME,
     SECRET_KEY,
     SESSION_PERMANENT,
     SESSION_TYPE,
     SESSION_USE_SIGNER,
-    INTERFACE_SETTINGS,
     VERSION,
 )
 
@@ -84,6 +84,7 @@ babel = Babel(app, locale_selector=get_locale)
 #     db.create_all()
 
 from . import active_learning  # noqa
+from . import analytics  # noqa
 from . import auth  # noqa
 from . import cli  # noqa
 from . import commands  # noqa
@@ -95,7 +96,6 @@ from . import project  # noqa
 from . import settings_routes  # noqa
 from . import upload_data  # noqa
 from .utils.entry import have_hidden  # noqa
-from .label_types import get_label_type_module, get_available_label_types, is_free_text_label  # noqa
 
 # Global variables to templates
 app.jinja_env.globals.update(
