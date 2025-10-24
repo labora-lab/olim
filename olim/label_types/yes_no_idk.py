@@ -10,7 +10,7 @@ LABEL_CONFIG = [
 ]
 
 
-def render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry, **kwargs):
+def render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry, **kwargs) -> str:
     """Render the yes/no/don't know label type"""
     return render_template(
         "label_types/yes_no_idk.html",
@@ -21,10 +21,10 @@ def render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry,
         show_hidden=show_hidden,
         valid_entry=valid_entry,
         label_config=LABEL_CONFIG,
-        **kwargs
+        **kwargs,
     )
 
 
-def get_label_options():
+def get_label_options() -> list:
     """Get the available options for this label type"""
     return LABEL_CONFIG

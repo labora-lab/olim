@@ -50,8 +50,7 @@ LABEL_CONFIG = [
 #   }
 
 
-
-def render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry, **kwargs):
+def render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry, **kwargs) -> str:
     """Render the multiple choice label type"""
     # Get options from label settings if available
     label_options = []
@@ -62,12 +61,14 @@ def render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry,
         for i, option in enumerate(options):
             if isinstance(option, dict):
                 # Support for {value: "name", color: "blue", icon: "check"}
-                label_options.append((
-                    option.get("value", f"option_{i}"),
-                    option.get("type", "text"),
-                    option.get("icon", str(i + 1)),
-                    option.get("color", "blue")
-                ))
+                label_options.append(
+                    (
+                        option.get("value", f"option_{i}"),
+                        option.get("type", "text"),
+                        option.get("icon", str(i + 1)),
+                        option.get("color", "blue"),
+                    )
+                )
             else:
                 # Simple string option
                 label_options.append((str(option), "text", str(i + 1), "blue"))
@@ -97,15 +98,15 @@ def render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry,
         valid_entry=valid_entry,
         label_config=label_options,
         selected_values=selected_values,
-        **kwargs
+        **kwargs,
     )
 
 
-def get_label_options():
+def get_label_options() -> list:
     """Get the available options for this label type"""
     return LABEL_CONFIG
 
 
-def is_multiple_choice():
+def is_multiple_choice() -> bool:
     """Indicates this is a multiple choice label type"""
     return True

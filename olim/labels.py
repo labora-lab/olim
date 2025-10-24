@@ -36,6 +36,7 @@ def labels(project_id: int) -> ...:
     for label in get_labels(project_id):
         # Check if this label is free text type
         from olim.label_types import is_free_text_label
+
         is_free_text = is_free_text_label(label.label_type)
 
         for entry in label.entries:

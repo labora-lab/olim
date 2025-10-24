@@ -61,6 +61,7 @@ if RANDOM_SEED is not None:
 HELP_URL = os.getenv("HELP_URL", "")
 """URL to the API help page"""
 
+
 class LabelTypes:
     SIM_NAO: ClassVar = [
         ("sim", "icon", "check-circle-fill", "green"),
