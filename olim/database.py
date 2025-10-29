@@ -78,6 +78,7 @@ class Project(db.Model, CreationControl):
     # Relationships
     project_datasets: Mapped[list["ProjectDataset"]] = db.relationship(back_populates="project")
     labels: Mapped[list["Label"]] = db.relationship(back_populates="project")
+    queues: Mapped[list["Queue"]] = db.relationship(back_populates="project")
 
     # Association proxy to datasets through project_datasets relationship
     datasets: Mapped[list["Dataset"]] = association_proxy(
@@ -182,6 +183,32 @@ class GlobalSetting(db.Model, CreationControl):
     )  # 'str', 'int', 'float', 'bool', 'json'
     description: Mapped[str | None] = db.mapped_column(db.Text, nullable=True)
     category: Mapped[str | None] = db.mapped_column(db.String(64), nullable=True)
+
+
+class Queue(db.Model, CreationControl):
+    """Queue model for storing entry queues"""
+
+    __tablename__ = "queues"
+    __table_args__ = (
+        db.Index("ix_queues_project_id", "project_id"),
+        db.Index("ix_queues_created", "created"),
+    )
+
+    # Columns
+    id: Mapped[str] = db.mapped_column(db.String(32), primary_key=True)  # MD5 hash
+    name: Mapped[str] = db.mapped_column(db.String(255), nullable=False)
+    project_id: Mapped[int] = db.mapped_column(db.ForeignKey("projects.id"), nullable=False)
+
+    # Queue data stored as JSON
+    queue_data: Mapped[list] = db.mapped_column(db.JSON, nullable=False)  # [(dataset_id, entry_id), ...]
+    highlight: Mapped[list | None] = db.mapped_column(db.JSON, nullable=True)  # List of highlight terms
+    extra_data: Mapped[dict | None] = db.mapped_column(db.JSON, nullable=True)  # Additional metadata
+
+    # Computed field
+    length: Mapped[int] = db.mapped_column(db.Integer, nullable=False)  # Cached queue length
+
+    # Relationships
+    project: Mapped["Project"] = db.relationship(back_populates="queues")
 
 
 class CeleryTaskStatus(db.TypeDecorator):
@@ -905,6 +932,112 @@ def get_label(idt: int, by: str = "id") -> Label | None:
         Label object or None if not found
     """
     return get_by(Label, by, idt, True)
+
+
+# endregion
+
+
+# region Queue Management
+# ----------------------
+def new_queue(
+    queue_data: list[tuple[int, str]],
+    name: str,
+    project_id: int,
+    user_id: int,
+    highlight: list[str] | None = None,
+    **extra_data: dict,
+) -> Queue:
+    """Create new queue.
+
+    Args:
+        queue_data: List of (dataset_id, entry_id) tuples
+        name: Queue name (required)
+        project_id: Associated project ID
+        user_id: ID of creating user
+        highlight: Optional list of terms to highlight
+        **extra_data: Additional metadata
+
+    Returns:
+        New Queue object
+    """
+    import hashlib
+    import json
+
+    # Generate ID from queue content (for URL compatibility)
+    queue_id = hashlib.md5(json.dumps(queue_data).encode("utf-8")).hexdigest()
+
+    # Check if queue with this ID already exists
+    existing = db.session.get(Queue, queue_id)
+    if existing and not existing.is_deleted:
+        return existing
+
+    queue = Queue(
+        id=queue_id,
+        name=name,
+        project_id=project_id,
+        queue_data=queue_data,
+        highlight=highlight,
+        extra_data=extra_data or {},
+        length=len(queue_data),
+        created=datetime.now(),
+        created_by=user_id,
+        is_deleted=False,
+    )
+    db.session.add(queue)
+    db.session.commit()
+    return queue
+
+
+def get_queue_by_id(queue_id: str, project_id: int) -> Queue | None:
+    """Retrieve queue by ID and project.
+
+    Args:
+        queue_id: Queue ID (MD5 hash)
+        project_id: Project ID for validation
+
+    Returns:
+        Queue object or None if not found
+    """
+    queue = db.session.get(Queue, queue_id)
+    if queue and not queue.is_deleted and queue.project_id == project_id:
+        return queue
+    return None
+
+
+def get_queues_for_project(project_id: int) -> list[Queue]:
+    """Retrieve all queues for a project.
+
+    Args:
+        project_id: Project ID
+
+    Returns:
+        List of Queue objects ordered by creation date (newest first)
+    """
+    return list(
+        db.session.execute(
+            db.select(Queue)
+            .filter_by(project_id=project_id, is_deleted=False)
+            .order_by(Queue.created.desc())
+        ).scalars()
+    )
+
+
+def delete_queue_by_id(queue_id: str, project_id: int, user_id: int) -> bool:
+    """Soft-delete a queue.
+
+    Args:
+        queue_id: Queue ID to delete
+        project_id: Project ID for validation
+        user_id: ID of user performing deletion
+
+    Returns:
+        True if deleted successfully, False otherwise
+    """
+    queue = get_queue_by_id(queue_id, project_id)
+    if queue:
+        del_controled(queue, user_id)
+        return True
+    return False
 
 
 # endregion

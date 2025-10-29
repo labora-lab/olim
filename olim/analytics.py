@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 
-from flask import jsonify, render_template
+from flask import jsonify, render_template, request
 from flask_babel import _
 from sqlalchemy import func
 
@@ -58,13 +58,23 @@ def analytics_data(project_id: int) -> ...:
     if not project or project.is_deleted:
         return jsonify({"error": "Project not found"}), 404
 
-    # Query for label entries in this project, grouped by user and day
-    # We need to join: LabelEntry -> Label -> Project
+    # Query for label entries in this project, grouped by user and day.
+    # Mode controls whether we count labels ('labels') or unique entries ('entries').
+    mode = request.args.get("mode", "labels").lower()
+    if mode not in ("labels", "entries"):
+        mode = "labels"
+
+    # Choose aggregation: count labels or count distinct entry IDs
+    if mode == "entries":
+        count_expr = func.count(func.distinct(LabelEntry.entry_id))
+    else:
+        count_expr = func.count(LabelEntry.id)
+
     query = (
         db.session.query(
             func.date(LabelEntry.created).label("date"),
             LabelEntry.created_by.label("user_id"),
-            func.count(LabelEntry.id).label("count"),
+            count_expr.label("count"),
         )
         .join(Label, LabelEntry.label_id == Label.id)
         .filter(

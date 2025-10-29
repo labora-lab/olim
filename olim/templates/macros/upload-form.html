@@ -622,6 +622,7 @@
                 textColumn.id = "text_column";
                 textColumn.name = "text_column";
                 textColumn.className = "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5";
+                textColumn.setAttribute('autocomplete', 'off');
                 textColumn.innerHTML = '<option value="" disabled selected>{{ _("Select Text column") }}</option>';
                 textDiv.appendChild(textColumn);
 

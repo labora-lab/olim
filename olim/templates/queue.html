@@ -41,13 +41,20 @@
                         {{ _('Copy IDs') }}
                         <kbd class="ml-2 px-1 py-0.5 text-xs bg-gray-200 rounded">Ctrl+C</kbd>
                     </button>
-                    <button type="button" onclick="selectAllEntries()"
+                    <button type="button" onclick="toggleSelectAll()"
                         class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors"
                         title="{{ _('Select all entries (Ctrl+A)') }}">
                         <i class="bi bi-check-square mr-2"></i>
                         {{ _('Select All') }}
                         <kbd class="ml-2 px-1 py-0.5 text-xs bg-gray-200 rounded">Ctrl+A</kbd>
                     </button>
+                    {% if has_permission('admin') %}
+                    <button type="button" id="deleteSelectedBtn" onclick="deleteSelectedEntries()" disabled
+                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="bi bi-trash mr-2"></i>
+                        <span id="deleteSelectedText">{{ _('Delete Selected') }}</span>
+                    </button>
+                    {% endif %}
                     <button type="button" onclick="exportQueue()"
                         class="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors">
                         <i class="bi bi-download mr-2"></i>
@@ -59,12 +66,17 @@
             <!-- Queue Entries Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {% for dataset_id, entry_id in queue %}
-                <div class="group border border-gray-200 rounded-lg p-3 hover:border-cyan-300 hover:bg-cyan-50 transition-all duration-200 cursor-pointer queue-entry"
-                    data-entry-id="{{ entry_id }}" data-dataset-id="{{ dataset_id }}">
+                <div class="group border border-gray-200 rounded-lg p-3 hover:border-cyan-300 hover:bg-cyan-50 transition-all duration-200 queue-entry"
+                    data-entry-id="{{ entry_id }}" data-dataset-id="{{ dataset_id }}" data-index="{{ loop.index0 }}">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-2">
+                        <div class="flex items-center space-x-2 flex-1 min-w-0">
+                            {% if has_permission('admin') %}
+                            <input type="checkbox" class="entry-checkbox w-4 h-4 text-cyan-600 bg-gray-100 border-gray-300 rounded focus:ring-cyan-500 focus:ring-2 cursor-pointer"
+                                data-index="{{ loop.index0 }}"
+                                onclick="event.stopPropagation(); updateDeleteButton();">
+                            {% endif %}
                             <div
-                                class="w-8 h-8 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600 font-medium text-sm group-hover:bg-cyan-200">
+                                class="w-8 h-8 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600 font-medium text-sm group-hover:bg-cyan-200 flex-shrink-0">
                                 {{ loop.index }}
                             </div>
                             <div class="min-w-0 flex-1">
@@ -74,10 +86,11 @@
                                 <p class="text-sm font-medium text-gray-900 truncate">{{ entry_id }}</p>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                             <a href="{{url_for('entry', project_id=project_id, queue_id=queue_id, queue_pos=loop.index)}}"
                                 class="inline-flex items-center p-1.5 text-xs text-cyan-600 hover:text-cyan-700 focus:outline-none"
-                                title="{{ _('Open Entry') }}" target="_blank">
+                                title="{{ _('Open Entry') }}" target="_blank"
+                                onclick="event.stopPropagation();">
                                 <i class="bi bi-box-arrow-up-right"></i>
                             </a>
                             <kbd
@@ -212,28 +225,49 @@
             }
         });
 
-        // Entry hover effects
+        // Entry hover effects and checkbox handling
         const entries = document.querySelectorAll('.queue-entry');
         entries.forEach((entry, index) => {
             entry.addEventListener('mouseenter', function () {
-                this.style.transform = 'translateY(-2px)';
-                this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                if (!this.classList.contains('entry-selected')) {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                }
             });
 
             entry.addEventListener('mouseleave', function () {
-                this.style.transform = 'translateY(0)';
-                this.style.boxShadow = '';
+                if (!this.classList.contains('entry-selected')) {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '';
+                }
             });
 
-            // Click to open entry
+            // Click to open entry (but not when clicking checkbox)
             entry.addEventListener('click', function (e) {
-                if (e.target.tagName !== 'A') {
+                // Don't open if clicking checkbox or link
+                if (e.target.tagName !== 'A' && e.target.tagName !== 'INPUT' && !e.target.classList.contains('entry-checkbox')) {
                     const link = this.querySelector('a');
                     if (link) {
                         window.open(link.href, '_blank');
                     }
                 }
             });
+
+            // Handle checkbox changes for visual feedback
+            const checkbox = entry.querySelector('.entry-checkbox');
+            if (checkbox) {
+                checkbox.addEventListener('change', function () {
+                    if (this.checked) {
+                        entry.classList.add('entry-selected', 'bg-blue-50', 'border-blue-400');
+                        entry.style.transform = 'translateY(-2px)';
+                        entry.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+                    } else {
+                        entry.classList.remove('entry-selected', 'bg-blue-50', 'border-blue-400');
+                        entry.style.transform = 'translateY(0)';
+                        entry.style.boxShadow = '';
+                    }
+                });
+            }
         });
     });
 
@@ -256,12 +290,85 @@
         });
     }
 
-    function selectAllEntries() {
-        const entries = document.querySelectorAll('.queue-entry');
-        entries.forEach(entry => {
-            entry.classList.add('bg-cyan-100', 'border-cyan-400');
+    function toggleSelectAll() {
+        const checkboxes = document.querySelectorAll('.entry-checkbox');
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = !allChecked;
         });
-        showNotification(`{{ _("Selected {count} entries").replace('{count}', '') }}${entries.length}`, 'info');
+
+        updateDeleteButton();
+
+        if (!allChecked) {
+            showNotification(`{{ _("Selected {count} entries").replace('{count}', '') }}${checkboxes.length}`, 'info');
+        } else {
+            showNotification('{{ _("Deselected all entries") }}', 'info');
+        }
+    }
+
+    function updateDeleteButton() {
+        const checkboxes = document.querySelectorAll('.entry-checkbox:checked');
+        const deleteBtn = document.getElementById('deleteSelectedBtn');
+        const deleteText = document.getElementById('deleteSelectedText');
+
+        if (deleteBtn) {
+            if (checkboxes.length > 0) {
+                deleteBtn.disabled = false;
+                deleteText.textContent = `{{ _("Delete Selected") }} (${checkboxes.length})`;
+            } else {
+                deleteBtn.disabled = true;
+                deleteText.textContent = '{{ _("Delete Selected") }}';
+            }
+        }
+    }
+
+    function deleteSelectedEntries() {
+        const checkboxes = document.querySelectorAll('.entry-checkbox:checked');
+        const indices = Array.from(checkboxes).map(cb => parseInt(cb.dataset.index));
+
+        if (indices.length === 0) {
+            showNotification('{{ _("No entries selected") }}', 'warning');
+            return;
+        }
+
+        // Confirm deletion
+        if (!confirm(`{{ _("Are you sure you want to delete {count} entries from this queue?").replace('{count}', '') }}${indices.length}`)) {
+            return;
+        }
+
+        // Send delete request
+        fetch(`/{{ project_id }}/queue/{{ queue_id }}/delete-entries`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ indices: indices })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(data.message, 'success');
+                // Reload page after short delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showNotification(data.error || '{{ _("Failed to delete entries") }}', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('{{ _("An error occurred while deleting entries") }}', 'error');
+        });
+    }
+
+    function selectAllEntries() {
+        const checkboxes = document.querySelectorAll('.entry-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+        updateDeleteButton();
     }
 
     function exportQueue() {
@@ -404,6 +511,14 @@
 
     .queue-entry {
         transition: all 0.2s ease;
+    }
+
+    .entry-selected {
+        transition: all 0.2s ease;
+    }
+
+    .entry-checkbox {
+        cursor: pointer;
     }
 
     @keyframes pulse {

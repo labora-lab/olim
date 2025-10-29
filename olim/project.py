@@ -310,7 +310,8 @@ def search(project_id: int) -> ...:
         queue_id = store_queue(
             [(row["dataset_id"], row["entry_id"]) for _, row in df_results.iterrows()],
             project_id,
-            highlight,
+            highlight=highlight,
+            queue_type="search",  # Auto-generate search queue name
             **extra_data,
         )
     else:
@@ -387,7 +388,12 @@ def queue(project_id: int, queue_id: str | None = None) -> ...:
     # If we have a populated queue store it and redirect by the id
     if len(queue) > 0:
         extra_data: dict = {"Randomly generated": True}
-        queue_id = store_queue(queue, project_id, **extra_data)
+        queue_id = store_queue(
+            queue,
+            project_id,
+            queue_type="random",  # Auto-generate random queue name
+            **extra_data,
+        )
         # Redirect to the first entry in the queue
         return redirect(url_for("entry", project_id=project_id, queue_id=queue_id, queue_pos=1))
     # If not redirect to data navigation
@@ -492,6 +498,63 @@ def delete_queue_route(project_id: int, queue_id: str) -> ...:
         return "", 404
 
 
+@app.route("/<int:project_id>/queue/<queue_id>/delete-entries", methods=["POST"])
+def delete_queue_entries(project_id: int, queue_id: str) -> ...:
+    """Delete selected entries from a queue"""
+    from flask import jsonify
+    from .database import get_queue_by_id, db
+    from . import auth
+
+    # Check project_id
+    res = update_session_project(project_id)
+    if res is not None:
+        return res
+
+    # Check admin permission
+    if not auth.role_has_permission(role="admin"):
+        return jsonify({"error": "Admin permission required"}), 403
+
+    try:
+        # Get indices to delete from request
+        indices_to_delete = request.json.get("indices", [])
+        if not indices_to_delete:
+            return jsonify({"error": "No indices provided"}), 400
+
+        # Load the queue from database
+        queue_obj = get_queue_by_id(queue_id, project_id)
+        if not queue_obj:
+            return jsonify({"error": "Queue not found"}), 404
+
+        # Get current queue data
+        current_queue = queue_obj.queue_data.copy()
+
+        # Sort indices in descending order to avoid index shifting issues
+        indices_to_delete = sorted(set(indices_to_delete), reverse=True)
+
+        # Remove entries at specified indices (0-based)
+        deleted_count = 0
+        for idx in indices_to_delete:
+            if 0 <= idx < len(current_queue):
+                del current_queue[idx]
+                deleted_count += 1
+
+        # Update queue in database
+        queue_obj.queue_data = current_queue
+        queue_obj.length = len(current_queue)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": f"Successfully deleted {deleted_count} entries from queue",
+            "deleted_count": deleted_count,
+            "remaining_count": len(current_queue)
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/<int:project_id>/create-queue", methods=["GET", "POST"])
 def create_queue(project_id: int) -> ...:
     """Create a queue manually from a list of entry IDs"""
@@ -509,6 +572,7 @@ def create_queue(project_id: int) -> ...:
     # Handle POST request
     entry_ids_text = request.form.get("entry_ids", "").strip()
     highlight_terms = request.form.get("highlight_terms", "").strip()
+    queue_name = request.form.get("queue_name", "").strip() or None  # Optional custom name
 
     if not entry_ids_text:
         flash(_("Please enter at least one entry ID"), "error")
@@ -589,7 +653,13 @@ def create_queue(project_id: int) -> ...:
 
     # Store the queue
     try:
-        store_queue(queue_entries, project_id, highlight=highlights)
+        store_queue(
+            queue_entries,
+            project_id,
+            highlight=highlights,
+            name=queue_name,  # Use custom name if provided
+            queue_type="manual",  # Auto-generate if no name provided
+        )
         flash(
             _("Queue created successfully with {count} entries").format(count=len(queue_entries)),
             "success",

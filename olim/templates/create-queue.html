@@ -55,6 +55,19 @@
                     </div>
                 </div>
 
+                <!-- Queue Name (Optional) -->
+                <div class="mb-6">
+                    <label for="queue_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="bi bi-tag mr-1"></i>
+                        {{ _('Queue Name') }}
+                        <span class="text-gray-500 text-xs">({{ _('optional') }})</span>
+                    </label>
+                    <input type="text" id="queue_name" name="queue_name" maxlength="255"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+                        placeholder="{{ _('Leave empty to auto-generate name based on queue size') }}">
+                    <p class="text-xs text-gray-500 mt-1">{{ _('Give your queue a descriptive name (max 255 characters)') }}</p>
+                </div>
+
                 <!-- Entry IDs Input -->
                 <div class="mb-6">
                     <label for="entry_ids" class="block text-sm font-medium text-gray-700 mb-2">

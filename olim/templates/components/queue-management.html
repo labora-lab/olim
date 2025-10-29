@@ -23,14 +23,8 @@
                     <tr>
                         <th scope="col" class="px-6 py-3">
                             <div class="flex items-center">
-                                <i class="bi bi-hash mr-2"></i>
-                                {{ _('Queue ID') }}
-                            </div>
-                        </th>
-                        <th scope="col" class="px-6 py-3">
-                            <div class="flex items-center">
-                                <i class="bi bi-card-text mr-2"></i>
-                                {{ _('Description') }}
+                                <i class="bi bi-list-ol mr-2"></i>
+                                {{ _('Queue') }}
                             </div>
                         </th>
                         <th scope="col" class="px-6 py-3">
@@ -53,34 +47,38 @@
                         <td class="px-6 py-4">
                             <div class="flex items-center">
                                 <div
-                                    class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
+                                    class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3 flex-shrink-0">
                                     {{ queue_item['id'][:2]|upper }}
                                 </div>
-                                <div class="font-mono text-gray-900">{{ queue_item['id'] }}</div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="font-medium text-gray-900">
-                                {{ queue_item.get('frontend_text', queue_item.get('fronend_text', _('Queue'))) }}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            {% if queue_item.get('extra_data') %}
-                            <div class="space-y-1">
-                                {% for k, v in queue_item['extra_data'].items() %}
-                                <div class="text-xs text-gray-600">
-                                    <span class="font-medium">{{ k }}:</span>
-                                    {% if v is sequence and v is not string %}
-                                    {% for item in v %}{{ item }}{% if not loop.last %}, {% endif %}{% endfor %}
-                                    {% else %}
-                                    {{ v }}
-                                    {% endif %}
+                                <div>
+                                    <div class="font-medium text-gray-900">
+                                        {{ queue_item.get('name', _('Unnamed Queue')) }}
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-0.5 font-mono">
+                                        {{ queue_item['id'][:16] }}...
+                                    </div>
                                 </div>
-                                {% endfor %}
                             </div>
-                            {% else %}
-                            <span class="text-gray-400 italic">{{ _('No additional details') }}</span>
-                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="space-y-1">
+                                <div class="text-xs text-gray-600">
+                                    <i class="bi bi-list-ol mr-1"></i>
+                                    <span class="font-medium">{{ queue_item.get('length', 0) }} {{ _('entries') }}</span>
+                                </div>
+                                {% if queue_item.get('extra_data') %}
+                                    {% for k, v in queue_item['extra_data'].items() %}
+                                    <div class="text-xs text-gray-600">
+                                        <span class="font-medium">{{ k }}:</span>
+                                        {% if v is sequence and v is not string %}
+                                        {% for item in v %}{{ item }}{% if not loop.last %}, {% endif %}{% endfor %}
+                                        {% else %}
+                                        {{ v }}
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
                         </td>
                         <td class="px-6 py-4 text-center">
                             <div class="flex items-center justify-center space-x-2">

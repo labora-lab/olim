@@ -1113,6 +1113,11 @@ msgstr "Atalhos"
 msgid "Keyboard Shortcuts"
 msgstr "Atalhos de Teclado"
 
+#: olim/templates/analytics.html:2 olim/templates/analytics.html:12
+#: olim/templates/components/sidebar.html:88
+msgid "Analytics"
+msgstr "Estatísticas"
+
 #: olim/templates/al-entry.html:158
 msgid "Label Shortcuts"
 msgstr "Atalhos de Rotulagem"
@@ -1156,11 +1161,6 @@ msgstr "Entendi!"
 #: olim/templates/al-entry.html:262
 msgid "Scroll to top"
 msgstr "Rolar para o topo"
-
-#: olim/templates/analytics.html:2 olim/templates/analytics.html:12
-#: olim/templates/components/sidebar.html:88
-msgid "Analytics"
-msgstr "Gráficos"
 
 #: olim/templates/analytics.html:14
 msgid "User labeling activity over time"

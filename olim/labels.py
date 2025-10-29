@@ -199,7 +199,9 @@ def catch_queue(label_id: int) -> ...:
         for label in label.entries
         if not label.is_deleted and label.value
     ]
-    queue_id = store_queue(queue, project_id)
+    # Create queue with label name
+    queue_name = _("Label: {label_name}").format(label_name=label.name)
+    queue_id = store_queue(queue, project_id, name=queue_name)
     # Redirect to queue
     return redirect(url_for("entry", project_id=project_id, queue_id=queue_id))
 

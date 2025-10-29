@@ -86,6 +86,10 @@ def generate_upload_batches(
                 if pd.isna(value) or value == "" or value == -1:
                     continue
 
+                # Rename reserved "text" field to avoid overwriting the main text
+                if key == "text":
+                    key = "metadata_text"
+
                 metadata[key] = value
 
             # Ensure pdf_url is in metadata

@@ -2,28 +2,19 @@
 # All functions here must have type hints and docstrings
 import hashlib
 import json
-from pathlib import Path
-
-import pandas as pd
 from flask import session
 from flask_babel import _
 
-from ..settings import QUEUES_PATH
-
-
-def get_queue_path(queue_id: str | None = None, project_id: int | None = None) -> Path:
-    queue_path = QUEUES_PATH / str(project_id)
-
-    queue_path.mkdir(parents=True, exist_ok=True)
-
-    if queue_id is None:
-        return queue_path
-    else:
-        return queue_path / f"queue_{queue_id}.json"
+from ..database import (
+    new_queue,
+    get_queue_by_id,
+    get_queues_for_project,
+    delete_queue_by_id,
+)
 
 
 def parse_queue(text: str) -> list[str]:
-    """Parse a queue input in to a queue list.
+    """Parse a queue input into a queue list.
 
     Args:
         text (str): Queue input
@@ -35,76 +26,139 @@ def parse_queue(text: str) -> list[str]:
     return text.replace(";", " ").replace(",", " ").replace("\n", " ").replace("\r\n", " ").split()
 
 
+def generate_queue_name(
+    queue_type: str,
+    number: int | None = None,
+    include_terms: list[str] | None = None,
+    exclude_terms: list[str] | None = None,
+) -> str:
+    """Auto-generate queue name based on type and parameters.
+
+    Args:
+        queue_type: Type of queue ("search", "random", "manual")
+        number: Number of entries (for random queues)
+        include_terms: Search include terms
+        exclude_terms: Search exclude terms
+
+    Returns:
+        Generated queue name
+    """
+    if queue_type == "search":
+        parts = []
+        if include_terms:
+            parts.append(", ".join(include_terms[:3]))  # Limit to first 3 terms
+            if len(include_terms) > 3:
+                parts[-1] += "..."
+        if exclude_terms:
+            parts.append(_("excluding") + " " + ", ".join(exclude_terms[:2]))
+            if len(exclude_terms) > 2:
+                parts[-1] += "..."
+
+        if parts:
+            return _("Search: {terms}").format(terms=" - ".join(parts))
+        else:
+            return _("Search Results")
+
+    elif queue_type == "random":
+        return _("Random Sample ({count} entries)").format(count=number)
+
+    elif queue_type == "manual":
+        return _("Manual Queue ({count} entries)").format(count=number)
+
+    return _("Queue")
+
+
 def store_queue(
-    queue: list[tuple[int, str]] | pd.Series,
+    queue: list[tuple[int, str]],
     project_id: int,
     highlight: list[str] | None = None,
+    name: str | None = None,
+    queue_type: str | None = None,
     **extra_data: dict,
 ) -> str:
-    """Stores a queue in a temporay file.
+    """Store a queue in the database.
 
     Args:
-        queue (iterable): Queue list
+        queue: Queue list of (dataset_id, entry_id) tuples
+        project_id: Project ID
+        highlight: Optional list of highlight terms
+        name: Optional queue name (auto-generated if not provided)
+        queue_type: Type for auto-naming ("search", "random", "manual")
+        **extra_data: Additional metadata
 
     Returns:
-        str: Hash of the queue for access
+        str: Queue ID (MD5 hash)
     """
-    queue = list(queue)
-    queue_id = hashlib.md5(json.dumps(queue).encode("utf-8")).hexdigest()
-    queue_data = {
-        "id": queue_id,
-        "queue": queue,
-        "project_id": project_id,
-        "highlight": highlight,
-        "extra_data": extra_data,
-        "lenght": len(queue),
-    }
-    queue_file = get_queue_path(queue_id, project_id)
-    with open(queue_file, "w") as f:
-        json.dump(queue_data, f)
-    return queue_id
+    queue_list = list(queue)
+
+    # Auto-generate name if not provided
+    if name is None:
+        if queue_type == "search":
+            include = extra_data.get("Include", [])
+            exclude = extra_data.get("Exclude", [])
+            name = generate_queue_name("search", include_terms=include, exclude_terms=exclude)
+        elif queue_type == "random":
+            name = generate_queue_name("random", number=len(queue_list))
+        else:
+            name = generate_queue_name("manual", number=len(queue_list))
+
+    # Get user_id from session
+    user_id = session.get("user_id", 1)
+
+    # Create queue in database
+    queue_obj = new_queue(
+        queue_data=queue_list,
+        name=name,
+        project_id=project_id,
+        user_id=user_id,
+        highlight=highlight,
+        **extra_data,
+    )
+
+    return queue_obj.id
 
 
-def get_queue(queue_id: str, project_id) -> list[tuple[int, str]]:
-    """Load the id of a position in a queue
+def get_queue(queue_id: str, project_id: int) -> list[tuple[int, str]]:
+    """Load queue data by ID.
 
     Args:
-        queue_id (str): Hash of the queue for access
+        queue_id (str): Queue ID (MD5 hash)
+        project_id: Project ID for validation
 
     Returns:
-        list[tuple[int, str]]: Queue list
+        list[tuple[int, str]]: Queue list of (dataset_id, entry_id)
+
+    Raises:
+        FileNotFoundError: If queue doesn't exist (for compatibility)
     """
-    queue_file = get_queue_path(queue_id, project_id)
-    with open(queue_file) as f:
-        queue = json.load(f)
-    if queue["highlight"] is not None:
-        # Merge queue highlights with existing session highlights
+    queue = get_queue_by_id(queue_id, project_id)
+
+    if queue is None:
+        raise FileNotFoundError(f"Queue {queue_id} not found")
+
+    # Handle highlight merging (same logic as before)
+    if queue.highlight is not None:
         raw_highlights = session.get(
             "highlight", {"terms": [], "colorAssignments": {}, "colorCounter": 0}
         )
 
         # Handle both old format (list) and new format (dict)
         if isinstance(raw_highlights, list):
-            # Old format: convert to new format
             existing_highlights = {
                 "terms": raw_highlights,
                 "colorAssignments": {},
                 "colorCounter": len(raw_highlights),
             }
         else:
-            # New format: use as-is, but ensure all keys exist
             existing_highlights = {
                 "terms": raw_highlights.get("terms", []),
                 "colorAssignments": raw_highlights.get("colorAssignments", {}),
                 "colorCounter": raw_highlights.get("colorCounter", 0),
             }
 
-        queue_highlights = queue["highlight"]
+        queue_highlights = queue.highlight
 
-        # Only update if queue highlights are different from current session
-        # This prevents re-adding the same highlights when navigating within a queue
         if set(queue_highlights) != set(existing_highlights["terms"]):
-            # Combine highlights, preserving order and avoiding duplicates
             merged_terms = list(existing_highlights["terms"])
             merged_color_assignments = existing_highlights["colorAssignments"].copy()
             color_counter = existing_highlights["colorCounter"]
@@ -113,7 +167,6 @@ def get_queue(queue_id: str, project_id) -> list[tuple[int, str]]:
                 if highlight not in merged_terms:
                     merged_terms.append(highlight)
                     if highlight not in merged_color_assignments:
-                        # Assign a new color, avoiding repetition and staying within the limit
                         merged_color_assignments[highlight] = color_counter % 8
                         color_counter += 1
 
@@ -122,49 +175,52 @@ def get_queue(queue_id: str, project_id) -> list[tuple[int, str]]:
                 "colorAssignments": merged_color_assignments,
                 "colorCounter": color_counter,
             }
-    return queue["queue"]
+
+    return queue.queue_data
 
 
 def delete_queue(queue_id: str, project_id: int) -> bool:
-    """Delete a queue file.
+    """Delete a queue.
 
     Args:
-        queue_id (str): Hash of the queue to delete
-        project_id (int): Project ID
+        queue_id (str): Queue ID to delete
+        project_id (int): Project ID for validation
 
     Returns:
         bool: True if deleted successfully, False otherwise
     """
-    try:
-        queue_file = get_queue_path(queue_id, project_id)
-        if queue_file.exists():
-            queue_file.unlink()
-            return True
-        return False
-    except Exception:
-        return False
+    user_id = session.get("user_id", 1)
+    return delete_queue_by_id(queue_id, project_id, user_id)
 
 
-def get_all_queues(project_id) -> list[dict]:
-    queues = []
-    queue_dir = get_queue_path(project_id=project_id)
-    for queue_file in queue_dir.iterdir():
-        if queue_file.name.startswith("queue_") and queue_file.name.endswith(".json"):
-            try:
-                with open(queue_file) as f:
-                    queue = json.load(f)
-            except Exception:
-                # Silently skip corrupted queue files to avoid duplicate flash messages
-                # This prevents double-flashing when redirecting from invalid queue IDs
-                pass
-                queue = None
-            if queue is not None:
-                queue["frontend_text"] = _("Entries: {queue_length}").format(
-                    queue_length=queue["lenght"]
-                )
-                if queue["highlight"]:
-                    queue["frontend_text"] += " - " + _("Highlight: {highlight}").format(
-                        highlight=", ".join(h for h in queue["highlight"])
-                    )
-                queues.append(queue)
-    return queues
+def get_all_queues(project_id: int) -> list[dict]:
+    """Get all queues for a project formatted for display.
+
+    Args:
+        project_id: Project ID
+
+    Returns:
+        List of queue dictionaries with frontend display data
+    """
+    queues = get_queues_for_project(project_id)
+
+    result = []
+    for queue in queues:
+        queue_dict = {
+            "id": queue.id,
+            "name": queue.name,
+            "lenght": queue.length,  # Keep typo for backward compatibility
+            "highlight": queue.highlight,
+            "extra_data": queue.extra_data or {},
+            "frontend_text": _("Entries: {queue_length}").format(queue_length=queue.length),
+        }
+
+        # Add highlight info to frontend text
+        if queue.highlight:
+            queue_dict["frontend_text"] += " - " + _("Highlight: {highlight}").format(
+                highlight=", ".join(h for h in queue.highlight)
+            )
+
+        result.append(queue_dict)
+
+    return result

@@ -3,33 +3,20 @@
 
 {% block content %}
 <div class="max-w-7xl mx-auto">
-    <!-- Page Header -->
-    <div class="mb-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 flex items-center">
-                    <i class="bi bi-graph-up text-cyan-600 mr-3"></i>
-                    {{ _('Analytics') }}
-                </h1>
-                <p class="text-gray-600 mt-1">{{ _('User labeling activity over time') }}</p>
-            </div>
-            <a href="{{ url_for('labels', project_id=project_id) }}"
-                class="text-white bg-gray-600 hover:bg-gray-700 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 transition-colors">
-                <i class="bi bi-arrow-left mr-2"></i>{{ _('Back to Labels') }}
-            </a>
-        </div>
-    </div>
-
     <!-- Chart Card -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div class="mb-4">
+        <div class="mb-4 flex items-center justify-between">
             <h2 class="text-xl font-semibold text-gray-900 flex items-center">
                 <i class="bi bi-bar-chart-line-fill text-blue-600 mr-2"></i>
                 {{ _('Labels Created per Day') }}
             </h2>
-            <p class="text-sm text-gray-600 mt-1">
-                {{ _('Track how many labels each user has created over time') }}
-            </p>
+            <div class="flex items-center space-x-3">
+                <label for="mode-select" class="text-sm text-gray-600">{{ _('Mode') }}</label>
+                <select id="mode-select" class="border rounded px-2 py-1 text-sm">
+                    <option value="labels">{{ _('Labels') }}</option>
+                    <option value="entries">{{ _('Unique Entries') }}</option>
+                </select>
+            </div>
         </div>
 
         <!-- Loading Indicator -->
@@ -145,7 +132,8 @@
         const statsSummary = document.getElementById('stats-summary');
 
         try {
-            const response = await fetch('{{ url_for("analytics_data", project_id=project_id) }}');
+            const mode = document.getElementById('mode-select') ? document.getElementById('mode-select').value : 'labels';
+            const response = await fetch('{{ url_for("analytics_data", project_id=project_id) }}?mode=' + encodeURIComponent(mode));
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -229,7 +217,8 @@
                                 label: function (context) {
                                     const label = context.dataset.label || '';
                                     const value = context.parsed.y;
-                                    return `${label}: ${value} label${value !== 1 ? 's' : ''}`;
+                                    const unit = mode === 'entries' ? '{{ _('entry') }}' : '{{ _('label') }}';
+                                    return `${label}: ${value} ${unit}${value !== 1 ? 's' : ''}`;
                                 }
                             }
                         },
@@ -251,7 +240,7 @@
                         y: {
                             title: {
                                 display: true,
-                                text: '{{ _("Number of Labels") }}',
+                                text: mode === 'entries' ? '{{ _('Number of Entries Labeled') }}': '{{ _('Number of Labels') }}',
                                 font: {
                                     size: 14,
                                     weight: 'bold',
@@ -300,7 +289,24 @@
         document.getElementById('avg-per-day').textContent = avgPerDay;
     }
 
-    // Load analytics on page load
-    document.addEventListener('DOMContentLoaded', loadAnalytics);
+    // Load analytics on page load and when mode changes
+    document.addEventListener('DOMContentLoaded', () => {
+        const modeSelect = document.getElementById('mode-select');
+        if (modeSelect) {
+            modeSelect.addEventListener('change', () => {
+                // Destroy existing chart if present
+                if (chart) {
+                    chart.destroy();
+                    chart = null;
+                }
+                // Reset UI
+                document.getElementById('chart-container').classList.add('hidden');
+                document.getElementById('stats-summary').classList.add('hidden');
+                document.getElementById('loading-indicator').classList.remove('hidden');
+                loadAnalytics();
+            });
+        }
+        loadAnalytics();
+    });
 </script>
 {% endblock %}
