@@ -142,8 +142,12 @@ class Label(db.Model, CreationControl):
     project_id: Mapped[int] = db.mapped_column(db.ForeignKey("projects.id"), nullable=False)
 
     # Label type configuration
-    label_type: Mapped[str] = db.mapped_column(nullable=True)  # string identifier for the label type
-    label_settings: Mapped[dict] = db.mapped_column(db.JSON, nullable=True)  # JSON with type-specific configuration
+    label_type: Mapped[str] = db.mapped_column(
+        nullable=True
+    )  # string identifier for the label type
+    label_settings: Mapped[dict] = db.mapped_column(
+        db.JSON, nullable=True
+    )  # JSON with type-specific configuration
 
     metrics: Mapped[list] = db.mapped_column(db.JSON, nullable=True)
     cache: Mapped[list] = db.mapped_column(db.JSON, nullable=True)
@@ -825,7 +829,9 @@ def is_dataset_linked(dataset_id: int, project_id: int) -> bool:
 
 # region Label Management
 # ----------------------
-def new_label(label, user_id, project_id, al_id=None, label_type=None, label_settings=None) -> Label:
+def new_label(
+    label, user_id, project_id, al_id=None, label_type=None, label_settings=None
+) -> Label:
     """Create new classification label.
 
     Args:

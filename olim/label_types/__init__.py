@@ -1,5 +1,7 @@
 """Label type modules for OLIM."""
 
+from types import ModuleType
+
 from . import (
     check,
     free_text,
@@ -35,12 +37,12 @@ _LABEL_TYPE_MAP = {
 }
 
 
-def get_label_type_module(label_type):
+def get_label_type_module(label_type) -> ModuleType:
     """Get the module for a specific label type"""
     return _LABEL_TYPE_MAP.get(label_type, sim_nao)
 
 
-def get_available_label_types():
+def get_available_label_types() -> list[tuple[str, str]]:
     """Get all available label types"""
     return [
         ("sim_nao", "Sim/Não"),
@@ -54,9 +56,9 @@ def get_available_label_types():
     ]
 
 
-def is_free_text_label(label_type):
+def is_free_text_label(label_type) -> bool:
     """Check if a label type is free text"""
     if label_type == "free_text":
         module = get_label_type_module(label_type)
-        return hasattr(module, 'is_free_text') and module.is_free_text()
+        return hasattr(module, "is_free_text") and module.is_free_text()
     return False

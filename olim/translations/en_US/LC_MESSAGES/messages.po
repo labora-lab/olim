@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2025-10-09 21:56-0300\n"
+"POT-Creation-Date: 2025-10-24 18:19-0300\n"
 "PO-Revision-Date: 2025-03-20 20:21+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: en_US\n"
@@ -19,58 +19,68 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-#: olim/active_learning.py:93
+#: olim/active_learning.py:86
 #, python-brace-format
 msgid "Training for label {label_name}"
 msgstr ""
 
-#: olim/active_learning.py:107
+#: olim/active_learning.py:100
 #, python-brace-format
 msgid "Added value \"{value_str}\" for entry {entry_id}."
 msgstr ""
 
-#: olim/active_learning.py:121 olim/active_learning.py:224
-#: olim/active_learning.py:264
+#: olim/active_learning.py:114 olim/active_learning.py:243
+#: olim/active_learning.py:283
 msgid "Label not found."
 msgstr ""
 
-#: olim/active_learning.py:128
+#: olim/active_learning.py:123
+msgid ""
+"Active Learning is not available for free text labels. Use regular "
+"labeling instead."
+msgstr ""
+
+#: olim/active_learning.py:134
 #, python-brace-format
 msgid "Creating Active Learning for {label_name}"
 msgstr ""
 
-#: olim/active_learning.py:140
+#: olim/active_learning.py:146
 #, python-brace-format
 msgid ""
 "Seting up Active Learning pipeline for label {label_name}, please wait a "
 "few minutes and try again."
 msgstr ""
 
-#: olim/active_learning.py:154
+#: olim/active_learning.py:173
 #, python-brace-format
 msgid "Error on active learning for label {label_name} report to developers."
 msgstr ""
 
-#: olim/active_learning.py:236
+#: olim/active_learning.py:255
 #, python-brace-format
 msgid "Already processing export of predictions for label {label_name}"
 msgstr ""
 
-#: olim/active_learning.py:244
+#: olim/active_learning.py:263
 #, python-brace-format
 msgid ""
 "Processing export of predictions for label {label_name}, please wait a "
 "few minutes."
 msgstr ""
 
-#: olim/active_learning.py:254
+#: olim/active_learning.py:273
 #, python-brace-format
 msgid "Generating predictions for {label_name}"
 msgstr ""
 
-#: olim/active_learning.py:306
+#: olim/active_learning.py:325
 #, python-brace-format
 msgid "Error exporting predictions: {error}"
+msgstr ""
+
+#: olim/analytics.py:24
+msgid "Project not found"
 msgstr ""
 
 #: olim/auth.py:54 olim/auth.py:56
@@ -343,73 +353,73 @@ msgstr ""
 msgid "Ticket sent. Thank you very much."
 msgstr ""
 
-#: olim/labels.py:76
+#: olim/labels.py:84
 #, python-brace-format
 msgid "Label {label_name} successfully created"
 msgstr ""
 
-#: olim/labels.py:88 olim/labels.py:111 olim/labels.py:146 olim/labels.py:176
-#: olim/labels.py:204
+#: olim/labels.py:96 olim/labels.py:119 olim/labels.py:154 olim/labels.py:184
+#: olim/labels.py:212
 #, python-brace-format
 msgid "Label id: {label_id} not found!"
 msgstr ""
 
-#: olim/labels.py:100
+#: olim/labels.py:108
 #, python-brace-format
 msgid "Label {label_name} sucessfully deleted"
 msgstr ""
 
-#: olim/labels.py:122 olim/labels.py:157 olim/labels.py:187 olim/labels.py:217
-#: olim/labels.py:232 olim/labels.py:310
+#: olim/labels.py:130 olim/labels.py:165 olim/labels.py:195 olim/labels.py:225
+#: olim/labels.py:240 olim/labels.py:318
 msgid "Label not found"
 msgstr ""
 
-#: olim/labels.py:227 olim/labels.py:305
+#: olim/labels.py:235 olim/labels.py:313
 msgid "Admin access required"
 msgstr ""
 
-#: olim/labels.py:284
+#: olim/labels.py:292
 msgid "Learner parameters updated successfully"
 msgstr ""
 
-#: olim/labels.py:288
+#: olim/labels.py:296
 #, python-brace-format
 msgid "Error converting parameter values: {error}"
 msgstr ""
 
-#: olim/labels.py:293
+#: olim/labels.py:301
 #, python-brace-format
 msgid "Error updating parameters: {error}"
 msgstr ""
 
-#: olim/labels.py:314 olim/labels.py:319
+#: olim/labels.py:322 olim/labels.py:327
 msgid "No file selected"
 msgstr ""
 
-#: olim/labels.py:331
+#: olim/labels.py:339
 #, python-brace-format
 msgid "Missing required columns: {columns}"
 msgstr ""
 
-#: olim/labels.py:355
+#: olim/labels.py:363
 #, python-brace-format
 msgid "Successfully uploaded {count} auto-labels"
 msgstr ""
 
-#: olim/labels.py:360
+#: olim/labels.py:368
 #, python-brace-format
 msgid "Error processing file: {error}"
 msgstr ""
 
-#: olim/labels.py:375
+#: olim/labels.py:383
 msgid "No datasets available for this project"
 msgstr ""
 
-#: olim/labels.py:386
+#: olim/labels.py:394
 msgid "Dataset selection required"
 msgstr ""
 
-#: olim/labels.py:394 olim/labels.py:397
+#: olim/labels.py:402 olim/labels.py:405
 msgid "Invalid dataset selection"
 msgstr ""
 
@@ -869,7 +879,7 @@ msgid "Update your password to keep your account secure"
 msgstr ""
 
 #: olim/templates/admin-settings.html:2 olim/templates/admin-settings.html:13
-#: olim/templates/components/sidebar.html:202
+#: olim/templates/components/sidebar.html:221
 msgid "Global Settings"
 msgstr ""
 
@@ -906,7 +916,7 @@ msgstr ""
 
 #: olim/templates/admin-settings.html:74
 #: olim/templates/components/queue-management.html:45
-#: olim/templates/label-settings.html:80 olim/templates/labels.html:51
+#: olim/templates/label-settings.html:80 olim/templates/labels.html:54
 #: olim/templates/projects.html:41 olim/templates/users.html:46
 msgid "Actions"
 msgstr ""
@@ -1073,6 +1083,71 @@ msgstr ""
 msgid "Scroll to top"
 msgstr ""
 
+#: olim/templates/analytics.html:2 olim/templates/analytics.html:12
+#: olim/templates/components/sidebar.html:88
+msgid "Analytics"
+msgstr ""
+
+#: olim/templates/analytics.html:14
+msgid "User labeling activity over time"
+msgstr ""
+
+#: olim/templates/analytics.html:18
+msgid "Back to Labels"
+msgstr ""
+
+#: olim/templates/analytics.html:28
+msgid "Labels Created per Day"
+msgstr ""
+
+#: olim/templates/analytics.html:31
+msgid "Track how many labels each user has created over time"
+msgstr ""
+
+#: olim/templates/analytics.html:39
+msgid "Loading data..."
+msgstr ""
+
+#: olim/templates/analytics.html:51
+msgid "No labeling data available yet"
+msgstr ""
+
+#: olim/templates/analytics.html:52
+msgid "Start labeling entries to see statistics"
+msgstr ""
+
+#: olim/templates/analytics.html:61
+msgid "Error loading data"
+msgstr ""
+
+#: olim/templates/analytics.html:77 olim/templates/projects.html:29
+msgid "Total Labels"
+msgstr ""
+
+#: olim/templates/analytics.html:88
+msgid "Active Users"
+msgstr ""
+
+#: olim/templates/analytics.html:99
+msgid "Date Range"
+msgstr ""
+
+#: olim/templates/analytics.html:110
+msgid "Avg per Day"
+msgstr ""
+
+#: olim/templates/analytics.html:184 olim/templates/labels.html:40
+msgid "Total"
+msgstr ""
+
+#: olim/templates/analytics.html:241
+msgid "Date"
+msgstr ""
+
+#: olim/templates/analytics.html:254
+msgid "Number of Labels"
+msgstr ""
+
 #: olim/templates/base.html:239 olim/templates/components/footer.html:7
 msgid "OLIM - Open Labeller for Iterative Machine learning"
 msgstr ""
@@ -1171,7 +1246,7 @@ msgid ""
 "                    entries:"
 msgstr ""
 
-#: olim/templates/components/sidebar.html:88
+#: olim/templates/components/sidebar.html:107
 #: olim/templates/data-navigation.html:3 olim/templates/data-navigation.html:13
 msgid "Data Navigation"
 msgstr ""
@@ -1234,47 +1309,47 @@ msgstr ""
 msgid "Remove \"{label_str}\" from all visible labels"
 msgstr ""
 
-#: olim/templates/entry.html:139
+#: olim/templates/entry.html:140
 msgid "Show hidden labels"
 msgstr ""
 
-#: olim/templates/entry.html:143
+#: olim/templates/entry.html:144
 msgid "Show labels that were marked as hidden"
 msgstr ""
 
-#: olim/templates/entry.html:151
+#: olim/templates/entry.html:152
 msgid "Hide hidden labels"
 msgstr ""
 
-#: olim/templates/entry.html:155
+#: olim/templates/entry.html:156
 msgid "Hide labels that were marked as hidden"
 msgstr ""
 
-#: olim/templates/entry.html:167
+#: olim/templates/entry.html:169
 msgid "Expand all"
 msgstr ""
 
-#: olim/templates/entry.html:171
+#: olim/templates/entry.html:173
 msgid "Expandir todas as seções retraídas do conteúdo"
 msgstr "Expand all collapsed sections of the content"
 
-#: olim/templates/entry.html:179
+#: olim/templates/entry.html:181
 msgid "Retract all"
 msgstr ""
 
-#: olim/templates/entry.html:183
+#: olim/templates/entry.html:185
 msgid "Retrair todas as seções expandidas do conteúdo"
 msgstr "Retract all expanded sections of the content"
 
-#: olim/templates/entry.html:199
+#: olim/templates/entry.html:202
 msgid "No entry loaded"
 msgstr ""
 
-#: olim/templates/entry.html:200
+#: olim/templates/entry.html:203
 msgid "Please enter an entry ID and dataset to view content."
 msgstr ""
 
-#: olim/templates/entry.html:238
+#: olim/templates/entry.html:241
 msgid "Please enter an entry ID"
 msgstr ""
 
@@ -1290,7 +1365,7 @@ msgstr ""
 msgid "Go Home"
 msgstr ""
 
-#: olim/templates/components/sidebar.html:212 olim/templates/error.html:103
+#: olim/templates/components/sidebar.html:231 olim/templates/error.html:103
 #: olim/templates/login.html:2
 msgid "Login"
 msgstr ""
@@ -1430,6 +1505,7 @@ msgstr ""
 
 #: olim/templates/components/setting-modal.html:145
 #: olim/templates/hidden.html:180 olim/templates/label-settings.html:407
+#: olim/templates/label_types/free_text.html:33
 #: olim/templates/projects.html:176
 msgid "Cancel"
 msgstr ""
@@ -1521,7 +1597,7 @@ msgstr ""
 msgid "Project Labels"
 msgstr ""
 
-#: olim/templates/init-config.html:183 olim/templates/labels.html:163
+#: olim/templates/init-config.html:183 olim/templates/labels.html:186
 msgid "Enter label name"
 msgstr ""
 
@@ -1546,7 +1622,7 @@ msgstr ""
 msgid "Label Information"
 msgstr ""
 
-#: olim/templates/label-settings.html:48 olim/templates/labels.html:43
+#: olim/templates/label-settings.html:48 olim/templates/labels.html:46
 #: olim/templates/projects.html:35
 msgid "Creator"
 msgstr ""
@@ -1706,71 +1782,75 @@ msgstr ""
 msgid "Label"
 msgstr ""
 
-#: olim/templates/labels.html:37
-msgid "Total"
-msgstr ""
-
-#: olim/templates/labels.html:99
+#: olim/templates/labels.html:118
 msgid "Hide this label in entry forms"
 msgstr ""
 
-#: olim/templates/labels.html:106
+#: olim/templates/labels.html:125
 msgid "Show this label in entry forms"
 msgstr ""
 
-#: olim/templates/labels.html:113
+#: olim/templates/labels.html:132
 msgid "Settings"
 msgstr ""
 
-#: olim/templates/labels.html:120
+#: olim/templates/labels.html:139
 msgid "Open active learning queue"
 msgstr ""
 
-#: olim/templates/labels.html:121
+#: olim/templates/labels.html:140
 msgid "Learn"
 msgstr ""
 
-#: olim/templates/labels.html:133
+#: olim/templates/labels.html:156
 msgid "No labels found"
 msgstr ""
 
-#: olim/templates/labels.html:134
+#: olim/templates/labels.html:157
 msgid "Create your first label to get started."
 msgstr ""
 
-#: olim/templates/labels.html:150 olim/templates/labels.html:169
+#: olim/templates/labels.html:173 olim/templates/labels.html:206
 msgid "Create Label"
 msgstr ""
 
-#: olim/templates/labels.html:159
+#: olim/templates/labels.html:182
 msgid "Label Name"
 msgstr ""
 
-#: olim/templates/labels.html:181
+#: olim/templates/labels.html:192
+msgid "Label Type"
+msgstr ""
+
+#: olim/templates/labels.html:196
+msgid "Choose label type"
+msgstr ""
+
+#: olim/templates/labels.html:218
 msgid "Upload Labels"
 msgstr ""
 
-#: olim/templates/labels.html:192
+#: olim/templates/labels.html:229
 msgid "Labelling File"
 msgstr ""
 
-#: olim/templates/labels.html:197
+#: olim/templates/labels.html:234
 msgid "Select a labelling file to upload"
 msgstr ""
 
-#: olim/templates/labels.html:205 olim/templates/labels.html:220
+#: olim/templates/labels.html:242 olim/templates/labels.html:257
 msgid "Target Dataset"
 msgstr ""
 
-#: olim/templates/labels.html:209
+#: olim/templates/labels.html:246
 msgid "Select Dataset"
 msgstr ""
 
-#: olim/templates/labels.html:232
+#: olim/templates/labels.html:269
 msgid "Submit through active learning (values will be considered for validation)"
 msgstr ""
 
-#: olim/templates/labels.html:240
+#: olim/templates/labels.html:277
 msgid "Upload File"
 msgstr ""
 
@@ -1796,10 +1876,6 @@ msgstr ""
 
 #: olim/templates/projects.html:23 olim/templates/projects.html:125
 msgid "Project Name"
-msgstr ""
-
-#: olim/templates/projects.html:29
-msgid "Total Labels"
 msgstr ""
 
 #: olim/templates/projects.html:79
@@ -1930,7 +2006,7 @@ msgstr ""
 msgid "No tasks."
 msgstr ""
 
-#: olim/templates/components/sidebar.html:195 olim/templates/upload-data.html:2
+#: olim/templates/components/sidebar.html:214 olim/templates/upload-data.html:2
 msgid "Upload Data"
 msgstr ""
 
@@ -1954,7 +2030,7 @@ msgstr ""
 msgid "Role"
 msgstr ""
 
-#: olim/templates/users.html:93
+#: olim/templates/label_types/free_text.html:44 olim/templates/users.html:93
 msgid "Edit"
 msgstr ""
 
@@ -2152,44 +2228,44 @@ msgid "Save Setting"
 msgstr ""
 
 #: olim/templates/components/sidebar.html:38
-#: olim/templates/components/sidebar.html:188
+#: olim/templates/components/sidebar.html:207
 msgid "Manage Projects"
 msgstr ""
 
-#: olim/templates/components/sidebar.html:108
+#: olim/templates/components/sidebar.html:127
 msgid "Hidden texts"
 msgstr ""
 
-#: olim/templates/components/sidebar.html:122
-#: olim/templates/components/sidebar.html:132
+#: olim/templates/components/sidebar.html:141
+#: olim/templates/components/sidebar.html:151
 msgid "Jobs"
 msgstr ""
 
-#: olim/templates/components/sidebar.html:132
+#: olim/templates/components/sidebar.html:151
 msgid "running"
 msgstr ""
 
-#: olim/templates/components/sidebar.html:132
+#: olim/templates/components/sidebar.html:151
 msgid "completed"
 msgstr ""
 
-#: olim/templates/components/sidebar.html:132
+#: olim/templates/components/sidebar.html:151
 msgid "pending/failed"
 msgstr ""
 
-#: olim/templates/components/sidebar.html:158
+#: olim/templates/components/sidebar.html:177
 msgid "Collapse/Expand Sidebar"
 msgstr ""
 
-#: olim/templates/components/sidebar.html:174
+#: olim/templates/components/sidebar.html:193
 msgid "Users"
 msgstr ""
 
-#: olim/templates/components/sidebar.html:181
+#: olim/templates/components/sidebar.html:200
 msgid "account_settings_1"
 msgstr "Account Settings"
 
-#: olim/templates/components/sidebar.html:218
+#: olim/templates/components/sidebar.html:237
 msgid "Logout"
 msgstr ""
 
@@ -2276,6 +2352,50 @@ msgstr ""
 msgid "Click here to open the PDF in a new tab"
 msgstr ""
 
+#: olim/templates/label_types/check.html:18
+#: olim/templates/label_types/sim_nao.html:18
+#: olim/templates/label_types/sim_nao_ns.html:18
+#: olim/templates/label_types/yes_no.html:18
+#: olim/templates/label_types/yes_no_idk.html:18
+#: olim/templates/label_types/yes_no_unknown.html:18
+#: olim/templates/macros/labels-menu.html:64
+#, python-brace-format
+msgid "Click to unmark as \"{label_str}\""
+msgstr ""
+
+#: olim/templates/label_types/check.html:37
+#: olim/templates/label_types/sim_nao.html:37
+#: olim/templates/label_types/sim_nao_ns.html:37
+#: olim/templates/label_types/yes_no.html:37
+#: olim/templates/label_types/yes_no_idk.html:37
+#: olim/templates/label_types/yes_no_unknown.html:37
+#: olim/templates/macros/labels-menu.html:83
+#, python-brace-format
+msgid "Click to mark as \"{label_str}\""
+msgstr ""
+
+#: olim/templates/label_types/free_text.html:23
+msgid "Enter text..."
+msgstr ""
+
+#: olim/templates/label_types/free_text.html:27
+msgid "Save"
+msgstr ""
+
+#: olim/templates/label_types/multiple_choice.html:30
+#, python-brace-format
+msgid "Click to unselect \"{option}\""
+msgstr ""
+
+#: olim/templates/label_types/multiple_choice.html:32
+#, python-brace-format
+msgid "Click to select \"{option}\""
+msgstr ""
+
+#: olim/templates/label_types/multiple_choice.html:45
+msgid "Clear all"
+msgstr ""
+
 #: olim/templates/macros/entry-load-form.html:7
 msgid "Entry Navigation"
 msgstr ""
@@ -2298,22 +2418,12 @@ msgstr ""
 msgid "Add Highlight"
 msgstr ""
 
-#: olim/templates/macros/labels-menu.html:20
+#: olim/templates/macros/labels-menu.html:21
 msgid "Hide this label"
 msgstr ""
 
-#: olim/templates/macros/labels-menu.html:32
+#: olim/templates/macros/labels-menu.html:33
 msgid "Show this label"
-msgstr ""
-
-#: olim/templates/macros/labels-menu.html:60
-#, python-brace-format
-msgid "Click to unmark as \"{label_str}\""
-msgstr ""
-
-#: olim/templates/macros/labels-menu.html:79
-#, python-brace-format
-msgid "Click to mark as \"{label_str}\""
 msgstr ""
 
 #: olim/templates/macros/new-user-form.html:14
@@ -2474,55 +2584,55 @@ msgstr ""
 msgid "CSV files only"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:487
+#: olim/templates/macros/upload-form.html:503
 msgid "Please select a CSV file only."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:511
+#: olim/templates/macros/upload-form.html:534
 msgid "Preparing upload..."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:522
+#: olim/templates/macros/upload-form.html:549
 msgid "Uploading..."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:543
+#: olim/templates/macros/upload-form.html:574
 msgid "Upload complete! Processing file..."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:568
+#: olim/templates/macros/upload-form.html:600
 msgid "Text ID column"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:575
+#: olim/templates/macros/upload-form.html:607
 msgid "Select Text ID column"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:586
+#: olim/templates/macros/upload-form.html:618
 msgid "Text column"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:593
+#: olim/templates/macros/upload-form.html:625
 msgid "Select Text column"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:608
+#: olim/templates/macros/upload-form.html:640
 msgid "PDF URL column"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:615
+#: olim/templates/macros/upload-form.html:647
 msgid "Select PDF URL column"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:670
+#: olim/templates/macros/upload-form.html:702
 msgid "File uploaded successfully"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:675
+#: olim/templates/macros/upload-form.html:707
 msgid "Change File"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:690
+#: olim/templates/macros/upload-form.html:731
 msgid "Upload failed:"
 msgstr ""
 

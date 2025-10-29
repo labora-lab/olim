@@ -6,16 +6,9 @@ from celery.result import AsyncResult
 from flask import Response, flash, redirect, render_template, request, session, url_for
 from flask_babel import _
 
-from . import app, db, settings
+from . import app, db
 from .celery_app import launch_task_with_tracking
-from .database import (
-    CeleryTask,
-    Label,
-    add_entry_label,
-    get_datasets,
-    get_entry,
-    get_label,
-)
+from .database import CeleryTask, Label, add_entry_label, get_datasets, get_entry, get_label
 from .functions import get_highlights, render_entry
 from .tasks.active_learning import (
     COMPOSITE_ID,
@@ -123,10 +116,14 @@ def catch_al(label_id: int) -> ...:
 
     # Check if label is free text type - active learning is not available
     from olim.label_types import is_free_text_label
+
     if is_free_text_label(label.label_type):
         flash(
-            _("Active Learning is not available for free text labels. Use regular labeling instead."),
-            category="warning"
+            _(
+                "Active Learning is not available for free text labels. "
+                "Use regular labeling instead."
+            ),
+            category="warning",
         )
         return redirect(url_for("labels", project_id=label.project_id))
 
@@ -158,11 +155,15 @@ def catch_al(label_id: int) -> ...:
         # Get label values from the label's type configuration
         if label.label_type:
             from olim.label_types import get_label_type_module
+
             label_module = get_label_type_module(label.label_type)
             label_options = label_module.get_label_options()
         else:
             # Default fallback to sim/não if no label type is configured
-            label_options = [("sim", "icon", "check-circle-fill", "green"), ("não", "icon", "x-circle-fill", "red")]
+            label_options = [
+                ("sim", "icon", "check-circle-fill", "green"),
+                ("não", "icon", "x-circle-fill", "red"),
+            ]
 
         value_str = label_options[-1 - int(request.form["value"])][0]
         entry_id = request.form["entry_id"]
@@ -231,7 +232,7 @@ def catch_al(label_id: int) -> ...:
         updated_cache = cache[cache_index + 1 :]
         label.cache = updated_cache
     db.session.commit()
-    data = render_entry(str(entry_id), int(dataset_id), data)
+    data = render_entry(str(entry_id), int(dataset_id), data)  # type: ignore [entry_is possibly unbounded]
     return render_template("al-entry.html", **data)
 
 
@@ -321,7 +322,7 @@ def get_predictions(label_id: int, task_id: str) -> ...:
         )
     else:
         flash(
-            _("Error exporting predictions: {error}").format(error=res["error"]),
+            _("Error exporting predictions: {error}").format(error=res["error"]),  # type: ignore [AsyncResult.__getitem__]
             category="error",
         )
         return redirect(url_for("label_settings", label_id=label_id))
