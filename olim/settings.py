@@ -61,6 +61,7 @@ if RANDOM_SEED is not None:
 HELP_URL = os.getenv("HELP_URL", "")
 """URL to the API help page"""
 
+
 class LabelTypes:
     SIM_NAO: ClassVar = [
         ("sim", "icon", "check-circle-fill", "green"),
@@ -97,7 +98,9 @@ if "LABELS_TYPES" in labels:
 try:
     LABELS = eval(labels)
 except (TypeError, NameError):
-    print(f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!")
+    print(
+        f"WARNING: Failed to parse LABELS={labels}, continuing with default 'LabelTypes.YES_NO'!"
+    )
     LABELS = LabelTypes.YES_NO
 
 # Label types are now configured at the individual label level

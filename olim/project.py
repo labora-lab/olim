@@ -151,19 +151,45 @@ def entry(
             queue_pos = get_queue_pos(queue_id)
         try:
             queue = get_queue(queue_id, project_id)
-            dataset_id, entry_id = queue[queue_pos - 1]
-            update_queue_pos(queue_id, queue_pos)
-            data.update(
-                {
-                    "queue_id": queue_id,
-                    "queue_len": len(queue),
-                    "queue_pos": queue_pos,
-                }
-            )
-        except Exception as e:
-            print(e)
+
+            # Check if queue is empty
+            if len(queue) == 0:
+                flash(
+                    _("Queue {queue_id} is empty").format(queue_id=queue_id),
+                    category="error",
+                )
+                queue_id = None
+            # Check if position is out of range
+            elif queue_pos < 1 or queue_pos > len(queue):
+                flash(
+                    _("Position {pos} is out of range for queue (size: {size}). Redirecting to position 1.").format(
+                        pos=queue_pos, size=len(queue)
+                    ),
+                    category="warning",
+                )
+                # Reset to position 1 and redirect
+                update_queue_pos(queue_id, 1)
+                return redirect(url_for("entry", project_id=project_id, queue_id=queue_id, queue_pos=1))
+            else:
+                dataset_id, entry_id = queue[queue_pos - 1]
+                update_queue_pos(queue_id, queue_pos)
+                data.update(
+                    {
+                        "queue_id": queue_id,
+                        "queue_len": len(queue),
+                        "queue_pos": queue_pos,
+                    }
+                )
+        except FileNotFoundError:
             flash(
                 _("Queue {queue_id} not found").format(queue_id=queue_id),
+                category="error",
+            )
+            queue_id = None
+        except Exception as e:
+            app.logger.error(f"Error loading queue {queue_id}: {e}", exc_info=True)
+            flash(
+                _("Error loading queue: {error}").format(error=str(e)),
                 category="error",
             )
             queue_id = None

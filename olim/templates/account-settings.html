@@ -14,10 +14,11 @@
                     {{ _('User Information') }}
                 </h3>
             </div>
-            
+
             <div class="p-6">
                 <div class="flex flex-col items-center text-center">
-                    <div class="w-20 h-20 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-medium mb-4">
+                    <div
+                        class="w-20 h-20 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-medium mb-4">
                         {{ user.name[0]|upper if user.name else user.username[0]|upper }}
                     </div>
                     <div>
@@ -48,7 +49,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 {% if session.role == 'admin' and session.user_id != user.id %}
                 <div class="mt-6 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                     <div class="flex">
@@ -84,7 +85,7 @@
                             {{ _('Select Language') }}
                         </label>
                         <select id="language" name="language"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                             <option value="" {% if not language %} selected{% endif %}>
                                 {{ _("Automatic") }}
                             </option>
@@ -95,9 +96,9 @@
                             {% endfor %}
                         </select>
                     </div>
-                    
+
                     <button type="submit" name="action"
-                            class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                        class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
                         <i class="bi bi-check-lg mr-2"></i>
                         {{ _('Save Language') }}
                     </button>
@@ -114,20 +115,44 @@
                 </h3>
                 <p class="text-sm text-gray-600 mt-1">{{ _('Update your password to keep your account secure') }}</p>
             </div>
-            
+
             <div class="p-6">
                 <form method="POST" action="{{ url_for('edit_password', user_id=user['id']) }}" class="space-y-4">
                     {{ user_macro.password_form(show_current=(session.role != 'admin')) }}
 
                     <!-- Submit Button -->
                     <button type="submit" name="action" id="submit-password-btn"
-                            class="w-full text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        class="w-full text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                         <i class="bi bi-shield-check mr-2"></i>
                         {{ _('Change Password') }}
                     </button>
                 </form>
             </div>
         </div>
+
+        <!-- Session Management -->
+        {% if session.role == 'admin' %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-database-x text-orange-600 mr-2"></i>
+                    {{ _('Session Management') }}
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">{{ _('Clear stored session data and preferences') }}</p>
+            </div>
+
+            <div class="p-6">
+                <form method="POST" action="{{ url_for('clear_user_session', user_id=user['id']) }}"
+                    onsubmit="return confirm('{{ _('Are you sure you want to clear all session data? This cannot be undone.') }}');">
+                    <button type="submit" name="action"
+                        class="w-full text-white bg-orange-600 hover:bg-orange-700 focus:ring-4 focus:outline-none focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                        <i class="bi bi-trash mr-2"></i>
+                        {{ _('Clear Session Data') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
