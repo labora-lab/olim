@@ -111,8 +111,7 @@ def check_permission() -> ...:
     if not check_is_setup() and request.endpoint != "init_config":
         if not (
             step == "add-data"
-            and request.endpoint
-            in ["upload_data", "handle_large_upload", "finalize_upload"]
+            and request.endpoint in ["upload_data", "handle_large_upload", "finalize_upload"]
         ):
             return redirect(url_for("init_config"))
 
@@ -265,9 +264,7 @@ def init_config() -> ...:
             raise ValueError("Error initializing database.")
     if request.method == "POST" and request.form["step"] == "add-project":
         name = request.form["name"]
-        labels = [
-            label.strip() for label in request.form.getlist("labels") if label.strip()
-        ]
+        labels = [label.strip() for label in request.form.getlist("labels") if label.strip()]
         if len(name) == 0:
             flash(_("Project name can't be empty."), category="warning")
             return render_template("init-config.html", step=get_setup_step())
@@ -283,9 +280,7 @@ def init_config() -> ...:
         for label in labels:
             if new_label(label, user_id, project.id):
                 flash(
-                    _("Label {label_name} successfully created!").format(
-                        label_name=label
-                    ),
+                    _("Label {label_name} successfully created!").format(label_name=label),
                     category="success",
                 )
             else:
@@ -350,9 +345,7 @@ def security_edit_password(
         return
 
     if new_password_check is None:
-        flash(
-            _("Please enter a new on both fields!"), category="error"
-        )  # no new password
+        flash(_("Please enter a new on both fields!"), category="error")  # no new password
         return
 
     if new_password != new_password_check:
@@ -365,12 +358,8 @@ def security_edit_password(
         )  # no old password when is not admin
         return
 
-    if changer_user.role != "admin" and not verify_password(
-        old_password, changer_user.password
-    ):
-        flash(
-            _("Incorrect old password!"), category="error"
-        )  # old password is incorrect
+    if changer_user.role != "admin" and not verify_password(old_password, changer_user.password):
+        flash(_("Incorrect old password!"), category="error")  # old password is incorrect
         return
 
     update_user_password(
@@ -382,9 +371,7 @@ def security_edit_password(
 def get_user_obj(user_id: int | None) -> User | None:
     user_id = user_id or session["user_id"]
 
-    if (user_id is None) or (
-        session["role"] != "admin" and session["user_id"] != user_id
-    ):
+    if (user_id is None) or (session["role"] != "admin" and session["user_id"] != user_id):
         return None
 
     user = get_user(user_id, by="id")
@@ -403,9 +390,7 @@ def user_settings(user_id: int | None = None) -> ...:
         # If no permission for current user, it's a 403
         abort(403)
 
-    return render_template(
-        "account-settings.html", user=user, languages=settings.LANGUAGES
-    )
+    return render_template("account-settings.html", user=user, languages=settings.LANGUAGES)
 
 
 @app.route("/user/<int:user_id>/set/password", methods=["POST"])
@@ -458,9 +443,7 @@ def edit_language(user_id: int | None = None) -> ...:
                 )
             else:
                 flash(
-                    _("Changed language for {user_name} to Automatic!").format(
-                        user_name=user.name
-                    ),
+                    _("Changed language for {user_name} to Automatic!").format(user_name=user.name),
                     category="success",
                 )
 
@@ -482,9 +465,7 @@ def clear_user_session(user_id: int | None = None) -> ...:
     if request.method == "POST":
         clear_session(to_change_user.id)
         flash(
-            _("Session data cleared for {user_name}!").format(
-                user_name=to_change_user.name
-            ),
+            _("Session data cleared for {user_name}!").format(user_name=to_change_user.name),
             category="success",
         )
 
