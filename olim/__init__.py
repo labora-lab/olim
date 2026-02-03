@@ -95,6 +95,7 @@ from . import labels  # noqa
 from . import project  # noqa
 from . import settings_routes  # noqa
 from . import upload_data  # noqa
+from . import learning_tasks  # noqa
 from .utils.entry import have_hidden  # noqa
 
 # Global variables to templates

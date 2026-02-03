@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}{{ task.name }} - {{ _('Learning Task') }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    {% if show_progress %}
+    <!-- Progress bar -->
+    <div class="max-w-3xl mx-auto mb-6">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-medium text-gray-700">{{ task.name }}</span>
+            <span class="text-sm text-gray-500">{{ position + 1 }} / {{ total_steps }}</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2">
+            <div class="bg-cyan-600 h-2 rounded-full transition-all duration-300"
+                 style="width: {{ ((position + 1) / total_steps * 100)|int }}%"></div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- State content -->
+    {{ content|safe }}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

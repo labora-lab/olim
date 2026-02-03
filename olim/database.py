@@ -216,6 +216,16 @@ class Queue(db.Model, CreationControl):
     # Relationships
     project: Mapped["Project"] = db.relationship(back_populates="queues")
 
+class LearningTask(db.Model, CreationControl):
+    __tablename__ = "learning_tasks"
+
+    id: Mapped[int] = db.mapped_column(primary_key=True)
+    name: Mapped[str] = db.mapped_column(nullable=False)
+    state: Mapped[str] = db.mapped_column(nullable=False)
+    position: Mapped[int] = db.mapped_column(default=0, nullable=False)
+    data: Mapped[dict] = db.mapped_column(db.JSON, nullable=False)
+    initial_setup: Mapped[dict] = db.mapped_column(db.JSON, nullable=False)
+    
 
 class CeleryTaskStatus(db.TypeDecorator):
     """Enum for Celery task states"""
@@ -370,7 +380,10 @@ def get_by(table: ..., col: str, idt: int | str, filter_deleted=True) -> ...:
         Found record or None
     """
     if col == "id":
-        return db.session.get(table, idt)
+        obj = db.session.get(table, idt)
+        if obj and filter_deleted and hasattr(obj, "is_deleted") and obj.is_deleted:
+            return None
+        return obj
     filter_params = {col: idt}
     if filter_deleted:
         filter_params["is_deleted"] = False
@@ -1282,6 +1295,110 @@ def get_celery_tasks(n=10) -> list[TaskStatus]:
                 }
             )
     return tasks
+
+
+# endregion
+
+
+# region Learning Task Management
+# -------------------------------
+def new_learning_task(
+    name: str, state: str, initial_setup: dict, user_id: int, data: dict | None = None
+) -> LearningTask:
+    """Create a new learning task.
+
+    Args:
+        name: Task name
+        state: Initial state of the task
+        initial_setup: Initial configuration for the task
+        user_id: ID of creating user
+        data: Optional initial task data (defaults to empty dict)
+
+    Returns:
+        New LearningTask object
+    """
+    task = LearningTask(
+        name=name,
+        state=state,
+        initial_setup=initial_setup,
+        data=data or {},
+        created=datetime.now(),
+        created_by=user_id,
+        is_deleted=False,
+    )
+    db.session.add(task)
+    db.session.commit()
+    return task
+
+
+def get_learning_task(task_id: int) -> LearningTask | None:
+    """Retrieve a learning task by ID.
+
+    Args:
+        task_id: Task ID
+
+    Returns:
+        LearningTask object or None if not found
+    """
+    return get_by(LearningTask, "id", task_id, True)
+
+
+def get_learning_tasks(state: str | None = None) -> list[LearningTask]:
+    """Retrieve all active learning tasks with optional state filtering.
+
+    Args:
+        state: Optional state to filter by
+
+    Returns:
+        List of LearningTask objects ordered by creation date (newest first)
+    """
+    query = db.select(LearningTask).filter_by(is_deleted=False)
+
+    if state is not None:
+        query = query.filter_by(state=state)
+
+    return list(
+        db.session.execute(query.order_by(LearningTask.created.desc())).scalars()
+    )
+
+
+def update_learning_task(task_id: int, **params) -> LearningTask | None:
+    """Update a learning task.
+
+    Args:
+        task_id: Task ID to update
+        **params: Fields to update (name, state, data)
+
+    Returns:
+        Updated LearningTask object or None if not found
+    """
+    task = get_learning_task(task_id)
+    if not task:
+        return None
+
+    for key, value in params.items():
+        if hasattr(task, key):
+            setattr(task, key, value)
+
+    db.session.commit()
+    return task
+
+
+def delete_learning_task(task_id: int, user_id: int) -> bool:
+    """Soft-delete a learning task.
+
+    Args:
+        task_id: Task ID to delete
+        user_id: ID of user performing deletion
+
+    Returns:
+        True if deleted successfully, False otherwise
+    """
+    task = get_learning_task(task_id)
+    if task:
+        del_controled(task, user_id)
+        return True
+    return False
 
 
 # endregion
