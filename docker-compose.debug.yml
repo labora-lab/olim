@@ -4,9 +4,11 @@ services:
   olim:
     volumes:
       - .:/app
+      - venv:/app/.venv
   worker:
     volumes:
       - .:/app
+      - venv:/app/.venv
   db:
     ports:
       - '${POSTGRES_PORT:-5432}:5432'
@@ -14,3 +16,6 @@ services:
     ports:
       - '9200:9200'
       - '9300:9300'
+
+volumes:
+  venv:
