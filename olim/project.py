@@ -162,14 +162,16 @@ def entry(
             # Check if position is out of range
             elif queue_pos < 1 or queue_pos > len(queue):
                 flash(
-                    _("Position {pos} is out of range for queue (size: {size}). Redirecting to position 1.").format(
-                        pos=queue_pos, size=len(queue)
-                    ),
+                    _(
+                        "Position {pos} is out of range for queue (size: {size}). Redirecting to position 1."
+                    ).format(pos=queue_pos, size=len(queue)),
                     category="warning",
                 )
                 # Reset to position 1 and redirect
                 update_queue_pos(queue_id, 1)
-                return redirect(url_for("entry", project_id=project_id, queue_id=queue_id, queue_pos=1))
+                return redirect(
+                    url_for("entry", project_id=project_id, queue_id=queue_id, queue_pos=1)
+                )
             else:
                 dataset_id, entry_id = queue[queue_pos - 1]
                 update_queue_pos(queue_id, queue_pos)
@@ -502,8 +504,9 @@ def delete_queue_route(project_id: int, queue_id: str) -> ...:
 def delete_queue_entries(project_id: int, queue_id: str) -> ...:
     """Delete selected entries from a queue"""
     from flask import jsonify
-    from .database import get_queue_by_id, db
+
     from . import auth
+    from .database import db, get_queue_by_id
 
     # Check project_id
     res = update_session_project(project_id)
@@ -543,12 +546,14 @@ def delete_queue_entries(project_id: int, queue_id: str) -> ...:
         queue_obj.length = len(current_queue)
         db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "message": f"Successfully deleted {deleted_count} entries from queue",
-            "deleted_count": deleted_count,
-            "remaining_count": len(current_queue)
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Successfully deleted {deleted_count} entries from queue",
+                "deleted_count": deleted_count,
+                "remaining_count": len(current_queue),
+            }
+        ), 200
 
     except Exception as e:
         db.session.rollback()

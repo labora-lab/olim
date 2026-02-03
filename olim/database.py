@@ -200,9 +200,15 @@ class Queue(db.Model, CreationControl):
     project_id: Mapped[int] = db.mapped_column(db.ForeignKey("projects.id"), nullable=False)
 
     # Queue data stored as JSON
-    queue_data: Mapped[list] = db.mapped_column(db.JSON, nullable=False)  # [(dataset_id, entry_id), ...]
-    highlight: Mapped[list | None] = db.mapped_column(db.JSON, nullable=True)  # List of highlight terms
-    extra_data: Mapped[dict | None] = db.mapped_column(db.JSON, nullable=True)  # Additional metadata
+    queue_data: Mapped[list] = db.mapped_column(
+        db.JSON, nullable=False
+    )  # [(dataset_id, entry_id), ...]
+    highlight: Mapped[list | None] = db.mapped_column(
+        db.JSON, nullable=True
+    )  # List of highlight terms
+    extra_data: Mapped[dict | None] = db.mapped_column(
+        db.JSON, nullable=True
+    )  # Additional metadata
 
     # Computed field
     length: Mapped[int] = db.mapped_column(db.Integer, nullable=False)  # Cached queue length

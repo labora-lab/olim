@@ -1,5 +1,6 @@
 from .commands import COMMANDS
 from .constants import ENTRY_TYPE, ES_INDEX, ES_TO_HIDE_INDEX
+from .entry_class import PatientEntry
 from .extract import extract_texts
 from .hidden import get_all_hidden, have_hidden
 from .render import render
@@ -12,6 +13,7 @@ __all__ = [
     "ENTRY_TYPE",
     "ES_INDEX",
     "ES_TO_HIDE_INDEX",
+    "PatientEntry",
     "extract_texts",
     "get_all_hidden",
     "have_hidden",

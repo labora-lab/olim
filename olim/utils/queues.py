@@ -1,15 +1,13 @@
 ## Auxiliary functions
 # All functions here must have type hints and docstrings
-import hashlib
-import json
 from flask import session
 from flask_babel import _
 
 from ..database import (
-    new_queue,
+    delete_queue_by_id,
     get_queue_by_id,
     get_queues_for_project,
-    delete_queue_by_id,
+    new_queue,
 )
 
 
