@@ -2,7 +2,7 @@ import random
 import string
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 from flask import session
 from sqlalchemy import ScalarResult, Select, func
@@ -11,6 +11,9 @@ from sqlalchemy.orm import Mapped, declared_attr
 from werkzeug.security import generate_password_hash
 
 from . import db
+
+if TYPE_CHECKING:
+    from olim.ml.models import MLModel
 
 
 ## DB tables
@@ -160,11 +163,18 @@ class Label(db.Model, CreationControl):
     # Auto-labels stored as {COMPOSITE_ID: value} for automatic labeling during active learning
     auto_labels: Mapped[dict] = db.mapped_column(db.JSON, nullable=True)
 
+    ml_model_id: Mapped[int | None] = db.mapped_column(
+        db.ForeignKey("ml_models.id"), nullable=True, index=True
+    )
+
     # Relationships
     entries: Mapped[list["LabelEntry"]] = db.relationship(
         back_populates="label", foreign_keys="[LabelEntry.label_id]"
     )
     project: Mapped["Project"] = db.relationship(back_populates="labels")
+    ml_model: Mapped["MLModel"] = db.relationship(  # type: ignore
+        foreign_keys=[ml_model_id], viewonly=True
+    )
 
 
 class GlobalSetting(db.Model, CreationControl):
@@ -1397,7 +1407,7 @@ def delete_setting(key: str, user_id: int | None = None) -> GlobalSetting | None
 
     setting = get_setting(key)
     if setting:
-        del_controled(setting, user_id)
+        del_controled(setting, user_id)  # type: ignore
         return setting
     return None
 

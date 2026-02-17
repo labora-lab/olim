@@ -96,6 +96,7 @@ from . import project  # noqa
 from . import settings_routes  # noqa
 from . import upload_data  # noqa
 from .utils.entry import have_hidden  # noqa
+from .ml import models as ml_models  # noqa
 
 # Global variables to templates
 app.jinja_env.globals.update(
