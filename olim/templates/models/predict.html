@@ -82,7 +82,7 @@
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">{{ _('Predicted Class') }}</label>
                     <div class="flex items-center">
-                        <span class="inline-flex items-center px-4 py-2 rounded-lg text-lg font-bold bg-gradient-to-r from-purple-500 to-pink-600 text-white">
+                        <span class="inline-flex items-center px-4 py-2 rounded-lg text-lg font-bold bg-linear-to-r from-purple-500 to-pink-600 text-white">
                             {{ prediction_result.predicted_class }}
                         </span>
                         {% if prediction_result.confidence %}
@@ -123,7 +123,7 @@
                                 <span class="text-gray-600">{{ "%.1f"|format(probability * 100) }}%</span>
                             </div>
                             <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-gradient-to-r from-purple-500 to-pink-600 h-2 rounded-full transition-all duration-300"
+                                <div class="bg-linear-to-r from-purple-500 to-pink-600 h-2 rounded-full transition-all duration-300"
                                      style="width: {{ probability * 100 }}%"></div>
                             </div>
                         </div>
