@@ -239,7 +239,7 @@ class TrainingOrchestrator:
         from olim.entry_types.registry import get_entry_type_instance
 
         # Get entry type instance
-        entry_type_instance = get_entry_type_instance(entry.type, entry.dataset_id)
+        entry_type_instance = get_entry_type_instance(entry.type)
 
         if entry_type_instance is None:
             # Fallback to entry_id if entry type not found
