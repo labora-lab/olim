@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+{% block title %}{{ model.name }} - {{ _('Model Details') }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto max-w-7xl">
+    <!-- Header -->
+    <div class="mb-6">
+        <a href="{{ url_for('models_list') }}" class="text-purple-600 hover:text-purple-700 flex items-center mb-4">
+            <i class="bi bi-arrow-left mr-2"></i>
+            {{ _('Back to Models') }}
+        </a>
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                    <i class="bi bi-robot text-purple-600 mr-3"></i>
+                    {{ model.name }}
+                </h1>
+                <p class="text-gray-600 mt-2">{{ model.description or _('No description provided') }}</p>
+                <div class="flex items-center mt-3 space-x-4">
+                    <span class="text-sm text-gray-500">
+                        <i class="bi bi-folder mr-1"></i>
+                        {{ model.project.name }}
+                    </span>
+                    <span class="text-sm text-gray-500">
+                        <i class="bi bi-diagram-3 mr-1"></i>
+                        {{ model.algorithm }}
+                    </span>
+                    {% if model.status == 'active' %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <i class="bi bi-circle-fill text-green-600 mr-1" style="font-size: 0.5rem;"></i>
+                        {{ _('Active') }}
+                    </span>
+                    {% elif model.status == 'training' %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        <i class="bi bi-circle-fill text-yellow-600 mr-1" style="font-size: 0.5rem;"></i>
+                        {{ _('Training') }}
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        {{ model.status }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <a href="{{ url_for('model_predict', model_id=model.id) }}"
+                   class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-colors">
+                    <i class="bi bi-lightning mr-2"></i>
+                    {{ _('Test Predictions') }}
+                </a>
+                <form method="POST" action="{{ url_for('model_train', model_id=model.id) }}" class="inline">
+                    <button type="submit"
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 transition-colors">
+                        <i class="bi bi-play-fill mr-2"></i>
+                        {{ _('Train Model') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Active Version -->
+            {% if active_version %}
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="bi bi-star-fill text-yellow-500 mr-2"></i>
+                    {{ _('Active Version') }}
+                </h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-sm text-gray-500">{{ _('Version') }}</span>
+                        <div class="text-2xl font-bold text-gray-900">v{{ active_version.version }}</div>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-500">{{ _('Trained') }}</span>
+                        <div class="text-sm text-gray-900">{{ active_version.trained_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-500">{{ _('Training Samples') }}</span>
+                        <div class="text-lg font-semibold text-gray-900">{{ active_version.n_train_samples }}</div>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-500">{{ _('Validation Samples') }}</span>
+                        <div class="text-lg font-semibold text-gray-900">{{ active_version.n_val_samples }}</div>
+                    </div>
+                </div>
+
+                <!-- Metrics -->
+                {% if active_version.metrics %}
+                <div class="mt-6">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-3">{{ _('Metrics') }}</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {% for metric_name, metric_value in active_version.metrics.items() %}
+                        <div class="bg-gray-50 rounded-lg p-3 text-center">
+                            <div class="text-xs text-gray-500 uppercase">{{ metric_name }}</div>
+                            <div class="text-lg font-bold text-purple-600">
+                                {% if metric_value is number %}
+                                {{ "%.3f"|format(metric_value) }}
+                                {% else %}
+                                {{ metric_value }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                <div class="flex items-start">
+                    <i class="bi bi-exclamation-triangle text-yellow-600 text-2xl mr-3"></i>
+                    <div>
+                        <h3 class="text-sm font-semibold text-yellow-800">{{ _('No Active Version') }}</h3>
+                        <p class="text-sm text-yellow-700 mt-1">
+                            {{ _('This model has not been trained yet. Click "Train Model" to create the first version.') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Version History -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="bi bi-clock-history text-purple-600 mr-2"></i>
+                        {{ _('Version History') }}
+                    </h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">{{ _('Version') }}</th>
+                                <th scope="col" class="px-6 py-3">{{ _('Trained') }}</th>
+                                <th scope="col" class="px-6 py-3 text-center">{{ _('Samples') }}</th>
+                                <th scope="col" class="px-6 py-3 text-center">{{ _('Accuracy') }}</th>
+                                <th scope="col" class="px-6 py-3 text-center">{{ _('Actions') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for version in versions %}
+                            <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <span class="font-medium text-gray-900">v{{ version.version }}</span>
+                                        {% if version.is_active %}
+                                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                            {{ _('Active') }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-gray-700">{{ version.trained_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <span class="text-gray-700">{{ version.n_train_samples }}</span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    {% if version.metrics and 'accuracy' in version.metrics %}
+                                    <span class="font-medium text-gray-900">{{ "%.2f"|format(version.metrics.accuracy * 100) }}%</span>
+                                    {% else %}
+                                    <span class="text-gray-400">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    {% if not version.is_active %}
+                                    <form method="POST" action="{{ url_for('version_activate', model_id=model.id, version_id=version.id) }}" class="inline">
+                                        <button type="submit"
+                                                class="inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-purple-600 rounded hover:bg-purple-700 focus:ring-2 focus:outline-none focus:ring-purple-300">
+                                            {{ _('Activate') }}
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                    {{ _('No versions yet. Train the model to create the first version.') }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Training Jobs -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="bi bi-gear-fill text-purple-600 mr-2"></i>
+                        {{ _('Recent Training Jobs') }}
+                    </h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-gray-500">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">{{ _('Job ID') }}</th>
+                                <th scope="col" class="px-6 py-3">{{ _('Status') }}</th>
+                                <th scope="col" class="px-6 py-3">{{ _('Started') }}</th>
+                                <th scope="col" class="px-6 py-3">{{ _('Duration') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for job in training_jobs %}
+                            <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
+                                <td class="px-6 py-4">
+                                    <code class="text-xs text-gray-600">{{ job.id[:8] }}...</code>
+                                </td>
+                                <td class="px-6 py-4">
+                                    {% if job.status == 'completed' %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                        {{ _('Completed') }}
+                                    </span>
+                                    {% elif job.status == 'running' %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                        {{ _('Running') }}
+                                    </span>
+                                    {% elif job.status == 'failed' %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                        {{ _('Failed') }}
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                                        {{ job.status }}
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4">
+                                    {% if job.started_at %}
+                                    <span class="text-gray-700">{{ job.started_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                                    {% else %}
+                                    <span class="text-gray-400">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4">
+                                    {% if job.started_at and job.completed_at %}
+                                    <span class="text-gray-700">{{ "%.1f"|format((job.completed_at - job.started_at).total_seconds()) }}s</span>
+                                    {% else %}
+                                    <span class="text-gray-400">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="px-6 py-8 text-center text-gray-500">
+                                    {{ _('No training jobs yet.') }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            <!-- Model Info -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">{{ _('Model Info') }}</h2>
+                <dl class="space-y-3">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">{{ _('Slug') }}</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ model.slug }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">{{ _('Type') }}</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ model.model_type }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">{{ _('Created') }}</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ model.created.strftime('%Y-%m-%d %H:%M') }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">{{ _('Created By') }}</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ model.creator.name }}</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <!-- Linked Label -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">{{ _('Linked Label') }}</h2>
+                {% if linked_label %}
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <div class="font-medium text-gray-900">{{ linked_label.name }}</div>
+                        <div class="text-xs text-gray-500">ID: {{ linked_label.id }}</div>
+                    </div>
+                </div>
+                <form method="POST" action="{{ url_for('model_unlink_label', model_id=model.id) }}">
+                    <button type="submit"
+                            class="w-full px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors">
+                        <i class="bi bi-x-circle mr-2"></i>
+                        {{ _('Unlink Label') }}
+                    </button>
+                </form>
+                {% else %}
+                <p class="text-sm text-gray-500 mb-3">{{ _('No label linked to this model.') }}</p>
+                <button onclick="document.getElementById('link-label-form').classList.toggle('hidden')"
+                        class="w-full px-3 py-2 text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors">
+                    <i class="bi bi-link-45deg mr-2"></i>
+                    {{ _('Link to Label') }}
+                </button>
+                <form id="link-label-form" method="POST" action="{{ url_for('model_link_label', model_id=model.id) }}" class="hidden mt-3">
+                    <input type="number" name="label_id" placeholder="{{ _('Label ID') }}" required
+                           class="block w-full mb-2 rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm">
+                    <button type="submit"
+                            class="w-full px-3 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700">
+                        {{ _('Link') }}
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="bg-white rounded-lg shadow-sm border border-red-200 p-6">
+                <h2 class="text-lg font-semibold text-red-900 mb-4">{{ _('Danger Zone') }}</h2>
+                <p class="text-sm text-gray-600 mb-3">{{ _('Deleting a model is permanent and cannot be undone.') }}</p>
+                {% if model.label_id %}
+                <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+                    <p class="text-xs text-red-700">{{ _('Cannot delete: model is linked to a label. Unlink it first.') }}</p>
+                </div>
+                {% endif %}
+                <form method="POST" action="{{ url_for('model_delete', model_id=model.id) }}"
+                      onsubmit="return confirm('{{ _('Are you sure you want to delete this model? This action cannot be undone.') }}');">
+                    <button type="submit"
+                            {% if model.label_id %}disabled{% endif %}
+                            class="w-full px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
+                        <i class="bi bi-trash mr-2"></i>
+                        {{ _('Delete Model') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

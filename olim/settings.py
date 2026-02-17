@@ -157,6 +157,16 @@ PERMISSIONS = {
         "get_help",
         "send_ticket",
         "redirect_to_project",
+        # ML Models Management
+        "models_list",
+        "model_detail",
+        "model_create",
+        "model_train",
+        "version_activate",
+        "model_link_label",
+        "model_unlink_label",
+        "model_delete",
+        "model_predict",
     ],
     "guest": ["static", "login"],
 }
