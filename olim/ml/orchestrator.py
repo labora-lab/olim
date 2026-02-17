@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from olim import db
-from olim.learner.public_api import AVAILABLE_MODELS, ActiveLearningBackend
+from olim.learner.public_api import ActiveLearningBackend
 from olim.ml.artifacts import ArtifactManager
 from olim.ml.registry import ModelRegistry
 
@@ -85,8 +85,8 @@ class TrainingOrchestrator:
             # Initialize ActiveLearningBackend
             learner = self._initialize_learner(model, train_data, val_data, fields)
 
-            # Train the model
-            learner.train()
+            # Train the model (using private _train method)
+            learner._train()
 
             # Calculate training duration
             training_duration = time.time() - start_time
@@ -286,43 +286,59 @@ class TrainingOrchestrator:
         Raises:
             ValueError: If algorithm not found or initialization fails
         """
-        # Get model class
-        model_class = AVAILABLE_MODELS.get(model.algorithm)
+        # Get label values from the linked label
+        from olim.database import get_label
+        from olim.label_types import get_label_type_module
 
-        if model_class is None:
-            raise ValueError(
-                f"Algorithm '{model.algorithm}' not found. "
-                f"Available: {list(AVAILABLE_MODELS.keys())}"
-            )
+        if model.label_id is None:
+            raise ValueError("Model is not linked to a label")
 
-        # Get label values (assumes they are keys in train_data values)
-        label_indices = {data[1] for data in train_data.values()}
-        label_values = [f"class_{i}" for i in sorted(label_indices)]
+        label = get_label(model.label_id)
+        if not label:
+            raise ValueError(f"Label {model.label_id} not found")
+
+        # Get label values from label type module
+        label_type_module = get_label_type_module(label.label_type)
+        label_options = label_type_module.get_label_options()
+        # Extract first element (label value) from each option tuple
+        label_values = [option[0] for option in label_options]
 
         # Get training configuration
         training_config = model.training_config or {}
+        model_config = model.model_config or {}
 
         # Extract specific configs
         n_kickstart = training_config.get("n_kickstart", 10)
-        subsample_size = model.subsample_config or [1000, 100, 10]
-        recall_frequency = training_config.get("recall_frequency", 5)
+        # Ensure subsample_config is a list
+        if model.subsample_config and isinstance(model.subsample_config, list):
+            subsample_size = model.subsample_config
+        else:
+            subsample_size = [1000, 20]
+        review_frequency = training_config.get("review_frequency", 10)
 
-        # Initialize learner
+        # Prepare original dataset (all entries as unlabeled text)
+        original_dataset = {entry_id: text for entry_id, (text, _) in train_data.items()}
+
+        # Prepare initial labeled dataset
+        initial_label_value_dataset = {
+            entry_id: label_values[label_idx] for entry_id, (_, label_idx) in train_data.items()
+        }
+
+        # Initialize learner with correct parameters
+        import numpy as np
+
         learner = ActiveLearningBackend(
+            original_dataset=original_dataset,
             label_values=label_values,
-            model_class=model_class,
+            initial_label_value_dataset=initial_label_value_dataset,
             n_kickstart=n_kickstart,
             subsample_size=subsample_size,
-            recall_frequency=recall_frequency,
+            review_frequency=review_frequency,
+            rng=np.random.default_rng(),
+            classification_model=model.algorithm,
+            model_parameters=str(model_config),
+            model_train_parameters=str(training_config),
         )
-
-        # Set original dataset (all unlabeled initially)
-        original_dataset = {entry_id: text for entry_id, (text, _) in train_data.items()}
-        learner._original_dataset = original_dataset
-
-        # Add labeled data
-        for entry_id, (_text, label_idx) in train_data.items():
-            learner.add_labeled_value(entry_id, label_values[label_idx])
 
         return learner
 
