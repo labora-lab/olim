@@ -192,9 +192,9 @@ class MLModelService:
         if model_id is not None:
             # Filter by model_id in result JSON
             # PostgreSQL: result->>'model_id' = str(model_id)
-            query = query.filter(
-                CeleryTask.result["model_id"].astext == str(model_id)  # type: ignore
-            )
+            from sqlalchemy import String, cast
+
+            query = query.filter(cast(CeleryTask.result["model_id"], String) == str(model_id))
 
         return query.order_by(CeleryTask.created.desc()).limit(limit).all()
 
