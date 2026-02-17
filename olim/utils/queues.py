@@ -3,12 +3,7 @@
 from flask import session
 from flask_babel import _
 
-from ..database import (
-    delete_queue_by_id,
-    get_queue_by_id,
-    get_queues_for_project,
-    new_queue,
-)
+from ..database import delete_queue_by_id, get_queue_by_id, get_queues_for_project, new_queue
 
 
 def parse_queue(text: str) -> list[str]:
@@ -92,8 +87,10 @@ def store_queue(
     # Auto-generate name if not provided
     if name is None:
         if queue_type == "search":
-            include = extra_data.get("Include", [])
-            exclude = extra_data.get("Exclude", [])
+            include_raw = extra_data.get("Include", [])
+            exclude_raw = extra_data.get("Exclude", [])
+            include = include_raw if isinstance(include_raw, list) else []
+            exclude = exclude_raw if isinstance(exclude_raw, list) else []
             name = generate_queue_name("search", include_terms=include, exclude_terms=exclude)
         elif queue_type == "random":
             name = generate_queue_name("random", number=len(queue_list))
@@ -142,7 +139,7 @@ def get_queue(queue_id: str, project_id: int) -> list[tuple[int, str]]:
 
         # Handle both old format (list) and new format (dict)
         if isinstance(raw_highlights, list):
-            existing_highlights = {
+            existing_highlights: dict = {
                 "terms": raw_highlights,
                 "colorAssignments": {},
                 "colorCounter": len(raw_highlights),
@@ -156,10 +153,23 @@ def get_queue(queue_id: str, project_id: int) -> list[tuple[int, str]]:
 
         queue_highlights = queue.highlight
 
-        if set(queue_highlights) != set(existing_highlights["terms"]):
-            merged_terms = list(existing_highlights["terms"])
-            merged_color_assignments = existing_highlights["colorAssignments"].copy()
-            color_counter = existing_highlights["colorCounter"]
+        # Ensure terms is a list
+        existing_terms = existing_highlights.get("terms", [])
+        if not isinstance(existing_terms, list):
+            existing_terms = []
+
+        existing_assignments = existing_highlights.get("colorAssignments", {})
+        if not isinstance(existing_assignments, dict):
+            existing_assignments = {}
+
+        existing_counter = existing_highlights.get("colorCounter", 0)
+        if not isinstance(existing_counter, int):
+            existing_counter = 0
+
+        if set(queue_highlights) != set(existing_terms):
+            merged_terms = list(existing_terms)
+            merged_color_assignments = existing_assignments.copy()
+            color_counter = existing_counter
 
             for highlight in queue_highlights:
                 if highlight not in merged_terms:

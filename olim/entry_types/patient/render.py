@@ -134,7 +134,7 @@ def render(entry_id: str, **pars) -> str:
     Returns:
         str: Rendered HTML.
     """
-    pid = entry_id
+    pid = int(entry_id)
 
     # Checks integrity of dates
     start_date_str, start_date = get_date("start-date")

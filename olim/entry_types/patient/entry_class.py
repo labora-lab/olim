@@ -4,6 +4,8 @@ This module provides the class-based implementation for patient entries,
 delegating to the existing module functions for backward compatibility.
 """
 
+from typing import Any
+
 import pandas as pd
 
 from ..base import EntryTypeBase
@@ -26,12 +28,12 @@ class PatientEntry(EntryTypeBase):
     supports_hiding = True
     custom_commands = COMMANDS
 
-    def render(self, entry_id: str, **kwargs) -> str:
+    def render(self, entry_id: str, **kwargs: Any) -> str:  # noqa: ANN401
         """Render patient entry HTML with timeline and hiding controls.
 
         Delegates to existing render module for backward compatibility.
         """
-        return render_module.render(entry_id, **kwargs)
+        return render_module.render(entry_id, **kwargs)  # type: ignore[attr-defined]
 
     def extract_texts(self, entry_id: str, **kwargs) -> pd.DataFrame:
         """Extract patient text content for ML/export.
@@ -53,7 +55,7 @@ class PatientEntry(EntryTypeBase):
         not_must_terms: list[str],
         not_must_phrases: list[str],
         number: int,
-        **kwargs,
+        **kwargs: Any,  # noqa: ANN401
     ) -> list[dict]:
         """Search patient entries via Elasticsearch.
 
@@ -61,7 +63,7 @@ class PatientEntry(EntryTypeBase):
 
         Note: Patient search does not use dataset_id parameter.
         """
-        return search_module.search(
+        return search_module.search(  # type: ignore[attr-defined]
             must_terms, must_phrases, not_must_terms, not_must_phrases, number
         )
 

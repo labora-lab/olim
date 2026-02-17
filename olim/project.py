@@ -163,7 +163,8 @@ def entry(
             elif queue_pos < 1 or queue_pos > len(queue):
                 flash(
                     _(
-                        "Position {pos} is out of range for queue (size: {size}). Redirecting to position 1."
+                        "Position {pos} is out of range for queue (size: {size}). "
+                        "Redirecting to position 1."
                     ).format(pos=queue_pos, size=len(queue)),
                     category="warning",
                 )
@@ -519,6 +520,8 @@ def delete_queue_entries(project_id: int, queue_id: str) -> ...:
 
     try:
         # Get indices to delete from request
+        if request.json is None:
+            return jsonify({"error": "No JSON data provided"}), 400
         indices_to_delete = request.json.get("indices", [])
         if not indices_to_delete:
             return jsonify({"error": "No indices provided"}), 400

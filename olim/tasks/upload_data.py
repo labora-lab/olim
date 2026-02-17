@@ -220,15 +220,22 @@ def upload_to_elasticsearch(
 
     # Perform bulk upload
     try:
-        success, errors = helpers.bulk(es, doc_generator())
+        bulk_result = helpers.bulk(es, doc_generator())
+        # helpers.bulk returns (success_count, errors_list) or just success_count
+        if isinstance(bulk_result, tuple):
+            success, errors = bulk_result
+        else:
+            success = bulk_result
+            errors = []
 
         if errors:
             # Extract meaningful error messages for user
             error_details = []
-            for error in errors[:3]:  # Show first 3 errors
+            errors_to_check = errors[:3] if isinstance(errors, list) else []
+            for error in errors_to_check:  # Show first 3 errors
                 if isinstance(error, dict) and "index" in error:
                     error_info = error["index"]
-                    if "error" in error_info:
+                    if "error" in error_info and isinstance(error_info["error"], dict):
                         error_details.append(
                             error_info["error"].get("reason", str(error_info["error"]))
                         )

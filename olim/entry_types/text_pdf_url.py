@@ -24,7 +24,7 @@ class TextPdfUrlEntry(EntryTypeBase):
     template_path = "entry_types/text_pdf_url.html"
     show_metadata = False
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize with delegation to SingleTextEntry for shared functionality."""
         super().__init__()
         self._single_text = SingleTextEntry()

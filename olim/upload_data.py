@@ -135,8 +135,9 @@ def upload_data(project_id: int | None = None) -> ...:
             dataset = new_dataset(dataset_name, session["user_id"])
 
             # Link to selected projects
-            for project_id in projects:
-                link_dataset_to_project(dataset.id, int(project_id), session["user_id"])
+            for project_id_str in projects:
+                project_id = int(project_id_str)
+                link_dataset_to_project(dataset.id, project_id, session["user_id"])
         except Exception as e:
             flash(_("Error creating dataset: {error}").format(error=str(e)), "error")
             if not check_is_setup():

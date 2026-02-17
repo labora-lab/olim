@@ -5,12 +5,15 @@ modules to class-based entry types. It allows both systems to coexist and provid
 utilities to check which system an entry type uses.
 """
 
-from typing import Any, TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
-T = TypeVar("T")
+if TYPE_CHECKING:
+    from .base import EntryTypeBase
+
+T = TypeVar("T", bound="EntryTypeBase")
 
 # Global registry of entry type classes
-_ENTRY_TYPE_CLASSES: dict[str, Any] = {}
+_ENTRY_TYPE_CLASSES: dict[str, type["EntryTypeBase"]] = {}
 
 
 def register_entry_type(entry_type_class: type[T]) -> type[T]:
@@ -50,7 +53,7 @@ def get_entry_type_class(type_name: str) -> type | None:
     return _ENTRY_TYPE_CLASSES.get(type_name)
 
 
-def get_entry_type_instance(type_name: str) -> Any:
+def get_entry_type_instance(type_name: str) -> "EntryTypeBase | None":
     """Get entry type instance by name.
 
     Creates a new instance of the entry type class each time called.
@@ -99,7 +102,7 @@ def is_class_based(type_name: str) -> bool:
     return type_name in _ENTRY_TYPE_CLASSES
 
 
-def get_entry_type_handler(type_name: str) -> Any:
+def get_entry_type_handler(type_name: str) -> "EntryTypeBase | None":
     """Get entry type handler (class instance or module).
 
     This is a compatibility helper that can return either a class instance
@@ -118,7 +121,7 @@ def get_entry_type_handler(type_name: str) -> Any:
     return None
 
 
-def call_entry_method(type_name: str, method_name: str, *args, **kwargs) -> Any:
+def call_entry_method(type_name: str, method_name: str, *args, **kwargs) -> object:
     """Call a method on an entry type handler.
 
     This is a convenience function for calling entry type methods
