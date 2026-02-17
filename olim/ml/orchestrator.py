@@ -353,15 +353,33 @@ class TrainingOrchestrator:
         """
         metrics = {}
 
-        # Get metrics from learner if available
-        if hasattr(learner, "metrics") and learner.metrics:
-            metrics = learner.metrics
+        try:
+            from olim.learner.eval.metrics import accuracy, auc_roc, precision, recall
 
-        # Add model-specific metrics if available
-        if hasattr(learner, "_model") and hasattr(learner._model, "get_metrics"):
-            model_metrics = learner._model.get_metrics()
-            if model_metrics:
-                metrics.update(model_metrics)
+            acc, acc_ci = learner.metric_with_confidence(accuracy, alpha=0.05, n_bootstrap=100)
+            if acc > 0:
+                metrics["accuracy"] = float(acc)
+                metrics["accuracy_ci_lower"] = float(acc_ci[0])
+                metrics["accuracy_ci_upper"] = float(acc_ci[1])
+
+            # Compute precision
+            prec, prec_ci = learner.metric_with_confidence(precision, alpha=0.05, n_bootstrap=100)
+            if prec > 0:
+                metrics["precision"] = float(prec)
+
+            rec, _rec_ci = learner.metric_with_confidence(recall, alpha=0.05, n_bootstrap=100)
+            if rec > 0:
+                metrics["recall"] = float(rec)
+
+            try:
+                auc, _auc_ci = learner.metric_with_confidence(auc_roc, alpha=0.05, n_bootstrap=100)
+                if auc > 0:
+                    metrics["auc_roc"] = float(auc)
+            except Exception:
+                pass
+
+        except Exception:
+            pass
 
         return metrics
 

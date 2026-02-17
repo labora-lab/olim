@@ -218,17 +218,21 @@
                                     <code class="text-xs text-gray-600">{{ job.id[:8] }}...</code>
                                 </td>
                                 <td class="px-6 py-4">
-                                    {% if job.status == 'completed' %}
+                                    {% if job.status == 'SUCCESS' %}
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                        {{ _('Completed') }}
+                                        {{ _('SUCCESS') }}
                                     </span>
-                                    {% elif job.status == 'running' %}
+                                    {% elif job.status == 'STARTED' %}
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                        {{ _('Running') }}
+                                        {{ _('RUNNING') }}
                                     </span>
-                                    {% elif job.status == 'failed' %}
+                                    {% elif job.status == 'FAILURE' %}
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                                        {{ _('Failed') }}
+                                        {{ _('FAILURE') }}
+                                    </span>
+                                    {% elif job.status == 'PENDING' %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        {{ _('PENDING') }}
                                     </span>
                                     {% else %}
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
@@ -237,15 +241,15 @@
                                     {% endif %}
                                 </td>
                                 <td class="px-6 py-4">
-                                    {% if job.started_at %}
-                                    <span class="text-gray-700">{{ job.started_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                                    {% if job.date_started %}
+                                    <span class="text-gray-700">{{ job.date_started.strftime('%Y-%m-%d %H:%M') }}</span>
                                     {% else %}
                                     <span class="text-gray-400">-</span>
                                     {% endif %}
                                 </td>
                                 <td class="px-6 py-4">
-                                    {% if job.started_at and job.completed_at %}
-                                    <span class="text-gray-700">{{ "%.1f"|format((job.completed_at - job.started_at).total_seconds()) }}s</span>
+                                    {% if job.date_started and job.date_completed %}
+                                    <span class="text-gray-700">{{ "%.1f"|format((job.date_completed - job.date_started).total_seconds()) }}s</span>
                                     {% else %}
                                     <span class="text-gray-400">-</span>
                                     {% endif %}
