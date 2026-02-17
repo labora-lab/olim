@@ -12,19 +12,19 @@ x-app-base: &app-base
 
 # Environments
 x-app-env: &app-env
-  DB_HOST: "olim_db"
-  DB_NAME: "${POSTGRES_DB}"
-  DB_USER: "${POSTGRES_USER}"
-  DB_PASSWORD: "${POSTGRES_PASSWORD}"
-  DB_PORT: "${POSTGRES_PORT:-5432}"
-  DEBUG: "${DEBUG:-false}"
-  ES_SERVER: "http://olim_es:9200"
+  DB_HOST: 'olim_db'
+  DB_NAME: '${POSTGRES_DB}'
+  DB_USER: '${POSTGRES_USER}'
+  DB_PASSWORD: '${POSTGRES_PASSWORD}'
+  DB_PORT: '${POSTGRES_PORT:-5432}'
+  DEBUG: '${DEBUG:-false}'
+  ES_SERVER: 'http://olim_es:9200'
   WORK_PATH: /app/work
-  LABELS: "${LABELS}"
-  HELP_URL: "${HELP_URL}"
-  REDIS_HOST: "olim_redis"
-  REDIS_PASSWORD: "${REDIS_PASSWORD}"
-  REDIS_PORT: "${REDIS_PORT:-6379}"
+  LABELS: '${LABELS}'
+  HELP_URL: '${HELP_URL}'
+  REDIS_HOST: 'olim_redis'
+  REDIS_PASSWORD: '${REDIS_PASSWORD}'
+  REDIS_PORT: '${REDIS_PORT:-6379}'
 
 services:
   es:
@@ -53,10 +53,12 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
     networks:
       - olim-es
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -82,7 +84,7 @@ services:
     ports:
       - '${REDIS_PORT:-6379}:6379'
     healthcheck:
-      test: [ 'CMD', 'redis-cli', 'ping' ]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 30s
       timeout: 10s
       retries: 5
@@ -94,7 +96,7 @@ services:
     <<: *app-base
     container_name: olim_worker
     command: celery -A olim.celery_app worker --loglevel=info
-    entrypoint: "" # Skips entrypoint script
+    entrypoint: '' # Skips entrypoint script
     environment:
       <<: *app-env
     depends_on:
