@@ -69,6 +69,16 @@ def model_detail(model_id: int) -> str | Response:
     # Get training jobs
     training_jobs = service.list_training_jobs(model_id=model_id, limit=10)
 
+    # Get available labels from the same project (for linking)
+    from .database import Label
+
+    available_labels = (
+        db.session.query(Label)
+        .filter_by(project_id=model.project_id, is_deleted=False)
+        .order_by(Label.name)
+        .all()
+    )
+
     return render_template(
         "models/detail.html",
         model=model,
@@ -76,6 +86,7 @@ def model_detail(model_id: int) -> str | Response:
         active_version=active_version,
         linked_label=linked_label,
         training_jobs=training_jobs,
+        available_labels=available_labels,
     )
 
 
