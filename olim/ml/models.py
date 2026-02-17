@@ -85,9 +85,6 @@ class MLModel(db.Model, CreationControl):
     predictions: Mapped[list[MLModelPrediction]] = db.relationship(
         back_populates="model", lazy="dynamic"
     )
-    training_jobs: Mapped[list[MLTrainingJob]] = db.relationship(
-        back_populates="model", lazy="dynamic"
-    )
 
     # Foreign key relationships
     project: Mapped[Project] = db.relationship(  # type: ignore
@@ -284,72 +281,4 @@ class MLModelPrediction(db.Model):
             "predicted_at": self.predicted_at.isoformat() if self.predicted_at else None,
             "external_request_id": self.external_request_id,
             "entry_id": self.entry_id,
-        }
-
-
-class MLTrainingJob(db.Model, CreationControl):
-    """Training job tracking
-
-    Tracks the status and progress of model training jobs. Uses Celery task IDs
-    as primary keys for easy integration with the existing task tracking system.
-
-    Attributes:
-        id: Celery task ID (primary key)
-        model_id: Foreign key to MLModel
-        status: Job status ("queued", "running", "completed", "failed")
-        started_at: Timestamp when training started
-        completed_at: Timestamp when training completed
-        version_id: Foreign key to created MLModelVersion (set on completion)
-        error_message: Error details if training failed
-        config_snapshot: JSON snapshot of configuration used for this training run
-    """
-
-    __tablename__ = "ml_training_jobs"
-    __table_args__ = (
-        db.Index("ix_ml_training_jobs_model", "model_id"),
-        db.Index("ix_ml_training_jobs_status", "status"),
-    )
-
-    # Identity (using Celery task ID)
-    id: Mapped[str] = db.mapped_column(db.String(36), primary_key=True)
-    model_id: Mapped[int] = db.mapped_column(db.ForeignKey("ml_models.id"), nullable=False)
-
-    # Status tracking
-    status: Mapped[str] = db.mapped_column(
-        nullable=False, default="queued"
-    )  # "queued", "running", "completed", "failed"
-    started_at: Mapped[datetime | None] = db.mapped_column(nullable=True)
-    completed_at: Mapped[datetime | None] = db.mapped_column(nullable=True)
-
-    # Results
-    version_id: Mapped[int | None] = db.mapped_column(
-        db.ForeignKey("ml_model_versions.id"), nullable=True
-    )
-    error_message: Mapped[str | None] = db.mapped_column(db.Text, nullable=True)
-
-    # Configuration snapshot (for reproducibility)
-    config_snapshot: Mapped[dict] = db.mapped_column(db.JSON, nullable=False, default=dict)
-
-    # Relationships
-    model: Mapped[MLModel] = db.relationship(back_populates="training_jobs")
-    version: Mapped[MLModelVersion] = db.relationship(  # type: ignore
-        foreign_keys=[version_id], viewonly=True
-    )
-
-    def __repr__(self) -> str:
-        return f"<MLTrainingJob {self.id} ({self.status})>"
-
-    def to_dict(self) -> dict:
-        """Convert training job to dictionary representation"""
-        return {
-            "id": self.id,
-            "model_id": self.model_id,
-            "status": self.status,
-            "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
-            "version_id": self.version_id,
-            "error_message": self.error_message,
-            "config_snapshot": self.config_snapshot,
-            "created": self.created.isoformat() if self.created else None,
-            "created_by": self.created_by,
         }

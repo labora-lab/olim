@@ -12,8 +12,9 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from olim import db
+from olim.database import CeleryTask
 from olim.ml.artifacts import ArtifactManager
-from olim.ml.models import MLModel, MLModelPrediction, MLModelVersion, MLTrainingJob
+from olim.ml.models import MLModel, MLModelPrediction, MLModelVersion
 from olim.ml.orchestrator import TrainingOrchestrator
 from olim.ml.prediction import PredictionEngine, PredictionResult
 from olim.ml.registry import ModelRegistry
@@ -165,35 +166,37 @@ class MLModelService:
             model_id=model_id, user_id=user_id, force_retrain=force_retrain
         )
 
-    def get_training_job(self, job_id: str) -> MLTrainingJob | None:
+    def get_training_job(self, job_id: str) -> CeleryTask | None:
         """Get training job by ID
 
         Args:
             job_id: Training job ID (Celery task ID)
 
         Returns:
-            MLTrainingJob instance or None
+            CeleryTask instance or None
         """
-        return db.session.query(MLTrainingJob).filter_by(id=job_id).first()
+        return db.session.query(CeleryTask).filter_by(id=job_id).first()
 
-    def list_training_jobs(
-        self, model_id: int | None = None, limit: int = 50
-    ) -> list[MLTrainingJob]:
-        """List training jobs
+    def list_training_jobs(self, model_id: int | None = None, limit: int = 50) -> list[CeleryTask]:
+        """List training jobs for ML models
 
         Args:
-            model_id: Filter by model ID
+            model_id: Filter by model ID (searches in result JSON)
             limit: Maximum results
 
         Returns:
-            List of MLTrainingJob instances
+            List of CeleryTask instances with task_name starting with 'ml.'
         """
-        query = db.session.query(MLTrainingJob)
+        query = db.session.query(CeleryTask).filter(CeleryTask.task_name.like("ml.%"))
 
         if model_id is not None:
-            query = query.filter_by(model_id=model_id)
+            # Filter by model_id in result JSON
+            # PostgreSQL: result->>'model_id' = str(model_id)
+            query = query.filter(
+                CeleryTask.result["model_id"].astext == str(model_id)  # type: ignore
+            )
 
-        return query.order_by(MLTrainingJob.created.desc()).limit(limit).all()
+        return query.order_by(CeleryTask.created.desc()).limit(limit).all()
 
     def get_version(self, version_id: int) -> MLModelVersion | None:
         """Get model version by ID

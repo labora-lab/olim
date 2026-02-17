@@ -5,7 +5,7 @@ This package provides a comprehensive ML models management system with dedicated
 models, versions, and predictions (decoupled from Labels)
 """
 
-from .models import MLModel, MLModelPrediction, MLModelVersion, MLTrainingJob
+from .models import MLModel, MLModelPrediction, MLModelVersion
 from .services import MLModelService
 
-__all__ = ["MLModel", "MLModelPrediction", "MLModelService", "MLModelVersion", "MLTrainingJob"]
+__all__ = ["MLModel", "MLModelPrediction", "MLModelService", "MLModelVersion"]
