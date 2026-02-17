@@ -6,5 +6,6 @@ models, versions, and predictions (decoupled from Labels)
 """
 
 from .models import MLModel, MLModelPrediction, MLModelVersion, MLTrainingJob
+from .services import MLModelService
 
-__all__ = ["MLModel", "MLModelPrediction", "MLModelVersion", "MLTrainingJob"]
+__all__ = ["MLModel", "MLModelPrediction", "MLModelService", "MLModelVersion", "MLTrainingJob"]
