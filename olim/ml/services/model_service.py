@@ -181,20 +181,22 @@ class MLModelService:
         """List training jobs for ML models
 
         Args:
-            model_id: Filter by model ID (searches in result JSON)
+            model_id: Filter by model ID (searches in result JSON or kwargs)
             limit: Maximum results
 
         Returns:
-            List of CeleryTask instances with task_name starting with 'ml.'
+            List of CeleryTask instances for training tasks
         """
-        query = db.session.query(CeleryTask).filter(CeleryTask.task_name.like("ml.%"))
+        query = db.session.query(CeleryTask).filter(CeleryTask.task_name == "learner.train_model")
 
         if model_id is not None:
-            # Filter by model_id in result JSON
-            # PostgreSQL: result->>'model_id' = str(model_id)
-            from sqlalchemy import String, cast
+            from sqlalchemy import String, cast, or_
 
-            query = query.filter(cast(CeleryTask.result["model_id"], String) == str(model_id))
+            kwargs_filter = cast(CeleryTask.kwargs["model_id"], String) == str(model_id)
+
+            result_filter = cast(CeleryTask.result["model_id"], String) == str(model_id)
+
+            query = query.filter(or_(kwargs_filter, result_filter))
 
         return query.order_by(CeleryTask.created.desc()).limit(limit).all()
 
