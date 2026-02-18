@@ -85,6 +85,7 @@ babel = Babel(app, locale_selector=get_locale)
 
 from . import active_learning  # noqa
 from . import analytics  # noqa
+from . import api_rest  # noqa
 from . import auth  # noqa
 from . import cli  # noqa
 from . import commands  # noqa
@@ -98,6 +99,9 @@ from . import settings_routes  # noqa
 from . import upload_data  # noqa
 from .ml import models as ml_models  # noqa
 from .utils.entry import have_hidden  # noqa
+
+# Register API blueprint
+app.register_blueprint(api_rest.api)
 
 # Global variables to templates
 app.jinja_env.globals.update(

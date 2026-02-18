@@ -157,7 +157,7 @@ PERMISSIONS = {
         "get_help",
         "send_ticket",
         "redirect_to_project",
-        # ML Models Management
+        # ML Models Management (UI)
         "models_list",
         "model_detail",
         "model_create",
@@ -167,6 +167,11 @@ PERMISSIONS = {
         "model_unlink_label",
         "model_delete",
         "model_predict",
+        # ML Models API (REST)
+        "api.health_check",
+        "api.get_model_info",
+        "api.predict_single",
+        "api.predict_batch",
     ],
     "guest": ["static", "login"],
 }
