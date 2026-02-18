@@ -8,7 +8,7 @@ from .database import Project, get_label
 from .ml.models import MLModel
 from .ml.services import MLModelService
 from .settings import WORK_PATH
-from .tasks.ml_training import train_ml_model
+from .tasks.active_learning import train_model
 
 
 def get_model_or_404(model_id: int) -> MLModel:
@@ -138,7 +138,7 @@ def model_train(model_id: int) -> Response:
 
     # Launch training task
     launch_task_with_tracking(
-        train_ml_model,
+        train_model,
         user_id=session["user_id"],
         track_progress=True,
         description=_("Training model {name}").format(name=model.name),

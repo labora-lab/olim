@@ -169,39 +169,55 @@ def create_label_al(
 @app.task(bind=True, name="learner.train_model", track_progress=True)
 def train_model(
     self,
-    project_id: int,
-    label_id: int,
     user_id: int,
+    project_id: int | None = None,
+    label_id: int | None = None,
+    model_id: int | None = None,
+    force_retrain: bool = False,
     **__,
 ) -> dict[str, Any]:
-    """Train ML model and update label metrics
+    """Train ML model (supports both label-based and model-based training)
 
     Args:
-        project_id: Project ID
-        label_id: Label ID
         user_id: User ID triggering training
+        project_id: Project ID (optional, for label-based training)
+        label_id: Label ID (for active learning workflow)
+        model_id: Model ID (for direct ML model training)
+        force_retrain: Force retraining even if no new data
 
     Returns:
         Success status and metrics
     """
     with flask_app.app_context():
-        label = get_label(label_id)
-        if not label:
-            raise ValueError(f"Label {label_id} not found")
+        service = MLModelService(settings.WORK_PATH)
 
-        # Get or create MLModel
-        model = get_or_create_ml_model(label, user_id)
+        # Determine which model to train
+        if model_id is not None:
+            # Direct model training (from ML UI)
+            model = service.get_model(model_id)
+            if not model:
+                raise ValueError(f"Model {model_id} not found")
+            label = None
+        elif label_id is not None:
+            # Label-based training (from Active Learning)
+            label = get_label(label_id)
+            if not label:
+                raise ValueError(f"Label {label_id} not found")
+            # Get or create MLModel for this label
+            model = get_or_create_ml_model(label, user_id)
+        else:
+            raise ValueError("Either label_id or model_id must be provided")
 
         # Train new version
-        service = MLModelService(settings.WORK_PATH)
         version = service.train_model(
             model_id=model.id,
             user_id=user_id,
-            force_retrain=False,
+            force_retrain=force_retrain,
         )
 
-        # Sync metrics and cache back to label
-        sync_label_from_version(label)
+        # If training from label, sync metrics back
+        if label is not None:
+            sync_label_from_version(label)
 
         # Convert metrics for return
         metrics = []
@@ -212,7 +228,12 @@ def train_model(
                 else:
                     metrics.append(f"{key}: {value}")
 
-        return {"success": True, "metrics": metrics, "version_id": version.id}
+        return {
+            "success": True,
+            "metrics": metrics,
+            "version_id": version.id,
+            "model_id": model.id,
+        }
 
 
 @app.task(bind=True, name="learner.add_label_value", track_progress=False)
