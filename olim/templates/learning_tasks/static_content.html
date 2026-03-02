@@ -1,0 +1,43 @@
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-4 bg-gradient-to-r from-cyan-600 to-blue-600">
+            <h1 class="text-2xl font-bold text-white">{{ title }}</h1>
+        </div>
+
+        <!-- Content -->
+        <div class="px-6 py-6 prose prose-sm max-w-none">
+            {{ body|safe }}
+        </div>
+
+        <!-- Navigation -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="flex justify-between items-center">
+                <div>
+                    {% if show_prev %}
+                    <button type="submit" name="action" value="prev"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors">
+                        <i class="bi bi-chevron-left mr-2"></i>
+                        {{ prev_label }}
+                    </button>
+                    {% endif %}
+                </div>
+                <div>
+                    {% if is_last_step %}
+                    <button type="submit" name="action" value="finish"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 transition-colors">
+                        <i class="bi bi-check-circle mr-2"></i>
+                        {{ _('Finish Task') }}
+                    </button>
+                    {% elif show_next %}
+                    <button type="submit" name="action" value="next"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 transition-colors">
+                        {{ next_label }}
+                        <i class="bi bi-chevron-right ml-2"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

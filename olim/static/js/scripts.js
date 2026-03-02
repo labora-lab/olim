@@ -1410,44 +1410,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Queue management functions
-    window.deleteQueue = function(queueId) {
-        if (!confirm('Are you sure you want to delete this queue? This action cannot be undone.')) {
-            return;
-        }
-
-        const projectId = window.projectId || document.querySelector('[data-project-id]')?.getAttribute('data-project-id');
-        if (!projectId) {
-            showToast('Project ID not found', 'error');
-            return;
-        }
-
-        fetch(`/${projectId}/data-navigation/queue/${queueId}/delete`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => {
-            if (response.ok) {
-                // Refresh the queue management component if we're currently viewing it
-                const activeTab = document.querySelector('.tab-button.active');
-                if (activeTab && activeTab.dataset.tab === 'queue-management') {
-                    htmx.ajax('GET', `/${projectId}/data-navigation/component/queue-management`, {
-                        target: '#tab-content',
-                        swap: 'innerHTML'
-                    });
-                }
-                showToast('Queue deleted successfully', 'success');
-            } else {
-                showToast('Failed to delete queue', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error deleting queue:', error);
-            showToast('Error deleting queue', 'error');
-        });
-    };
 });
 
 // Label Settings page specific functionality

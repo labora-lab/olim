@@ -1,4 +1,14 @@
 @import "tailwindcss";
 @import "flowbite/src/themes/default";
+
+@theme {
+    --radius: 0.25rem;
+    --radius-xs: 0.125rem;
+    --radius-sm: 0.25rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --radius-xl: 0.75rem;
+    --radius-base: 0.375rem;
+}
 @plugin "flowbite/plugin";
 @source "../../../node_modules/flowbite";

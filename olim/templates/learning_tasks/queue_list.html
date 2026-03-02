@@ -1,0 +1,228 @@
+<!-- Queue List View for Learning Tasks -->
+<div class="space-y-4">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-list-ol text-purple-600 mr-2"></i>
+                    {{ title }}
+                </h3>
+                <div class="flex items-center space-x-3">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        <i class="bi bi-hash mr-1"></i>
+                        {{ queue|length }} {{ _('entries') }}
+                    </span>
+                    <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="inline">
+                        <button type="submit" name="action" value="continue"
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 transition-colors">
+                            <i class="bi bi-play-fill mr-2"></i>
+                            {% if current_position > 0 %}
+                            {{ _('Continue') }} ({{ current_position + 1 }}/{{ queue|length }})
+                            {% else %}
+                            {{ _('Start') }}
+                            {% endif %}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6">
+            <div class="mb-4">
+                <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+                    <i class="bi bi-lightning mr-2"></i>
+                    {{ _('Quick Actions') }}
+                </h4>
+                <div class="flex items-center space-x-2">
+                    <button type="button" onclick="copyQueueIds()"
+                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-300 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors"
+                        title="{{ _('Copy all entry IDs') }}">
+                        <i class="bi bi-clipboard mr-2"></i>
+                        {{ _('Copy IDs') }}
+                    </button>
+                    <button type="button" onclick="exportQueue()"
+                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-colors">
+                        <i class="bi bi-download mr-2"></i>
+                        {{ _('Export Queue') }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Labels being used -->
+            {% if labels %}
+            <div class="mb-4">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">{{ _('Labels') }}</h4>
+                <div class="flex flex-wrap gap-2">
+                    {% for label in labels %}
+                    <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+                        {{ label.name }}
+                        {% if label.id in required_label_ids %}
+                        <span class="text-red-500">*</span>
+                        {% endif %}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Progress -->
+            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-600">{{ _('Progress') }}</span>
+                    <span class="font-medium text-gray-900">{{ completed_count }}/{{ queue|length }} {{ _('labeled') }}</span>
+                </div>
+                <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-green-600 h-2 rounded-full transition-all duration-300"
+                         style="width: {{ (completed_count / queue|length * 100) if queue|length > 0 else 0 }}%"></div>
+                </div>
+            </div>
+
+            <!-- Queue Entries Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" id="queue-grid">
+                {% for entry_id in queue %}
+                {% set is_current = loop.index0 == current_position %}
+                {% set is_completed = entry_id in completed_entries %}
+                <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="queue-entry-form">
+                    <input type="hidden" name="action" value="goto">
+                    <input type="hidden" name="position" value="{{ loop.index0 }}">
+                    <button type="submit"
+                        class="w-full group border rounded-lg p-3 text-left transition-all duration-200 queue-entry
+                            {% if is_current %}
+                            border-purple-400 bg-purple-50 ring-2 ring-purple-300
+                            {% elif is_completed %}
+                            border-green-300 bg-green-50 hover:border-green-400 hover:bg-green-100
+                            {% else %}
+                            border-gray-200 hover:border-purple-300 hover:bg-purple-50
+                            {% endif %}"
+                        data-entry-id="{{ entry_id }}" data-index="{{ loop.index0 }}">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium flex-shrink-0
+                                {% if is_current %}
+                                bg-purple-200 text-purple-700
+                                {% elif is_completed %}
+                                bg-green-200 text-green-700
+                                {% else %}
+                                bg-gray-100 text-gray-600 group-hover:bg-purple-100 group-hover:text-purple-600
+                                {% endif %}">
+                                {% if is_completed %}
+                                <i class="bi bi-check-lg"></i>
+                                {% else %}
+                                {{ loop.index }}
+                                {% endif %}
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ entry_id }}</p>
+                                {% if is_current %}
+                                <p class="text-xs text-purple-600">{{ _('Current') }}</p>
+                                {% elif is_completed %}
+                                <p class="text-xs text-green-600">{{ _('Done') }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </button>
+                </form>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="flex justify-between items-center">
+        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
+            <button type="submit" name="action" value="back_to_setup"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors">
+                <i class="bi bi-chevron-left mr-2"></i>
+                {{ _('Back to Setup') }}
+            </button>
+        </form>
+        {% if is_last_step and completed_count == queue|length %}
+        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
+            <button type="submit" name="action" value="finish"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 transition-colors">
+                {{ _('Finish Task') }}
+                <i class="bi bi-check-lg ml-2"></i>
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function copyQueueIds() {
+    const entries = document.querySelectorAll('.queue-entry');
+    const ids = Array.from(entries).map(entry => entry.dataset.entryId).join('\n');
+
+    navigator.clipboard.writeText(ids).then(() => {
+        showNotification('{{ _("Entry IDs copied to clipboard!") }}', 'success');
+    }).catch(() => {
+        // Fallback
+        const textArea = document.createElement('textarea');
+        textArea.value = ids;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showNotification('{{ _("Entry IDs copied to clipboard!") }}', 'success');
+    });
+}
+
+function exportQueue() {
+    const entries = document.querySelectorAll('.queue-entry');
+    const queueData = Array.from(entries).map((entry, index) => ({
+        position: index + 1,
+        entry_id: entry.dataset.entryId
+    }));
+
+    const csvContent = "data:text/csv;charset=utf-8,"
+        + "Position,Entry ID\n"
+        + queueData.map(row => `${row.position},${row.entry_id}`).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `queue_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    showNotification('{{ _("Queue exported successfully!") }}', 'success');
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    const colors = {
+        success: 'bg-green-100 border-green-500 text-green-700',
+        error: 'bg-red-100 border-red-500 text-red-700',
+        info: 'bg-blue-100 border-blue-500 text-blue-700',
+        warning: 'bg-yellow-100 border-yellow-500 text-yellow-700'
+    };
+
+    notification.className = `fixed top-4 right-4 px-4 py-3 border-l-4 rounded shadow-lg ${colors[type] || colors.info} transform transition-all duration-300 translate-x-full opacity-0 z-50`;
+    notification.innerHTML = `
+    <div class="flex items-center">
+        <i class="bi bi-check-circle mr-2"></i>
+        <span class="text-sm font-medium">${message}</span>
+        <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-current hover:text-gray-600">
+            <i class="bi bi-x"></i>
+        </button>
+    </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full', 'opacity-0');
+    }, 100);
+
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 300);
+        }
+    }, 4000);
+}
+</script>

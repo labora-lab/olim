@@ -61,13 +61,35 @@
                     <i class="bi bi-chevron-down transform transition-transform duration-200 text-gray-500"></i>
                 </summary>
                 <div class="border-t border-gray-300">
-                    <div class="p-4 bg-gray-900 max-h-60 overflow-auto">
-                        <pre
-                            class="text-xs text-gray-300 font-mono whitespace-pre-wrap break-words leading-relaxed">{{ traceback_info }}</pre>
+                    <div class="relative">
+                        <button onclick="copyTraceback()" id="copy-traceback-btn"
+                            class="absolute top-3 right-3 mr-4 inline-flex items-center px-3 py-1.5 text-sm text-gray-400 hover:text-white bg-gray-700/50 hover:bg-gray-700 rounded transition-colors"
+                            title="{{ _('Copy to clipboard') }}">
+                            <i class="bi bi-clipboard mr-2" id="copy-icon"></i>
+                            {{ _('Copy') }}
+                        </button>
+                        <div class="p-4 bg-gray-900 max-h-60 overflow-auto">
+                            <pre id="traceback-content"
+                                class="text-xs text-gray-300 font-mono whitespace-pre-wrap break-words leading-relaxed">{{ traceback_info }}</pre>
+                        </div>
                     </div>
                 </div>
             </details>
         </div>
+        <script>
+            function copyTraceback() {
+                const content = document.getElementById('traceback-content').textContent;
+                navigator.clipboard.writeText(content).then(() => {
+                    const icon = document.getElementById('copy-icon');
+                    icon.classList.remove('bi-clipboard');
+                    icon.classList.add('bi-check-lg');
+                    setTimeout(() => {
+                        icon.classList.remove('bi-check-lg');
+                        icon.classList.add('bi-clipboard');
+                    }, 2000);
+                });
+            }
+        </script>
         {% endif %}
 
         <!-- Action Buttons -->

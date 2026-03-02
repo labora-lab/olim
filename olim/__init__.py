@@ -4,7 +4,11 @@ from flask_migrate import Migrate
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 
-from .label_types import get_available_label_types, get_label_type_module, is_free_text_label
+from .label_types import (
+    get_available_label_types,
+    get_label_type_module,
+    is_free_text_label,
+)
 
 # from werkzeug.middleware.profiler import ProfilerMiddleware
 from .settings import (
@@ -98,6 +102,7 @@ from . import project  # noqa
 from . import settings_routes  # noqa
 from . import upload_data  # noqa
 from .ml import models as ml_models  # noqa
+from . import learning_tasks  # noqa
 from .utils.entry import have_hidden  # noqa
 
 # Register API blueprint
