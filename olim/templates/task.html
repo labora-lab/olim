@@ -1,27 +1,29 @@
 {% extends "base.html" %}
+{% import "macros/labels-menu.html" as labels_macro %}
 
 {% block title %}{{ task.name }} - {{ _('Learning Task') }}{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    {% if show_progress %}
-    <!-- Progress bar -->
-    <div class="max-w-3xl mx-auto mb-6">
-        <div class="flex items-center justify-between mb-2">
-            <span class="text-sm font-medium text-gray-700">{{ task.name }}</span>
-            <span class="text-sm text-gray-500">{{ position + 1 }} / {{ total_steps }}</span>
-        </div>
-        <div class="w-full bg-gray-200 rounded-full h-2">
-            <div class="bg-cyan-600 h-2 rounded-full transition-all duration-300"
-                 style="width: {{ ((position + 1) / total_steps * 100)|int }}%"></div>
-        </div>
-    </div>
-    {% endif %}
+<div>
+    {% include "learning_tasks/_progress_bar.html" %}
 
     <!-- State content -->
-    {{ content|safe }}
+    <div id="task-content" class="space-y-4">
+        {{ content|safe }}
+    </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+<script>
+    window.projectId = {{ task.project_id }};
+
+    document.body.addEventListener('showFlash', function(e) {
+        var messages = e.detail.value || [];
+        messages.forEach(function(m) {
+            showToast(m.message, m.category, m.category === 'error' ? 10000 : 5000);
+        });
+    });
+</script>
+{{ state_scripts|safe if state_scripts else '' }}
 {% endblock %}

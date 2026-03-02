@@ -1,12 +1,23 @@
 import json
 from pathlib import Path
 
-from flask import abort, flash, redirect, render_template, request, session, url_for
+from flask import (
+    abort,
+    flash,
+    get_flashed_messages,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from flask_babel import _
 
 from .. import app
 from ..database import (
     delete_learning_task,
+    get_datasets,
     get_learning_task,
     get_learning_tasks,
     new_learning_task,
@@ -64,7 +75,7 @@ def get_available_configurations() -> list[dict]:
                         "description": config.get("description", ""),
                         "steps": len(config.get("sequence", [])),
                     })
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 continue
     return configurations
 
@@ -76,7 +87,7 @@ def load_configuration(filename: str) -> dict | None:
         try:
             with open(file_path, encoding="utf-8") as f:
                 return json.load(f)
-        except (json.JSONDecodeError, IOError):
+        except (OSError, json.JSONDecodeError):
             return None
     return None
 
@@ -89,7 +100,7 @@ def save_configuration(filename: str, config: dict) -> bool:
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=4, ensure_ascii=False)
         return True
-    except IOError:
+    except OSError:
         return False
 
 
@@ -132,7 +143,7 @@ def learning_tasks_list(project_id: int) -> ...:
     if res is not None:
         return res
 
-    tasks = get_learning_tasks()
+    tasks = get_learning_tasks(project_id)
     configurations = get_available_configurations()
     return render_template(
         "learning-tasks.html",
@@ -201,7 +212,8 @@ def create_learning_task(project_id: int) -> ...:
         state=initial_state,
         initial_setup=initial_setup,
         user_id=session["user_id"],
-        data={"position": 0},
+        project_id=project_id,
+        data={},
     )
 
     flash(_("Learning task created successfully"), "success")
@@ -302,6 +314,10 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
     if task is None:
         abort(404, "Learning task not found")
 
+    # Verify task belongs to this project
+    if task.project_id != project_id:
+        abort(404, "Learning task not found in this project")
+
     # Get sequence from initial_setup
     initial_setup = task.initial_setup or {}
     sequence = initial_setup.get("sequence", [])
@@ -323,23 +339,35 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
     if state_class is None:
         abort(500, f"Unknown state: {state_name}")
 
-    # Get step-specific parameters and inject is_last_step
+    # Get step-specific parameters and inject context
     params = dict(current_step.get("params", {}))
     is_last_step = position == len(sequence) - 1
     params["is_last_step"] = is_last_step
 
+    # Inject project context (accessible to all states)
+    params["_project_id"] = project_id
+    params["_datasets"] = list(get_datasets(project_id))
+
     # Instantiate state with data and params
     state = state_class(data, params)
+
+    is_htmx = request.headers.get("HX-Request") == "true"
 
     # Handle POST (state transition)
     if request.method == "POST":
         action = request.form.get("action", "")
-        payload = request.form.to_dict()
-        payload.pop("action", None)
+        # Pass form directly to preserve multiple values (e.g., checkboxes)
+        payload = request.form
 
         # Handle finish action
         if action == "finish":
             flash(_("Task completed!"), "success")
+            if is_htmx:
+                resp = make_response("")
+                resp.headers["HX-Redirect"] = url_for(
+                    "learning_tasks_list", project_id=project_id
+                )
+                return resp
             return redirect(url_for("learning_tasks_list", project_id=project_id))
 
         # Process interaction and get relative position change
@@ -351,6 +379,12 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
         # Check if task is complete (moved past the last step)
         if raw_new_position >= len(sequence):
             flash(_("Task completed!"), "success")
+            if is_htmx:
+                resp = make_response("")
+                resp.headers["HX-Redirect"] = url_for(
+                    "learning_tasks_list", project_id=project_id
+                )
+                return resp
             return redirect(url_for("learning_tasks_list", project_id=project_id))
 
         # Clamp position to valid range
@@ -373,11 +407,47 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
             position = new_position
             new_state_class = get_state_class(new_state_name)
             if new_state_class:
-                new_params = new_step.get("params", {}) if new_step else {}
+                new_params = dict(new_step.get("params", {})) if new_step else {}
+                # Re-inject context
+                new_params["is_last_step"] = new_position == len(sequence) - 1
+                new_params["_project_id"] = project_id
+                new_params["_datasets"] = list(get_datasets(project_id))
                 state = new_state_class(data, new_params)
 
-    # Check if progress bar should be shown
-    show_progress = initial_setup.get("show_progress", True)
+    # Check if progress bar should be shown (default: hidden)
+    show_progress = initial_setup.get("show_progress", False)
+
+    # HTMX partial response: return only the state content + OOB progress bar
+    if is_htmx:
+        body = state.render()
+
+        # Append OOB progress bar update
+        if show_progress:
+            body += render_template(
+                "learning_tasks/_progress_bar.html",
+                task=task,
+                position=position,
+                total_steps=len(sequence),
+                show_progress=True,
+                oob=True,
+            )
+
+        resp = make_response(body)
+
+        # Drain flash messages and send as HX-Trigger
+        flash_messages = []
+        for cat in ("success", "warning", "error", "info"):
+            for msg in get_flashed_messages(category_filter=[cat]):
+                flash_messages.append({"message": msg, "category": cat})
+        if flash_messages:
+            resp.headers["HX-Trigger"] = json.dumps({"showFlash": flash_messages})
+
+        return resp
+
+    # Get optional scripts from state
+    state_scripts = ""
+    if hasattr(state, "render_scripts"):
+        state_scripts = state.render_scripts()
 
     return render_template(
         "task.html",
@@ -387,6 +457,8 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
         position=position,
         total_steps=len(sequence),
         show_progress=show_progress,
+        state_scripts=state_scripts,
+        oob=False,
     )
 
 

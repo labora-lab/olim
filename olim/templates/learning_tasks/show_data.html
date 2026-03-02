@@ -39,7 +39,7 @@
 
         <!-- Navigation -->
         <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
-            <form method="post" class="flex justify-between items-center">
+            <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="flex justify-between items-center">
                 <div>
                     {% if show_prev %}
                     <button type="submit" name="action" value="prev"

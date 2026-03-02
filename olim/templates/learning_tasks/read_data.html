@@ -6,7 +6,7 @@
         </div>
 
         <!-- Form -->
-        <form method="post" class="px-6 py-6">
+        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="px-6 py-6">
             {% if description %}
             <p class="text-gray-600 mb-6">{{ description }}</p>
             {% endif %}

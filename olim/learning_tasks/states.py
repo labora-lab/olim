@@ -1,9 +1,11 @@
 import json
 from typing import Any
 
-from flask import render_template
+from flask import render_template, session
 from flask_babel import _
 
+from ..database import get_labels, random_entries
+from ..functions import render_entry
 from . import register_state
 from .base import BaseState
 
@@ -276,4 +278,416 @@ class ShowData(BaseState):
             return 1
         elif action == "prev":
             return -1
+        return 0
+
+
+@register_state
+class QueueSetup(BaseState):
+    """State for setting up a labeling queue.
+
+    Collects entry IDs and optionally lets user select which labels to use.
+
+    Params:
+        title: Page title (default: "Queue Setup")
+        description: Optional description text
+        dataset_id: Dataset ID to validate entries against (optional)
+        labels: List of available labels [{"id": 1, "name": "Label A"}, ...]
+                If not provided, will use project labels
+        project_id: Project ID to get labels from (required if labels not provided)
+        allow_label_selection: Let user select which labels to use (default: True)
+        id_separator: Separator for parsing IDs - "newline", "comma", or "space" (default: "newline")
+
+    Stores in data:
+        queue_ids: List of entry IDs to label
+        queue_labels: List of selected labels [{"id": ..., "name": ...}, ...]
+        queue_position: Current position in queue (starts at 0)
+        queue_results: Dict mapping entry_id to label_id
+
+    Example:
+    {
+        "state": "QueueSetup",
+        "params": {
+            "title": "Setup Labeling Queue",
+            "description": "Enter the entry IDs you want to label",
+            "project_id": 1,
+            "allow_label_selection": true
+        }
+    }
+    """
+
+    def __init__(self, data: dict[str, Any], params: dict[str, Any] | None = None):
+        super().__init__(data, params)
+        self.errors: dict[str, str] = {}
+
+    def _get_available_labels(self) -> list[dict]:
+        """Get available labels from params or project context."""
+        if "labels" in self.params:
+            return self.params["labels"]
+
+        # Use injected project context
+        project_id = self.params.get("_project_id")
+        if project_id:
+            labels = get_labels(project_id)
+            return [{"id": lbl.id, "name": lbl.name} for lbl in labels]
+
+        return []
+
+    def render(self) -> str:
+        available_labels = self._get_available_labels()
+        selected_label_ids = self.data.get("queue_labels", [])
+        if selected_label_ids:
+            selected_label_ids = [lbl["id"] for lbl in selected_label_ids]
+
+        required_label_ids = self.data.get("queue_required_labels", [])
+        if required_label_ids:
+            required_label_ids = [lbl["id"] for lbl in required_label_ids]
+
+        return render_template(
+            "learning_tasks/queue_setup.html",
+            title=self.params.get("title", _("Queue Setup")),
+            description=self.params.get("description", ""),
+            available_labels=available_labels,
+            selected_label_ids=selected_label_ids,
+            required_label_ids=required_label_ids,
+            allow_label_selection=self.params.get("allow_label_selection", True),
+            entry_ids_text=self.data.get("_queue_ids_text", ""),
+            entry_source=self.data.get("_entry_source", "manual"),
+            random_count=self.data.get("_random_count", 10),
+            completion_mode=self.data.get("queue_completion_mode", "any"),
+            errors=self.errors,
+            show_prev=self.params.get("show_prev", True),
+            is_last_step=self.params.get("is_last_step", False),
+        )
+
+    def handle(self, action: str, payload: dict[str, Any]) -> int:
+        if action == "prev":
+            return -1
+
+        if action == "submit":
+            self.errors = {}
+            entry_source = payload.get("entry_source", "manual")
+            self.data["_entry_source"] = entry_source
+
+            if entry_source == "random":
+                # Random entries
+                project_id = self.params.get("_project_id")
+                try:
+                    count = int(payload.get("random_count", 10))
+                    self.data["_random_count"] = count
+                except (ValueError, TypeError):
+                    self.errors["random_count"] = _(
+                        "Please enter a valid number"
+                    )
+                    return 0
+
+                if count < 1:
+                    self.errors["random_count"] = _(
+                        "Must be at least 1"
+                    )
+                    return 0
+
+                entries = list(random_entries(count, project_id))
+                if not entries:
+                    self.errors["random_count"] = _(
+                        "No entries found in this project"
+                    )
+                    return 0
+
+                entry_ids = [e.entry_id for e in entries]
+            else:
+                # Manual entry IDs
+                ids_text = payload.get("entry_ids", "").strip()
+                self.data["_queue_ids_text"] = ids_text
+
+                if not ids_text:
+                    self.errors["entry_ids"] = _(
+                        "Please enter at least one entry ID"
+                    )
+                    return 0
+
+                separator = self.params.get("id_separator", "newline")
+                if separator == "comma":
+                    raw_ids = [x.strip() for x in ids_text.split(",")]
+                elif separator == "space":
+                    raw_ids = ids_text.split()
+                else:  # newline
+                    raw_ids = [
+                        x.strip() for x in ids_text.splitlines()
+                    ]
+
+                entry_ids = [eid for eid in raw_ids if eid]
+
+                if not entry_ids:
+                    self.errors["entry_ids"] = _(
+                        "Please enter at least one entry ID"
+                    )
+                    return 0
+
+            # Get selected labels
+            available_labels = self._get_available_labels()
+            if self.params.get("allow_label_selection", True):
+                selected_ids = payload.getlist("labels") if hasattr(payload, "getlist") else payload.get("labels", [])
+                if isinstance(selected_ids, str):
+                    selected_ids = [selected_ids]
+                selected_ids = [int(x) for x in selected_ids if x]
+
+                if not selected_ids:
+                    self.errors["labels"] = _("Please select at least one label")
+                    return 0
+
+                selected_labels = [lbl for lbl in available_labels if lbl["id"] in selected_ids]
+            else:
+                selected_labels = available_labels
+
+            if not selected_labels:
+                self.errors["labels"] = _("No labels available")
+                return 0
+
+            # Get required labels (subset of selected labels)
+            required_ids = payload.getlist("required_labels") if hasattr(payload, "getlist") else payload.get("required_labels", [])
+            if isinstance(required_ids, str):
+                required_ids = [required_ids]
+            required_ids = [int(x) for x in required_ids if x]
+            required_labels = [lbl for lbl in selected_labels if lbl["id"] in required_ids]
+
+            # Get completion mode
+            completion_mode = payload.get("completion_mode", "any")
+            if completion_mode not in ("any", "all"):
+                completion_mode = "any"
+
+            # Store queue data
+            self.data["queue_ids"] = entry_ids
+            self.data["queue_labels"] = selected_labels
+            self.data["queue_required_labels"] = required_labels
+            self.data["queue_completion_mode"] = completion_mode
+            self.data["queue_position"] = 0
+            self.data["queue_completed"] = []
+
+            return 1
+
+        return 0
+
+
+@register_state
+class LabelEntry(BaseState):
+    """State for labeling entries in a queue.
+
+    Loops through entries stored in data by QueueSetup, displaying each one
+    and collecting labels until the queue is complete. Supports a list view
+    to see all entries and jump to specific positions.
+
+    Reads from data:
+        queue_ids: List of entry IDs to label
+        queue_labels: List of available labels
+        queue_required_labels: List of required labels
+        queue_completion_mode: "any" or "all" (default: "any")
+        queue_position: Current position in queue
+        queue_completed: List of entry IDs that meet completion criteria
+        queue_view_mode: "label" or "list" (default: "label")
+    """
+
+    def _check_entry_complete(
+        self,
+        labels_values: dict,
+        label_ids: list[int],
+        required_label_ids: list[int],
+        completion_mode: str,
+    ) -> bool:
+        """Check if an entry meets the completion criteria."""
+        # Determine which labels to check
+        check_ids = required_label_ids if required_label_ids else label_ids
+        if not check_ids:
+            return True
+
+        filled = [
+            lid for lid in check_ids
+            if labels_values.get(lid)
+        ]
+
+        if completion_mode == "all":
+            return len(filled) == len(check_ids)
+        else:  # "any"
+            return len(filled) > 0
+
+    def _get_labels_context(self) -> tuple[list, list[int], list[int], str]:
+        """Get labels, required_label_ids, label_ids, and completion_mode."""
+        queue_labels = self.data.get("queue_labels", [])
+        project_id = self.params.get("_project_id")
+
+        label_ids = [lbl["id"] for lbl in queue_labels]
+        if label_ids:
+            labels = [
+                lbl for lbl in get_labels(project_id)
+                if lbl.id in label_ids
+            ]
+        else:
+            labels = list(get_labels(project_id)) if project_id else []
+
+        required_labels = self.data.get("queue_required_labels", [])
+        required_label_ids = [lbl["id"] for lbl in required_labels]
+        completion_mode = self.data.get("queue_completion_mode", "any")
+
+        return labels, label_ids, required_label_ids, completion_mode
+
+    def _update_completion(
+        self,
+        entry_id: str,
+        labels_values: dict,
+        label_ids: list[int],
+        required_label_ids: list[int],
+        completion_mode: str,
+    ) -> None:
+        """Update completion tracking for an entry."""
+        completed = set(self.data.get("queue_completed", []))
+        if self._check_entry_complete(
+            labels_values, label_ids, required_label_ids, completion_mode
+        ):
+            completed.add(entry_id)
+        else:
+            completed.discard(entry_id)
+        self.data["queue_completed"] = list(completed)
+
+    def render(self) -> str:
+        queue_ids = self.data.get("queue_ids", [])
+        queue_position = self.data.get("queue_position", 0)
+        queue_completed = self.data.get("queue_completed", [])
+        view_mode = self.data.get("queue_view_mode", "label")
+
+        total = len(queue_ids)
+        position = queue_position + 1  # 1-indexed for display
+
+        labels, label_ids, required_label_ids, completion_mode = (
+            self._get_labels_context()
+        )
+
+        # List view mode
+        if view_mode == "list":
+            return render_template(
+                "learning_tasks/queue_list.html",
+                title=_("Queue Overview"),
+                queue=queue_ids,
+                labels=labels,
+                required_label_ids=required_label_ids,
+                current_position=queue_position,
+                completed_entries=set(queue_completed),
+                completed_count=len(queue_completed),
+                completion_mode=completion_mode,
+                is_last_step=self.params.get("is_last_step", False),
+            )
+
+        # Check if queue is complete
+        if queue_position >= total:
+            return render_template(
+                "learning_tasks/queue_complete.html",
+                title=_("Queue Complete"),
+                total_labeled=len(queue_completed),
+                total=total,
+                is_last_step=self.params.get("is_last_step", False),
+            )
+
+        # Get current entry using render_entry helper
+        current_id = queue_ids[queue_position]
+        datasets = self.params.get("_datasets", [])
+
+        # Try to find the entry in any of the project's datasets
+        entry_data = {"valid_entry": False}
+        for dataset in datasets:
+            entry_data = render_entry(current_id, dataset.id)
+            if entry_data.get("valid_entry"):
+                break
+
+        labels_values = entry_data.get("labels_values", {})
+
+        # Update completion tracking for current entry
+        self._update_completion(
+            current_id, labels_values,
+            label_ids, required_label_ids, completion_mode,
+        )
+
+        # Compute missing labels for warning
+        check_ids = required_label_ids if required_label_ids else label_ids
+        filled_ids = [
+            lid for lid in check_ids
+            if labels_values.get(lid)
+        ]
+        missing_labels = [
+            lbl for lbl in (
+                self.data.get("queue_required_labels", [])
+                if required_label_ids
+                else self.data.get("queue_labels", [])
+            )
+            if lbl["id"] not in filled_ids
+        ]
+
+        # Get hidden labels from session
+        hidden_labels = session.get("hidden_labels", [])
+
+        return render_template(
+            "learning_tasks/label_entry.html",
+            # Entry data
+            entry=entry_data.get("entry"),
+            entry_html=entry_data.get("entry_html", ""),
+            valid_entry=entry_data.get("valid_entry", False),
+            labels_values=labels_values,
+            # Labels
+            labels=labels,
+            required_label_ids=required_label_ids,
+            missing_labels=missing_labels,
+            completion_mode=completion_mode,
+            hidden_labels=hidden_labels,
+            show_hidden=False,
+            # Queue navigation
+            position=position,
+            total=total,
+            show_back=(
+                self.params.get("show_back", True) and queue_position > 0
+            ),
+            is_last_step=self.params.get("is_last_step", False),
+        )
+
+    def handle(self, action: str, payload: dict[str, Any]) -> int:
+        queue_ids = self.data.get("queue_ids", [])
+        queue_position = self.data.get("queue_position", 0)
+        total = len(queue_ids)
+
+        if action == "view_list":
+            self.data["queue_view_mode"] = "list"
+            return 0
+
+        if action == "continue":
+            self.data["queue_view_mode"] = "label"
+            return 0
+
+        if action == "goto":
+            try:
+                new_pos = int(payload.get("position", 0))
+                if 0 <= new_pos < total:
+                    self.data["queue_position"] = new_pos
+            except (ValueError, TypeError):
+                pass
+            self.data["queue_view_mode"] = "label"
+            return 0
+
+        if action == "back_to_setup":
+            self.data["queue_view_mode"] = "label"
+            return -1
+
+        if action == "prev_entry":
+            if queue_position >= total:
+                self.data["queue_position"] = total - 1
+            elif queue_position > 0:
+                self.data["queue_position"] = queue_position - 1
+            return 0
+
+        if action == "skip":
+            new_position = queue_position + 1
+            self.data["queue_position"] = new_position
+            return 0
+
+        if action in ("finish_queue", "finish"):
+            return 1
+
+        if action == "prev":
+            return -1
+
         return 0

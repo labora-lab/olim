@@ -1,0 +1,62 @@
+<!-- Queue Navigation - Complete state -->
+<div class="bg-green-50 border border-green-200 rounded-lg p-4">
+    <div class="flex flex-col sm:flex-row w-full gap-3">
+        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="flex-1 w-full">
+            <button type="submit" name="action" value="prev_entry"
+                class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-green-700 bg-white border border-green-300 rounded-lg hover:bg-green-50 focus:ring-4 focus:outline-none focus:ring-green-200 transition-colors">
+                <i class="bi bi-arrow-left mr-2"></i>
+                {{ _('Back to Last Entry') }}
+            </button>
+        </form>
+
+        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="flex-1 w-full">
+            <button type="submit" name="action" value="view_list"
+                class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-green-600 bg-green-100 border border-green-300 rounded-lg hover:bg-green-200 focus:ring-4 focus:outline-none focus:ring-green-200 transition-colors">
+                <i class="bi bi-list-ol mr-2"></i>
+                {{ _('View List') }}
+            </button>
+        </form>
+
+        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="flex-1 w-full">
+            {% if is_last_step %}
+            <button type="submit" name="action" value="finish"
+                class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-green-600 border border-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-200 transition-colors">
+                {{ _('Finish Task') }}
+                <i class="bi bi-check-lg ml-2"></i>
+            </button>
+            {% else %}
+            <button type="submit" name="action" value="finish_queue"
+                class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-green-600 border border-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-200 transition-colors">
+                {{ _('Continue') }}
+                <i class="bi bi-arrow-right ml-2"></i>
+            </button>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<!-- Summary Card -->
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-green-500 to-emerald-600">
+            <h3 class="text-lg font-semibold text-white flex items-center">
+                <i class="bi bi-check-circle mr-2"></i>
+                {{ title }}
+            </h3>
+        </div>
+
+        <div class="px-6 py-6">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+                    <i class="bi bi-check-lg text-green-600 text-3xl"></i>
+                </div>
+                <p class="text-lg text-gray-700">
+                    {{ _('You have gone through all {total} entries').format(total=total) }}
+                </p>
+                <p class="text-sm text-gray-500 mt-1">
+                    {{ _('{count} labeled').format(count=total_labeled) }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
