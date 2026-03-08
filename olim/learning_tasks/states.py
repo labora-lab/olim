@@ -1,11 +1,14 @@
 import json
 from typing import Any
 
+import requests
 from flask import render_template, session
 from flask_babel import _
 
+from ..celery_app import launch_task_with_tracking
 from ..database import get_labels, random_entries
 from ..functions import render_entry
+from ..tasks.learning_tasks import label_queue_with_llm
 from . import register_state
 from .base import BaseState
 
@@ -685,6 +688,467 @@ class LabelEntry(BaseState):
             return 0
 
         if action in ("finish_queue", "finish"):
+            return 1
+
+        if action == "prev":
+            return -1
+
+        return 0
+
+
+@register_state
+class OllamaQueueSetup(BaseState):
+    """State for setting up auto-labeling with Ollama LLM.
+
+    Collects entry IDs (manual or random) and Ollama API configuration.
+
+    Params:
+        title: Page title (default: "Setup Auto-Labeling Queue")
+        description: Optional description text
+        entry_source: "manual" or "random" (can be hardcoded for automation)
+        random_count: Number of random entries (default: 10)
+        ollama_url: Ollama API URL (default: http://localhost:11434/v1)
+        labels: Pre-selected label IDs for automation (optional)
+
+    Stores in data:
+        queue_ids: List of entry IDs to label
+        queue_labels: List of selected labels [{"id": ..., "name": ...}, ...]
+        ollama_url: Ollama API endpoint
+        _entry_source: "manual" or "random"
+        _queue_ids_text: Original text input (for manual mode)
+        _random_count: Count if using random mode
+
+    Example:
+    {
+        "state": "OllamaQueueSetup",
+        "params": {
+            "title": "Select Entries",
+            "entry_source": "random",
+            "random_count": 20,
+            "ollama_url": "http://localhost:11434/v1",
+            "labels": [1, 2]
+        }
+    }
+    """
+
+    def __init__(self, data: dict[str, Any], params: dict[str, Any] | None = None):
+        super().__init__(data, params)
+        self.errors: dict[str, str] = {}
+
+    def _get_available_labels(self) -> list[dict]:
+        """Get available labels from params or project context."""
+        if "labels" in self.params:
+            # If labels are provided as IDs, convert to full label info
+            label_ids = self.params["labels"]
+            project_id = self.params.get("_project_id")
+            if project_id:
+                all_labels = get_labels(project_id)
+                return [{"id": lbl.id, "name": lbl.name} for lbl in all_labels if lbl.id in label_ids]
+            return []
+
+        # Use injected project context
+        project_id = self.params.get("_project_id")
+        if project_id:
+            labels = get_labels(project_id)
+            return [{"id": lbl.id, "name": lbl.name} for lbl in labels]
+
+        return []
+
+    def render(self) -> str:
+        available_labels = self._get_available_labels()
+        selected_label_ids = self.data.get("queue_labels", [])
+        if selected_label_ids:
+            selected_label_ids = [lbl["id"] for lbl in selected_label_ids]
+
+        # Check for pre-selected labels in params (for automation)
+        if not selected_label_ids and "labels" in self.params:
+            selected_label_ids = self.params["labels"]
+
+        return render_template(
+            "learning_tasks/ollama_queue_setup.html",
+            title=self.params.get("title", _("Setup Auto-Labeling Queue")),
+            description=self.params.get("description", ""),
+            available_labels=available_labels,
+            selected_label_ids=selected_label_ids,
+            entry_ids_text=self.data.get("_queue_ids_text", ""),
+            entry_source=self.data.get("_entry_source", self.params.get("entry_source", "random")),
+            random_count=self.data.get("_random_count", self.params.get("random_count", 10)),
+            ollama_url=self.data.get("ollama_url", self.params.get("ollama_url", "http://localhost:11434/v1")),
+            errors=self.errors,
+            show_prev=self.params.get("show_prev", True),
+            is_last_step=self.params.get("is_last_step", False),
+        )
+
+    def handle(self, action: str, payload: dict[str, Any]) -> int:
+        if action == "prev":
+            return -1
+
+        if action == "submit":
+            self.errors = {}
+            entry_source = payload.get("entry_source", self.params.get("entry_source", "random"))
+            self.data["_entry_source"] = entry_source
+
+            # Handle entry selection
+            if entry_source == "random":
+                # Random entries
+                project_id = self.params.get("_project_id")
+                try:
+                    count = int(payload.get("random_count", self.params.get("random_count", 10)))
+                    self.data["_random_count"] = count
+                except (ValueError, TypeError):
+                    self.errors["random_count"] = _("Please enter a valid number")
+                    return 0
+
+                if count < 1:
+                    self.errors["random_count"] = _("Must be at least 1")
+                    return 0
+
+                entries = list(random_entries(count, project_id))
+                if not entries:
+                    self.errors["random_count"] = _("No entries found in this project")
+                    return 0
+
+                entry_ids = [e.entry_id for e in entries]
+            else:
+                # Manual entry IDs
+                ids_text = payload.get("entry_ids", "").strip()
+                self.data["_queue_ids_text"] = ids_text
+
+                if not ids_text:
+                    self.errors["entry_ids"] = _("Please enter at least one entry ID")
+                    return 0
+
+                raw_ids = [x.strip() for x in ids_text.splitlines()]
+                entry_ids = [eid for eid in raw_ids if eid]
+
+                if not entry_ids:
+                    self.errors["entry_ids"] = _("Please enter at least one entry ID")
+                    return 0
+
+            # Get selected labels
+            available_labels = self._get_available_labels()
+
+            # Check if labels are pre-selected in params (automation mode)
+            if "labels" in self.params:
+                selected_ids = self.params["labels"]
+            else:
+                selected_ids = payload.getlist("labels") if hasattr(payload, "getlist") else payload.get("labels", [])
+                if isinstance(selected_ids, str):
+                    selected_ids = [selected_ids]
+                selected_ids = [int(x) for x in selected_ids if x]
+
+            if not selected_ids:
+                self.errors["labels"] = _("Please select at least one label")
+                return 0
+
+            selected_labels = [lbl for lbl in available_labels if lbl["id"] in selected_ids]
+
+            if not selected_labels:
+                self.errors["labels"] = _("No labels available")
+                return 0
+
+            # Get Ollama URL
+            ollama_url = payload.get("ollama_url", self.params.get("ollama_url", "http://localhost:11434/v1")).strip()
+
+            if not ollama_url:
+                self.errors["ollama_url"] = _("Ollama URL is required")
+                return 0
+
+            if not (ollama_url.startswith("http://") or ollama_url.startswith("https://")):
+                self.errors["ollama_url"] = _("URL must start with http:// or https://")
+                return 0
+
+            # Store queue data
+            self.data["queue_ids"] = entry_ids
+            self.data["queue_labels"] = selected_labels
+            self.data["ollama_url"] = ollama_url
+
+            return 1
+
+        return 0
+
+
+@register_state
+class OllamaModelConfig(BaseState):
+    """State for configuring LLM model and prompts.
+
+    Allows selection of Ollama model and customization of prompts.
+
+    Params:
+        title: Page title (default: "Configure LLM")
+        description: Optional description text
+        model: Pre-selected model name (for automation)
+        system_prompt: Pre-configured system prompt (for automation)
+        prompt_template: Pre-configured prompt template (for automation)
+
+    Reads from data:
+        ollama_url: Ollama API URL (from OllamaQueueSetup)
+        queue_labels: Selected labels
+        queue_ids: Queue size
+
+    Stores in data:
+        llm_model: Selected model name
+        llm_system_prompt: System prompt
+        llm_prompt_template: Prompt template
+
+    Example:
+    {
+        "state": "OllamaModelConfig",
+        "params": {
+            "title": "Configure LLM",
+            "model": "llama3.2",
+            "system_prompt": "You are an expert labeling assistant.",
+            "prompt_template": "Label this text: {text}"
+        }
+    }
+    """
+
+    def __init__(self, data: dict[str, Any], params: dict[str, Any] | None = None):
+        super().__init__(data, params)
+        self.errors: dict[str, str] = {}
+
+    def _fetch_ollama_models(self, ollama_url: str) -> list[str]:
+        """Fetch available models from Ollama API.
+
+        Args:
+            ollama_url: Ollama API URL
+
+        Returns:
+            List of model names
+        """
+        try:
+            # Remove /v1 suffix if present, add /api/tags
+            base_url = ollama_url.replace("/v1", "")
+            response = requests.get(f"{base_url}/api/tags", timeout=5)
+            if response.ok:
+                models = response.json().get("models", [])
+                return [m["name"] for m in models]
+        except Exception as e:
+            self.errors["ollama_api"] = f"Failed to fetch models: {str(e)}"
+        return []
+
+    def render(self) -> str:
+        ollama_url = self.data.get("ollama_url", "http://localhost:11434/v1")
+        queue_labels = self.data.get("queue_labels", [])
+        queue_ids = self.data.get("queue_ids", [])
+
+        # Fetch available models from Ollama
+        available_models = self._fetch_ollama_models(ollama_url)
+
+        # Default prompts
+        default_system_prompt = "You are a helpful assistant that accurately labels text data."
+        default_prompt_template = """Label the following text for: {label_name}
+
+Text:
+{text}
+
+Available options: {label_options}
+
+Respond with ONLY the label value from the options above."""
+
+        # Get current values or use params/defaults
+        selected_model = self.data.get("llm_model", self.params.get("model", ""))
+        system_prompt = self.data.get("llm_system_prompt", self.params.get("system_prompt", default_system_prompt))
+        prompt_template = self.data.get("llm_prompt_template", self.params.get("prompt_template", default_prompt_template))
+
+        return render_template(
+            "learning_tasks/ollama_model_config.html",
+            title=self.params.get("title", _("Configure LLM")),
+            description=self.params.get("description", ""),
+            available_models=available_models,
+            selected_model=selected_model,
+            system_prompt=system_prompt,
+            prompt_template=prompt_template,
+            queue_labels=queue_labels,
+            queue_size=len(queue_ids),
+            errors=self.errors,
+            show_prev=self.params.get("show_prev", True),
+            is_last_step=self.params.get("is_last_step", False),
+        )
+
+    def handle(self, action: str, payload: dict[str, Any]) -> int:
+        if action == "prev":
+            return -1
+
+        if action == "submit":
+            self.errors = {}
+
+            # Get model (from payload or params)
+            model = payload.get("model", self.params.get("model", "")).strip()
+            if not model:
+                self.errors["model"] = _("Please select a model")
+                return 0
+
+            # Get prompts (from payload or params)
+            system_prompt = payload.get("system_prompt", self.params.get("system_prompt", "You are a helpful assistant that accurately labels text data.")).strip()
+            prompt_template = payload.get("prompt_template", self.params.get("prompt_template", "")).strip()
+
+            if not prompt_template:
+                self.errors["prompt_template"] = _("Prompt template is required")
+                return 0
+
+            # Validate prompt template has required placeholders
+            if "{text}" not in prompt_template:
+                self.errors["prompt_template"] = _("Prompt template must contain {text} placeholder")
+                return 0
+
+            # Store LLM configuration
+            self.data["llm_model"] = model
+            self.data["llm_system_prompt"] = system_prompt
+            self.data["llm_prompt_template"] = prompt_template
+
+            return 1
+
+        return 0
+
+
+@register_state
+class OllamaAutoLabel(BaseState):
+    """State for running LLM auto-labeling task.
+
+    Launches a Celery task and tracks progress until completion.
+
+    Params:
+        title: Page title (default: "Auto-Labeling Progress")
+        description: Optional description text
+        auto_start: Auto-launch task on first render (default: True)
+
+    Reads from data:
+        queue_ids: Entries to label
+        queue_labels: Labels to apply
+        ollama_url: API endpoint
+        llm_model: Model name
+        llm_system_prompt: System prompt
+        llm_prompt_template: Prompt template
+
+    Stores in data:
+        llm_task_id: Celery task ID
+        llm_results: Results after completion
+
+    Example:
+    {
+        "state": "OllamaAutoLabel",
+        "params": {
+            "title": "Auto-Labeling",
+            "auto_start": true
+        }
+    }
+    """
+
+    def _get_task_status(self, task_id: str) -> dict[str, Any]:
+        """Get Celery task status.
+
+        Args:
+            task_id: Celery task ID
+
+        Returns:
+            Dictionary with state, progress, message, result, error
+        """
+        from ..celery_app import app as celery_app
+
+        task = celery_app.AsyncResult(task_id)
+
+        print(f"DEBUG _get_task_status: task_id={task_id}, state={task.state}, info={task.info}")
+
+        if task.state == "PENDING":
+            return {"state": "pending", "progress": 0, "message": "Task pending..."}
+        elif task.state == "PROCESSING":
+            meta = task.info or {}
+            return {
+                "state": "processing",
+                "progress": meta.get("progress", 0),
+                "message": meta.get("status", "Processing..."),
+            }
+        elif task.state == "SUCCESS":
+            return {"state": "completed", "result": task.result}
+        elif task.state == "FAILURE":
+            return {"state": "failed", "error": str(task.info)}
+        else:
+            return {"state": "unknown", "progress": 0, "message": f"State: {task.state}"}
+
+    def render(self) -> str:
+        task_id: str | None = self.data.get("llm_task_id")
+
+        # If no task yet, show start button
+        if not task_id:
+            return render_template(
+                "learning_tasks/ollama_auto_label.html",
+                title=self.params.get("title", _("Ready to Start Auto-Labeling")),
+                mode="ready",
+                queue_size=len(self.data.get("queue_ids", [])),
+                label_count=len(self.data.get("queue_labels", [])),
+                model=self.data.get("llm_model", ""),
+                is_last_step=self.params.get("is_last_step", False),
+            )
+
+        # Poll task status (task_id should not be None here)
+        if not task_id:
+            return render_template(
+                "learning_tasks/ollama_auto_label.html",
+                title=self.params.get("title", _("Auto-Labeling Error")),
+                mode="error",
+                error="No task ID found",
+                task_id="",
+                is_last_step=self.params.get("is_last_step", False),
+            )
+
+        status = self._get_task_status(task_id)
+
+        if status["state"] == "completed":
+            self.data["llm_results"] = status["result"]
+            return render_template(
+                "learning_tasks/ollama_auto_label.html",
+                title=self.params.get("title", _("Auto-Labeling Complete")),
+                mode="results",
+                results=status["result"],
+                is_last_step=self.params.get("is_last_step", False),
+            )
+        elif status["state"] == "failed":
+            return render_template(
+                "learning_tasks/ollama_auto_label.html",
+                title=self.params.get("title", _("Auto-Labeling Error")),
+                mode="error",
+                error=status.get("error", "Unknown error"),
+                task_id=task_id,
+                is_last_step=self.params.get("is_last_step", False),
+            )
+        else:
+            return render_template(
+                "learning_tasks/ollama_auto_label.html",
+                title=self.params.get("title", _("Auto-Labeling in Progress")),
+                mode="progress",
+                progress=status.get("progress", 0),
+                message=status.get("message", "Processing..."),
+                task_id=task_id,
+                is_last_step=self.params.get("is_last_step", False),
+            )
+
+    def handle(self, action: str, payload: dict[str, Any]) -> int:  # noqa: ARG002
+        if action == "start":
+            # Launch the Celery task
+            task = launch_task_with_tracking(
+                label_queue_with_llm,
+                user_id=self.params["_user_id"],
+                queue_ids=self.data["queue_ids"],
+                label_configs=self.data["queue_labels"],
+                datasets=[d.id for d in self.params["_datasets"]],
+                project_id=self.params["_project_id"],
+                ollama_url=self.data["ollama_url"],
+                model=self.data["llm_model"],
+                system_prompt=self.data["llm_system_prompt"],
+                prompt_template=self.data["llm_prompt_template"],
+            )
+            self.data["llm_task_id"] = task.id
+            print(f"DEBUG OllamaAutoLabel.handle(start): Launched task {task.id}")
+            return 0  # Stay on this step to show progress
+
+        if action == "retry":
+            # Clear task ID to trigger re-launch
+            self.data.pop("llm_task_id", None)
+            self.data.pop("llm_results", None)
+            return 0
+
+        if action == "next":
             return 1
 
         if action == "prev":
