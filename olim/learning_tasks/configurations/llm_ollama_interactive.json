@@ -21,15 +21,8 @@
             "state": "OllamaAutoLabel",
             "params": {
                 "title": "Auto-Labeling",
-                "description": "Start LLM-powered labeling of your entries"
-            }
-        },
-        {
-            "state": "ShowData",
-            "params": {
-                "title": "Labeling Complete - Results",
-                "show_keys": ["llm_results"],
-                "format": "json"
+                "description": "Start LLM-powered labeling of your entries",
+                "is_last_step": true
             }
         }
     ]

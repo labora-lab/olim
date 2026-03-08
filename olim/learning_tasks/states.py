@@ -6,7 +6,7 @@ from flask import render_template, session
 from flask_babel import _
 
 from ..celery_app import launch_task_with_tracking
-from ..database import get_labels, random_entries
+from ..database import get_entry, get_labels, new_queue, random_entries
 from ..functions import render_entry
 from ..tasks.learning_tasks import label_queue_with_llm
 from . import register_state
@@ -1096,11 +1096,20 @@ class OllamaAutoLabel(BaseState):
 
         if status["state"] == "completed":
             self.data["llm_results"] = status["result"]
+
+            # Calculate labeled entry IDs (all entries minus errors)
+            all_entry_ids = set(self.data.get("queue_ids", []))
+            error_entry_ids = {str(err["entry_id"]) for err in status["result"].get("errors", [])}
+            labeled_entry_ids = sorted(all_entry_ids - error_entry_ids)
+
             return render_template(
                 "learning_tasks/ollama_auto_label.html",
                 title=self.params.get("title", _("Auto-Labeling Complete")),
                 mode="results",
                 results=status["result"],
+                labeled_entry_ids=labeled_entry_ids,
+                created_queue_id=self.data.get("created_queue_id"),
+                project_id=self.params.get("_project_id"),
                 is_last_step=self.params.get("is_last_step", False),
             )
         elif status["state"] == "failed":
@@ -1148,7 +1157,65 @@ class OllamaAutoLabel(BaseState):
             self.data.pop("llm_results", None)
             return 0
 
+        if action == "create_queue":
+            # Create a queue from labeled entries
+            task_id = self.data.get("llm_task_id")
+            if not task_id:
+                return 0
+
+            status = self._get_task_status(task_id)
+            if status["state"] != "completed":
+                return 0
+
+            # Calculate labeled entry IDs (all entries minus errors)
+            all_entry_ids = self.data.get("queue_ids", [])
+            error_entry_ids = {str(err["entry_id"]) for err in status["result"].get("errors", [])}
+            labeled_entry_ids = [eid for eid in all_entry_ids if eid not in error_entry_ids]
+
+            if not labeled_entry_ids:
+                return 0
+
+            # Build queue_data by looking up dataset_id for each entry
+            queue_data = []
+            datasets = self.params.get("_datasets", [])
+            dataset_ids = [d.id for d in datasets]
+
+            for entry_id in labeled_entry_ids:
+                # Try to find entry in available datasets
+                for ds_id in dataset_ids:
+                    entry_obj = get_entry((ds_id, entry_id), by="composite")
+                    if entry_obj:
+                        queue_data.append((ds_id, entry_id))
+                        break
+
+            if not queue_data:
+                return 0
+
+            # Create queue
+            queue = new_queue(
+                queue_data=queue_data,
+                name=f"LLM Labeled - {self.data.get('llm_model', 'Unknown Model')}",
+                project_id=self.params["_project_id"],
+                user_id=self.params["_user_id"],
+                highlight=None,
+            )
+
+            # Store queue ID in data for display
+            self.data["created_queue_id"] = queue.id
+
+            # Flash success message
+            from flask import flash
+            flash(_("Queue created successfully with {count} entries").format(count=len(queue_data)), "success")
+
+            return 0  # Stay on this step to show the queue was created
+
         if action == "next":
+            # Save results before moving to next step
+            task_id = self.data.get("llm_task_id")
+            if task_id:
+                status = self._get_task_status(task_id)
+                if status["state"] == "completed":
+                    self.data["llm_results"] = status["result"]
             return 1
 
         if action == "prev":
