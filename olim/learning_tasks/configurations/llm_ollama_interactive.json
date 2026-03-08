@@ -1,0 +1,36 @@
+{
+    "name": "LLM Auto-Labeling (Ollama - Interactive)",
+    "description": "Automatically label entries using Ollama LLM - configure everything yourself",
+    "sequence": [
+        {
+            "state": "OllamaQueueSetup",
+            "params": {
+                "title": "Select Entries and API Endpoint",
+                "description": "Choose entries to label and configure Ollama URL",
+                "show_prev": false
+            }
+        },
+        {
+            "state": "OllamaModelConfig",
+            "params": {
+                "title": "Configure LLM Model",
+                "description": "Select model and customize prompts"
+            }
+        },
+        {
+            "state": "OllamaAutoLabel",
+            "params": {
+                "title": "Auto-Labeling",
+                "description": "Start LLM-powered labeling of your entries"
+            }
+        },
+        {
+            "state": "ShowData",
+            "params": {
+                "title": "Labeling Complete - Results",
+                "show_keys": ["llm_results"],
+                "format": "json"
+            }
+        }
+    ]
+}

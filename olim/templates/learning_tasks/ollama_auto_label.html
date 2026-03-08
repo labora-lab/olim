@@ -1,0 +1,216 @@
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-4 bg-gradient-to-r from-blue-600 to-cyan-600">
+            <h1 class="text-2xl font-bold text-white">{{ title }}</h1>
+        </div>
+
+        <!-- Content based on mode -->
+        <div class="px-6 py-6">
+            {% if mode == 'ready' %}
+                <!-- Ready Mode - Show start button -->
+                <div class="py-6">
+                    <div class="flex items-center justify-center mb-6">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full">
+                            <i class="bi bi-play-fill text-blue-600 text-3xl"></i>
+                        </div>
+                    </div>
+
+                    <h2 class="text-xl font-semibold text-gray-800 text-center mb-2">{{ _('Ready to Start Auto-Labeling') }}</h2>
+                    <p class="text-gray-600 text-center mb-6">{{ _('Click the button below to begin LLM-powered labeling') }}</p>
+
+                    <!-- Configuration Summary -->
+                    <div class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                        <h3 class="font-medium text-gray-700 mb-3">{{ _('Configuration Summary') }}</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">{{ _('Entries to label') }}:</span>
+                                <span class="font-semibold text-gray-800">{{ queue_size }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">{{ _('Labels') }}:</span>
+                                <span class="font-semibold text-gray-800">{{ label_count }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">{{ _('Model') }}:</span>
+                                <span class="font-mono font-semibold text-gray-800">{{ model }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="pt-4 border-t border-gray-200 flex justify-between">
+                        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
+                            <button type="submit" name="action" value="prev"
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors">
+                                <i class="bi bi-chevron-left mr-2"></i>
+                                {{ _('Previous') }}
+                            </button>
+                        </form>
+                        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
+                            <button type="submit" name="action" value="start"
+                                class="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-colors shadow-lg hover:shadow-xl">
+                                <i class="bi bi-play-fill mr-2"></i>
+                                {{ _('Start Auto-Labeling') }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            {% elif mode == 'progress' %}
+                <!-- Progress Mode -->
+                <div class="text-center py-8" hx-get="" hx-trigger="every 2s" hx-target="#task-content" hx-swap="innerHTML">
+                    <div class="inline-flex items-center justify-center w-16 h-16 mb-4">
+                        <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+                    </div>
+                    <h2 class="text-xl font-semibold text-gray-800 mb-2">{{ _('Auto-Labeling in Progress') }}</h2>
+                    <p class="text-gray-600 mb-6">{{ message }}</p>
+
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-gray-200 rounded-full h-4 mb-4">
+                        <div class="bg-blue-600 h-4 rounded-full transition-all duration-300" style="width: {{ progress }}%"></div>
+                    </div>
+                    <p class="text-sm text-gray-500">{{ "%.1f"|format(progress) }}% {{ _('complete') }}</p>
+
+                    <p class="text-xs text-gray-400 mt-8">
+                        <i class="bi bi-info-circle mr-1"></i>
+                        {{ _('This page will refresh automatically') }}
+                    </p>
+                </div>
+
+            {% elif mode == 'results' %}
+                <!-- Results Mode -->
+                <div class="py-6">
+                    <div class="flex items-center justify-center mb-6">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full">
+                            <i class="bi bi-check-circle-fill text-green-600 text-3xl"></i>
+                        </div>
+                    </div>
+
+                    <h2 class="text-xl font-semibold text-gray-800 text-center mb-2">{{ _('Auto-Labeling Complete!') }}</h2>
+                    <p class="text-gray-600 text-center mb-6">{{ _('Your entries have been labeled') }}</p>
+
+                    <!-- Summary Stats -->
+                    <div class="grid grid-cols-3 gap-4 mb-6">
+                        <div class="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div class="text-2xl font-bold text-blue-600">{{ results.total_entries }}</div>
+                            <div class="text-sm text-gray-600">{{ _('Total Entries') }}</div>
+                        </div>
+                        <div class="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                            <div class="text-2xl font-bold text-green-600">{{ results.labeled_count }}</div>
+                            <div class="text-sm text-gray-600">{{ _('Labeled') }}</div>
+                        </div>
+                        <div class="text-center p-4 {% if results.error_count > 0 %}bg-red-50 border-red-200{% else %}bg-gray-50 border-gray-200{% endif %} rounded-lg border">
+                            <div class="text-2xl font-bold {% if results.error_count > 0 %}text-red-600{% else %}text-gray-600{% endif %}">{{ results.error_count }}</div>
+                            <div class="text-sm text-gray-600">{{ _('Errors') }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Label Statistics -->
+                    {% if results.stats_by_label %}
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">{{ _('Label Distribution') }}</h3>
+                        <div class="space-y-4">
+                            {% for label_name, value_counts in results.stats_by_label.items() %}
+                            <div class="border border-gray-200 rounded-lg p-4">
+                                <h4 class="font-medium text-gray-700 mb-2">{{ label_name }}</h4>
+                                <div class="space-y-2">
+                                    {% for value, count in value_counts.items() %}
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-600">{{ value }}</span>
+                                        <span class="font-mono font-semibold text-gray-800">{{ count }}</span>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Errors -->
+                    {% if results.errors %}
+                    <div class="mb-6">
+                        <details class="border border-red-200 rounded-lg">
+                            <summary class="px-4 py-3 bg-red-50 cursor-pointer hover:bg-red-100 rounded-t-lg font-medium text-red-800">
+                                <i class="bi bi-exclamation-triangle mr-2"></i>
+                                {{ _('View Errors') }} ({{ results.errors|length }})
+                            </summary>
+                            <div class="p-4 bg-white max-h-64 overflow-y-auto">
+                                <div class="space-y-3">
+                                    {% for error in results.errors %}
+                                    <div class="text-sm border-l-4 border-red-400 pl-3 py-1">
+                                        <p class="font-mono text-gray-800">{{ _('Entry') }}: {{ error.entry_id }}</p>
+                                        {% if error.label %}
+                                        <p class="text-gray-600">{{ _('Label') }}: {{ error.label }}</p>
+                                        {% endif %}
+                                        <p class="text-red-600">{{ error.error }}</p>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+                    {% endif %}
+
+                    <!-- Navigation -->
+                    <div class="pt-4 border-t border-gray-200 flex justify-end">
+                        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
+                            <button type="submit" name="action" value="next"
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-colors">
+                                {% if is_last_step %}
+                                    {{ _('Finish') }}
+                                {% else %}
+                                    {{ _('Next') }}
+                                    <i class="bi bi-chevron-right ml-2"></i>
+                                {% endif %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            {% elif mode == 'error' %}
+                <!-- Error Mode -->
+                <div class="py-6">
+                    <div class="flex items-center justify-center mb-6">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full">
+                            <i class="bi bi-x-circle-fill text-red-600 text-3xl"></i>
+                        </div>
+                    </div>
+
+                    <h2 class="text-xl font-semibold text-gray-800 text-center mb-2">{{ _('Auto-Labeling Failed') }}</h2>
+                    <p class="text-gray-600 text-center mb-6">{{ _('An error occurred during processing') }}</p>
+
+                    <!-- Error Details -->
+                    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <div class="flex items-start">
+                            <i class="bi bi-exclamation-triangle text-red-600 mt-0.5 mr-2"></i>
+                            <div class="text-sm text-red-800">
+                                <p class="font-semibold mb-1">{{ _('Error Details') }}</p>
+                                <p class="font-mono">{{ error }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Navigation -->
+                    <div class="pt-4 border-t border-gray-200 flex justify-between">
+                        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
+                            <button type="submit" name="action" value="prev"
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors">
+                                <i class="bi bi-chevron-left mr-2"></i>
+                                {{ _('Previous') }}
+                            </button>
+                        </form>
+                        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
+                            <button type="submit" name="action" value="retry"
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-colors">
+                                <i class="bi bi-arrow-clockwise mr-2"></i>
+                                {{ _('Retry') }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
