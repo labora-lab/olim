@@ -10,7 +10,7 @@
                 "entry_source": "random",
                 "random_count": 20,
                 "ollama_url": "http://localhost:11434/v1",
-                "labels": []
+                "labels": [12]
             }
         },
         {
@@ -18,14 +18,15 @@
             "params": {
                 "title": "LLM Configuration",
                 "model": "llama3.2",
-                "system_prompt": "You are an expert at analyzing and labeling text data. Follow the instructions carefully and respond only with the requested label value.",
-                "prompt_template": "Label the following text for: {label_name}\n\nText:\n{text}\n\nAvailable options:\n{label_options}\n\nRespond with ONLY the label value from the options above. Do not include any explanation or additional text."
+                "system_prompt": "You are a precise labeling assistant. You MUST respond with ONLY the exact label value - nothing else. No explanations, no punctuation, no formatting.",
+                "prompt_template": "Classify this text for the label '{label_name}'.\n\nText:\n{text}\n\n--- VALID OPTIONS (choose one exactly as shown) ---\n{label_options}\n\nIMPORTANT: Return ONLY the exact value from the options above. Copy it character-for-character. Do not add any other text, explanation, punctuation, or formatting.\n\nYour response:"
             }
         },
         {
             "state": "OllamaAutoLabel",
             "params": {
-                "title": "Auto-Labeling"
+                "title": "Auto-Labeling",
+                "is_last_step": true
             }
         }
     ]

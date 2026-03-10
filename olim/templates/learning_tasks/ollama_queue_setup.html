@@ -151,4 +151,25 @@ function switchSource(source) {
     if (source === 'random') switchSource('random');
     else switchSource('manual');
 })();
+
+// Auto-submit in automation mode
+{% if auto_submit %}
+(function() {
+    console.log('Auto-submitting OllamaQueueSetup form');
+    setTimeout(function() {
+        const form = document.querySelector('form[hx-post]');
+        const submitBtn = form.querySelector('button[name="action"][value="submit"]');
+
+        // Add the action value to the form data
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'submit';
+        form.appendChild(actionInput);
+
+        // Trigger HTMX request
+        htmx.trigger(form, 'submit');
+    }, 500);
+})();
+{% endif %}
 </script>

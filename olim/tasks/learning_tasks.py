@@ -143,7 +143,12 @@ def label_queue_with_llm(
 
                     # Create agent with output validation
                     # Note: pydantic-ai uses 'output_type' parameter (not 'result_type')
-                    agent = Agent(ollama_model, output_type=output_model, system_prompt=system_prompt)
+                    agent = Agent(
+                        ollama_model,
+                        output_type=output_model,
+                        system_prompt=system_prompt,
+                        retries=5,  # Increase retries for validation failures
+                    )
 
                     # Run inference (PydanticAI handles validation automatically)
                     result = agent.run_sync(user_prompt)

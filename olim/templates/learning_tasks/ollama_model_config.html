@@ -129,3 +129,25 @@ Respond with ONLY the label value from the options above."
         </form>
     </div>
 </div>
+
+{% if auto_submit %}
+<script>
+// Auto-submit in automation mode
+(function() {
+    console.log('Auto-submitting OllamaModelConfig form');
+    setTimeout(function() {
+        const form = document.querySelector('form[hx-post]');
+
+        // Add the action value to the form data
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'submit';
+        form.appendChild(actionInput);
+
+        // Trigger HTMX request
+        htmx.trigger(form, 'submit');
+    }, 500);
+})();
+</script>
+{% endif %}

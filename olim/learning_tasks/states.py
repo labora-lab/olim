@@ -763,6 +763,18 @@ class OllamaQueueSetup(BaseState):
         # Check for pre-selected labels in params (for automation)
         if not selected_label_ids and "labels" in self.params:
             selected_label_ids = self.params["labels"]
+            # Auto-select all if empty array
+            if not selected_label_ids and available_labels:
+                selected_label_ids = [lbl["id"] for lbl in available_labels]
+
+        # Detect automation mode - auto-submit if all required params are provided
+        # and we haven't already attempted auto-submit
+        auto_submit = (
+            "entry_source" in self.params
+            and "ollama_url" in self.params
+            and "labels" in self.params
+            and not self.data.get("_auto_submitted_queue_setup")  # Only auto-submit once
+        )
 
         return render_template(
             "learning_tasks/ollama_queue_setup.html",
@@ -777,6 +789,7 @@ class OllamaQueueSetup(BaseState):
             errors=self.errors,
             show_prev=self.params.get("show_prev", True),
             is_last_step=self.params.get("is_last_step", False),
+            auto_submit=auto_submit,
         )
 
     def handle(self, action: str, payload: dict[str, Any]) -> int:
@@ -785,8 +798,14 @@ class OllamaQueueSetup(BaseState):
 
         if action == "submit":
             self.errors = {}
+
+            # Mark that we've attempted auto-submit (prevents infinite loop)
+            self.data["_auto_submitted_queue_setup"] = True
+
             entry_source = payload.get("entry_source", self.params.get("entry_source", "random"))
             self.data["_entry_source"] = entry_source
+
+            print(f"DEBUG OllamaQueueSetup.handle(submit): entry_source={entry_source}, params={self.params.keys()}, payload keys={payload.keys() if hasattr(payload, 'keys') else 'not a dict'}")
 
             # Handle entry selection
             if entry_source == "random":
@@ -828,24 +847,36 @@ class OllamaQueueSetup(BaseState):
             # Get selected labels
             available_labels = self._get_available_labels()
 
+            print(f"DEBUG OllamaQueueSetup: available_labels count={len(available_labels)}")
+
             # Check if labels are pre-selected in params (automation mode)
             if "labels" in self.params:
                 selected_ids = self.params["labels"]
+                print(f"DEBUG OllamaQueueSetup: labels from params={selected_ids}")
+                # Auto-select all labels if empty array in automation mode
+                if not selected_ids and available_labels:
+                    selected_ids = [lbl["id"] for lbl in available_labels]
+                    print(f"DEBUG OllamaQueueSetup: auto-selected all labels={selected_ids}")
             else:
                 selected_ids = payload.getlist("labels") if hasattr(payload, "getlist") else payload.get("labels", [])
                 if isinstance(selected_ids, str):
                     selected_ids = [selected_ids]
                 selected_ids = [int(x) for x in selected_ids if x]
+                print(f"DEBUG OllamaQueueSetup: labels from payload={selected_ids}")
 
             if not selected_ids:
+                print("DEBUG OllamaQueueSetup: ERROR - No labels selected")
                 self.errors["labels"] = _("Please select at least one label")
                 return 0
 
             selected_labels = [lbl for lbl in available_labels if lbl["id"] in selected_ids]
 
             if not selected_labels:
+                print("DEBUG OllamaQueueSetup: ERROR - No matching labels found")
                 self.errors["labels"] = _("No labels available")
                 return 0
+
+            print(f"DEBUG OllamaQueueSetup: Successfully selected {len(selected_labels)} labels")
 
             # Get Ollama URL
             ollama_url = payload.get("ollama_url", self.params.get("ollama_url", "http://localhost:11434/v1")).strip()
@@ -936,20 +967,31 @@ class OllamaModelConfig(BaseState):
         available_models = self._fetch_ollama_models(ollama_url)
 
         # Default prompts
-        default_system_prompt = "You are a helpful assistant that accurately labels text data."
-        default_prompt_template = """Label the following text for: {label_name}
+        default_system_prompt = "You are a precise labeling assistant. You MUST respond with ONLY the exact label value - nothing else. No explanations, no punctuation, no formatting."
+        default_prompt_template = """Classify this text for the label '{label_name}'.
 
 Text:
 {text}
 
-Available options: {label_options}
+--- VALID OPTIONS (choose one exactly as shown) ---
+{label_options}
 
-Respond with ONLY the label value from the options above."""
+IMPORTANT: Return ONLY the exact value from the options above. Copy it character-for-character. Do not add any other text, explanation, punctuation, or formatting.
+
+Your response:"""
 
         # Get current values or use params/defaults
         selected_model = self.data.get("llm_model", self.params.get("model", ""))
         system_prompt = self.data.get("llm_system_prompt", self.params.get("system_prompt", default_system_prompt))
         prompt_template = self.data.get("llm_prompt_template", self.params.get("prompt_template", default_prompt_template))
+
+        # Detect automation mode - auto-submit if all required params are provided
+        # and we haven't already attempted auto-submit
+        auto_submit = (
+            "model" in self.params
+            and "prompt_template" in self.params
+            and not self.data.get("_auto_submitted_model_config")  # Only auto-submit once
+        )
 
         return render_template(
             "learning_tasks/ollama_model_config.html",
@@ -964,6 +1006,7 @@ Respond with ONLY the label value from the options above."""
             errors=self.errors,
             show_prev=self.params.get("show_prev", True),
             is_last_step=self.params.get("is_last_step", False),
+            auto_submit=auto_submit,
         )
 
     def handle(self, action: str, payload: dict[str, Any]) -> int:
@@ -972,6 +1015,9 @@ Respond with ONLY the label value from the options above."""
 
         if action == "submit":
             self.errors = {}
+
+            # Mark that we've attempted auto-submit (prevents infinite loop)
+            self.data["_auto_submitted_model_config"] = True
 
             # Get model (from payload or params)
             model = payload.get("model", self.params.get("model", "")).strip()
