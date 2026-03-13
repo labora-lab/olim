@@ -37,7 +37,7 @@ def _validate_csv_options(sep: str | None, encoding: str | None) -> tuple[str, s
     if s == "\\t":
         s = "\t"
     if len(s) > 10:
-        raise ValueError("")  # spec: no specific message body required for this case
+        raise ValueError(_("Separator too long."))
 
     return s, enc
 
@@ -92,6 +92,10 @@ def handle_large_upload() -> ...:
 def finalize_upload(file_id) -> ...:
     filename = request.args.get("filename")
     total_chunks = request.args.get("total_chunks")
+
+    if not filename or not total_chunks:
+        return jsonify(error=_("filename and total_chunks are required")), 400
+
     final_path = UPLOAD_PATH / f"{file_id}_{filename}"
 
     try:
