@@ -10,11 +10,7 @@ from .label_types import get_available_label_types, get_label_type_module, is_fr
 from .settings import (
     BABEL_DEFAULT_LOCALE,
     BABEL_TRANSLATION_DIRECTORIES,
-    DB_HOST,
-    DB_NAME,
-    DB_PASSWORD,
-    DB_PORT,
-    DB_USER,
+    DB_URL,
     DEBUG,
     HELP_URL,
     INTERFACE_SETTINGS,
@@ -33,12 +29,10 @@ app = Flask(__name__)
 app.config["DEBUG"] = DEBUG
 
 # Database configuration
-if all([DB_HOST, DB_NAME, DB_USER, DB_PASSWORD]):
-    app.config["SQLALCHEMY_DATABASE_URI"] = (
-        f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    )
+if DB_URL:
+    app.config["SQLALCHEMY_DATABASE_URI"] = DB_URL
 else:
-    print("Warning: Missing PostgreSQL configuration. Falling back to SQLite.")
+    print("Warning: DB_URL not set. Falling back to SQLite.")
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///olim.sqlite"
 
 
