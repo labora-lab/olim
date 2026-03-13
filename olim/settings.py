@@ -3,6 +3,10 @@ from datetime import timedelta
 from pathlib import Path
 from typing import ClassVar
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 VERSION = "0.3.0-rc2"
 """Version of the application"""
 
