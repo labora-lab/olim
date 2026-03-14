@@ -117,7 +117,11 @@ def finalize_upload(file_id) -> ...:
         track_progress=False,
     )
 
-    columns = res.get()["columns"]
+    try:
+        result = res.get()
+    except Exception as e:
+        return jsonify(error=str(e)), 400
+    columns = result["columns"]
 
     return jsonify(success=True, path=str(final_path), columns=columns)
 

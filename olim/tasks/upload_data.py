@@ -600,5 +600,5 @@ def finalize_chunks_upload(
                 raise Exception(_("Uploaded file not found. Please try uploading again.")) from e
             else:
                 raise self.retry(countdown=2, exc=e) from e
-    except Exception as e:
+    except OSError as e:
         raise self.retry(countdown=2, exc=e) from e
