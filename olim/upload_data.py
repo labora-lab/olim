@@ -154,6 +154,16 @@ def upload_data(project_id: int | None = None) -> ...:
         filename = request.form.get("filename")
         file_id = request.form.get("file_id")
 
+        # Extract and validate CSV options
+        try:
+            sep, encoding = _validate_csv_options(
+                request.form.get("sep", ","),
+                request.form.get("encoding", "utf-8"),
+            )
+        except ValueError as e:
+            flash(str(e), "error")
+            return redirect(request.url)
+
         # Validate required fields
         if not upload_type:
             flash(_("Upload type is required"), "error")
@@ -171,7 +181,7 @@ def upload_data(project_id: int | None = None) -> ...:
 
         # Create new dataset
         try:
-            dataset = new_dataset(dataset_name, session["user_id"])
+            dataset = new_dataset(dataset_name, session["user_id"], sep=sep, encoding=encoding)
 
             # Link to selected projects
             for project_id_str in projects:

@@ -363,6 +363,13 @@ def upload_dataset(
     index_name = ES_INDEX.format(dataset_id=dataset_id)
     create_index(index_name)
 
+    # Load CSV options from dataset record
+    with flask_app.app_context():
+        dataset_record = db.session.get(Dataset, dataset_id)
+        if dataset_record:
+            upload_params["sep"] = dataset_record.sep
+            upload_params["encoding"] = dataset_record.encoding
+
     # Check if JSONL file already exists and backup if needed
     dataset_dir = WORK_PATH / "datasets"
     dataset_dir.mkdir(parents=True, exist_ok=True)
@@ -394,23 +401,8 @@ def upload_dataset(
                 batch_size=UPLOAD_BATCH_SIZE,
                 **upload_params,
             )
-        except Exception as e:
-            if "CSV" in str(e) or "encoding" in str(e).lower():
-                raise Exception(
-                    _(
-                        "CSV file format error. Please check that your "
-                        "file is properly formatted and uses UTF-8 encoding."
-                    )
-                ) from e
-            elif "column" in str(e).lower():
-                raise Exception(
-                    _(
-                        "Required columns not found in CSV. Please check that "
-                        "your file contains the selected ID and text columns."
-                    )
-                ) from e
-            else:
-                raise Exception(_("File processing error: %(error)s", error=str(e))) from e
+        except Exception:
+            raise
 
         # Process batches sequentially
         total_records = 0
