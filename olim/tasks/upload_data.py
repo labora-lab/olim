@@ -364,11 +364,10 @@ def upload_dataset(
     create_index(index_name)
 
     # Load CSV options from dataset record
-    with flask_app.app_context():
-        dataset_record = db.session.get(Dataset, dataset_id)
-        if dataset_record:
-            upload_params["sep"] = dataset_record.sep
-            upload_params["encoding"] = dataset_record.encoding
+    dataset_record = db.session.get(Dataset, dataset_id)
+    if dataset_record:
+        upload_params["sep"] = dataset_record.sep
+        upload_params["encoding"] = dataset_record.encoding
 
     # Check if JSONL file already exists and backup if needed
     dataset_dir = WORK_PATH / "datasets"
