@@ -122,8 +122,14 @@ class SingleTextEntry(EntryTypeBase):
         **kwargs,
     ) -> Generator[list[dict[str, Any]]]:
         """Generate batches of records with structured metadata."""
+        sep = kwargs.get("sep", ",")
+        encoding = kwargs.get("encoding", "utf-8")
+        read_kwargs: dict = {"chunksize": batch_size, "sep": sep, "encoding": encoding}
+        if len(sep) > 1:
+            read_kwargs["engine"] = "python"
+
         # Read in chunks
-        for chunk in tqdm(pd.read_csv(filename, chunksize=batch_size)):
+        for chunk in tqdm(pd.read_csv(filename, **read_kwargs)):
             # Clean chunk
             chunk = chunk.drop_duplicates(subset=[id_column])
             chunk = chunk.fillna(-1)
