@@ -624,8 +624,7 @@
 
                 setTimeout(() => { if (progress) progress.classList.add('hidden'); }, 2000);
 
-                // Now do the actual form POST
-                form.submit();
+                // File uploaded and columns shown — wait for user to select columns and click submit again
 
             } catch (error) {
                 if (progressBar) progressBar.style.backgroundColor = 'red';
