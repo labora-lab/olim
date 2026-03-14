@@ -314,8 +314,6 @@
 
             // Re-attach event listeners for the new file input
             const newFileInput = document.getElementById('large-file-input');
-            newFileInput?.addEventListener('change', window.validateForm);
-
             // Re-attach drag and drop listeners
             const newDropArea = document.getElementById('drop-area');
             if (newDropArea) {
@@ -394,12 +392,17 @@
                 uploadType.value = val
 
                 // Reset file upload when changing entry type
-                if (fileInput.files.length > 0) {
+                if (window._pendingUploadFile != null) {
                     // Clear the file input
                     fileInput.value = '';
 
                     // Reset upload container to original state
                     resetUploadContainer();
+
+                    const newInput = document.getElementById('large-file-input');
+                    if (newInput) {
+                        window.attachChunkedUpload(newInput);
+                    }
                 }
 
                 // Hide fields regardless of format when changing option
