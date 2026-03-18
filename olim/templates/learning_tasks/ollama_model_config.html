@@ -1,0 +1,153 @@
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-4 bg-gradient-to-r from-blue-600 to-cyan-600">
+            <h1 class="text-2xl font-bold text-white">{{ title }}</h1>
+        </div>
+
+        <!-- Form -->
+        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="px-6 py-6">
+            {% if description %}
+            <p class="text-gray-600 mb-6">{{ description }}</p>
+            {% endif %}
+
+            <!-- Queue Summary -->
+            <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="flex items-start">
+                    <i class="bi bi-info-circle text-blue-600 mt-0.5 mr-2"></i>
+                    <div class="text-sm text-blue-800">
+                        <p class="font-semibold mb-1">{{ _('Queue Summary') }}</p>
+                        <p>{{ _('Entries to label') }}: <span class="font-mono font-bold">{{ queue_size }}</span></p>
+                        <p>{{ _('Labels') }}:
+                            {% for label in queue_labels %}
+                                <span class="inline-block px-2 py-0.5 bg-blue-600 text-white rounded text-xs mr-1 mt-1">{{ label.name }}</span>
+                            {% endfor %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Model Selection -->
+                <div>
+                    <label for="model" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ _('LLM Model') }} <span class="text-red-500">*</span>
+                    </label>
+                    <p class="text-sm text-gray-500 mb-2">{{ _('Select the Ollama model to use for labeling') }}</p>
+
+                    {% if available_models %}
+                        <select id="model" name="model"
+                            class="w-full px-3 py-2 border {% if errors.get('model') %}border-red-500{% else %}border-gray-300{% endif %} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <option value="">{{ _('Select a model...') }}</option>
+                            {% for model in available_models %}
+                                <option value="{{ model }}" {% if model == selected_model %}selected{% endif %}>{{ model }}</option>
+                            {% endfor %}
+                        </select>
+                    {% else %}
+                        <input type="text" id="model" name="model"
+                            value="{{ selected_model }}"
+                            placeholder="llama3.2"
+                            class="w-full px-3 py-2 border {% if errors.get('model') %}border-red-500{% else %}border-gray-300{% endif %} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-mono">
+                        {% if errors.get('ollama_api') %}
+                        <p class="mt-1 text-sm text-amber-600">
+                            <i class="bi bi-exclamation-triangle mr-1"></i>
+                            {{ errors['ollama_api'] }}. {{ _('Enter model name manually') }}.
+                        </p>
+                        {% endif %}
+                    {% endif %}
+
+                    {% if errors.get('model') %}
+                    <p class="mt-1 text-sm text-red-500">{{ errors['model'] }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- System Prompt -->
+                <div>
+                    <label for="system_prompt" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ _('System Prompt') }}
+                    </label>
+                    <p class="text-sm text-gray-500 mb-2">{{ _('Sets the LLM behavior and role') }}</p>
+                    <textarea
+                        id="system_prompt"
+                        name="system_prompt"
+                        rows="3"
+                        placeholder="{{ _('You are a helpful assistant that accurately labels text data.') }}"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    >{{ system_prompt }}</textarea>
+                </div>
+
+                <!-- Prompt Template -->
+                <div>
+                    <label for="prompt_template" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ _('Prompt Template') }} <span class="text-red-500">*</span>
+                    </label>
+                    <p class="text-sm text-gray-500 mb-2">
+                        {{ _('Template for each labeling request. Use placeholders') }}:
+                        <code class="px-1.5 py-0.5 bg-gray-100 text-xs rounded">{text}</code>
+                        <code class="px-1.5 py-0.5 bg-gray-100 text-xs rounded">{label_name}</code>
+                        <code class="px-1.5 py-0.5 bg-gray-100 text-xs rounded">{label_options}</code>
+                    </p>
+                    <textarea
+                        id="prompt_template"
+                        name="prompt_template"
+                        rows="8"
+                        placeholder="Label the following text for: {label_name}
+
+Text:
+{text}
+
+Available options: {label_options}
+
+Respond with ONLY the label value from the options above."
+                        class="w-full px-3 py-2 border {% if errors.get('prompt_template') %}border-red-500{% else %}border-gray-300{% endif %} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-mono"
+                    >{{ prompt_template }}</textarea>
+                    {% if errors.get('prompt_template') %}
+                    <p class="mt-1 text-sm text-red-500">{{ errors['prompt_template'] }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="mt-6 pt-4 border-t border-gray-200 flex justify-between items-center">
+                <div>
+                    {% if show_prev %}
+                    <button type="submit" name="action" value="prev"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors">
+                        <i class="bi bi-chevron-left mr-2"></i>
+                        {{ _('Previous') }}
+                    </button>
+                    {% endif %}
+                </div>
+                <div>
+                    <button type="submit" name="action" value="submit"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-colors">
+                        {{ _('Start Auto-Labeling') }}
+                        <i class="bi bi-chevron-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if auto_submit %}
+<script>
+// Auto-submit in automation mode
+(function() {
+    console.log('Auto-submitting OllamaModelConfig form');
+    setTimeout(function() {
+        const form = document.querySelector('form[hx-post]');
+
+        // Add the action value to the form data
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'submit';
+        form.appendChild(actionInput);
+
+        // Trigger HTMX request
+        htmx.trigger(form, 'submit');
+    }, 500);
+})();
+</script>
+{% endif %}
