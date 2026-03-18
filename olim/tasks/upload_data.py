@@ -363,6 +363,13 @@ def upload_dataset(
     index_name = ES_INDEX.format(dataset_id=dataset_id)
     create_index(index_name)
 
+    # Load CSV options from dataset record
+    with flask_app.app_context():
+        dataset_record = db.session.get(Dataset, dataset_id)
+        if dataset_record:
+            upload_params["sep"] = dataset_record.sep
+            upload_params["encoding"] = dataset_record.encoding
+
     # Check if JSONL file already exists and backup if needed
     dataset_dir = WORK_PATH / "datasets"
     dataset_dir.mkdir(parents=True, exist_ok=True)
@@ -394,23 +401,8 @@ def upload_dataset(
                 batch_size=UPLOAD_BATCH_SIZE,
                 **upload_params,
             )
-        except Exception as e:
-            if "CSV" in str(e) or "encoding" in str(e).lower():
-                raise Exception(
-                    _(
-                        "CSV file format error. Please check that your "
-                        "file is properly formatted and uses UTF-8 encoding."
-                    )
-                ) from e
-            elif "column" in str(e).lower():
-                raise Exception(
-                    _(
-                        "Required columns not found in CSV. Please check that "
-                        "your file contains the selected ID and text columns."
-                    )
-                ) from e
-            else:
-                raise Exception(_("File processing error: %(error)s", error=str(e))) from e
+        except Exception:
+            raise
 
         # Process batches sequentially
         total_records = 0
@@ -535,6 +527,8 @@ def finalize_chunks_upload(
     file_id: str,
     filename: str,
     total_chunks: int,
+    sep: str = ",",
+    encoding: str = "utf-8",
     **kwargs,
 ) -> dict:
     chunk_dir = UPLOAD_PATH / file_id
@@ -570,20 +564,14 @@ def finalize_chunks_upload(
 
         # Read columns from the first few rows of the CSV
         try:
-            columns = list(pd.read_csv(filename, nrows=1).columns)
+            read_kwargs: dict = {"nrows": 1, "sep": sep, "encoding": encoding}
+            if len(sep) > 1:
+                read_kwargs["engine"] = "python"
+            columns = list(pd.read_csv(filename, **read_kwargs).columns)
 
             # Validate CSV structure
             if not columns:
                 raise Exception(_("CSV file appears to be empty or has no columns."))
-
-            # Check for common CSV issues
-            if len(columns) == 1 and ";" in columns[0]:
-                raise Exception(
-                    _(
-                        "CSV file may be using semicolons as separators. "
-                        "Please use comma-separated format."
-                    )
-                )
 
             return {
                 "success": True,
@@ -593,26 +581,25 @@ def finalize_chunks_upload(
         except pd.errors.EmptyDataError as e:
             raise Exception(_("CSV file is empty. Please upload a file with data.")) from e
         except pd.errors.ParserError as e:
-            if "delimiter" in str(e).lower():
-                raise Exception(
-                    _(
-                        "CSV format error. Please ensure your file uses "
-                        "comma separators and proper quoting."
-                    )
-                ) from e
-            else:
-                raise Exception(
-                    _("CSV parsing error: %(error)s. Please check your file format.", error=str(e))
-                ) from e
+            raise Exception(
+                _(
+                    "Could not read the CSV with separator '%(sep)s'. "
+                    "Please check the advanced options.",
+                    sep=sep,
+                )
+            ) from e
         except UnicodeDecodeError as e:
             raise Exception(
-                _("File encoding error. Please save your CSV file with UTF-8 encoding.")
+                _(
+                    "Encoding error reading the file with '%(encoding)s'. "
+                    "Please try a different encoding in the advanced options.",
+                    encoding=encoding,
+                )
             ) from e
         except Exception as e:
             if "No such file" in str(e):
                 raise Exception(_("Uploaded file not found. Please try uploading again.")) from e
             else:
-                # Retry for other errors
                 raise self.retry(countdown=2, exc=e) from e
-    except Exception as e:
+    except OSError as e:
         raise self.retry(countdown=2, exc=e) from e
