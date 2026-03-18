@@ -121,9 +121,18 @@ def finalize_upload(file_id) -> ...:
         result = res.get()
     except Exception as e:
         return jsonify(error=str(e)), 400
+
+    if not result.get("success"):
+        return jsonify(error=result["error"], can_retry=result.get("can_retry", False)), 400
     columns = result["columns"]
 
-    return jsonify(success=True, path=str(final_path), columns=columns)
+    return jsonify(
+        success=True,
+        path=str(final_path),
+        columns=columns,
+        sep=result.get("sep", ","),
+        encoding=result.get("encoding", "utf-8"),
+    )
 
 
 @app.route("/upload-data", methods=["GET", "POST"])

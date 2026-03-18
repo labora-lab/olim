@@ -20,7 +20,6 @@ x-app-env: &app-env
   DEBUG: '${DEBUG:-false}'
   ES_SERVER: 'http://olim_es:9200'
   DB_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@olim_db:${POSTGRES_PORT:-5432}/${POSTGRES_DB}"
-  DEBUG: "${DEBUG:-false}"
   WORK_PATH: /app/work
   LABELS: '${LABELS}'
   HELP_URL: '${HELP_URL}'

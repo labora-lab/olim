@@ -22,7 +22,7 @@ dependencies = [
     "numpy>=2.1.0",
     "openai>=2.26.0",
     "pandas==2.2.3",
-    "psycopg2-binary>=2.9.10",
+    "psycopg2>=2.9.10",
     "pydantic>=2.12.5",
     "pydantic-ai>=1.66.0",
     "python-dotenv>=1.1.0",
