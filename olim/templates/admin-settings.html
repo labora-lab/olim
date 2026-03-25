@@ -185,6 +185,36 @@
     </div>
     {% endfor %}
 
+    <!-- Task Configuration Presets -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-cloud-upload text-blue-600 mr-2"></i>
+                {{ _('Save Configuration Preset') }}
+            </h3>
+            <p class="text-sm text-gray-500 mt-1">{{ _('Upload a JSON task configuration file to make it available as a preset when creating learning tasks.') }}</p>
+        </div>
+        <div class="p-6 max-w-lg">
+            <form action="{{ url_for('upload_configuration') }}" method="post" enctype="multipart/form-data" class="space-y-4">
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-900">{{ _('Configuration Name') }}</label>
+                    <input type="text" name="config_name"
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                        placeholder="{{ _('Optional — uses filename if empty') }}">
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-900">{{ _('Configuration File') }}</label>
+                    <input type="file" name="config_file" accept=".json" required
+                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                </div>
+                <button type="submit"
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg transition-colors">
+                    <i class="bi bi-cloud-upload mr-2"></i>{{ _('Save to Presets') }}
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Empty State -->
     {% if not settings_by_category %}
     <div class="bg-white rounded-lg shadow-sm border border-gray-200">

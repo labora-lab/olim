@@ -19,8 +19,6 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from olim.learner.public_api import ActiveLearningBackend
-
 
 class ArtifactManager:
     """Manager for ML model artifact storage
@@ -59,7 +57,10 @@ class ArtifactManager:
         self,
         model_id: int,
         version: int,
-        learner: ActiveLearningBackend,
+        model: Any,
+        encoder: Any,
+        policy: Any | None = None,
+        bandit: Any | None = None,
         fields: list[str] | None = None,
     ) -> Path:
         """Save all model artifacts to disk
@@ -67,7 +68,10 @@ class ArtifactManager:
         Args:
             model_id: ID of the model
             version: Version number
-            learner: Trained ActiveLearningBackend instance
+            model: Trained model instance (e.g. ConformalPredictor)
+            encoder: Label encoder instance
+            policy: Active learning policy (optional)
+            bandit: Bandit explorer (optional)
             fields: List of field names used for training
 
         Returns:
@@ -82,21 +86,21 @@ class ArtifactManager:
         try:
             # Save main model
             with open(version_path / "model.pickle", "wb") as f:
-                pickle.dump(learner._model, f)
+                pickle.dump(model, f)
 
             # Save label encoder
             with open(version_path / "encoder.pickle", "wb") as f:
-                pickle.dump(learner._label_value_encoder, f)
+                pickle.dump(encoder, f)
 
             # Save policy
-            if learner._policy is not None:
+            if policy is not None:
                 with open(version_path / "policy.pickle", "wb") as f:
-                    pickle.dump(learner._policy, f)
+                    pickle.dump(policy, f)
 
             # Save bandit explorer
-            if learner._bandit_explorer is not None:
+            if bandit is not None:
                 with open(version_path / "bandit.pickle", "wb") as f:
-                    pickle.dump(learner._bandit_explorer, f)
+                    pickle.dump(bandit, f)
 
             # Save field configuration
             if fields is not None:

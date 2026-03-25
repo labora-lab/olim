@@ -13,7 +13,6 @@ from .functions import get_highlights, render_entry
 from .tasks.active_learning import (
     COMPOSITE_ID,
     add_label_value,
-    create_label_al,
     export_predictions,
     train_model,
 )
@@ -123,29 +122,6 @@ def catch_al(label_id: int) -> ...:
                 "Active Learning is not available for free text labels. "
                 "Use regular labeling instead."
             ),
-            category="warning",
-        )
-        return redirect(url_for("labels", project_id=label.project_id))
-
-    # Create learner if it doen't exists
-    if label.al_key is None:
-        launch_task_with_tracking(
-            create_label_al,
-            description=_("Creating Active Learning for {label_name}").format(
-                label_name=label.name
-            ),
-            project_id=label.project_id,
-            label_id=label.id,
-            user_id=session["user_id"],
-            track_progress=True,
-        )
-        label.al_key = "setup"
-        db.session.commit()
-        flash(
-            _(
-                "Seting up Active Learning pipeline for label {label_name}, "
-                "please wait a few minutes and try again."
-            ).format(label_name=label.name),
             category="warning",
         )
         return redirect(url_for("labels", project_id=label.project_id))

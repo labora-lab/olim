@@ -5,7 +5,7 @@
 <div class="container mx-auto max-w-5xl">
     <!-- Header -->
     <div class="mb-6">
-        <a href="{{ url_for('model_detail', model_id=model.id) }}" class="text-purple-600 hover:text-purple-700 flex items-center mb-4">
+        <a href="{{ url_for('model_detail', project_id=project_id, model_id=model.id) }}" class="text-purple-600 hover:text-purple-700 flex items-center mb-4">
             <i class="bi bi-arrow-left mr-2"></i>
             {{ _('Back to Model') }}
         </a>
@@ -20,7 +20,7 @@
         <!-- Prediction Form -->
         <div class="lg:col-span-2">
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <form method="POST" action="{{ url_for('model_predict', model_id=model.id) }}">
+                <form method="POST" action="{{ url_for('model_predict', project_id=project_id, model_id=model.id) }}">
                     <!-- Version Selection -->
                     <div class="mb-6">
                         <label for="version_id" class="block text-sm font-medium text-gray-700 mb-2">
@@ -177,7 +177,7 @@
                 </dl>
 
                 <div class="mt-6 pt-6 border-t border-gray-200">
-                    <a href="{{ url_for('model_detail', model_id=model.id) }}"
+                    <a href="{{ url_for('model_detail', project_id=project_id, model_id=model.id) }}"
                        class="block w-full px-4 py-2 text-center text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors">
                         <i class="bi bi-info-circle mr-2"></i>
                         {{ _('View Model Details') }}

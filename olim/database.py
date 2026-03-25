@@ -1,8 +1,11 @@
+import hashlib
+import json
 import random
+import re
 import string
 from collections import defaultdict
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 
 from flask import session
 from sqlalchemy import ScalarResult, Select, func
@@ -13,7 +16,7 @@ from werkzeug.security import generate_password_hash
 from . import db
 
 if TYPE_CHECKING:
-    from olim.ml.models import MLModel
+    from olim.ml.models import MLModel, MLModelPrediction, MLModelVersion
 
 
 ## DB tables
@@ -117,10 +120,33 @@ class LabelEntry(db.Model, CreationControl):
     entry_id: Mapped[int] = db.mapped_column(db.ForeignKey("entries.id"))
     label_id: Mapped[int] = db.mapped_column(db.ForeignKey("labels.id"))
     value: Mapped[str] = db.mapped_column(nullable=True)
+    meta: Mapped[dict | None] = db.mapped_column("metadata", db.JSON, nullable=True)
 
     # Relations
     label: Mapped["Label"] = db.relationship(back_populates="entries")
     entry: Mapped["Entry"] = db.relationship(back_populates="labels")
+
+
+class ModelPrediction(db.Model):
+    """ML model prediction per entry/label — separate from human annotations."""
+
+    __tablename__ = "model_predictions"
+    __table_args__ = (
+        db.Index("ix_model_predictions_label", "label_id"),
+        db.Index("ix_model_predictions_entry_label", "entry_id", "label_id"),
+    )
+
+    id: Mapped[int] = db.mapped_column(primary_key=True)
+    entry_id: Mapped[int] = db.mapped_column(db.ForeignKey("entries.id"), nullable=False)
+    label_id: Mapped[int] = db.mapped_column(db.ForeignKey("labels.id"), nullable=False)
+    model_id: Mapped[int] = db.mapped_column(db.ForeignKey("ml_models.id"), nullable=False)
+    version_id: Mapped[int] = db.mapped_column(
+        db.ForeignKey("ml_model_versions.id"), nullable=False
+    )
+    value: Mapped[str | None] = db.mapped_column(nullable=True)
+    score: Mapped[float | None] = db.mapped_column(nullable=True)
+    prediction_set: Mapped[list | None] = db.mapped_column(db.JSON, nullable=True)
+    created_at: Mapped[datetime] = db.mapped_column(nullable=False, default=datetime.now)
 
 
 class Entry(db.Model):
@@ -240,9 +266,13 @@ class LearningTask(db.Model, CreationControl):
     position: Mapped[int] = db.mapped_column(default=0, nullable=False)
     data: Mapped[dict] = db.mapped_column(db.JSON, nullable=False)
     initial_setup: Mapped[dict] = db.mapped_column(db.JSON, nullable=False)
+    assigned_to: Mapped[int | None] = db.mapped_column(
+        db.ForeignKey("users.id"), nullable=True
+    )
 
     # Relationships
     project: Mapped["Project"] = db.relationship(back_populates="learning_tasks")
+    assignee: Mapped["User | None"] = db.relationship(foreign_keys=[assigned_to])
 
 
 class CeleryTaskStatus(db.TypeDecorator):
@@ -467,7 +497,10 @@ def get_users() -> list[User]:
         List of User objects sorted by username
     """
     return db.session.execute(
-        db.select(User).filter_by(is_deleted=False).order_by(User.username)
+        db.select(User)
+        .filter_by(is_deleted=False)
+        .filter(User.username != LLM_USER_USERNAME)
+        .order_by(User.username)
     ).scalars()
 
 
@@ -494,6 +527,43 @@ def insert_user(username: str, hashed_password: str, role: str, creator: int, **
         is_deleted=False,
     )
     db.session.add(user)
+    db.session.commit()
+    return user
+
+
+LLM_USER_USERNAME = "__llm__"
+
+
+def get_or_create_llm_user() -> User:
+    """Return the virtual LLM user, creating it if it doesn't exist.
+
+    This user is used as the author of all LLM-generated labels so they can be
+    differentiated from human labels.  The account has an unusable password and
+    cannot be used to log in.
+    """
+    user = db.session.execute(
+        db.select(User).filter_by(username=LLM_USER_USERNAME)
+    ).scalar_one_or_none()
+    if user:
+        return user
+
+    # Find any existing user to satisfy the created_by FK
+    creator_id: int = db.session.execute(
+        db.select(User.id).order_by(User.id).limit(1)
+    ).scalar_one()
+
+    user = User(
+        name="LLM Auto-Labeler",
+        username=LLM_USER_USERNAME,
+        password="!",  # unusable — no valid bcrypt hash starts with "!"
+        role="annotator",
+        created=datetime.now(),
+        created_by=creator_id,
+        is_deleted=False,
+    )
+    db.session.add(user)
+    db.session.flush()
+    user.created_by = user.id  # self-owned record
     db.session.commit()
     return user
 
@@ -976,6 +1046,43 @@ def get_label(idt: int, by: str = "id") -> Label | None:
     return get_by(Label, by, idt, True)
 
 
+def get_label_entries(label_id: int) -> list[LabelEntry]:
+    """Return all non-null LabelEntry rows for a label.
+
+    Args:
+        label_id: Target label ID
+
+    Returns:
+        List of LabelEntry objects with their associated Entry loaded
+    """
+    return (
+        db.session.query(LabelEntry)
+        .filter(LabelEntry.label_id == label_id, LabelEntry.value.isnot(None))
+        .all()
+    )
+
+
+def get_labeled_entry_ids(label_id: int) -> set[int]:
+    """Return the set of Entry DB PKs that already have a value for this label.
+
+    Args:
+        label_id: Target label ID
+
+    Returns:
+        Set of Entry.id integers that have a non-null, non-deleted label value
+    """
+    rows = (
+        db.session.query(LabelEntry.entry_id)
+        .filter(
+            LabelEntry.label_id == label_id,
+            LabelEntry.value.isnot(None),
+            LabelEntry.is_deleted.is_(False),
+        )
+        .all()
+    )
+    return {row[0] for row in rows}
+
+
 # endregion
 
 
@@ -1002,9 +1109,6 @@ def new_queue(
     Returns:
         New Queue object
     """
-    import hashlib
-    import json
-
     # Generate ID from queue content (for URL compatibility)
     queue_id = hashlib.md5(json.dumps(queue_data).encode("utf-8")).hexdigest()
 
@@ -1200,7 +1304,14 @@ def register_entries(entries_ids: list[str], entries_type: str, dataset_id: int)
 
 # region Label-Entry Association
 # -----------------------------
-def add_entry_label(label_id, entry_uid, user_id, value, created=None) -> LabelEntry | None:
+def add_entry_label(
+    label_id: int,
+    entry_uid: int,
+    user_id: int,
+    value: str,
+    created: datetime | None = None,
+    metadata: dict | None = None,
+) -> LabelEntry | None:
     """Apply label to data entry.
 
     Args:
@@ -1209,6 +1320,7 @@ def add_entry_label(label_id, entry_uid, user_id, value, created=None) -> LabelE
         user_id: ID of labeling user
         value: Label value/text
         created: Optional timestamp override
+        metadata: Optional provenance metadata (e.g. LLM model/prompt settings)
 
     Returns:
         Created LabelEntry object or None
@@ -1232,20 +1344,21 @@ def add_entry_label(label_id, entry_uid, user_id, value, created=None) -> LabelE
             is_deleted=False,
             entry_id=entry.id,
             label_id=label.id,
+            meta=metadata,
         )
         db.session.add(label_entry)
         db.session.commit()
         return label_entry
 
 
-def get_labeled(label_id) -> Select:
+def get_labeled(label_id: int) -> Select:
     """Retrieve labeling history for a label.
 
     Args:
         label_id: Target label ID
 
     Returns:
-        SQLAlchemy Select query
+        SQLAlchemy Select query (includes label_metadata for export post-processing)
     """
     return (
         db.select(
@@ -1256,6 +1369,7 @@ def get_labeled(label_id) -> Select:
             Label.name.label("label"),
             LabelEntry.value,
             User.username.label("created_by"),
+            LabelEntry.meta.label("label_metadata"),
         )
         .filter_by(is_deleted=False, label_id=label_id)
         .join(LabelEntry.entry)
@@ -1263,6 +1377,174 @@ def get_labeled(label_id) -> Select:
         .join(LabelEntry.creator)
         .join(Entry.dataset)
     )
+
+
+def add_model_prediction(
+    entry_id: int,
+    label_id: int,
+    model_id: int,
+    version_id: int,
+    value: str | None,
+    score: float | None = None,
+    prediction_set: list | None = None,
+) -> ModelPrediction:
+    """Upsert an ML model prediction for an entry/label/version.
+
+    Replaces any existing prediction for the same (entry, label, version) triple.
+    """
+    db.session.execute(
+        db.delete(ModelPrediction).where(
+            ModelPrediction.entry_id == entry_id,
+            ModelPrediction.label_id == label_id,
+            ModelPrediction.version_id == version_id,
+        )
+    )
+    mp = ModelPrediction(
+        entry_id=entry_id,
+        label_id=label_id,
+        model_id=model_id,
+        version_id=version_id,
+        value=value,
+        score=score,
+        prediction_set=prediction_set,
+        created_at=datetime.now(),
+    )
+    db.session.add(mp)
+    db.session.commit()
+    return mp
+
+
+def get_model_predictions(
+    label_id: int, version_id: int | None = None
+) -> list[ModelPrediction]:
+    """Return model predictions for a label, optionally filtered to one version."""
+    q = db.select(ModelPrediction).filter_by(label_id=label_id)
+    if version_id is not None:
+        q = q.filter_by(version_id=version_id)
+    return list(db.session.execute(q).scalars())
+
+
+def export_model_predictions_csv(model_id: int, version_id: int | None = None, trusted_only: bool = False) -> str:
+    """Export model predictions as a CSV string.
+
+    Columns: entry_id, label, model_version, predicted_value, score, prediction_set, created_at
+    """
+    import csv as _csv
+    import io as _io
+
+    from olim.ml.models import MLModelVersion
+
+    q = (
+        db.select(
+            Entry.entry_id.label("entry_id"),
+            Label.name.label("label"),
+            MLModelVersion.version.label("model_version"),
+            ModelPrediction.value.label("predicted_value"),
+            ModelPrediction.score.label("score"),
+            ModelPrediction.prediction_set.label("prediction_set"),
+            ModelPrediction.created_at.label("created_at"),
+        )
+        .join(Entry, Entry.id == ModelPrediction.entry_id)
+        .join(Label, Label.id == ModelPrediction.label_id)
+        .join(MLModelVersion, MLModelVersion.id == ModelPrediction.version_id)
+        .where(ModelPrediction.model_id == model_id)
+        .order_by(MLModelVersion.version, Entry.entry_id)
+    )
+    if version_id is not None:
+        q = q.where(ModelPrediction.version_id == version_id)
+
+    rows = db.session.execute(q).mappings().all()
+    if trusted_only:
+        rows = [r for r in rows if r["prediction_set"] and len(r["prediction_set"]) == 1]
+
+    buf = _io.StringIO()
+    writer = _csv.writer(buf)
+    writer.writerow(["entry_id", "label", "model_version", "predicted_value", "score", "prediction_set", "created_at"])
+    for row in rows:
+        writer.writerow([
+            row["entry_id"],
+            row["label"],
+            row["model_version"],
+            row["predicted_value"],
+            row["score"],
+            row["prediction_set"],
+            row["created_at"],
+        ])
+    return buf.getvalue()
+
+
+def bulk_replace_model_predictions(
+    predictions: list[dict],
+    model_id: int,
+    version_id: int,
+) -> None:
+    """Delete all existing predictions for a model version then bulk-insert new ones.
+
+    Each dict in predictions must have: entry_id, label_id, value, score, prediction_set.
+    Uses bulk_insert_mappings for performance (no per-row commit).
+    """
+    from datetime import datetime as _dt
+
+    db.session.execute(
+        db.delete(ModelPrediction).where(
+            ModelPrediction.model_id == model_id,
+            ModelPrediction.version_id == version_id,
+        )
+    )
+    now = _dt.now()
+    rows = [
+        {
+            "entry_id": p["entry_id"],
+            "label_id": p["label_id"],
+            "model_id": model_id,
+            "version_id": version_id,
+            "value": p.get("value"),
+            "score": p.get("score"),
+            "prediction_set": p.get("prediction_set"),
+            "created_at": now,
+        }
+        for p in predictions
+    ]
+    db.session.bulk_insert_mappings(ModelPrediction, rows)  # type: ignore[arg-type]
+    db.session.commit()
+
+
+def delete_model_predictions(model_id: int, version_id: int) -> None:
+    """Delete all predictions for a specific model version."""
+    db.session.execute(
+        db.delete(ModelPrediction).where(
+            ModelPrediction.model_id == model_id,
+            ModelPrediction.version_id == version_id,
+        )
+    )
+    db.session.commit()
+
+
+def bulk_append_model_predictions(predictions: list[dict]) -> None:
+    """Bulk-insert model predictions without deleting existing ones.
+
+    Each dict must have: entry_id, label_id, model_id, version_id, value, score, prediction_set.
+    """
+    from datetime import datetime as _dt
+
+    if not predictions:
+        return
+    now = _dt.now()
+    rows = [
+        {
+            "entry_id": p["entry_id"],
+            "label_id": p["label_id"],
+            "model_id": p["model_id"],
+            "version_id": p["version_id"],
+            "value": p.get("value"),
+            "score": p.get("score"),
+            "prediction_set": p.get("prediction_set"),
+            "created_at": now,
+        }
+        for p in predictions
+    ]
+    db.session.bulk_insert_mappings(ModelPrediction, rows)  # type: ignore[arg-type]
+    db.session.commit()
 
 
 # endregion
@@ -1350,6 +1632,7 @@ def new_learning_task(
     user_id: int,
     project_id: int,
     data: dict | None = None,
+    assigned_to: int | None = None,
 ) -> LearningTask:
     """Create a new learning task.
 
@@ -1360,6 +1643,7 @@ def new_learning_task(
         user_id: ID of creating user
         project_id: ID of the project this task belongs to
         data: Optional initial task data (defaults to empty dict)
+        assigned_to: Optional user ID to assign the task to
 
     Returns:
         New LearningTask object
@@ -1373,6 +1657,7 @@ def new_learning_task(
         created=datetime.now(),
         created_by=user_id,
         is_deleted=False,
+        assigned_to=assigned_to,
     )
     db.session.add(task)
     db.session.commit()
@@ -1391,12 +1676,17 @@ def get_learning_task(task_id: int) -> LearningTask | None:
     return get_by(LearningTask, "id", task_id, True)
 
 
-def get_learning_tasks(project_id: int, state: str | None = None) -> list[LearningTask]:
-    """Retrieve all active learning tasks for a project with optional state filtering.
+def get_learning_tasks(
+    project_id: int,
+    state: str | None = None,
+    assigned_to: int | None = None,
+) -> list[LearningTask]:
+    """Retrieve all active learning tasks for a project with optional filtering.
 
     Args:
         project_id: Project ID to filter by
         state: Optional state to filter by
+        assigned_to: Optional user ID to filter by assignee
 
     Returns:
         List of LearningTask objects ordered by creation date (newest first)
@@ -1406,7 +1696,25 @@ def get_learning_tasks(project_id: int, state: str | None = None) -> list[Learni
     if state is not None:
         query = query.filter_by(state=state)
 
-    return list(db.session.execute(query.order_by(LearningTask.created.desc())).scalars())
+    if assigned_to is not None:
+        query = query.filter_by(assigned_to=assigned_to)
+
+    return list(
+        db.session.execute(query.order_by(LearningTask.created.desc())).scalars()
+    )
+
+
+def assign_learning_task(task_id: int, assigned_to: int | None) -> LearningTask | None:
+    """Assign (or unassign) a learning task to a user.
+
+    Args:
+        task_id: Task ID to update
+        assigned_to: User ID to assign to, or None to unassign
+
+    Returns:
+        Updated LearningTask or None if not found
+    """
+    return update_learning_task(task_id, assigned_to=assigned_to)
 
 
 def update_learning_task(task_id: int, **params) -> LearningTask | None:
@@ -1510,8 +1818,6 @@ def set_setting(
         Created or updated GlobalSetting object
     """
     if user_id is None:
-        from flask import session
-
         user_id = session.get("user_id", 1)  # Fallback to user 1 if no session
 
     setting = get_setting(key)
@@ -1555,8 +1861,6 @@ def delete_setting(key: str, user_id: int | None = None) -> GlobalSetting | None
         Deleted GlobalSetting object or None if not found
     """
     if user_id is None:
-        from flask import session
-
         user_id = session.get("user_id", 1)
 
     setting = get_setting(key)
@@ -1580,6 +1884,502 @@ def get_setting_value(key: str, default: str | None = None) -> str | None:
     if setting:
         return setting.value
     return default
+
+
+# endregion
+
+
+# region ML Model CRUD
+# --------------------
+
+
+def _ml_slugify(text: str) -> str:
+    """Convert text to a URL-friendly slug for ML model names."""
+    text = text.lower()
+    text = re.sub(r"[\s_]+", "-", text)
+    text = re.sub(r"[^a-z0-9-]", "", text)
+    text = re.sub(r"-+", "-", text)
+    return text.strip("-")
+
+
+def new_ml_model(
+    *,
+    name: str,
+    project_id: int,
+    created_by: int,
+    algorithm: str = "TfidfXGBoostClassifier",
+    model_type: str = "classification",
+    model_config: dict | None = None,
+    training_config: dict | None = None,
+    policy_type: str | None = None,
+    subsample_config: dict | list | None = None,
+    label_id: int | None = None,
+    description: str | None = None,
+) -> "MLModel":
+    """Create a new ML model with a unique slug.
+
+    Returns:
+        Created MLModel instance
+    """
+    from olim.ml.models import MLModel as _MLModel
+
+    base_slug = _ml_slugify(name)
+    slug = base_slug
+    counter = 1
+    while db.session.query(_MLModel).filter_by(slug=slug).first() is not None:
+        slug = f"{base_slug}-{counter}"
+        counter += 1
+
+    model = _MLModel(
+        slug=slug,
+        name=name,
+        description=description,
+        project_id=project_id,
+        label_id=label_id,
+        model_type=model_type,
+        algorithm=algorithm,
+        model_config=model_config or {},
+        training_config=training_config or {},
+        policy_type=policy_type,
+        subsample_config=subsample_config,
+        status="draft",
+        created=datetime.now(),
+        created_by=created_by,
+        is_deleted=False,
+    )
+    db.session.add(model)
+    db.session.commit()
+    return model
+
+
+def get_ml_model(model_id: int) -> "MLModel | None":
+    """Retrieve an ML model by ID (excludes soft-deleted)."""
+    from olim.ml.models import MLModel as _MLModel
+
+    return db.session.query(_MLModel).filter_by(id=model_id, is_deleted=False).first()
+
+
+def get_ml_model_by_slug(slug: str) -> "MLModel | None":
+    """Retrieve an ML model by slug (excludes soft-deleted)."""
+    from olim.ml.models import MLModel as _MLModel
+
+    return db.session.query(_MLModel).filter_by(slug=slug, is_deleted=False).first()
+
+
+def get_ml_models(
+    *,
+    project_id: int | None = None,
+    status: str | None = None,
+    label_id: int | None = None,
+    limit: int = 100,
+    offset: int = 0,
+) -> "list[MLModel]":
+    """List ML models with optional filters, ordered by creation date descending."""
+    from sqlalchemy import desc
+
+    from olim.ml.models import MLModel as _MLModel
+
+    query = db.session.query(_MLModel).filter_by(is_deleted=False)
+    if project_id is not None:
+        query = query.filter_by(project_id=project_id)
+    if status is not None:
+        query = query.filter_by(status=status)
+    if label_id is not None:
+        query = query.filter_by(label_id=label_id)
+    return query.order_by(desc(_MLModel.created)).limit(limit).offset(offset).all()
+
+
+def update_ml_model(model_id: int, **kwargs: Any) -> "MLModel":
+    """Update allowed fields on an ML model and commit.
+
+    Allowed fields: name, description, model_config, training_config,
+                    policy_type, subsample_config, status
+
+    Raises:
+        ValueError: If model not found
+    """
+    from olim.ml.models import MLModel as _MLModel
+
+    model = db.session.query(_MLModel).filter_by(id=model_id, is_deleted=False).first()
+    if model is None:
+        raise ValueError(f"Model {model_id} not found")
+
+    allowed = {"name", "description", "model_config", "training_config", "policy_type", "subsample_config", "status"}
+    for key, value in kwargs.items():
+        if key in allowed:
+            setattr(model, key, value)
+    db.session.commit()
+    return model
+
+
+def delete_ml_model(model_id: int, deleted_by: int) -> None:
+    """Soft-delete an ML model.
+
+    Raises:
+        ValueError: If model not found
+    """
+    from olim.ml.models import MLModel as _MLModel
+
+    model = db.session.query(_MLModel).filter_by(id=model_id, is_deleted=False).first()
+    if model is None:
+        raise ValueError(f"Model {model_id} not found")
+    model.is_deleted = True
+    model.deleted = datetime.now()
+    model.deleted_by = deleted_by
+    db.session.commit()
+
+
+# endregion
+
+
+# region ML Version CRUD
+# ----------------------
+
+
+def new_ml_version(
+    *,
+    model_id: int,
+    artifact_path: str,
+    n_train_samples: int,
+    n_val_samples: int,
+    metrics: dict,
+    created_by: int,
+    trained_at: datetime | None = None,
+    training_duration: float | None = None,
+    class_distribution: dict | None = None,
+    conformal_threshold: float | None = None,
+    cache_entries: list | None = None,
+    auto_activate: bool = True,
+) -> "MLModelVersion":
+    """Create a new ML model version, optionally auto-activating it."""
+    from sqlalchemy import desc
+
+    from olim.ml.models import MLModel as _MLModel, MLModelVersion as _MLModelVersion
+
+    last_version = (
+        db.session.query(_MLModelVersion)
+        .filter_by(model_id=model_id)
+        .order_by(desc(_MLModelVersion.version))
+        .first()
+    )
+    version_number = 1 if last_version is None else last_version.version + 1
+
+    version = _MLModelVersion(
+        model_id=model_id,
+        version=version_number,
+        artifact_path=artifact_path,
+        trained_at=trained_at or datetime.now(),
+        training_duration=training_duration,
+        n_train_samples=n_train_samples,
+        n_val_samples=n_val_samples,
+        class_distribution=class_distribution,
+        metrics=metrics,
+        conformal_threshold=conformal_threshold,
+        cache_entries=cache_entries,
+        is_active=False,
+        created=datetime.now(),
+        created_by=created_by,
+        is_deleted=False,
+    )
+    db.session.add(version)
+    db.session.flush()
+
+    if auto_activate:
+        activate_ml_version(version.id)
+
+    model = db.session.query(_MLModel).filter_by(id=model_id).first()
+    if model and version_number == 1:
+        model.status = "active"
+
+    db.session.commit()
+    return version
+
+
+def get_ml_version(version_id: int) -> "MLModelVersion | None":
+    """Retrieve an ML model version by ID."""
+    from olim.ml.models import MLModelVersion as _MLModelVersion
+
+    return db.session.query(_MLModelVersion).filter_by(id=version_id).first()
+
+
+def get_active_ml_version(model_id: int) -> "MLModelVersion | None":
+    """Retrieve the currently active version for a model."""
+    from olim.ml.models import MLModelVersion as _MLModelVersion
+
+    return (
+        db.session.query(_MLModelVersion)
+        .filter_by(model_id=model_id, is_active=True, is_deleted=False)
+        .first()
+    )
+
+
+def get_ml_versions(model_id: int, *, limit: int = 100, offset: int = 0) -> "list[MLModelVersion]":
+    """List all versions for a model, ordered by version number descending."""
+    from sqlalchemy import desc
+
+    from olim.ml.models import MLModelVersion as _MLModelVersion
+
+    return (
+        db.session.query(_MLModelVersion)
+        .filter_by(model_id=model_id, is_deleted=False)
+        .order_by(desc(_MLModelVersion.version))
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
+
+
+def activate_ml_version(version_id: int) -> "MLModelVersion":
+    """Activate a version, deactivating all others for the same model.
+
+    Raises:
+        ValueError: If version not found
+    """
+    from sqlalchemy import and_
+
+    from olim.ml.models import MLModelVersion as _MLModelVersion
+
+    version = db.session.query(_MLModelVersion).filter_by(id=version_id).first()
+    if version is None:
+        raise ValueError(f"Version {version_id} not found")
+
+    db.session.query(_MLModelVersion).filter(
+        and_(
+            _MLModelVersion.model_id == version.model_id,
+            _MLModelVersion.id != version_id,
+        )
+    ).update({"is_active": False})
+    version.is_active = True
+    db.session.commit()
+    return version
+
+
+# endregion
+
+
+# region Label helpers
+# --------------------
+
+
+def update_label(label_id: int, **kwargs: Any) -> "Label | None":
+    """Update fields on a Label and commit.
+
+    Returns the updated Label, or None if not found.
+    """
+    label = get_label(label_id)
+    if label is None:
+        return None
+    for key, value in kwargs.items():
+        setattr(label, key, value)
+    db.session.commit()
+    return label
+
+
+def link_label_to_model(label_id: int, model_id: int) -> None:
+    """Set label.ml_model_id and model.label_id, then commit."""
+    from olim.ml.models import MLModel as _MLModel
+
+    label = get_label(label_id)
+    model = db.session.query(_MLModel).filter_by(id=model_id, is_deleted=False).first()
+    if label is not None:
+        label.ml_model_id = model_id
+    if model is not None:
+        model.label_id = label_id
+    db.session.commit()
+
+
+def unlink_label_from_model(label_id: int, model_id: int) -> None:
+    """Clear label.ml_model_id and model.label_id, then commit."""
+    from olim.ml.models import MLModel as _MLModel
+
+    label = get_label(label_id)
+    model = db.session.query(_MLModel).filter_by(id=model_id, is_deleted=False).first()
+    if label is not None:
+        label.ml_model_id = None
+    if model is not None:
+        model.label_id = None
+    db.session.commit()
+
+
+# endregion
+
+
+# region CeleryTask helpers
+# -------------------------
+
+
+def get_celery_task(task_id: str | None) -> "CeleryTask | None":
+    """Retrieve a CeleryTask by its ID."""
+    if task_id is None:
+        return None
+    return db.session.get(CeleryTask, task_id)
+
+
+def get_started_celery_tasks() -> list["CeleryTask"]:
+    """Return all CeleryTask records currently in STARTED status."""
+    return CeleryTask.query.filter_by(status="STARTED").all()
+
+
+def get_celery_tasks_for_model(model_id: int | None = None, limit: int = 50) -> list["CeleryTask"]:
+    """Return training CeleryTask records, optionally filtered to a specific ML model.
+
+    When model_id is given, matches tasks whose kwargs or result JSON contains it.
+    """
+    query = db.session.query(CeleryTask).filter(CeleryTask.task_name == "learner.train_model")
+    if model_id is not None:
+        from sqlalchemy import String, cast, or_
+
+        kwargs_filter = cast(CeleryTask.kwargs["model_id"], String) == str(model_id)
+        result_filter = cast(CeleryTask.result["model_id"], String) == str(model_id)
+        query = query.filter(or_(kwargs_filter, result_filter))
+    return query.order_by(CeleryTask.created.desc()).limit(limit).all()
+
+
+def persist_celery_task(task: "CeleryTask") -> None:
+    """Add a new CeleryTask to the session and commit."""
+    db.session.add(task)
+    db.session.commit()
+
+
+# endregion
+
+
+# region Entry helpers
+# --------------------
+
+
+def get_entries_by_dataset(dataset_id: int) -> list["Entry"]:
+    """Return all Entry records for a given dataset."""
+    return db.session.query(Entry).filter_by(dataset_id=dataset_id).all()
+
+
+def get_entries_by_ids(entry_ids: list[int]) -> list["Entry"]:
+    """Return Entry records for a list of DB primary-key IDs."""
+    return db.session.query(Entry).filter(Entry.id.in_(entry_ids)).all()
+
+
+def get_dataset_entry_type(dataset_id: int) -> str | None:
+    """Return the entry type string for the first entry in a dataset, or None."""
+    return db.session.execute(
+        db.select(Entry.type).filter_by(dataset_id=dataset_id).limit(1)
+    ).scalar_one_or_none()
+
+
+def get_project_entries_page(project_id: int, offset: int, limit: int) -> list["Entry"]:
+    """Return a page of Entry records that belong to a project via its datasets."""
+    return (
+        db.session.query(Entry)
+        .join(Dataset, Entry.dataset_id == Dataset.id)
+        .join(ProjectDataset, Dataset.id == ProjectDataset.dataset_id)
+        .filter(ProjectDataset.project_id == project_id)
+        .filter(ProjectDataset.is_deleted.is_(False))
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
+
+
+# endregion
+
+
+# region Dataset cascade cleanup
+# --------------------------------
+
+
+def cleanup_dataset(dataset_id: int, user_id: int) -> dict:
+    """Cascade-delete a failed/unwanted dataset upload.
+
+    Soft-deletes the dataset, its project associations, and its label entry
+    associations; hard-deletes the bare Entry rows (which have no soft-delete).
+
+    Returns:
+        dict with keys success, entries_deleted, associations_deleted (or error)
+    """
+    try:
+        dataset = db.session.get(Dataset, dataset_id)
+        if not dataset:
+            return {"success": False, "error": "Dataset not found"}
+
+        entries = (
+            db.session.execute(db.select(Entry).filter_by(dataset_id=dataset_id))
+            .scalars()
+            .all()
+        )
+        entries_deleted = 0
+        for entry in entries:
+            label_entries = (
+                db.session.execute(db.select(LabelEntry).filter_by(entry_id=entry.id, is_deleted=False))
+                .scalars()
+                .all()
+            )
+            for le in label_entries:
+                del_controled(le, user_id)
+            db.session.delete(entry)
+            entries_deleted += 1
+
+        project_datasets = (
+            db.session.execute(db.select(ProjectDataset).filter_by(dataset_id=dataset_id, is_deleted=False))
+            .scalars()
+            .all()
+        )
+        associations_deleted = 0
+        for pd_row in project_datasets:
+            del_controled(pd_row, user_id)
+            associations_deleted += 1
+
+        del_controled(dataset, user_id)
+        db.session.commit()
+
+        return {"success": True, "entries_deleted": entries_deleted, "associations_deleted": associations_deleted}
+
+    except Exception as e:
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        return {"success": False, "error": str(e)}
+
+
+# endregion
+
+
+# region ML Audit Prediction
+# --------------------------
+
+
+def store_ml_audit_prediction(
+    model_id: int,
+    version_id: int,
+    input_text: str,
+    predicted_class: str | None,
+    prediction_set: list | None,
+    confidence: float | None,
+    class_probabilities: dict | None,
+    entry_id: int | None = None,
+    external_request_id: str | None = None,
+) -> "MLModelPrediction":
+    """Store a prediction in the ML audit log (MLModelPrediction table).
+
+    Returns:
+        Created MLModelPrediction instance
+    """
+    from olim.ml.models import MLModelPrediction as _MLModelPrediction
+
+    prediction = _MLModelPrediction(
+        model_id=model_id,
+        version_id=version_id,
+        input_text=input_text,
+        predicted_class=predicted_class,
+        prediction_set=prediction_set,
+        confidence=confidence,
+        class_probabilities=class_probabilities,
+        predicted_at=datetime.now(),
+        external_request_id=external_request_id,
+        entry_id=entry_id,
+    )
+    db.session.add(prediction)
+    db.session.commit()
+    return prediction
 
 
 # endregion

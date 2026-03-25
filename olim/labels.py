@@ -6,7 +6,6 @@ from flask import Response, flash, redirect, render_template, request, session, 
 from flask_babel import _
 
 from . import app, db, entry_types
-from .celery_app import launch_task_with_tracking
 from .database import (
     CeleryTask,
     del_label,
@@ -18,12 +17,15 @@ from .database import (
     new_label,
 )
 from .project import update_session_project
-from .tasks.active_learning import create_label_al
 from .utils.label import label_upload
 from .utils.queues import store_queue
 
 
 @app.route("/<int:project_id>", methods=["GET"])
+def project_home(project_id: int) -> ...:
+    return redirect(url_for("learning_tasks_list", project_id=project_id))
+
+
 @app.route("/<int:project_id>/labels", methods=["GET"])
 def labels(project_id: int) -> ...:
     # Check project_id and require data
@@ -73,13 +75,6 @@ def create_label(project_id: int) -> ...:
     label_name = request.form.get("label")
     label_type = request.form.get("label_type") or None
     label = new_label(label_name, session["user_id"], project_id, label_type=label_type)
-    launch_task_with_tracking(
-        create_label_al,
-        project_id=project_id,
-        label_id=label.id,
-        user_id=session["user_id"],
-        track_progress=True,
-    )
     flash(
         _("Label {label_name} successfully created").format(label_name=label.name),
         category="success",
@@ -132,7 +127,22 @@ def extract_labels(label_id: int) -> ...:
 
     label_str = label.name
     df = pd.read_sql(get_labeled(label_id), db.engine)
-    print(df.head())
+
+    # Replace __llm__ username with llm:<model_name> using stored metadata
+    def _resolve_creator(row: pd.Series) -> str:
+        if row["created_by"] == "__llm__":
+            meta = row.get("label_metadata") or {}
+            if isinstance(meta, str):
+                try:
+                    meta = json.loads(meta)
+                except Exception:
+                    meta = {}
+            return f"llm:{meta.get('model', 'llm')}"
+        return str(row["created_by"])
+
+    df["created_by"] = df.apply(_resolve_creator, axis=1)
+    df = df.drop(columns=["label_metadata"])
+
     dfs_entries = []
     for le in label.entries:
         if not le.is_deleted:

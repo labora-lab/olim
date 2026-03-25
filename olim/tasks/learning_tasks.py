@@ -12,8 +12,9 @@ from pydantic_ai.providers.ollama import OllamaProvider
 
 from .. import app as flask_app, entry_types
 from ..celery_app import app
-from ..database import add_entry_label, get_entry, get_label
+from ..database import add_entry_label, get_entry, get_label, get_or_create_llm_user
 from ..label_types import get_label_type_module, is_free_text_label
+from ..settings import DEBUG
 
 if TYPE_CHECKING:
     from celery import Task
@@ -31,7 +32,8 @@ def label_queue_with_llm(
     model: str,
     system_prompt: str,
     prompt_template: str,
-    **kwargs,
+    thinking: bool = False,
+    **kwargs: Any,
 ) -> dict[str, Any]:
     """Label a queue of entries using an LLM via Ollama.
 
@@ -46,6 +48,7 @@ def label_queue_with_llm(
         model: Model name (e.g., llama3.2)
         system_prompt: System prompt for the LLM
         prompt_template: Template for the user prompt with {text}, {label_name}, {label_options}
+        thinking: Enable model thinking/reasoning (for deepseek-r1, qwq, etc.)
         **kwargs: Additional task parameters
 
     Returns:
@@ -58,12 +61,7 @@ def label_queue_with_llm(
             - stats_by_label: dict of label name to value counts
     """
     with flask_app.app_context():
-        from ..database import get_learning_task
-
-        lt = get_learning_task(learning_task_id)
-        if not lt:
-            raise ValueError(f"LearningTask {learning_task_id} not found")
-        queue_ids: list[str] = lt.data.get("queue_ids", [])
+        llm_user_id = get_or_create_llm_user().id
 
         # Setup Ollama model using OllamaProvider
         # This is the correct way to use Ollama with PydanticAI
@@ -72,9 +70,14 @@ def label_queue_with_llm(
             provider=OllamaProvider(base_url=ollama_url),
         )
 
+        max_consecutive_errors: int = kwargs.get("max_consecutive_errors", 3)
         success_count = 0
+        consecutive_errors = 0
+        early_stop = False
+        early_stop_error: str | None = None
         errors = []
         stats_by_label: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        debug_conversations: list[dict] = []
 
         for idx, entry_id in enumerate(queue_ids):
             try:
@@ -142,8 +145,12 @@ def label_queue_with_llm(
                         label_options_str = "\n".join([f"- {opt[0]}" for opt in options])
 
                     # Format prompt
+                    label_description = (label_config.get("description") or "").strip()
                     user_prompt = prompt_template.format(
-                        text=full_text, label_name=label.name, label_options=label_options_str
+                        text=full_text,
+                        label_name=label.name,
+                        label_options=label_options_str,
+                        label_description=label_description,
                     )
 
                     # Create agent with output validation
@@ -156,7 +163,11 @@ def label_queue_with_llm(
                     )
 
                     # Run inference (PydanticAI handles validation automatically)
-                    result = agent.run_sync(user_prompt)
+                    # Pass think=True via extra_body for models that support it (deepseek-r1, qwq…)
+                    run_kwargs: dict[str, Any] = {}
+                    if thinking:
+                        run_kwargs["model_settings"] = {"extra_body": {"think": True}}
+                    result = agent.run_sync(user_prompt, **run_kwargs)
 
                     # Extract value (either string or .value attribute)
                     if is_free_text_label(label.label_type):
@@ -164,18 +175,40 @@ def label_queue_with_llm(
                     else:
                         predicted_value = result.output.value  # type: ignore[attr-defined]
 
+                    # Capture raw conversation in debug mode
+                    if DEBUG:
+                        import json as _json
+                        debug_conversations.append({
+                            "entry_id": entry_id,
+                            "label": label.name,
+                            "predicted": predicted_value,
+                            "messages": _json.loads(result.all_messages_json()),
+                        })
+
                     # Apply label to entry
                     add_entry_label(
                         label_id=label.id,
                         entry_uid=entry_obj.id,
-                        user_id=user_id,
+                        user_id=llm_user_id,
                         value=predicted_value,
+                        metadata={
+                            "model": model,
+                            "ollama_url": ollama_url,
+                            "system_prompt": system_prompt,
+                            "prompt_template": prompt_template,
+                            "thinking": thinking,
+                        },
                     )
 
                     success_count += 1
                     stats_by_label[label.name][predicted_value] += 1
 
+                # Successful entry — reset consecutive error counter
+                consecutive_errors = 0
+
             except Exception as e:
+                consecutive_errors += 1
+
                 # Get label name safely
                 label_name = "unknown"
                 try:
@@ -192,26 +225,30 @@ def label_queue_with_llm(
                     }
                 )
 
+                # Stop early if errors keep repeating — likely a configuration problem
+                if consecutive_errors >= max_consecutive_errors:
+                    early_stop = True
+                    early_stop_error = str(e)
+                    break
+
             # Update progress
             progress = ((idx + 1) / len(queue_ids)) * 100
-            print(
-                f"DEBUG: Updating task state - Entry {idx + 1}/{len(queue_ids)},"
-                " Progress: {progress}%"
-            )
-            self.update_state(
-                state="PROCESSING",
-                meta={
-                    "status": f"Labeled {idx + 1}/{len(queue_ids)} entries",
-                    "progress": progress,
-                },
-            )
-            print("DEBUG: Task state updated successfully")
+            meta: dict[str, Any] = {
+                "status": f"Labeled {idx + 1}/{len(queue_ids)} entries",
+                "progress": progress,
+            }
+            if DEBUG:
+                meta["debug_conversations"] = debug_conversations
+            self.update_state(state="PROCESSING", meta=meta)
 
         return {
             "success": True,
+            "early_stop": early_stop,
+            "early_stop_error": early_stop_error,
             "total_entries": len(queue_ids),
             "labeled_count": success_count,
             "error_count": len(errors),
             "errors": errors,
             "stats_by_label": dict(stats_by_label),
+            "debug_conversations": debug_conversations if DEBUG else [],
         }

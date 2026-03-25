@@ -2,9 +2,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from olim.entry_types.registry import get_entry_type_instance
+
 from .. import app as flask_app, settings
 from ..celery_app import app
-from ..database import db, get_label, get_project
+from ..database import (
+    get_entries_by_dataset,
+    get_label,
+    get_project,
+    link_label_to_model,
+    update_label,
+)
 from ..ml.models import MLModel
 from ..ml.services import MLModelService
 
@@ -39,9 +47,7 @@ def get_or_create_ml_model(label: Label, user_id: int) -> MLModel:
         user_id=user_id,
     )
 
-    # Link label to model
-    label.ml_model_id = model.id
-    db.session.commit()
+    link_label_to_model(label.id, model.id)
 
     print(f"Created MLModel {model.id} for Label {label.id}")
     return model
@@ -64,7 +70,7 @@ def sync_label_from_version(label: Label) -> None:
     if not version:
         return
 
-    # Sync metrics (convert dict to list of strings for old format)
+    updates: dict = {}
     if version.metrics:
         metrics_strs = []
         for key, value in version.metrics.items():
@@ -72,98 +78,19 @@ def sync_label_from_version(label: Label) -> None:
                 metrics_strs.append(f"{key}: {value:.4f}")
             else:
                 metrics_strs.append(f"{key}: {value}")
-        label.metrics = metrics_strs
-
-    # Sync cache (list of composite IDs to annotate)
+        updates["metrics"] = metrics_strs
     if version.cache_entries:
-        label.cache = version.cache_entries
+        updates["cache"] = version.cache_entries
+    if updates:
+        update_label(label.id, **updates)
 
-    db.session.commit()
 
-
-def update_label(label_id: int, **to_update) -> None:
-    """Helper to update label fields
-
-    Args:
-        label_id: Label ID
-        **to_update: Fields to update
-    """
+def _update_label_in_context(label_id: int, **to_update: Any) -> None:
+    """Update label fields within an app context (thin wrapper for Celery use)."""
     with flask_app.app_context():
-        label = get_label(label_id)
-        if not label:
+        result = update_label(label_id, **to_update)
+        if result is None:
             raise ValueError(f"Label {label_id} not found")
-
-        for col, value in to_update.items():
-            setattr(label, col, value)
-
-        db.session.commit()
-
-
-@app.task(bind=True, name="learner.create_label_al", track_progress=True)
-def create_label_al(
-    self,
-    project_id: int,
-    label_id: int,
-    user_id: int,
-    **__,
-) -> dict[str, Any]:
-    """Create ML model for label (replaces old AL initialization)
-
-    Args:
-        project_id: Project ID
-        label_id: Label ID
-        user_id: User ID triggering creation
-
-    Returns:
-        Success status and message
-    """
-    with flask_app.app_context():
-        label = get_label(label_id)
-        if not label:
-            raise ValueError(f"Label {label_id} not found")
-
-        # Check if label is free text type - if so, skip ML
-        from olim.label_types import is_free_text_label
-
-        if is_free_text_label(label.label_type):
-            # For free text labels, just mark as set up without creating ML
-            update_label(label_id, al_key="free_text_disabled")
-            return {
-                "success": True,
-                "errors": None,
-                "message": "Active learning disabled for free text labels",
-            }
-
-        # Create MLModel for this label
-        model = get_or_create_ml_model(label, user_id)
-
-        # Check if we have enough data to train initial version
-        label_entries = [le for le in label.entries if not le.deleted and le.value is not None]
-
-        if len(label_entries) >= 10:
-            # Train initial version
-            print(f"Training initial version for Label {label_id} ({len(label_entries)} samples)")
-            service = MLModelService(settings.WORK_PATH)
-            service.train_model(
-                model_id=model.id,
-                user_id=user_id,
-                force_retrain=True,
-            )
-
-            # Sync back to label for backward compatibility
-            sync_label_from_version(label)
-        else:
-            print(f"Not enough samples for initial training ({len(label_entries)}/10)")
-            # Set empty cache and metrics
-            label.metrics = []
-            label.cache = []
-            db.session.commit()
-
-        # Mark as initialized
-        label.al_key = str(label_id)
-        db.session.commit()
-
-        return {"success": True, "errors": None}
 
 
 @app.task(bind=True, name="learner.train_model", track_progress=True)
@@ -174,6 +101,7 @@ def train_model(
     label_id: int | None = None,
     model_id: int | None = None,
     force_retrain: bool = False,
+    training_overrides: dict | None = None,
     **__,
 ) -> dict[str, Any]:
     """Train ML model (supports both label-based and model-based training)
@@ -213,13 +141,14 @@ def train_model(
             model_id=model.id,
             user_id=user_id,
             force_retrain=force_retrain,
+            training_overrides=training_overrides,
         )
 
         # If training from label, sync metrics back
         if label is not None:
             sync_label_from_version(label)
 
-        # Convert metrics for return
+        # Convert metrics for return (include conformal_threshold for early-stop)
         metrics = []
         if version.metrics:
             for key, value in version.metrics.items():
@@ -227,6 +156,8 @@ def train_model(
                     metrics.append(f"{key}: {value:.4f}")
                 else:
                     metrics.append(f"{key}: {value}")
+        if version.conformal_threshold is not None:
+            metrics.append(f"conformal_threshold: {version.conformal_threshold:.4f}")
 
         return {
             "success": True,
@@ -308,12 +239,9 @@ def export_predictions(
         model = get_or_create_ml_model(label, user_id)
 
         # Get all entries from project datasets
-        from ..database import Entry
-
         all_entries = []
         for dataset in project.datasets:
-            entries = db.session.query(Entry).filter_by(dataset_id=dataset.id).all()
-            all_entries.extend(entries)
+            all_entries.extend(get_entries_by_dataset(dataset.id))
 
         print(f"Exporting predictions for {len(all_entries)} entries")
 
@@ -323,8 +251,6 @@ def export_predictions(
             composite_id = COMPOSITE_ID.format(dataset_id=entry.dataset_id, entry_id=entry.entry_id)
 
             # Extract text from entry using entry type system
-            from olim.entry_types.registry import get_entry_type_instance
-
             entry_type_instance = get_entry_type_instance(entry.type, entry.dataset_id)
             if entry_type_instance:
                 df = entry_type_instance.extract_texts(entry.entry_id, dataset_id=entry.dataset_id)

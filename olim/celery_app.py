@@ -20,6 +20,18 @@ from olim.database import CeleryTask, get_celery_task, get_started_celery_tasks,
 
 Task.__class_getitem__ = classmethod(lambda cls, *args, **kwargs: cls)  # type: ignore[attr-defined]
 
+# Human-readable display names for Celery tasks
+TASK_DISPLAY_NAMES: dict[str, str] = {
+    "learning_tasks.label_queue_with_llm": "LLM Auto-Labeling",
+    "learner.train_model": "Model Training",
+    "learner.add_label_value": "Add Label Value",
+    "learner.export_predictions": "Export Predictions",
+    "upload.process_batch": "Process Batch",
+    "upload.upload_dataset": "Upload Dataset",
+    "upload.save_chunk": "Save Chunk",
+    "upload.finalize_upload": "Finalize Upload",
+}
+
 load_dotenv()
 redis_port = os.getenv("REDIS_PORT", 6379)
 redis_host = os.getenv("REDIS_HOST", "localhost")

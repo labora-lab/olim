@@ -5,7 +5,7 @@
 <div class="container mx-auto max-w-3xl">
     <!-- Header -->
     <div class="mb-6">
-        <a href="{{ url_for('models_list') }}" class="text-purple-600 hover:text-purple-700 flex items-center mb-4">
+        <a href="{{ url_for('models_list', project_id=project_id) }}" class="text-purple-600 hover:text-purple-700 flex items-center mb-4">
             <i class="bi bi-arrow-left mr-2"></i>
             {{ _('Back to Models') }}
         </a>
@@ -18,7 +18,7 @@
 
     <!-- Create Form -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <form method="POST" action="{{ url_for('model_create') }}">
+        <form method="POST" action="{{ url_for('model_create', project_id=project_id) }}">
             <!-- Model Name -->
             <div class="mb-6">
                 <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
@@ -28,21 +28,6 @@
                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
                        placeholder="{{ _('e.g., Patient Diagnosis Classifier') }}">
                 <p class="mt-1 text-sm text-gray-500">{{ _('A descriptive name for your model') }}</p>
-            </div>
-
-            <!-- Project -->
-            <div class="mb-6">
-                <label for="project_id" class="block text-sm font-medium text-gray-700 mb-2">
-                    {{ _('Project') }} <span class="text-red-500">*</span>
-                </label>
-                <select name="project_id" id="project_id" required
-                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500">
-                    <option value="">{{ _('Select a project') }}</option>
-                    {% for project in projects %}
-                    <option value="{{ project.id }}">{{ project.name }}</option>
-                    {% endfor %}
-                </select>
-                <p class="mt-1 text-sm text-gray-500">{{ _('The project this model belongs to') }}</p>
             </div>
 
             <!-- Algorithm -->
@@ -86,7 +71,7 @@
 
             <!-- Actions -->
             <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
-                <a href="{{ url_for('models_list') }}"
+                <a href="{{ url_for('models_list', project_id=project_id) }}"
                    class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors">
                     {{ _('Cancel') }}
                 </a>

@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-VERSION = "0.3.0-rc2"
+VERSION = "0.4.0-rc1"
 """Version of the application"""
 
 ES_INDEX = "dataset-{dataset_id}"
@@ -172,6 +172,11 @@ PERMISSIONS = {
         "api.get_model_info",
         "api.predict_single",
         "api.predict_batch",
+        # Project home (redirects to learning tasks)
+        "project_home",
+        # Learning Tasks (assigned tasks visible to all users)
+        "learning_tasks_list",
+        "learning_task_view",
     ],
     "guest": ["static", "login"],
 }

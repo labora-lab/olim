@@ -111,6 +111,31 @@ class EntryTypeBase(ABC):
             f"{self.__class__.__name__} does not implement search functionality"
         )
 
+    def search_regex(
+        self,
+        _pattern: str,
+        _number: int,
+        **_kwargs,
+    ) -> list[dict]:
+        """Search entries by Python regex applied over text content.
+
+        Optional method - only implement if entry type supports regex search.
+
+        Args:
+            _pattern: Python regex pattern (case-insensitive)
+            _number: Maximum number of results to return
+            **_kwargs: Additional parameters (may include dataset_id, etc.)
+
+        Returns:
+            List of dicts with keys: entry_id, description, type
+
+        Raises:
+            NotImplementedError: If entry type doesn't support regex search
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} does not implement regex search functionality"
+        )
+
     def generate_upload_batches(
         self,
         _filename: str,

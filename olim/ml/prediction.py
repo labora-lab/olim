@@ -8,13 +8,10 @@ from __future__ import annotations
 
 from pathlib import Path
 from threading import Lock
-from typing import TYPE_CHECKING
 
+from olim.database import get_ml_version
 from olim.ml.artifacts import ArtifactManager
 from olim.ml.registry import ModelRegistry
-
-if TYPE_CHECKING:
-    pass
 
 
 class PredictionResult:
@@ -97,10 +94,7 @@ class PredictionEngine:
             version_number = version.version
         else:
             # Verify version exists
-            from olim import db
-            from olim.ml.models import MLModelVersion
-
-            version = db.session.query(MLModelVersion).filter_by(id=version_id).first()
+            version = get_ml_version(version_id)
             if version is None:
                 raise ValueError(f"Version {version_id} not found")
             version_number = version.version

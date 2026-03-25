@@ -1,7 +1,9 @@
 import csv
 import json
 import os
+import re
 from collections.abc import Generator
+from datetime import datetime
 from pathlib import Path
 from time import sleep, time
 from typing import Any
@@ -11,78 +13,18 @@ from charset_normalizer import from_bytes
 from elasticsearch import helpers
 from flask_babel import gettext as _
 
-from .. import app as flask_app, db, entry_types
+from .. import app as flask_app, entry_types
 from ..celery_app import app
-from ..database import Dataset, Entry, LabelEntry, ProjectDataset, del_controled, register_entries
+from ..database import cleanup_dataset, get_dataset, register_entries
+from ..functions import ensure_dir
 from ..settings import ES_INDEX, ES_SERVER, UPLOAD_BATCH_SIZE, UPLOAD_PATH, WORK_PATH
 from ..utils.es import create_index, get_es_conn
 
 
 def cleanup_failed_dataset(dataset_id: int, user_id: int = 1) -> dict:
     """Clean up a failed dataset upload by removing dataset and associated entries."""
-    try:
-        with flask_app.app_context():
-            # Get the dataset
-            dataset = db.session.get(Dataset, dataset_id)
-            if not dataset:
-                return {"success": False, "error": "Dataset not found"}
-
-            # Delete associated entries (hard delete since Entry doesn't inherit CreationControl)
-            entries = (
-                db.session.execute(db.select(Entry).filter_by(dataset_id=dataset_id))
-                .scalars()
-                .all()
-            )
-
-            entries_deleted = 0
-            for entry in entries:
-                # First delete any label associations
-                label_entries = (
-                    db.session.execute(
-                        db.select(LabelEntry).filter_by(entry_id=entry.id, is_deleted=False)
-                    )
-                    .scalars()
-                    .all()
-                )
-
-                for le in label_entries:
-                    del_controled(le, user_id)
-
-                # Then delete the entry itself
-                db.session.delete(entry)
-                entries_deleted += 1
-
-            # Soft delete project associations
-            project_datasets = (
-                db.session.execute(
-                    db.select(ProjectDataset).filter_by(dataset_id=dataset_id, is_deleted=False)
-                )
-                .scalars()
-                .all()
-            )
-
-            associations_deleted = 0
-            for pd in project_datasets:
-                del_controled(pd, user_id)
-                associations_deleted += 1
-
-            # Soft delete the dataset
-            del_controled(dataset, user_id)
-
-            db.session.commit()
-
-            return {
-                "success": True,
-                "entries_deleted": entries_deleted,
-                "associations_deleted": associations_deleted,
-            }
-
-    except Exception as e:
-        try:
-            db.session.rollback()
-        except:  # noqa
-            pass
-        return {"success": False, "error": str(e)}
+    with flask_app.app_context():
+        return cleanup_dataset(dataset_id, user_id)
 
 
 def cleanup_elasticsearch_index(index_name: str) -> bool:
@@ -162,8 +104,6 @@ def process_batch(
         ):
             # Extract the duplicate ID from the error message
             if "entry_id" in str(e):
-                import re
-
                 match = re.search(r"entry_id.*?=\(([^,)]+)", str(e))
                 duplicate_id = match.group(1) if match else "unknown"
                 raise Exception(
@@ -367,7 +307,7 @@ def upload_dataset(
 
     # Load CSV options from dataset record
     with flask_app.app_context():
-        dataset_record = db.session.get(Dataset, dataset_id)
+        dataset_record = get_dataset(dataset_id)
         if dataset_record:
             upload_params["sep"] = dataset_record.sep
             upload_params["encoding"] = dataset_record.encoding
@@ -378,8 +318,6 @@ def upload_dataset(
     jsonl_file = dataset_dir / f"{dataset_id}.jsonl"
 
     if jsonl_file.exists():
-        from datetime import datetime
-
         backup_name = f"{dataset_id}.jsonl.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         backup_path = dataset_dir / backup_name
         jsonl_file.rename(backup_path)

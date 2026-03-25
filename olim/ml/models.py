@@ -177,7 +177,7 @@ class MLModelVersion(db.Model, CreationControl):
     # Conformal prediction
     conformal_threshold: Mapped[float | None] = db.mapped_column(nullable=True)
 
-    # Active Learning cache
+    # Active Learning cache — list[dict] with keys: id, score, reason
     cache_entries: Mapped[list | None] = db.mapped_column(db.JSON, nullable=True)
 
     # Status

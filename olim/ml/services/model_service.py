@@ -7,12 +7,17 @@ unified interface for common operations.
 
 from __future__ import annotations
 
-from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from olim import db
-from olim.database import CeleryTask
+from olim.database import (
+    CeleryTask,
+    get_celery_task,
+    get_celery_tasks_for_model,
+    get_ml_version,
+    link_label_to_model,
+    store_ml_audit_prediction,
+)
 from olim.ml.artifacts import ArtifactManager
 from olim.ml.models import MLModel, MLModelPrediction, MLModelVersion
 from olim.ml.orchestrator import TrainingOrchestrator
@@ -84,8 +89,7 @@ class MLModelService:
         )
 
         # Link model to label
-        label.ml_model_id = model.id
-        db.session.commit()
+        link_label_to_model(label.id, model.id)
 
         return model
 
@@ -147,6 +151,7 @@ class MLModelService:
         model_id: int,
         user_id: int,
         force_retrain: bool = False,
+        training_overrides: dict | None = None,
     ) -> MLModelVersion:
         """Train a new version of the model
 
@@ -154,6 +159,7 @@ class MLModelService:
             model_id: ID of model to train
             user_id: ID of user triggering training
             force_retrain: Force retraining even if no new data
+            training_overrides: Optional per-run overrides (split, alpha, pool_size, n_clusters, cache_size)
 
         Returns:
             Created MLModelVersion instance
@@ -163,7 +169,10 @@ class MLModelService:
             RuntimeError: If training fails
         """
         return self.orchestrator.train_new_version(
-            model_id=model_id, user_id=user_id, force_retrain=force_retrain
+            model_id=model_id,
+            user_id=user_id,
+            force_retrain=force_retrain,
+            training_overrides=training_overrides,
         )
 
     def get_training_job(self, job_id: str) -> CeleryTask | None:
@@ -175,7 +184,7 @@ class MLModelService:
         Returns:
             CeleryTask instance or None
         """
-        return db.session.query(CeleryTask).filter_by(id=job_id).first()
+        return get_celery_task(job_id)
 
     def list_training_jobs(self, model_id: int | None = None, limit: int = 50) -> list[CeleryTask]:
         """List training jobs for ML models
@@ -187,18 +196,7 @@ class MLModelService:
         Returns:
             List of CeleryTask instances for training tasks
         """
-        query = db.session.query(CeleryTask).filter(CeleryTask.task_name == "learner.train_model")
-
-        if model_id is not None:
-            from sqlalchemy import String, cast, or_
-
-            kwargs_filter = cast(CeleryTask.kwargs["model_id"], String) == str(model_id)
-
-            result_filter = cast(CeleryTask.result["model_id"], String) == str(model_id)
-
-            query = query.filter(or_(kwargs_filter, result_filter))
-
-        return query.order_by(CeleryTask.created.desc()).limit(limit).all()
+        return get_celery_tasks_for_model(model_id, limit=limit)
 
     def get_version(self, version_id: int) -> MLModelVersion | None:
         """Get model version by ID
@@ -209,7 +207,7 @@ class MLModelService:
         Returns:
             MLModelVersion instance or None
         """
-        return db.session.query(MLModelVersion).filter_by(id=version_id).first()
+        return get_ml_version(version_id)
 
     def get_active_version(self, model_id: int) -> MLModelVersion | None:
         """Get active version of a model
@@ -315,7 +313,7 @@ class MLModelService:
         Returns:
             Created MLModelPrediction instance
         """
-        prediction = MLModelPrediction(
+        return store_ml_audit_prediction(
             model_id=model_id,
             version_id=version_id,
             input_text=input_text,
@@ -323,15 +321,9 @@ class MLModelService:
             prediction_set=result.prediction_set,
             confidence=result.confidence,
             class_probabilities=result.probabilities,
-            predicted_at=datetime.now(),
-            external_request_id=external_request_id,
             entry_id=entry_id,
+            external_request_id=external_request_id,
         )
-
-        db.session.add(prediction)
-        db.session.commit()
-
-        return prediction
 
     def get_next_entries(self, model_id: int, n: int = 10) -> list[int]:
         """Get next entries for active learning

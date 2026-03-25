@@ -15,11 +15,14 @@ from flask import (
 from flask_babel import _
 
 from .. import app
+from ..auth import role_has_permission as has_permission
 from ..database import (
+    assign_learning_task,
     delete_learning_task,
     get_datasets,
     get_learning_task,
     get_learning_tasks,
+    get_users,
     new_learning_task,
     update_learning_task,
 )
@@ -69,16 +72,16 @@ def get_available_configurations() -> list[dict]:
             try:
                 with open(file_path, encoding="utf-8") as f:
                     config = json.load(f)
-                    configurations.append(
-                        {
-                            "filename": file_path.stem,
-                            "name": config.get("name", file_path.stem),
-                            "description": config.get("description", ""),
-                            "steps": len(config.get("sequence", [])),
-                        }
-                    )
+                    configurations.append({
+                        "filename": file_path.stem,
+                        "name": config.get("name", file_path.stem),
+                        "description": config.get("description", ""),
+                        "steps": len(config.get("sequence", [])),
+                        "order": config.get("order", 999),
+                    })
             except (OSError, json.JSONDecodeError):
                 continue
+    configurations.sort(key=lambda c: (c["order"], c["name"].lower()))
     return configurations
 
 
@@ -145,13 +148,22 @@ def learning_tasks_list(project_id: int) -> ...:
     if res is not None:
         return res
 
-    tasks = get_learning_tasks(project_id)
+    user_id: int = session["user_id"]
+    is_admin = has_permission("admin")
+
+    my_tasks = get_learning_tasks(project_id, assigned_to=user_id)
+    all_tasks = get_learning_tasks(project_id) if is_admin else []
+    users = get_users() if is_admin else []
     configurations = get_available_configurations()
+
     return render_template(
         "learning-tasks.html",
-        tasks=tasks,
+        my_tasks=my_tasks,
+        all_tasks=all_tasks,
+        users=users,
         configurations=configurations,
         available_states=list(STATE_REGISTRY.keys()),
+        is_admin=is_admin,
     )
 
 
@@ -209,6 +221,9 @@ def create_learning_task(project_id: int) -> ...:
     # Get initial state from first step
     initial_state = initial_setup["sequence"][0]["state"]
 
+    assigned_to_raw = request.form.get("assigned_to", "").strip()
+    assigned_to: int | None = int(assigned_to_raw) if assigned_to_raw.isdigit() else None
+
     task = new_learning_task(
         name=name,
         state=initial_state,
@@ -216,48 +231,12 @@ def create_learning_task(project_id: int) -> ...:
         user_id=session["user_id"],
         project_id=project_id,
         data={},
+        assigned_to=assigned_to,
     )
 
     flash(_("Learning task created successfully"), "success")
     return redirect(url_for("learning_task_view", project_id=project_id, task_id=task.id))
 
-
-@app.route("/<int:project_id>/tasks/configurations/upload", methods=["POST"])
-def upload_configuration(project_id: int) -> ...:
-    """Upload a new configuration to the configurations folder."""
-    res = update_session_project(project_id)
-    if res is not None:
-        return res
-
-    uploaded_file = request.files.get("config_file")
-    if not uploaded_file or not uploaded_file.filename:
-        flash(_("Please upload a configuration file"), "error")
-        return redirect(url_for("learning_tasks_list", project_id=project_id))
-
-    try:
-        config = json.load(uploaded_file.stream)
-        valid, error_msg = validate_configuration(config)
-        if not valid:
-            flash(error_msg, "error")
-            return redirect(url_for("learning_tasks_list", project_id=project_id))
-
-        # Use provided name or filename
-        config_name = request.form.get("config_name", "").strip()
-        if not config_name:
-            config_name = Path(uploaded_file.filename).stem
-
-        # Sanitize filename
-        config_name = "".join(c for c in config_name if c.isalnum() or c in "-_")
-
-        if save_configuration(config_name, config):
-            flash(_("Configuration uploaded successfully"), "success")
-        else:
-            flash(_("Failed to save configuration"), "error")
-
-    except json.JSONDecodeError:
-        flash(_("Invalid JSON file"), "error")
-
-    return redirect(url_for("learning_tasks_list", project_id=project_id))
 
 
 @app.route("/<int:project_id>/tasks/<int:task_id>/delete", methods=["GET", "POST"])
@@ -271,6 +250,28 @@ def delete_learning_task_route(project_id: int, task_id: int) -> ...:
         flash(_("Learning task deleted successfully"), "success")
     else:
         flash(_("Learning task not found"), "error")
+
+    return redirect(url_for("learning_tasks_list", project_id=project_id))
+
+
+@app.route("/<int:project_id>/tasks/<int:task_id>/assign", methods=["POST"])
+def assign_learning_task_route(project_id: int, task_id: int) -> ...:
+    """Assign a learning task to a user."""
+    res = update_session_project(project_id)
+    if res is not None:
+        return res
+
+    if not has_permission("admin"):
+        abort(403)
+
+    assigned_to_raw = request.form.get("assigned_to", "").strip()
+    assigned_to: int | None = int(assigned_to_raw) if assigned_to_raw.isdigit() else None
+
+    task = assign_learning_task(task_id, assigned_to)
+    if task:
+        flash(_("Task assigned successfully"), "success")
+    else:
+        flash(_("Task not found"), "error")
 
     return redirect(url_for("learning_tasks_list", project_id=project_id))
 
@@ -353,16 +354,9 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
 
     # Get user_id from session (same way as labels.py and other modules)
     is_htmx = request.headers.get("HX-Request") == "true"
-    print(
-        f"DEBUG learning_task_view: is_htmx={is_htmx}, session keys: {session.keys()}, "
-        f"user_id in session: {'user_id' in session}"
-    )
     try:
-        user_id = session["user_id"]
-        print(f"DEBUG learning_task_view: Got user_id from session: {user_id}")
-        params["_user_id"] = user_id
+        params["_user_id"] = session["user_id"]
     except KeyError:
-        print("DEBUG learning_task_view: KeyError - user_id not in session")
         params["_user_id"] = None
 
     # Instantiate state with data and params

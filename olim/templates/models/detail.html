@@ -5,7 +5,7 @@
 <div class="container mx-auto max-w-7xl">
     <!-- Header -->
     <div class="mb-6">
-        <a href="{{ url_for('models_list') }}" class="text-purple-600 hover:text-purple-700 flex items-center mb-4">
+        <a href="{{ url_for('models_list', project_id=project_id) }}" class="text-purple-600 hover:text-purple-700 flex items-center mb-4">
             <i class="bi bi-arrow-left mr-2"></i>
             {{ _('Back to Models') }}
         </a>
@@ -43,13 +43,25 @@
                 </div>
             </div>
             <div class="flex space-x-2">
-                <a href="{{ url_for('model_predict', model_id=model.id) }}"
+                <a href="{{ url_for('model_predict', project_id=project_id, model_id=model.id) }}"
                    {% if not active_version %}disabled aria-disabled="true" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-400 bg-gray-300 rounded-lg cursor-not-allowed"
                    {% else %}class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-colors"{% endif %}>
                     <i class="bi bi-lightning mr-2"></i>
                     {{ _('Test Predictions') }}
                 </a>
-                <form method="POST" action="{{ url_for('model_train', model_id=model.id) }}" class="inline">
+                <a href="{{ url_for('model_export_predictions', project_id=project_id, model_id=model.id) }}"
+                   {% if not active_version %}aria-disabled="true" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-400 bg-gray-300 rounded-lg cursor-not-allowed pointer-events-none"
+                   {% else %}class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors"{% endif %}>
+                    <i class="bi bi-download mr-2"></i>
+                    {{ _('Export All') }}
+                </a>
+                <a href="{{ url_for('model_export_predictions', project_id=project_id, model_id=model.id, trusted_only=1) }}"
+                   {% if not active_version %}aria-disabled="true" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-400 bg-gray-300 rounded-lg cursor-not-allowed pointer-events-none"
+                   {% else %}class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors"{% endif %}>
+                    <i class="bi bi-shield-check mr-2"></i>
+                    {{ _('Export Trusted') }}
+                </a>
+                <form method="POST" action="{{ url_for('model_train', project_id=project_id, model_id=model.id) }}" class="inline">
                     <button type="submit"
                             {% if not linked_label %}disabled title="{{ _('Link a label before training') }}"{% endif %}
                             class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
@@ -96,16 +108,26 @@
                     <h3 class="text-sm font-semibold text-gray-700 mb-3">{{ _('Metrics') }}</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {% for metric_name, metric_value in active_version.metrics.items() %}
+                        {% if not metric_name.endswith('_ci') %}
                         <div class="bg-gray-50 rounded-lg p-3 text-center">
                             <div class="text-xs text-gray-500 uppercase">{{ metric_name }}</div>
                             <div class="text-lg font-bold text-purple-600">
-                                {% if metric_value is number %}
+                                {% if metric_name == 'coverage' %}
+                                {{ "%.1f%%"|format(metric_value * 100) }}
+                                {% elif metric_value is number %}
                                 {{ "%.3f"|format(metric_value) }}
                                 {% else %}
                                 {{ metric_value }}
                                 {% endif %}
                             </div>
+                            {% set ci = active_version.metrics.get(metric_name + '_ci') %}
+                            {% if ci %}
+                            <div class="text-xs text-gray-400 mt-1">
+                                [{{ "%.3f"|format(ci[0]) }}–{{ "%.3f"|format(ci[1]) }}]
+                            </div>
+                            {% endif %}
                         </div>
+                        {% endif %}
                         {% endfor %}
                     </div>
                 </div>
@@ -172,7 +194,7 @@
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     {% if not version.is_active %}
-                                    <form method="POST" action="{{ url_for('version_activate', model_id=model.id, version_id=version.id) }}" class="inline">
+                                    <form method="POST" action="{{ url_for('version_activate', project_id=project_id, model_id=model.id, version_id=version.id) }}" class="inline">
                                         <button type="submit"
                                                 class="inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-purple-600 rounded hover:bg-purple-700 focus:ring-2 focus:outline-none focus:ring-purple-300">
                                             {{ _('Activate') }}
@@ -303,7 +325,7 @@
                         <div class="text-xs text-gray-500">ID: {{ linked_label.id }}</div>
                     </div>
                 </div>
-                <form method="POST" action="{{ url_for('model_unlink_label', model_id=model.id) }}">
+                <form method="POST" action="{{ url_for('model_unlink_label', project_id=project_id, model_id=model.id) }}">
                     <button type="submit"
                             class="w-full px-3 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors">
                         <i class="bi bi-x-circle mr-2"></i>
@@ -324,7 +346,7 @@
                     <i class="bi bi-link-45deg mr-2"></i>
                     {{ _('Link to Label') }}
                 </button>
-                <form id="link-label-form" method="POST" action="{{ url_for('model_link_label', model_id=model.id) }}" class="hidden mt-3">
+                <form id="link-label-form" method="POST" action="{{ url_for('model_link_label', project_id=project_id, model_id=model.id) }}" class="hidden mt-3">
                     <label for="label_id" class="block text-xs font-medium text-gray-700 mb-1">
                         {{ _('Select Label') }}
                     </label>
@@ -355,6 +377,31 @@
                 {% endif %}
             </div>
 
+            <!-- Confidence Level -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                <h3 class="font-semibold text-gray-900 mb-3 flex items-center">
+                    <i class="bi bi-shield-check text-purple-600 mr-2"></i>
+                    {{ _('Confidence Level') }}
+                </h3>
+                <form method="POST" action="{{ url_for('model_update_alpha', project_id=project_id, model_id=model.id) }}">
+                    <label class="block text-sm text-gray-600 mb-1">{{ _('Alpha (miscoverage rate)') }}</label>
+                    <input type="number" name="alpha" step="0.01" min="0.01" max="0.5"
+                           value="{{ model.training_config.get('alpha', '') if model.training_config else '' }}"
+                           placeholder="{{ _('Global default (0.1)') }}"
+                           class="block w-full mb-1 rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 text-sm">
+                    <p class="text-xs text-gray-400 mb-2">{{ _('Lower = stricter. Takes effect on next training.') }}</p>
+                    <button type="submit"
+                            class="w-full px-3 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700">
+                        {{ _('Save') }}
+                    </button>
+                </form>
+                {% if active_version and active_version.conformal_threshold is not none %}
+                <div class="mt-3 text-xs text-gray-500">
+                    {{ _('Current threshold:') }} <code>{{ "%.4f"|format(active_version.conformal_threshold) }}</code>
+                </div>
+                {% endif %}
+            </div>
+
             <!-- Danger Zone -->
             <div class="bg-white rounded-lg shadow-sm border border-red-200 p-6">
                 <h2 class="text-lg font-semibold text-red-900 mb-4">{{ _('Danger Zone') }}</h2>
@@ -364,7 +411,7 @@
                     <p class="text-xs text-red-700">{{ _('Cannot delete: model is linked to a label. Unlink it first.') }}</p>
                 </div>
                 {% endif %}
-                <form method="POST" action="{{ url_for('model_delete', model_id=model.id) }}"
+                <form method="POST" action="{{ url_for('model_delete', project_id=project_id, model_id=model.id) }}"
                       onsubmit="return confirm('{{ _('Are you sure you want to delete this model? This action cannot be undone.') }}');">
                     <button type="submit"
                             {% if model.label_id %}disabled{% endif %}

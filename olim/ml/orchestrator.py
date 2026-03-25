@@ -2,12 +2,10 @@
 Training Orchestrator for ML Models
 
 This module orchestrates the complete training lifecycle:
-1. Load model configuration
-2. Prepare training data
-3. Train the model using ActiveLearningBackend
-4. Save artifacts via ArtifactManager
-5. Create and activate new MLModelVersion
-6. Update model metrics
+1. Load labeled data from the database
+2. Train ConformalPredictor directly (no in-memory full dataset)
+3. Rank unlabeled project entries in paginated batches for the uncertainty cache
+4. Save artifacts and register a new MLModelVersion
 """
 
 from __future__ import annotations
@@ -15,450 +13,665 @@ from __future__ import annotations
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.metrics import pairwise_distances_argmin_min as dist_argmin
+from sklearn.preprocessing import LabelEncoder
 
 from olim import db
-from olim.learner.public_api import ActiveLearningBackend
+from olim.database import (
+    Entry,
+    Label,
+    add_model_prediction,
+    bulk_append_model_predictions,
+    delete_model_predictions,
+    get_entries_by_ids,
+    get_label,
+    get_label_entries,
+    get_project_entries_page,
+    get_setting_value,
+    update_ml_model,
+)
+from olim.entry_types.registry import get_entry_type_instance
+from olim.label_types import get_label_type_module
 from olim.ml.artifacts import ArtifactManager
+from olim.ml.classifiers.conformal import ConformalPredictor
+from olim.ml.classifiers.tfidf_sklearn import (
+    TfidfDecisionTreeClassifier,
+    TfidfLightGBMClassifier,
+    TfidfLogisticRegressionClassifier,
+    TfidfXGBoostClassifier,
+)
+from olim.ml.metrics import accuracy, auc_roc, bootstrap_metric
 from olim.ml.registry import ModelRegistry
+from olim.settings import ES_INDEX
+from olim.utils.es import es_search
 
 if TYPE_CHECKING:
-    from olim.database import Entry, Label
     from olim.ml.models import MLModel, MLModelVersion
+
+AVAILABLE_MODELS = {
+    "TfidfXGBoostClassifier": TfidfXGBoostClassifier,
+    "TfidfLogisticRegressionClassifier": TfidfLogisticRegressionClassifier,
+    "TfidfDecisionTreeClassifier": TfidfDecisionTreeClassifier,
+    "TfidfLightGBMClassifier": TfidfLightGBMClassifier,
+}
 
 
 class TrainingOrchestrator:
-    """Orchestrator for ML model training lifecycle
-
-    Manages the complete training process from data preparation to
-    artifact storage and version management.
-    """
+    """Orchestrator for ML model training lifecycle."""
 
     def __init__(self, work_path: Path | str) -> None:
-        """Initialize TrainingOrchestrator
-
-        Args:
-            work_path: Base path for storing artifacts (e.g., WORK_PATH)
-        """
         self.work_path = Path(work_path)
         self.artifact_manager = ArtifactManager(self.work_path / "ml_models")
         self.registry = ModelRegistry()
+
+    # ------------------------------------------------------------------ #
+    # Public API                                                           #
+    # ------------------------------------------------------------------ #
 
     def train_new_version(
         self,
         model_id: int,
         user_id: int,
         force_retrain: bool = False,
+        training_overrides: dict | None = None,
     ) -> MLModelVersion:
-        """Train a new version of the model
+        """Train a new version of the model.
 
         Args:
             model_id: ID of the MLModel to train
             user_id: ID of the user triggering training
-            force_retrain: Force retraining even if no new data
+            force_retrain: Unused; kept for API compatibility
 
         Returns:
             Created MLModelVersion instance
-
-        Raises:
-            ValueError: If model not found or invalid configuration
-            RuntimeError: If training fails
         """
-        # Get model from registry
         model = self.registry.get_model(model_id)
         if model is None:
             raise ValueError(f"Model {model_id} not found")
 
-        # Update model status to 'training'
-        model.status = "training"
-        db.session.commit()
+        update_ml_model(model.id, status="training")
 
         start_time = time.time()
 
+        overrides = training_overrides or {}
         try:
-            # Prepare training data
-            train_data, val_data, fields = self._prepare_training_data(model)
+            # 1. Load labeled data
+            train_data, fields = self._prepare_training_data(model)
 
-            if not train_data:
-                raise ValueError("No training data available")
+            # 2. Train ConformalPredictor directly
+            conformal, val_list, label_values = self._build_and_train_conformal(
+                model, train_data, overrides
+            )
 
-            # Initialize ActiveLearningBackend
-            learner = self._initialize_learner(model, train_data, val_data, fields)
+            # 3. Rank unlabeled entries in batches → uncertainty cache
+            labeled_ids = set(train_data.keys())
+            cache_entries, coverage = self._rank_entries_batched(conformal, model, fields, labeled_ids, overrides=overrides)
 
-            # Train the model (using private _train method)
-            learner._train()
+            # 4. Metrics from held-out validation split
+            metrics = self._compute_metrics(conformal, val_list)
+            if coverage is not None:
+                metrics["coverage"] = round(coverage, 4)
 
-            # Calculate training duration
             training_duration = time.time() - start_time
 
-            # Get next version number
+            # 5. Persist artifacts
+            encoder = LabelEncoder()
+            encoder.fit(label_values)
+
             last_version = self.registry.get_active_version(model_id)
             version_number = 1 if last_version is None else last_version.version + 1
 
-            # Save artifacts
             artifact_path = self.artifact_manager.save_artifacts(
                 model_id=model_id,
                 version=version_number,
-                learner=learner,
+                model=conformal,
+                encoder=encoder,
+                policy=getattr(conformal, "_policy", None),
                 fields=fields,
             )
 
-            # Extract metrics
-            metrics = self._extract_metrics(learner)
+            # 6. Conformal threshold (set during calibration).
+            # threshold is annotated list[float]|None but is actually a numpy scalar after training.
+            raw_threshold = getattr(conformal, "threshold", None)
+            try:
+                conformal_threshold = float(raw_threshold) if raw_threshold is not None else None  # type: ignore[arg-type]
+            except (TypeError, ValueError):
+                conformal_threshold = None
 
-            # Get class distribution
-            class_distribution = self._get_class_distribution(train_data)
-
-            # Get conformal threshold if available
-            conformal_threshold = None
-            if hasattr(learner, "_policy") and learner._policy is not None:
-                if hasattr(learner._policy, "threshold"):
-                    conformal_threshold = float(learner._policy.threshold)
-
-            # Get cache entries for active learning
-            cache_entries = learner._cached_subsample if learner._cached_subsample else None
-
-            # Create new version
+            # 7. Register version
             version = self.registry.create_version(
                 model_id=model_id,
                 artifact_path=str(artifact_path),
                 n_train_samples=len(train_data),
-                n_val_samples=len(val_data),
+                n_val_samples=len(val_list),
                 metrics=metrics,
                 created_by=user_id,
                 trained_at=datetime.now(),
                 training_duration=training_duration,
-                class_distribution=class_distribution,
+                class_distribution=self._get_class_distribution(train_data),
                 conformal_threshold=conformal_threshold,
                 cache_entries=cache_entries,
                 auto_activate=True,
             )
 
-            # Update model status to 'active'
-            model.status = "active"
-            db.session.commit()
+            update_ml_model(model.id, status="active")
+
+            # 8. Store model predictions for all unlabeled entries
+            if model.label_id is not None:
+                self._store_full_predictions(
+                    conformal, encoder, model, version, cache_entries, fields, labeled_ids
+                )
 
             return version
 
         except Exception as e:
-            # Rollback and update status on failure
-            model.status = "draft"
-            db.session.commit()
+            update_ml_model(model.id, status="draft")
             raise RuntimeError(f"Training failed: {e}") from e
+
+    # ------------------------------------------------------------------ #
+    # Data loading                                                         #
+    # ------------------------------------------------------------------ #
 
     def _prepare_training_data(
         self, model: MLModel
-    ) -> tuple[dict[int, tuple[str, int]], dict[int, tuple[str, int]], list[str]]:
-        """Prepare training and validation data from Label
-
-        Args:
-            model: MLModel instance
+    ) -> tuple[dict[int, tuple[str, int]], list[str]]:
+        """Load labeled entries from the DB and extract their texts.
 
         Returns:
-            Tuple of (train_data, val_data, fields)
+            train_data: {entry_db_id: (text, label_idx)}
+            fields: list of text field names
         """
-        # If model is linked to a label, use label data
-        if model.label_id is not None:
-            from olim.database import Label, LabelEntry
-
-            label = db.session.query(Label).filter_by(id=model.label_id).first()
-
-            if label is None:
-                raise ValueError(f"Label {model.label_id} not found")
-
-            # Get label entries with values
-            label_entries = (
-                db.session.query(LabelEntry)
-                .filter(LabelEntry.label_id == label.id, LabelEntry.value.isnot(None))
-                .all()
-            )
-
-            if not label_entries:
-                raise ValueError(f"No labeled data found for label {label.id}")
-
-            # Get fields from label settings or model config
-            fields = self._get_fields_from_label(label)
-
-            # Build dataset
-            train_data = {}
-            val_data = {}
-
-            # Get label value encoder mapping
-            label_values = sorted({le.value for le in label_entries if le.value is not None})
-            value_to_idx = {val: idx for idx, val in enumerate(label_values)}
-
-            for label_entry in label_entries:
-                entry = label_entry.entry
-
-                # Get entry text based on fields
-                text = self._extract_entry_text(entry, fields)
-
-                # Encode label value
-                label_idx = value_to_idx[label_entry.value]
-
-                # Add to train_data (80/20 split can be handled by ActiveLearningBackend)
-                train_data[entry.id] = (text, label_idx)
-
-            # ActiveLearningBackend will handle train/val split internally
-            # For now, return empty val_data
-            return train_data, val_data, fields
-
-        else:
-            # Model not linked to label - would need custom data loading logic
-            raise ValueError(
-                "Model is not linked to a label. Custom data loading not yet implemented."
-            )
-
-    def _get_fields_from_label(self, label: Label) -> list[str]:
-        """Extract fields from label configuration
-
-        Args:
-            label: Label instance
-
-        Returns:
-            List of field names to use for training
-        """
-        # Check label learner_parameters
-        if label.learner_parameters and "fields" in label.learner_parameters:
-            return label.learner_parameters["fields"]
-
-        # Default to all text fields from entry type
-        # This is a simplified version - real implementation would inspect entry schema
-        return ["text"]
-
-    def _extract_entry_text(self, entry: Entry, fields: list[str]) -> str:
-        """Extract text from entry based on fields
-
-        Args:
-            entry: Entry instance
-            fields: List of field names to extract
-
-        Returns:
-            Concatenated text from specified fields
-        """
-        from olim.entry_types.registry import get_entry_type_instance
-
-        # Get entry type instance
-        entry_type_instance = get_entry_type_instance(entry.type)
-
-        if entry_type_instance is None:
-            # Fallback to entry_id if entry type not found
-            return str(entry.entry_id)
-
-        # Extract texts using entry type system
-        df = entry_type_instance.extract_texts(entry.entry_id, dataset_id=entry.dataset_id)
-
-        if df.empty:
-            return str(entry.entry_id)
-
-        # Concatenate specified fields
-        text_parts = []
-        for field in fields:
-            if field in df.columns:
-                text_parts.append(str(df[field].iloc[0]))
-
-        # If no fields found, use all text columns
-        if not text_parts:
-            for col in df.columns:
-                if col != "entry_id" and df[col].dtype == object:
-                    text_parts.append(str(df[col].iloc[0]))
-
-        return " ".join(text_parts) if text_parts else str(entry.entry_id)
-
-    def _initialize_learner(
-        self,
-        model: MLModel,
-        train_data: dict,
-        val_data: dict,
-        fields: list[str],
-    ) -> ActiveLearningBackend:
-        """Initialize ActiveLearningBackend with model configuration
-
-        Args:
-            model: MLModel instance
-            train_data: Training data dictionary
-            val_data: Validation data dictionary
-            fields: List of field names
-
-        Returns:
-            Initialized ActiveLearningBackend instance
-
-        Raises:
-            ValueError: If algorithm not found or initialization fails
-        """
-        # Get label values from the linked label
-        from olim.database import get_label
-        from olim.label_types import get_label_type_module
-
         if model.label_id is None:
             raise ValueError("Model is not linked to a label")
 
         label = get_label(model.label_id)
-        if not label:
+        if label is None:
             raise ValueError(f"Label {model.label_id} not found")
 
-        # Get label values from label type module
-        label_type_module = get_label_type_module(label.label_type)
-        label_options = label_type_module.get_label_options()
-        # Extract first element (label value) from each option tuple
-        label_values = [option[0] for option in label_options]
+        label_entries = get_label_entries(label.id)
+        if not label_entries:
+            raise ValueError(f"No labeled data found for label {label.id}")
 
-        # Get training configuration
+        fields = self._get_fields_from_label(label)
+
+        label_values_sorted = sorted({le.value for le in label_entries if le.value is not None})
+        value_to_idx = {val: idx for idx, val in enumerate(label_values_sorted)}
+
+        train_data: dict[int, tuple[str, int]] = {}
+        for le in label_entries:
+            text = self._extract_entry_text(le.entry, fields)
+            train_data[le.entry.id] = (text, value_to_idx[le.value])
+
+        return train_data, fields
+
+    # ------------------------------------------------------------------ #
+    # Training                                                             #
+    # ------------------------------------------------------------------ #
+
+    def _build_and_train_conformal(
+        self,
+        model: MLModel,
+        train_data: dict[int, tuple[str, int]],
+        overrides: dict | None = None,
+    ) -> tuple[ConformalPredictor, list[tuple[str, int]], list[str]]:
+        """Instantiate and train a ConformalPredictor from labeled data.
+
+        Returns:
+            conformal: Trained ConformalPredictor
+            val_list:  Held-out calibration samples [(text, label_idx), ...]
+            label_values: Ordered list of label value strings
+        """
+        if model.label_id is None:
+            raise ValueError("Model is not linked to a label")
+        label = get_label(model.label_id)
+        if label is None:
+            raise ValueError(f"Label {model.label_id} not found")
+        label_type_module = get_label_type_module(label.label_type)
+        label_values = [opt[0] for opt in label_type_module.get_label_options()]
+        n_classes = len(label_values)
+
+        overrides = overrides or {}
         training_config = model.training_config or {}
         model_config = model.model_config or {}
 
-        # Extract specific configs
-        n_kickstart = training_config.get("n_kickstart", 10)
-        # Ensure subsample_config is a list
-        if model.subsample_config and isinstance(model.subsample_config, list):
-            subsample_size = model.subsample_config
-        else:
-            subsample_size = [1000, 20]
-        review_frequency = training_config.get("review_frequency", 10)
+        split_ratio = float(overrides.get("split", training_config.get("split", 0.8)))
+        split_ratio = max(0.1, min(0.95, split_ratio))
+        global_alpha = float(get_setting_value("ml.conformal_alpha") or 0.1)
+        alpha = float(overrides.get("alpha", training_config.get("alpha", global_alpha)))
 
-        # Prepare original dataset (all entries as unlabeled text)
-        original_dataset = {entry_id: text for entry_id, (text, _) in train_data.items()}
+        all_items: list[tuple[str, int]] = list(train_data.values())
+        split = max(1, int(len(all_items) * split_ratio))
+        train_list = all_items[:split]
+        val_list = all_items[split:]
 
-        # Prepare initial labeled dataset
-        initial_label_value_dataset = {
-            entry_id: label_values[label_idx] for entry_id, (_, label_idx) in train_data.items()
-        }
-
-        # Initialize learner with correct parameters
-        import numpy as np
-
-        learner = ActiveLearningBackend(
-            original_dataset=original_dataset,
-            label_values=label_values,
-            initial_label_value_dataset=initial_label_value_dataset,
-            n_kickstart=n_kickstart,
-            subsample_size=subsample_size,
-            review_frequency=review_frequency,
-            rng=np.random.default_rng(),
-            classification_model=model.algorithm,
-            model_parameters=str(model_config),
-            model_train_parameters=str(training_config),
+        model_cls = AVAILABLE_MODELS.get(model.algorithm, TfidfXGBoostClassifier)
+        inner = model_cls(**{**model_config, "n_classes": n_classes})
+        conformal = ConformalPredictor(
+            model=inner,
+            alpha=alpha,
+            n_classes=n_classes,
         )
+        conformal.train(train_list, val_list if val_list else None)
 
-        return learner
+        return conformal, val_list, label_values
 
-    def _extract_metrics(self, learner: ActiveLearningBackend) -> dict:
-        """Extract training metrics from learner
+    # ------------------------------------------------------------------ #
+    # Batch uncertainty ranking                                            #
+    # ------------------------------------------------------------------ #
 
-        Args:
-            learner: Trained ActiveLearningBackend instance
+    def _rank_entries_batched(
+        self,
+        conformal: ConformalPredictor,
+        ml_model: MLModel,
+        fields: list[str],
+        labeled_ids: set[int],
+        batch_size: int = 500,
+        overrides: dict | None = None,
+    ) -> tuple[list[dict], float | None]:
+        """Score all unlabeled project entries in batches and return ranked cache.
 
-        Returns:
-            Dictionary of metrics
+        Returns a list of dicts with keys:
+            id     — Entry DB primary key
+            score  — Uncertainty score (higher = more uncertain)
+            reason — "diverse" | "uncertainty" | "certain"
+
+        certain_rate (0–1) controls what fraction of the cache is filled with
+        low-uncertainty entries so the model also sees confident examples.
+
+        Uses paginated DB queries to avoid loading the full dataset into RAM.
+        Session objects are expired after each batch to keep memory usage flat.
         """
-        metrics = {}
+        if ml_model.label_id is None:
+            return [], None
+        label = get_label(ml_model.label_id)
+        if label is None:
+            return [], None
+        project_id = label.project_id
+
+        overrides = overrides or {}
+        subsample_config = ml_model.subsample_config
+        if not subsample_config or not isinstance(subsample_config, list):
+            subsample_config = [1000, 20, 20]
+        pool_size    = int(overrides.get("pool_size",    subsample_config[0]))
+        cache_size   = int(overrides.get("cache_size",   subsample_config[-2] if len(subsample_config) >= 2 else 20))
+        n_clusters   = int(overrides.get("n_clusters",   subsample_config[-1] if len(subsample_config) >= 2 else 20))
+        certain_rate = float(overrides.get("certain_rate", 0.0))
+        certain_rate = max(0.0, min(0.5, certain_rate))  # cap at 50 %
+
+        n_certain  = int(cache_size * certain_rate)
+        n_uncertain = cache_size - n_certain
+
+        scores: list[tuple[int, float]] = []
+        n_trusted = 0
+        n_total = 0
+        offset = 0
+        while True:
+            batch: list[Entry] = get_project_entries_page(project_id, offset, batch_size)
+            if not batch:
+                break
+            offset += batch_size
+            unlabeled = [e for e in batch if e.id not in labeled_ids]
+            if unlabeled:
+                texts = self._batch_extract_texts(unlabeled, fields)
+                uncertainties = conformal.predict_uncert(texts)
+                trusted_mask = conformal.predict_trusted(texts)
+                n_trusted += int(np.sum(trusted_mask))
+                n_total += len(texts)
+                # Only accumulate ranking candidates until we have enough
+                if len(scores) < pool_size * 3:
+                    scores.extend(zip([e.id for e in unlabeled], uncertainties.tolist(), strict=False))
+            # Expire batch objects so SQLAlchemy doesn't accumulate them in the identity map
+            db.session.expire_all()
+            # No early break — scan full dataset for accurate coverage
+
+        coverage: float | None = n_trusted / n_total if n_total > 0 else None
+
+        if not scores:
+            return [], coverage
+
+        # Sort descending by uncertainty
+        scores.sort(key=lambda x: x[1], reverse=True)
+
+        # Certain entries: take from the low-uncertainty tail (outside the uncertain pool)
+        certain_entries: list[dict] = []
+        if n_certain > 0:
+            tail = scores[pool_size:] if len(scores) > pool_size else []
+            # tail is sorted descending, so the last items are most certain
+            certain_candidates = list(reversed(tail[:n_certain * 3])) if tail else []
+            certain_entries = [
+                {"id": eid, "score": round(sc, 4), "reason": "certain"}
+                for eid, sc in certain_candidates[:n_certain]
+            ]
+
+        top = scores[:pool_size]
+        score_map = dict(top)
+
+        if len(top) <= n_clusters:
+            uncertain_entries = [
+                {"id": eid, "score": round(sc, 4), "reason": "uncertainty"}
+                for eid, sc in top[:n_uncertain]
+            ]
+            return self._interleave_certain(uncertain_entries, certain_entries, certain_rate), coverage
+
+        # KMeans clustering for diversity
+        top_ids = [eid for eid, _ in top]
+        entry_map: dict[int, Entry] = {
+            e.id: e
+            for e in get_entries_by_ids(top_ids)
+        }
+        top_texts = [self._extract_entry_text(entry_map[eid], fields) for eid in top_ids]
+
+        raw_embeddings = conformal.get_embeddings(top_texts)
+        embeddings = raw_embeddings.toarray() if hasattr(raw_embeddings, "toarray") else np.array(raw_embeddings)
+        kmeans = KMeans(n_clusters=min(n_clusters, len(top_ids)), n_init="auto").fit(embeddings)
+        centroid_idxs = dist_argmin(kmeans.cluster_centers_, embeddings)[0]
+        best_ids = [top_ids[i] for i in centroid_idxs]
+        diverse_set = set(best_ids)
+        rest = [eid for eid in top_ids if eid not in diverse_set]
+
+        uncertain_entries = (
+            [{"id": eid, "score": round(score_map[eid], 4), "reason": "diverse"} for eid in best_ids]
+            + [{"id": eid, "score": round(score_map[eid], 4), "reason": "uncertainty"} for eid in rest]
+        )[:n_uncertain]
+
+        return self._interleave_certain(uncertain_entries, certain_entries, certain_rate), coverage
+
+    @staticmethod
+    def _interleave_certain(
+        uncertain: list[dict], certain: list[dict], rate: float
+    ) -> list[dict]:
+        """Interleave certain entries into the uncertain list at the given rate.
+
+        E.g. rate=0.2 → insert one certain entry every 5 positions.
+        """
+        if not certain or rate <= 0:
+            return uncertain
+        step = max(1, round(1.0 / rate))  # positions between certain insertions
+        result: list[dict] = []
+        ci = ui = 0
+        pos = 0
+        while ui < len(uncertain) or ci < len(certain):
+            if ci < len(certain) and pos > 0 and pos % step == step - 1:
+                result.append(certain[ci])
+                ci += 1
+            elif ui < len(uncertain):
+                result.append(uncertain[ui])
+                ui += 1
+            else:
+                result.append(certain[ci])
+                ci += 1
+            pos += 1
+        return result
+
+    # ------------------------------------------------------------------ #
+    # Prediction storage                                                   #
+    # ------------------------------------------------------------------ #
+
+    def _store_cache_predictions(
+        self,
+        conformal: ConformalPredictor,
+        encoder: LabelEncoder,
+        ml_model: MLModel,
+        version: MLModelVersion,
+        cache_entries: list[dict],
+        fields: list[str],
+    ) -> None:
+        """Batch-predict cache entries and store results in model_predictions table.
+
+        Called after a new version is registered so version.id is available.
+        Runs predict_proba on cache entry texts to extract the predicted class,
+        then upserts one ModelPrediction row per entry.
+        """
+        entry_ids = [item["id"] for item in cache_entries]
+        entry_map: dict[int, Entry] = {
+            e.id: e
+            for e in get_entries_by_ids(entry_ids)
+        }
+        score_map = {item["id"]: item["score"] for item in cache_entries}
+
+        texts = [self._extract_entry_text(entry_map[eid], fields) for eid in entry_ids if eid in entry_map]
+        valid_ids = [eid for eid in entry_ids if eid in entry_map]
+        if not texts:
+            return
 
         try:
-            from olim.learner.eval.metrics import accuracy, auc_roc, precision, recall
+            probas = conformal.model.predict_proba(texts)
+        except Exception:
+            return
 
-            acc, acc_ci = learner.metric_with_confidence(accuracy, alpha=0.05, n_bootstrap=100)
-            if acc > 0:
-                metrics["accuracy"] = float(acc)
-                metrics["accuracy_ci_lower"] = float(acc_ci[0])
-                metrics["accuracy_ci_upper"] = float(acc_ci[1])
+        threshold = getattr(conformal, "threshold", None)
+        classes = encoder.classes_
+        for eid, proba in zip(valid_ids, probas, strict=False):
+            predicted_idx = int(np.argmax(proba))
+            predicted_class: str | None = None
+            if classes is not None and 0 <= predicted_idx < len(classes):
+                predicted_class = str(classes[predicted_idx])
 
-            # Compute precision
-            prec, prec_ci = learner.metric_with_confidence(precision, alpha=0.05, n_bootstrap=100)
-            if prec > 0:
-                metrics["precision"] = float(prec)
-
-            rec, _rec_ci = learner.metric_with_confidence(recall, alpha=0.05, n_bootstrap=100)
-            if rec > 0:
-                metrics["recall"] = float(rec)
+            if threshold is not None and classes is not None:
+                scores = 1 - np.array(proba)
+                pred_set = [str(classes[i]) for i in range(len(proba)) if scores[i] <= threshold]
+            else:
+                pred_set = [predicted_class] if predicted_class else []
 
             try:
-                auc, _auc_ci = learner.metric_with_confidence(auc_roc, alpha=0.05, n_bootstrap=100)
-                if auc > 0:
-                    metrics["auc_roc"] = float(auc)
+                add_model_prediction(
+                    entry_id=eid,
+                    label_id=ml_model.label_id,  # type: ignore[arg-type]
+                    model_id=ml_model.id,
+                    version_id=version.id,
+                    value=predicted_class,
+                    score=score_map.get(eid),
+                    prediction_set=pred_set,
+                )
             except Exception:
-                pass
+                pass  # don't fail training if prediction storage fails
 
+    # ------------------------------------------------------------------ #
+    # Metrics                                                              #
+    # ------------------------------------------------------------------ #
+
+    def _compute_metrics(
+        self,
+        conformal: ConformalPredictor,
+        val_list: list[tuple[str, int]],
+    ) -> dict[str, Any]:
+        """Compute accuracy and AUC-ROC on the held-out validation split."""
+        if not val_list:
+            return {}
+
+        val_texts  = [text for text, _ in val_list]
+        val_labels = np.array([lbl for _, lbl in val_list])
+        preds      = np.array(conformal.model.predict(val_texts))
+
+        metrics: dict[str, Any] = {}
+        try:
+            pt, lo, hi = bootstrap_metric(accuracy, val_labels, preds)
+            metrics["accuracy"] = pt
+            metrics["accuracy_ci"] = [lo, hi]
+        except Exception:
+            pass
+        try:
+            proba_matrix = np.array(conformal.model.predict_proba(val_texts))
+            pt, lo, hi = bootstrap_metric(auc_roc, val_labels, preds, label_proba=proba_matrix)
+            metrics["auc_roc"] = pt
+            metrics["auc_roc_ci"] = [lo, hi]
         except Exception:
             pass
 
         return metrics
 
-    def _get_class_distribution(self, train_data: dict) -> dict:
-        """Get class distribution from training data
+    # ------------------------------------------------------------------ #
+    # Helpers                                                              #
+    # ------------------------------------------------------------------ #
 
-        Args:
-            train_data: Training data dictionary
+    def _get_fields_from_label(self, label: Label) -> list[str]:
+        if label.learner_parameters and "fields" in label.learner_parameters:
+            return label.learner_parameters["fields"]
+        return ["text"]
 
-        Returns:
-            Dictionary mapping class indices to counts
+    def _extract_entry_text(self, entry: Entry, fields: list[str]) -> str:
+        instance = get_entry_type_instance(entry.type)
+        if instance is None:
+            return str(entry.entry_id)
+
+        df = instance.extract_texts(entry.entry_id, dataset_id=entry.dataset_id)
+        if df.empty:
+            return str(entry.entry_id)
+
+        text_parts = [str(df[f].iloc[0]) for f in fields if f in df.columns]
+        if not text_parts:
+            text_parts = [
+                str(df[col].iloc[0])
+                for col in df.columns
+                if col != "entry_id" and df[col].dtype == object
+            ]
+        return " ".join(text_parts) if text_parts else str(entry.entry_id)
+
+    def _batch_extract_texts(self, entries: list[Entry], fields: list[str]) -> list[str]:
+        """Batch ES text extraction grouped by dataset — one query per batch per dataset.
+
+        For single_text entries, fires one ES query per dataset covering all entries in
+        the batch.  Other entry types fall back to per-entry extraction.
         """
-        distribution: dict[int, int] = {}
+        from collections import defaultdict
 
+        if not entries:
+            return []
+
+        texts: list[str] = [str(e.entry_id) for e in entries]
+        groups: defaultdict[tuple[str, int], list[int]] = defaultdict(list)
+        for i, entry in enumerate(entries):
+            groups[(entry.type, entry.dataset_id)].append(i)
+
+        for (entry_type, dataset_id), indices in groups.items():
+            batch_entries = [entries[i] for i in indices]
+
+            if entry_type != "single_text":
+                for i, entry in zip(indices, batch_entries, strict=False):
+                    texts[i] = self._extract_entry_text(entry, fields)
+                continue
+
+            entry_ids = [str(e.entry_id) for e in batch_entries]
+            try:
+                index = ES_INDEX.format(dataset_id=dataset_id)
+                res = es_search(
+                    query={"terms": {"_id": entry_ids}},
+                    index=index,
+                    size=len(entry_ids),
+                )
+                id_to_src: dict[str, dict] = {
+                    hit["_id"]: hit["_source"]
+                    for hit in res.get("hits", {}).get("hits", [])
+                }
+                for i, entry in zip(indices, batch_entries, strict=False):
+                    src = id_to_src.get(str(entry.entry_id), {})
+                    text_parts = [str(src[f]) for f in fields if src.get(f)]
+                    if not text_parts:
+                        fallback = src.get("text", "")
+                        text_parts = [str(fallback)] if fallback else []
+                    texts[i] = " ".join(text_parts) if text_parts else self._extract_entry_text(entry, fields)
+            except Exception:
+                for i, entry in zip(indices, batch_entries, strict=False):
+                    texts[i] = self._extract_entry_text(entry, fields)
+
+        return texts
+
+    def _store_full_predictions(
+        self,
+        conformal: ConformalPredictor,
+        encoder: LabelEncoder,
+        ml_model: MLModel,
+        version: MLModelVersion,
+        cache_entries: list[dict],
+        fields: list[str],
+        labeled_ids: set[int],
+        batch_size: int = 500,
+        insert_chunk: int = 5000,
+    ) -> None:
+        """Store predictions for ALL unlabeled entries using batch ES extraction.
+
+        Replaces any existing predictions for this model version.
+        Writes in chunks of insert_chunk rows to keep memory usage bounded.
+        """
+        if ml_model.label_id is None:
+            return
+        label = get_label(ml_model.label_id)
+        if label is None:
+            return
+        project_id = label.project_id
+
+        score_map = {item["id"]: item["score"] for item in cache_entries}
+        threshold = getattr(conformal, "threshold", None)
+        classes = encoder.classes_
+
+        # Delete old predictions first
+        delete_model_predictions(ml_model.id, version.id)
+
+        pending: list[dict] = []
+        offset = 0
+        while True:
+            batch: list[Entry] = get_project_entries_page(project_id, offset, batch_size)
+            if not batch:
+                break
+            offset += batch_size
+            unlabeled = [e for e in batch if e.id not in labeled_ids]
+            if not unlabeled:
+                db.session.expire_all()
+                continue
+
+            texts = self._batch_extract_texts(unlabeled, fields)
+            try:
+                probas = conformal.model.predict_proba(texts)
+            except Exception:
+                db.session.expire_all()
+                continue
+
+            for entry, proba in zip(unlabeled, probas, strict=False):
+                predicted_idx = int(np.argmax(proba))
+                predicted_class: str | None = None
+                if classes is not None and 0 <= predicted_idx < len(classes):
+                    predicted_class = str(classes[predicted_idx])
+
+                if threshold is not None and classes is not None:
+                    entry_scores = 1 - np.array(proba)
+                    pred_set = [str(classes[i]) for i in range(len(proba)) if entry_scores[i] <= threshold]
+                else:
+                    pred_set = [predicted_class] if predicted_class else []
+
+                pending.append({
+                    "entry_id": entry.id,
+                    "label_id": ml_model.label_id,
+                    "model_id": ml_model.id,
+                    "version_id": version.id,
+                    "value": predicted_class,
+                    "score": score_map.get(entry.id),
+                    "prediction_set": pred_set,
+                })
+
+            if len(pending) >= insert_chunk:
+                bulk_append_model_predictions(pending)
+                pending = []
+
+            db.session.expire_all()
+
+        if pending:
+            bulk_append_model_predictions(pending)
+
+    def _get_class_distribution(self, train_data: dict) -> dict:
+        distribution: dict[int, int] = {}
         for _, label_idx in train_data.values():
             distribution[label_idx] = distribution.get(label_idx, 0) + 1
-
         return {str(k): v for k, v in distribution.items()}
 
-    def get_next_al_entries(
-        self,
-        model_id: int,
-        n: int = 10,
-    ) -> list[int]:
-        """Get next entries for active learning annotation
-
-        Args:
-            model_id: ID of the MLModel
-            n: Number of entries to retrieve
-
-        Returns:
-            List of entry IDs to annotate next
-
-        Raises:
-            ValueError: If model or active version not found
-        """
-        # Get active version
+    def get_next_al_entries(self, model_id: int, n: int = 10) -> list[int]:
+        """Return the first n entry IDs from the active version's uncertainty cache."""
         version = self.registry.get_active_version(model_id)
-
         if version is None:
             raise ValueError(f"No active version found for model {model_id}")
-
-        # Load cached entries from version
         if version.cache_entries:
-            # Return first n entries from cache
-            return version.cache_entries[:n]
-
-        # If no cache, load artifacts and regenerate queue
-        model = self.registry.get_model(model_id)
-        if model is None:
-            raise ValueError(f"Model {model_id} not found")
-
-        try:
-            # Load artifacts
-            artifacts = self.artifact_manager.load_artifacts(model_id, version.version)
-
-            # Reconstruct learner state
-            learner = ActiveLearningBackend(
-                label_values=list(artifacts["encoder"].classes_),
-                model_class=type(artifacts["model"]),
-                n_kickstart=model.training_config.get("n_kickstart", 10),
-                subsample_size=model.subsample_config or [1000, 100, 10],
-                recall_frequency=model.training_config.get("recall_frequency", 5),
-            )
-
-            # Restore model and encoder
-            learner._model = artifacts["model"]
-            learner._label_value_encoder = artifacts["encoder"]
-            learner._policy = artifacts.get("policy")
-            learner._bandit_explorer = artifacts.get("bandit")
-
-            # Get unlabeled entries from the dataset
-            # This would require access to the original dataset
-            # For now, return empty list as it needs more context from Label
-            # The cache should be populated during training and stored in version.cache_entries
-
-            return []
-
-        except Exception:
-            # If artifact loading fails, return empty list
-            # Cache should be populated during next training
-            return []
+            return [item["id"] for item in version.cache_entries[:n]]
+        return []

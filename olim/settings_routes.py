@@ -3,6 +3,9 @@
 This module provides admin-only routes for managing global system settings.
 """
 
+import json
+from pathlib import Path
+
 from flask import abort, flash, redirect, render_template, request, session, url_for
 from flask_babel import _
 
@@ -13,6 +16,7 @@ from .database import (
     get_settings,
     set_setting,
 )
+from .learning_tasks import save_configuration, validate_configuration
 from .utils.settings import validate_setting_value
 
 
@@ -215,6 +219,41 @@ def _handle_reset_setting() -> ...:
 
     except Exception as e:
         flash(_("Error resetting setting: {error}").format(error=str(e)), category="error")
+
+
+@app.route("/admin/settings/configurations/upload", methods=["POST"])
+def upload_configuration() -> ...:
+    """Upload a new task configuration preset."""
+    if session.get("role") != "admin":
+        abort(403)
+
+    uploaded_file = request.files.get("config_file")
+    if not uploaded_file or not uploaded_file.filename:
+        flash(_("Please upload a configuration file"), "error")
+        return redirect(url_for("admin_settings"))
+
+    try:
+        config = json.load(uploaded_file.stream)
+        valid, error_msg = validate_configuration(config)
+        if not valid:
+            flash(error_msg, "error")
+            return redirect(url_for("admin_settings"))
+
+        config_name = request.form.get("config_name", "").strip()
+        if not config_name:
+            config_name = Path(uploaded_file.filename).stem
+
+        config_name = "".join(c for c in config_name if c.isalnum() or c in "-_")
+
+        if save_configuration(config_name, config):
+            flash(_("Configuration saved to presets"), "success")
+        else:
+            flash(_("Failed to save configuration"), "error")
+
+    except json.JSONDecodeError:
+        flash(_("Invalid JSON file"), "error")
+
+    return redirect(url_for("admin_settings"))
 
 
 @app.route("/api/settings/<key>", methods=["GET"])

@@ -1,3 +1,4 @@
+import re
 from collections.abc import Generator
 from typing import Any
 
@@ -112,6 +113,43 @@ class SingleTextEntry(EntryTypeBase):
             )
 
         return patients
+
+    def search_regex(
+        self,
+        pattern: str,
+        number: int,
+        **kwargs,
+    ) -> list[dict]:
+        """Search entries by Python regex, fetching a batch from ES then filtering."""
+        dataset_id = kwargs.get("dataset_id")
+        if not dataset_id:
+            raise ValueError("dataset_id required for single_text regex search")
+
+        compiled = re.compile(pattern, re.IGNORECASE)
+        batch_size = min(number * 10, 5000)
+        hits = es_search(
+            query={"match_all": {}},
+            size=batch_size,
+            index=ES_INDEX.format(dataset_id=dataset_id),
+        )["hits"]["hits"]
+
+        results = []
+        for h in hits:
+            text = h["_source"].get("text", "")
+            if compiled.search(text):
+                try:
+                    desc = " ".join(text.split()[:5]) + "..."
+                except IndexError:
+                    desc = text
+                results.append({
+                    "entry_id": h["_id"],
+                    "description": desc,
+                    "type": self.entry_type,
+                })
+                if len(results) >= number:
+                    break
+
+        return results
 
     def generate_upload_batches(
         self,

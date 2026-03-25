@@ -4148,11 +4148,6 @@
       --tw-ring-color: var(--color-red-500);
     }
   }
-  .focus\:ring-yellow-300 {
-    &:focus {
-      --tw-ring-color: var(--color-yellow-300);
-    }
-  }
   .focus\:ring-yellow-400 {
     &:focus {
       --tw-ring-color: var(--color-yellow-400);
