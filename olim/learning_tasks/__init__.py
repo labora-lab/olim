@@ -69,12 +69,14 @@ def get_available_configurations() -> list[dict]:
             try:
                 with open(file_path, encoding="utf-8") as f:
                     config = json.load(f)
-                    configurations.append({
-                        "filename": file_path.stem,
-                        "name": config.get("name", file_path.stem),
-                        "description": config.get("description", ""),
-                        "steps": len(config.get("sequence", [])),
-                    })
+                    configurations.append(
+                        {
+                            "filename": file_path.stem,
+                            "name": config.get("name", file_path.stem),
+                            "description": config.get("description", ""),
+                            "steps": len(config.get("sequence", [])),
+                        }
+                    )
             except (OSError, json.JSONDecodeError):
                 continue
     return configurations
@@ -377,9 +379,7 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
             flash(_("Task completed!"), "success")
             if is_htmx:
                 resp = make_response("")
-                resp.headers["HX-Redirect"] = url_for(
-                    "learning_tasks_list", project_id=project_id
-                )
+                resp.headers["HX-Redirect"] = url_for("learning_tasks_list", project_id=project_id)
                 return resp
             return redirect(url_for("learning_tasks_list", project_id=project_id))
 
@@ -394,9 +394,7 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
             flash(_("Task completed!"), "success")
             if is_htmx:
                 resp = make_response("")
-                resp.headers["HX-Redirect"] = url_for(
-                    "learning_tasks_list", project_id=project_id
-                )
+                resp.headers["HX-Redirect"] = url_for("learning_tasks_list", project_id=project_id)
                 return resp
             return redirect(url_for("learning_tasks_list", project_id=project_id))
 

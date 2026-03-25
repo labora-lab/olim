@@ -9,7 +9,6 @@ from ..database import (
     add_entry_label,
     check_entries_exist,
     get_entry,
-    get_label,
     get_labels,
     new_label,
 )

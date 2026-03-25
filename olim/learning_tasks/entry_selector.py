@@ -6,6 +6,7 @@ Supports four source types:
 - regex: Python regex filter applied over ES results
 - manual: explicit entry IDs
 """
+
 from __future__ import annotations
 
 import re

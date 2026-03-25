@@ -194,10 +194,16 @@ def label_queue_with_llm(
 
             # Update progress
             progress = ((idx + 1) / len(queue_ids)) * 100
-            print(f"DEBUG: Updating task state - Entry {idx + 1}/{len(queue_ids)}, Progress: {progress}%")  # noqa: E501
+            print(
+                f"DEBUG: Updating task state - Entry {idx + 1}/{len(queue_ids)},"
+                " Progress: {progress}%"
+            )
             self.update_state(
                 state="PROCESSING",
-                meta={"status": f"Labeled {idx + 1}/{len(queue_ids)} entries", "progress": progress},  # noqa: E501
+                meta={
+                    "status": f"Labeled {idx + 1}/{len(queue_ids)} entries",
+                    "progress": progress,
+                },
             )
             print("DEBUG: Task state updated successfully")
 

@@ -91,9 +91,7 @@ def update_session_project(project_id: int, require_data: bool = False) -> ...:
     if require_data:
         datasets = list(get_datasets(project_id, non_empty=True))
         if not datasets:
-            flash(
-                _("This project has no datasets. Please upload data first."), "warning"
-            )
+            flash(_("This project has no datasets. Please upload data first."), "warning")
             return redirect(url_for("upload_data", project_id=project_id))
 
     return None
@@ -172,9 +170,7 @@ def entry(
                 # Reset to position 1 and redirect
                 update_queue_pos(queue_id, 1)
                 return redirect(
-                    url_for(
-                        "entry", project_id=project_id, queue_id=queue_id, queue_pos=1
-                    )
+                    url_for("entry", project_id=project_id, queue_id=queue_id, queue_pos=1)
                 )
             else:
                 dataset_id, entry_id = queue[queue_pos - 1]
@@ -305,9 +301,9 @@ def search(project_id: int) -> ...:
         df_results = pd.DataFrame(data)
         df_results["dataset_id"] = dataset_ids
         df_results = df_results[df_results["match_count"] > 0]
-        df_results = df_results.sort_values(
-            by="score", ascending=False, ignore_index=True
-        ).iloc[:number]
+        df_results = df_results.sort_values(by="score", ascending=False, ignore_index=True).iloc[
+            :number
+        ]
         data = df_results.to_dict("records")
         extra_data: dict = {
             "Include": must_terms + must_phrases,
@@ -363,9 +359,7 @@ def data_navigation(project_id: int) -> ...:
     )
 
 
-@app.route(
-    "/<int:project_id>/data-navigation/component/<component_name>", methods=["GET"]
-)
+@app.route("/<int:project_id>/data-navigation/component/<component_name>", methods=["GET"])
 def data_navigation_component(project_id: int, component_name: str) -> ...:
     """Load individual data navigation components via HTMX"""
     # Check project_id
@@ -393,9 +387,7 @@ def data_navigation_component(project_id: int, component_name: str) -> ...:
     return render_template(f"components/{component_name}.html", **context)
 
 
-@app.route(
-    "/<int:project_id>/data-navigation/queue/<queue_id>/delete", methods=["DELETE"]
-)
+@app.route("/<int:project_id>/data-navigation/queue/<queue_id>/delete", methods=["DELETE"])
 def delete_queue_route(project_id: int, queue_id: str) -> ...:
     """Delete a queue"""
     # Check project_id
@@ -489,22 +481,16 @@ def create_queue(project_id: int) -> ...:
     datasets = list(get_datasets(project_id))
 
     if request.method == "GET":
-        return render_template(
-            "create-queue.html", project_id=project_id, datasets=datasets
-        )
+        return render_template("create-queue.html", project_id=project_id, datasets=datasets)
 
     # Handle POST request
     entry_ids_text = request.form.get("entry_ids", "").strip()
     highlight_terms = request.form.get("highlight_terms", "").strip()
-    queue_name = (
-        request.form.get("queue_name", "").strip() or None
-    )  # Optional custom name
+    queue_name = request.form.get("queue_name", "").strip() or None  # Optional custom name
 
     if not entry_ids_text:
         flash(_("Please enter at least one entry ID"), "error")
-        return render_template(
-            "create-queue.html", project_id=project_id, datasets=datasets
-        )
+        return render_template("create-queue.html", project_id=project_id, datasets=datasets)
 
     # Parse entry IDs
     lines = [line.strip() for line in entry_ids_text.split("\n") if line.strip()]
@@ -532,9 +518,7 @@ def create_queue(project_id: int) -> ...:
             try:
                 # Use pandas to parse the line as CSV (handles quotes properly)
                 csv_io = StringIO(line)
-                df = pd.read_csv(
-                    csv_io, header=None, quoting=1
-                )  # quoting=1 = QUOTE_ALL
+                df = pd.read_csv(csv_io, header=None, quoting=1)  # quoting=1 = QUOTE_ALL
 
                 if df.shape[1] != 2:
                     errors.append(
@@ -570,22 +554,16 @@ def create_queue(project_id: int) -> ...:
     if errors:
         for error in errors:
             flash(error, "error")
-        return render_template(
-            "create-queue.html", project_id=project_id, datasets=datasets
-        )
+        return render_template("create-queue.html", project_id=project_id, datasets=datasets)
 
     if not queue_entries:
         flash(_("No valid entries found"), "error")
-        return render_template(
-            "create-queue.html", project_id=project_id, datasets=datasets
-        )
+        return render_template("create-queue.html", project_id=project_id, datasets=datasets)
 
     # Parse highlight terms
     highlights = None
     if highlight_terms:
-        highlights = [
-            term.strip() for term in highlight_terms.split(",") if term.strip()
-        ]
+        highlights = [term.strip() for term in highlight_terms.split(",") if term.strip()]
 
     # Store the queue
     try:
@@ -597,20 +575,15 @@ def create_queue(project_id: int) -> ...:
             queue_type="manual",  # Auto-generate if no name provided
         )
         flash(
-            _("Queue created successfully with {count} entries").format(
-                count=len(queue_entries)
-            ),
+            _("Queue created successfully with {count} entries").format(count=len(queue_entries)),
             "success",
         )
         return redirect(
-            url_for("data_navigation", project_id=project_id)
-            + "?section=queue-management"
+            url_for("data_navigation", project_id=project_id) + "?section=queue-management"
         )
     except Exception as e:
         flash(_("Failed to create queue: {error}").format(error=str(e)), "error")
-        return render_template(
-            "create-queue.html", project_id=project_id, datasets=datasets
-        )
+        return render_template("create-queue.html", project_id=project_id, datasets=datasets)
 
 
 # endregion

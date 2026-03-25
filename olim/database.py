@@ -229,13 +229,12 @@ class Queue(db.Model, CreationControl):
     # Relationships
     project: Mapped["Project"] = db.relationship(back_populates="queues")
 
+
 class LearningTask(db.Model, CreationControl):
     __tablename__ = "learning_tasks"
 
     id: Mapped[int] = db.mapped_column(primary_key=True)
-    project_id: Mapped[int] = db.mapped_column(
-        db.ForeignKey("projects.id"), nullable=False
-    )
+    project_id: Mapped[int] = db.mapped_column(db.ForeignKey("projects.id"), nullable=False)
     name: Mapped[str] = db.mapped_column(nullable=False)
     state: Mapped[str] = db.mapped_column(nullable=False)
     position: Mapped[int] = db.mapped_column(default=0, nullable=False)
@@ -1407,9 +1406,7 @@ def get_learning_tasks(project_id: int, state: str | None = None) -> list[Learni
     if state is not None:
         query = query.filter_by(state=state)
 
-    return list(
-        db.session.execute(query.order_by(LearningTask.created.desc())).scalars()
-    )
+    return list(db.session.execute(query.order_by(LearningTask.created.desc())).scalars())
 
 
 def update_learning_task(task_id: int, **params) -> LearningTask | None:

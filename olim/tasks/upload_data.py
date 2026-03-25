@@ -502,7 +502,6 @@ def upload_dataset(
         raise Exception(final_message) from e
 
 
-
 _ENCODING_ALIASES: dict[str, str] = {
     "utf-8": "utf-8",
     "utf_8": "utf-8",

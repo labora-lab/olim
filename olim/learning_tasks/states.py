@@ -161,18 +161,15 @@ class ReadData(BaseState):
             try:
                 num_value = float(value)
                 if "min" in field and num_value < field["min"]:
-                    return _("{label} must be at least {min}").format(
-                        label=label, min=field["min"]
-                    )
+                    return _("{label} must be at least {min}").format(label=label, min=field["min"])
                 if "max" in field and num_value > field["max"]:
-                    return _("{label} must be at most {max}").format(
-                        label=label, max=field["max"]
-                    )
+                    return _("{label} must be at most {max}").format(label=label, max=field["max"])
             except (ValueError, TypeError):
                 return _("{label} must be a valid number").format(label=label)
 
         elif field_type == "email":
             import re
+
             if not re.match(r"^[^@]+@[^@]+\.[^@]+$", str(value)):
                 return _("{label} must be a valid email address").format(label=label)
 
@@ -188,6 +185,7 @@ class ReadData(BaseState):
                 )
             if "pattern" in field:
                 import re
+
                 if not re.match(field["pattern"], str_value):
                     pattern_msg = field.get("pattern_message", _("Invalid format"))
                     return f"{label}: {pattern_msg}"
@@ -379,22 +377,16 @@ class QueueSetup(BaseState):
                     count = int(payload.get("random_count", 10))
                     self.data["_random_count"] = count
                 except (ValueError, TypeError):
-                    self.errors["random_count"] = _(
-                        "Please enter a valid number"
-                    )
+                    self.errors["random_count"] = _("Please enter a valid number")
                     return 0
 
                 if count < 1:
-                    self.errors["random_count"] = _(
-                        "Must be at least 1"
-                    )
+                    self.errors["random_count"] = _("Must be at least 1")
                     return 0
 
                 entries = list(random_entries(count, project_id))
                 if not entries:
-                    self.errors["random_count"] = _(
-                        "No entries found in this project"
-                    )
+                    self.errors["random_count"] = _("No entries found in this project")
                     return 0
 
                 entry_ids = [e.entry_id for e in entries]
@@ -404,9 +396,7 @@ class QueueSetup(BaseState):
                 self.data["_queue_ids_text"] = ids_text
 
                 if not ids_text:
-                    self.errors["entry_ids"] = _(
-                        "Please enter at least one entry ID"
-                    )
+                    self.errors["entry_ids"] = _("Please enter at least one entry ID")
                     return 0
 
                 separator = self.params.get("id_separator", "newline")
@@ -415,16 +405,12 @@ class QueueSetup(BaseState):
                 elif separator == "space":
                     raw_ids = ids_text.split()
                 else:  # newline
-                    raw_ids = [
-                        x.strip() for x in ids_text.splitlines()
-                    ]
+                    raw_ids = [x.strip() for x in ids_text.splitlines()]
 
                 entry_ids = [eid for eid in raw_ids if eid]
 
                 if not entry_ids:
-                    self.errors["entry_ids"] = _(
-                        "Please enter at least one entry ID"
-                    )
+                    self.errors["entry_ids"] = _("Please enter at least one entry ID")
                     return 0
 
             # Get selected labels
@@ -511,10 +497,7 @@ class LabelEntry(BaseState):
         if not check_ids:
             return True
 
-        filled = [
-            lid for lid in check_ids
-            if labels_values.get(lid)
-        ]
+        filled = [lid for lid in check_ids if labels_values.get(lid)]
 
         if completion_mode == "all":
             return len(filled) == len(check_ids)
@@ -528,10 +511,7 @@ class LabelEntry(BaseState):
 
         label_ids = [lbl["id"] for lbl in queue_labels]
         if label_ids:
-            labels = [
-                lbl for lbl in get_labels(project_id)
-                if lbl.id in label_ids
-            ]
+            labels = [lbl for lbl in get_labels(project_id) if lbl.id in label_ids]
         else:
             labels = list(get_labels(project_id)) if project_id else []
 
@@ -568,9 +548,7 @@ class LabelEntry(BaseState):
         total = len(queue_ids)
         position = queue_position + 1  # 1-indexed for display
 
-        labels, label_ids, required_label_ids, completion_mode = (
-            self._get_labels_context()
-        )
+        labels, label_ids, required_label_ids, completion_mode = self._get_labels_context()
 
         # List view mode
         if view_mode == "list":
@@ -612,18 +590,19 @@ class LabelEntry(BaseState):
 
         # Update completion tracking for current entry
         self._update_completion(
-            current_id, labels_values,
-            label_ids, required_label_ids, completion_mode,
+            current_id,
+            labels_values,
+            label_ids,
+            required_label_ids,
+            completion_mode,
         )
 
         # Compute missing labels for warning
         check_ids = required_label_ids if required_label_ids else label_ids
-        filled_ids = [
-            lid for lid in check_ids
-            if labels_values.get(lid)
-        ]
+        filled_ids = [lid for lid in check_ids if labels_values.get(lid)]
         missing_labels = [
-            lbl for lbl in (
+            lbl
+            for lbl in (
                 self.data.get("queue_required_labels", [])
                 if required_label_ids
                 else self.data.get("queue_labels", [])
@@ -651,9 +630,7 @@ class LabelEntry(BaseState):
             # Queue navigation
             position=position,
             total=total,
-            show_back=(
-                self.params.get("show_back", True) and queue_position > 0
-            ),
+            show_back=(self.params.get("show_back", True) and queue_position > 0),
             is_last_step=self.params.get("is_last_step", False),
         )
 
@@ -752,7 +729,9 @@ class OllamaQueueSetup(BaseState):
             project_id = self.params.get("_project_id")
             if project_id:
                 all_labels = get_labels(project_id)
-                return [{"id": lbl.id, "name": lbl.name} for lbl in all_labels if lbl.id in label_ids]  # noqa: E501
+                return [
+                    {"id": lbl.id, "name": lbl.name} for lbl in all_labels if lbl.id in label_ids
+                ]
             return []
 
         # Use injected project context
@@ -794,7 +773,9 @@ class OllamaQueueSetup(BaseState):
             entry_ids_text=self.data.get("_queue_ids_text", ""),
             entry_source=self.data.get("_entry_source", self.params.get("entry_source", "random")),
             random_count=self.data.get("_random_count", self.params.get("random_count", 10)),
-            ollama_url=self.data.get("ollama_url", self.params.get("ollama_url", "http://localhost:11434/v1")),
+            ollama_url=self.data.get(
+                "ollama_url", self.params.get("ollama_url", "http://localhost:11434/v1")
+            ),
             errors=self.errors,
             show_prev=self.params.get("show_prev", True),
             is_last_step=self.params.get("is_last_step", False),
@@ -896,7 +877,9 @@ class OllamaQueueSetup(BaseState):
             print(f"DEBUG OllamaQueueSetup: Successfully selected {len(selected_labels)} labels")
 
             # Get Ollama URL
-            ollama_url = payload.get("ollama_url", self.params.get("ollama_url", "http://localhost:11434/v1")).strip()
+            ollama_url = payload.get(
+                "ollama_url", self.params.get("ollama_url", "http://localhost:11434/v1")
+            ).strip()
 
             if not ollama_url:
                 self.errors["ollama_url"] = _("Ollama URL is required")
@@ -1053,7 +1036,9 @@ Your response:"""
             # Get prompts (from payload or params)
             system_prompt = payload.get(
                 "system_prompt",
-                self.params.get("system_prompt", "You are a helpful assistant that accurately labels text data."),  # noqa: E501
+                self.params.get(
+                    "system_prompt", "You are a helpful assistant that accurately labels text data."
+                ),
             ).strip()
             prompt_template = payload.get(
                 "prompt_template", self.params.get("prompt_template", "")
@@ -1065,7 +1050,9 @@ Your response:"""
 
             # Validate prompt template has required placeholders
             if "{text}" not in prompt_template:
-                self.errors["prompt_template"] = _("Prompt template must contain {text} placeholder")  # noqa: E501
+                self.errors["prompt_template"] = _(
+                    "Prompt template must contain {text} placeholder"
+                )
                 return 0
 
             # Store LLM configuration
@@ -1281,6 +1268,7 @@ class OllamaAutoLabel(BaseState):
 
             # Flash success message
             from flask import flash
+
             flash(
                 _("Queue created successfully with {count} entries").format(count=len(queue_data)),
                 "success",
