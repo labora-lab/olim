@@ -11,10 +11,10 @@ from .database import (
     link_dataset_to_project,
     new_dataset,
 )
-from .functions import check_is_setup
+from .functions import check_is_setup, ensure_dir
 from .project import update_session_project
 from .settings import ALLOWED_EXTENSIONS, CHUNK_SIZE, MAX_FILE_SIZE, UPLOAD_PATH
-from .tasks.upload_data import finalize_chunks_upload, save_chunk, upload_dataset
+from .tasks.upload_data import finalize_chunks_upload, upload_dataset
 
 ALLOWED_ENCODINGS = {"utf-8", "latin-1", "cp1252"}
 
@@ -75,15 +75,11 @@ def handle_large_upload() -> ...:
         return jsonify(error="File too large"), 413
 
     chunk = request.files["file"].read()
-
-    launch_task_with_tracking(
-        save_chunk,
-        chunk=chunk,
-        chunk_number=chunk_number,
-        file_id=file_id,
-        user_id=session["user_id"],
-        track_progress=False,
-    )
+    chunk_dir = UPLOAD_PATH / file_id
+    ensure_dir(chunk_dir)
+    chunk_path = chunk_dir / f"{chunk_number:04d}"
+    with open(chunk_path, "wb") as f:
+        f.write(chunk)
 
     return jsonify(success=True)
 

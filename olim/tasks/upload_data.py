@@ -14,7 +14,6 @@ from flask_babel import gettext as _
 from .. import app as flask_app, db, entry_types
 from ..celery_app import app
 from ..database import Dataset, Entry, LabelEntry, ProjectDataset, del_controled, register_entries
-from ..functions import ensure_dir
 from ..settings import ES_INDEX, ES_SERVER, UPLOAD_BATCH_SIZE, UPLOAD_PATH, WORK_PATH
 from ..utils.es import create_index, get_es_conn
 
@@ -502,26 +501,6 @@ def upload_dataset(
 
         raise Exception(final_message) from e
 
-
-@app.task(bind=True, name="upload.save_chunk")
-def save_chunk(
-    self,
-    chunk: bytes,
-    chunk_number: int,
-    file_id: str,
-    **kwargs,
-) -> dict:
-    # Save chunk
-    chunk_dir = UPLOAD_PATH / file_id
-    ensure_dir(chunk_dir)
-
-    chunk_path = chunk_dir / f"{chunk_number:04d}"
-    with open(chunk_path, "wb") as f:
-        f.write(chunk)
-
-    return {
-        "success": True,
-    }
 
 
 _ENCODING_ALIASES: dict[str, str] = {

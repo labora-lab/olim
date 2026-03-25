@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
-from olim.database import CeleryTask
+from olim.database import CeleryTask, get_celery_task, get_started_celery_tasks, persist_celery_task
 
 Task.__class_getitem__ = classmethod(lambda cls, *args, **kwargs: cls)  # type: ignore[attr-defined]
 
@@ -38,6 +38,39 @@ app.conf.update(
     enable_utc=True,
     result_expires=3600,
 )
+
+# Human-readable display names for Celery tasks
+TASK_DISPLAY_NAMES: dict[str, str] = {
+    "learning_tasks.label_queue_with_llm": "LLM Auto-Labeling",
+    "learner.train_model": "Model Training",
+    "learner.add_label_value": "Add Label Value",
+    "learner.export_predictions": "Export Predictions",
+    "upload.process_batch": "Process Batch",
+    "upload.upload_dataset": "Upload Dataset",
+    "upload.finalize_upload": "Finalize Upload",
+}
+
+_LARGE_KWARGS_KEYS: frozenset[str] = frozenset({"chunk", "queue_ids", "batch_data"})
+_MAX_KWARG_VALUE_LEN = 2048  # JSON-serialised characters
+
+
+def _sanitize_kwargs_for_storage(kwargs: dict) -> dict:
+    """Strip known-large or non-serialisable values before storing kwargs in the DB."""
+    import json
+
+    result = {}
+    for k, v in kwargs.items():
+        if k in _LARGE_KWARGS_KEYS:
+            result[k] = f"<omitted:{k}>"
+        else:
+            try:
+                if len(json.dumps(v)) > _MAX_KWARG_VALUE_LEN:
+                    result[k] = f"<omitted:{k}>"
+                else:
+                    result[k] = v
+            except (TypeError, ValueError):
+                result[k] = f"<omitted:{k}>"
+    return result
 
 
 def get_flask_app() -> Flask:
@@ -106,46 +139,37 @@ def task_prerun_handler(
     try:
         flask_app = get_flask_app()
         db = get_db()
-        CeleryTask = get_celery_task_model()  # noqa: N806
 
         with flask_app.app_context():
             # Check if task already exists (in case of retry)
-            existing_task = db.session.get(CeleryTask, task_id)
+            existing_task = get_celery_task(task_id)
 
             if existing_task:
                 # Update existing task status
                 existing_task.update_status("STARTED")
                 existing_task.date_started = datetime.now(UTC)
+                db.session.commit()
             else:
                 # Create new task record
                 user_id = extract_user_id(kwargs or {})
 
-                print(kwargs)
-
-                if kwargs:
-                    description = kwargs.get("description", None)
-                else:
-                    description = None
-
-                print(description)
-
-                if not description:
-                    description = sender.name if sender else "unknown_task"
+                CeleryTask = get_celery_task_model()  # noqa: N806
+                task_name = sender.name if sender else "unknown_task"
+                description = (kwargs or {}).get("description") or TASK_DISPLAY_NAMES.get(
+                    task_name, task_name
+                )
 
                 task_record = CeleryTask.create_task(
                     task_id=task_id,  # type: ignore
-                    task_name=sender.name if sender else "unknown_task",
+                    task_name=task_name,
                     description=description,
                     user_id=user_id,
                     args=args,
-                    kwargs=kwargs,
+                    kwargs=_sanitize_kwargs_for_storage(kwargs or {}),
                 )
                 task_record.update_status("STARTED")
                 task_record.date_started = datetime.now(UTC)
-
-                db.session.add(task_record)
-
-            db.session.commit()
+                persist_celery_task(task_record)
 
     except Exception as e:
         print(f"Error in task_prerun_handler for task {task_id}: {e}")
@@ -169,10 +193,9 @@ def task_postrun_handler(
     try:
         flask_app = get_flask_app()
         db = get_db()
-        CeleryTask = get_celery_task_model()  # noqa: N806
 
         with flask_app.app_context():
-            task_record = db.session.get(CeleryTask, task_id)
+            task_record = get_celery_task(task_id)
             if task_record:
                 # Update completion timestamp
                 task_record.date_completed = datetime.now(UTC)
@@ -194,11 +217,10 @@ def task_success_handler(sender=None, **kwargs) -> None:
     try:
         flask_app = get_flask_app()
         db = get_db()
-        CeleryTask = get_celery_task_model()  # noqa: N806
 
         with flask_app.app_context():
             # Query all tasks in 'STARTED' status
-            started_tasks = CeleryTask.query.filter_by(status="STARTED").all()
+            started_tasks = get_started_celery_tasks()
 
             for task_record in started_tasks:
                 task_kwargs = getattr(task_record, "kwargs", {})
@@ -233,10 +255,9 @@ def task_failure_handler(sender=None, task_id=None, exception=None, einfo=None, 
     try:
         flask_app = get_flask_app()
         db = get_db()
-        CeleryTask = get_celery_task_model()  # noqa: N806
 
         with flask_app.app_context():
-            task_record = db.session.get(CeleryTask, task_id)
+            task_record = get_celery_task(task_id)
             if task_record:
                 task_record.update_status("FAILURE")
                 task_record.error = (
@@ -261,10 +282,9 @@ def task_retry_handler(sender=None, task_id=None, reason=None, einfo=None, **kwa
     try:
         flask_app = get_flask_app()
         db = get_db()
-        CeleryTask = get_celery_task_model()  # noqa: N806
 
         with flask_app.app_context():
-            task_record = db.session.get(CeleryTask, task_id)
+            task_record = get_celery_task(task_id)
             if task_record:
                 task_record.update_status("RETRY")
                 # Store retry reason

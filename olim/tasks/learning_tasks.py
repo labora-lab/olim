@@ -3,16 +3,14 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import Field, create_model
 from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.ollama import OllamaProvider
-from typing_extensions import Literal
 
-from .. import app as flask_app
-from .. import entry_types
+from .. import app as flask_app, entry_types
 from ..celery_app import app
 from ..database import add_entry_label, get_entry, get_label
 from ..label_types import get_label_type_module, is_free_text_label
@@ -25,22 +23,22 @@ if TYPE_CHECKING:
 def label_queue_with_llm(
     self: Task,
     user_id: int,
-    queue_ids: list[str],
+    learning_task_id: int,
     label_configs: list[dict],
     datasets: list[int],
-    project_id: int,  # noqa: ARG001
+    project_id: int,
     ollama_url: str,
     model: str,
     system_prompt: str,
     prompt_template: str,
-    **kwargs: Any,  # noqa: ARG001
+    **kwargs,
 ) -> dict[str, Any]:
     """Label a queue of entries using an LLM via Ollama.
 
     Args:
         self: Celery task instance (bound)
         user_id: User ID performing the labeling
-        queue_ids: List of entry IDs to label
+        learning_task_id: LearningTask ID — queue_ids are fetched from its data field
         label_configs: Label configurations [{"id": 1, "name": "Sentiment"}, ...]
         datasets: List of dataset IDs to search for entries
         project_id: Project ID
@@ -60,6 +58,13 @@ def label_queue_with_llm(
             - stats_by_label: dict of label name to value counts
     """
     with flask_app.app_context():
+        from ..database import get_learning_task
+
+        lt = get_learning_task(learning_task_id)
+        if not lt:
+            raise ValueError(f"LearningTask {learning_task_id} not found")
+        queue_ids: list[str] = lt.data.get("queue_ids", [])
+
         # Setup Ollama model using OllamaProvider
         # This is the correct way to use Ollama with PydanticAI
         ollama_model = OpenAIChatModel(
@@ -161,7 +166,10 @@ def label_queue_with_llm(
 
                     # Apply label to entry
                     add_entry_label(
-                        label_id=label.id, entry_uid=entry_obj.id, user_id=user_id, value=predicted_value
+                        label_id=label.id,
+                        entry_uid=entry_obj.id,
+                        user_id=user_id,
+                        value=predicted_value,
                     )
 
                     success_count += 1
@@ -186,12 +194,12 @@ def label_queue_with_llm(
 
             # Update progress
             progress = ((idx + 1) / len(queue_ids)) * 100
-            print(f"DEBUG: Updating task state - Entry {idx + 1}/{len(queue_ids)}, Progress: {progress}%")
+            print(f"DEBUG: Updating task state - Entry {idx + 1}/{len(queue_ids)}, Progress: {progress}%")  # noqa: E501
             self.update_state(
                 state="PROCESSING",
-                meta={"status": f"Labeled {idx + 1}/{len(queue_ids)} entries", "progress": progress},
+                meta={"status": f"Labeled {idx + 1}/{len(queue_ids)} entries", "progress": progress},  # noqa: E501
             )
-            print(f"DEBUG: Task state updated successfully")
+            print("DEBUG: Task state updated successfully")
 
         return {
             "success": True,

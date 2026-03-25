@@ -1,0 +1,35 @@
+{
+  "order": 50,
+  "name": "Active Learning — Search Cold Start",
+  "description": "Search for class-representative entries, label them, then train",
+  "show_progress": true,
+  "sequence": [
+    {
+      "state": "ALLabelSelect",
+      "params": {
+        "title": "Select Label for Active Learning"
+      }
+    },
+    {
+      "state": "ColdStartSearchSetup",
+      "params": {
+        "title": "Search per Class",
+        "cache_size": 100,
+        "retrain_every": 10
+      }
+    },
+    {
+      "state": "LabelEntry",
+      "params": {}
+    },
+    {
+      "state": "ActiveLearningLoop",
+      "params": {
+        "metric_goal": {"auc_roc": 0.85},
+        "retrain_every": 10,
+        "max_rounds": 10,
+        "cache_size": 100
+      }
+    }
+  ]
+}

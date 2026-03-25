@@ -244,7 +244,7 @@ class LearningTask(db.Model, CreationControl):
 
     # Relationships
     project: Mapped["Project"] = db.relationship(back_populates="learning_tasks")
-    
+
 
 class CeleryTaskStatus(db.TypeDecorator):
     """Enum for Celery task states"""
@@ -1319,6 +1319,24 @@ def get_celery_tasks(n=10) -> list[TaskStatus]:
                 }
             )
     return tasks
+
+
+def get_celery_task(task_id: str | None) -> "CeleryTask | None":
+    """Retrieve a single CeleryTask by its UUID. Returns None if not found."""
+    if task_id is None:
+        return None
+    return db.session.get(CeleryTask, task_id)
+
+
+def get_started_celery_tasks() -> list["CeleryTask"]:
+    """Return all CeleryTask records currently in STARTED status."""
+    return CeleryTask.query.filter(CeleryTask.status == "STARTED").all()
+
+
+def persist_celery_task(task: "CeleryTask") -> None:
+    """Add a new CeleryTask record to the session and commit."""
+    db.session.add(task)
+    db.session.commit()
 
 
 # endregion

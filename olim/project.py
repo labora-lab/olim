@@ -1,6 +1,7 @@
 import json
 import shutil
 from datetime import datetime
+from io import StringIO
 
 import pandas as pd
 from flask import flash, redirect, render_template, request, session, url_for
@@ -23,7 +24,7 @@ from .functions import (
 )
 from .settings import QUEUES_PATH
 from .utils.entry import get_all_hidden
-from .utils.queues import get_queue, store_queue
+from .utils.queues import delete_queue, get_queue, store_queue
 
 
 def backup_old_queue_folder(project_id: int) -> None:

@@ -1,0 +1,47 @@
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600">
+            <h1 class="text-2xl font-bold text-white">{{ title }}</h1>
+        </div>
+
+        <!-- Form -->
+        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="px-6 py-6">
+            <div class="space-y-4">
+                <div>
+                    <label for="al-label-id" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ _('Label') }} <span class="text-red-500">*</span>
+                    </label>
+                    <p class="text-sm text-gray-500 mb-2">{{ _('Select the label you want to train the active learning model for.') }}</p>
+                    <select id="al-label-id" name="label_id" required
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">— {{ _('Select a label') }} —</option>
+                        {% for label in labels %}
+                        <option value="{{ label.id }}" {% if label.id == selected_id %}selected{% endif %}>
+                            {{ label.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="mt-6 pt-4 border-t border-gray-200 flex justify-between items-center">
+                <div>
+                    <button type="submit" name="action" value="prev"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors">
+                        <i class="bi bi-chevron-left mr-2"></i>
+                        {{ _('Previous') }}
+                    </button>
+                </div>
+                <div>
+                    <button type="submit" name="action" value="select"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-colors">
+                        {{ _('Continue') }}
+                        <i class="bi bi-chevron-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

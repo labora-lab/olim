@@ -25,7 +25,7 @@ class BaseState(ABC):
     }
     """
 
-    def __init__(self, data: dict[str, Any], params: dict[str, Any] | None = None):
+    def __init__(self, data: dict[str, Any], params: dict[str, Any] | None = None) -> None:
         """Initialize state with task memory and step parameters.
 
         Args:

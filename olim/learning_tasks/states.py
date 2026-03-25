@@ -116,7 +116,7 @@ class ReadData(BaseState):
     }
     """
 
-    def __init__(self, data: dict[str, Any], params: dict[str, Any] | None = None):
+    def __init__(self, data: dict[str, Any], params: dict[str, Any] | None = None) -> None:
         super().__init__(data, params)
         self.errors: dict[str, str] = {}
 
@@ -141,7 +141,7 @@ class ReadData(BaseState):
             is_last_step=self.params.get("is_last_step", False),
         )
 
-    def validate_field(self, field: dict, value: Any) -> str | None:
+    def validate_field(self, field: dict, value: Any) -> str | None:  # noqa: ANN401
         """Validate a single field. Returns error message or None if valid."""
         field_name = field.get("name", "")
         field_type = field.get("type", "text")
@@ -298,7 +298,8 @@ class QueueSetup(BaseState):
                 If not provided, will use project labels
         project_id: Project ID to get labels from (required if labels not provided)
         allow_label_selection: Let user select which labels to use (default: True)
-        id_separator: Separator for parsing IDs - "newline", "comma", or "space" (default: "newline")
+        id_separator: Separator for parsing IDs - "newline", "comma", or "space"
+            (default: "newline")
 
     Stores in data:
         queue_ids: List of entry IDs to label
@@ -318,7 +319,7 @@ class QueueSetup(BaseState):
     }
     """
 
-    def __init__(self, data: dict[str, Any], params: dict[str, Any] | None = None):
+    def __init__(self, data: dict[str, Any], params: dict[str, Any] | None = None) -> None:
         super().__init__(data, params)
         self.errors: dict[str, str] = {}
 
@@ -429,7 +430,11 @@ class QueueSetup(BaseState):
             # Get selected labels
             available_labels = self._get_available_labels()
             if self.params.get("allow_label_selection", True):
-                selected_ids = payload.getlist("labels") if hasattr(payload, "getlist") else payload.get("labels", [])
+                selected_ids = (
+                    payload.getlist("labels")
+                    if hasattr(payload, "getlist")
+                    else payload.get("labels", [])
+                )
                 if isinstance(selected_ids, str):
                     selected_ids = [selected_ids]
                 selected_ids = [int(x) for x in selected_ids if x]
@@ -447,7 +452,11 @@ class QueueSetup(BaseState):
                 return 0
 
             # Get required labels (subset of selected labels)
-            required_ids = payload.getlist("required_labels") if hasattr(payload, "getlist") else payload.get("required_labels", [])
+            required_ids = (
+                payload.getlist("required_labels")
+                if hasattr(payload, "getlist")
+                else payload.get("required_labels", [])
+            )
             if isinstance(required_ids, str):
                 required_ids = [required_ids]
             required_ids = [int(x) for x in required_ids if x]
@@ -731,7 +740,7 @@ class OllamaQueueSetup(BaseState):
     }
     """
 
-    def __init__(self, data: dict[str, Any], params: dict[str, Any] | None = None):
+    def __init__(self, data: dict[str, Any], params: dict[str, Any] | None = None) -> None:
         super().__init__(data, params)
         self.errors: dict[str, str] = {}
 
@@ -743,7 +752,7 @@ class OllamaQueueSetup(BaseState):
             project_id = self.params.get("_project_id")
             if project_id:
                 all_labels = get_labels(project_id)
-                return [{"id": lbl.id, "name": lbl.name} for lbl in all_labels if lbl.id in label_ids]
+                return [{"id": lbl.id, "name": lbl.name} for lbl in all_labels if lbl.id in label_ids]  # noqa: E501
             return []
 
         # Use injected project context
@@ -805,7 +814,11 @@ class OllamaQueueSetup(BaseState):
             entry_source = payload.get("entry_source", self.params.get("entry_source", "random"))
             self.data["_entry_source"] = entry_source
 
-            print(f"DEBUG OllamaQueueSetup.handle(submit): entry_source={entry_source}, params={self.params.keys()}, payload keys={payload.keys() if hasattr(payload, 'keys') else 'not a dict'}")
+            print(
+                f"DEBUG OllamaQueueSetup.handle(submit): entry_source={entry_source}, "
+                f"params={self.params.keys()}, "
+                f"payload keys={payload.keys() if hasattr(payload, 'keys') else 'not a dict'}"
+            )
 
             # Handle entry selection
             if entry_source == "random":
@@ -858,7 +871,11 @@ class OllamaQueueSetup(BaseState):
                     selected_ids = [lbl["id"] for lbl in available_labels]
                     print(f"DEBUG OllamaQueueSetup: auto-selected all labels={selected_ids}")
             else:
-                selected_ids = payload.getlist("labels") if hasattr(payload, "getlist") else payload.get("labels", [])
+                selected_ids = (
+                    payload.getlist("labels")
+                    if hasattr(payload, "getlist")
+                    else payload.get("labels", [])
+                )
                 if isinstance(selected_ids, str):
                     selected_ids = [selected_ids]
                 selected_ids = [int(x) for x in selected_ids if x]
@@ -934,7 +951,7 @@ class OllamaModelConfig(BaseState):
     }
     """
 
-    def __init__(self, data: dict[str, Any], params: dict[str, Any] | None = None):
+    def __init__(self, data: dict[str, Any], params: dict[str, Any] | None = None) -> None:
         super().__init__(data, params)
         self.errors: dict[str, str] = {}
 
@@ -955,7 +972,7 @@ class OllamaModelConfig(BaseState):
                 models = response.json().get("models", [])
                 return [m["name"] for m in models]
         except Exception as e:
-            self.errors["ollama_api"] = f"Failed to fetch models: {str(e)}"
+            self.errors["ollama_api"] = f"Failed to fetch models: {e!s}"
         return []
 
     def render(self) -> str:
@@ -967,7 +984,10 @@ class OllamaModelConfig(BaseState):
         available_models = self._fetch_ollama_models(ollama_url)
 
         # Default prompts
-        default_system_prompt = "You are a precise labeling assistant. You MUST respond with ONLY the exact label value - nothing else. No explanations, no punctuation, no formatting."
+        default_system_prompt = (
+            "You are a precise labeling assistant. You MUST respond with ONLY the exact label value"
+            " - nothing else. No explanations, no punctuation, no formatting."
+        )
         default_prompt_template = """Classify this text for the label '{label_name}'.
 
 Text:
@@ -976,14 +996,19 @@ Text:
 --- VALID OPTIONS (choose one exactly as shown) ---
 {label_options}
 
-IMPORTANT: Return ONLY the exact value from the options above. Copy it character-for-character. Do not add any other text, explanation, punctuation, or formatting.
+IMPORTANT: Return ONLY the exact value from the options above. Copy it character-for-character.
+Do not add any other text, explanation, punctuation, or formatting.
 
 Your response:"""
 
         # Get current values or use params/defaults
         selected_model = self.data.get("llm_model", self.params.get("model", ""))
-        system_prompt = self.data.get("llm_system_prompt", self.params.get("system_prompt", default_system_prompt))
-        prompt_template = self.data.get("llm_prompt_template", self.params.get("prompt_template", default_prompt_template))
+        system_prompt = self.data.get(
+            "llm_system_prompt", self.params.get("system_prompt", default_system_prompt)
+        )
+        prompt_template = self.data.get(
+            "llm_prompt_template", self.params.get("prompt_template", default_prompt_template)
+        )
 
         # Detect automation mode - auto-submit if all required params are provided
         # and we haven't already attempted auto-submit
@@ -1026,8 +1051,13 @@ Your response:"""
                 return 0
 
             # Get prompts (from payload or params)
-            system_prompt = payload.get("system_prompt", self.params.get("system_prompt", "You are a helpful assistant that accurately labels text data.")).strip()
-            prompt_template = payload.get("prompt_template", self.params.get("prompt_template", "")).strip()
+            system_prompt = payload.get(
+                "system_prompt",
+                self.params.get("system_prompt", "You are a helpful assistant that accurately labels text data."),  # noqa: E501
+            ).strip()
+            prompt_template = payload.get(
+                "prompt_template", self.params.get("prompt_template", "")
+            ).strip()
 
             if not prompt_template:
                 self.errors["prompt_template"] = _("Prompt template is required")
@@ -1035,7 +1065,7 @@ Your response:"""
 
             # Validate prompt template has required placeholders
             if "{text}" not in prompt_template:
-                self.errors["prompt_template"] = _("Prompt template must contain {text} placeholder")
+                self.errors["prompt_template"] = _("Prompt template must contain {text} placeholder")  # noqa: E501
                 return 0
 
             # Store LLM configuration
@@ -1178,13 +1208,13 @@ class OllamaAutoLabel(BaseState):
                 is_last_step=self.params.get("is_last_step", False),
             )
 
-    def handle(self, action: str, payload: dict[str, Any]) -> int:  # noqa: ARG002
+    def handle(self, action: str, payload: dict[str, Any]) -> int:
         if action == "start":
             # Launch the Celery task
             task = launch_task_with_tracking(
                 label_queue_with_llm,
                 user_id=self.params["_user_id"],
-                queue_ids=self.data["queue_ids"],
+                learning_task_id=self.params["_task_id"],
                 label_configs=self.data["queue_labels"],
                 datasets=[d.id for d in self.params["_datasets"]],
                 project_id=self.params["_project_id"],
@@ -1251,7 +1281,10 @@ class OllamaAutoLabel(BaseState):
 
             # Flash success message
             from flask import flash
-            flash(_("Queue created successfully with {count} entries").format(count=len(queue_data)), "success")
+            flash(
+                _("Queue created successfully with {count} entries").format(count=len(queue_data)),
+                "success",
+            )
 
             return 0  # Stay on this step to show the queue was created
 

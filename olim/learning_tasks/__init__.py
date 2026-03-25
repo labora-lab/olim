@@ -345,12 +345,16 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
     params["is_last_step"] = is_last_step
 
     # Inject project context (accessible to all states)
+    params["_task_id"] = task_id
     params["_project_id"] = project_id
     params["_datasets"] = list(get_datasets(project_id))
 
     # Get user_id from session (same way as labels.py and other modules)
     is_htmx = request.headers.get("HX-Request") == "true"
-    print(f"DEBUG learning_task_view: is_htmx={is_htmx}, session keys: {session.keys()}, user_id in session: {'user_id' in session}")
+    print(
+        f"DEBUG learning_task_view: is_htmx={is_htmx}, session keys: {session.keys()}, "
+        f"user_id in session: {'user_id' in session}"
+    )
     try:
         user_id = session["user_id"]
         print(f"DEBUG learning_task_view: Got user_id from session: {user_id}")
