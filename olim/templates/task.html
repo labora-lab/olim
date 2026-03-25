@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% import "macros/labels-menu.html" as labels_macro %}
+
+{% block title %}{{ task.name }} - {{ _('Learning Task') }}{% endblock %}
+
+{% block content %}
+<div>
+    {% include "learning_tasks/_progress_bar.html" %}
+
+    <!-- State content -->
+    <div id="task-content" class="space-y-4">
+        {{ content|safe }}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.projectId = {{ task.project_id }};
+
+    document.body.addEventListener('showFlash', function(e) {
+        var messages = e.detail.value || [];
+        messages.forEach(function(m) {
+            showToast(m.message, m.category, m.category === 'error' ? 10000 : 5000);
+        });
+    });
+</script>
+{{ state_scripts|safe if state_scripts else '' }}
+{% endblock %}

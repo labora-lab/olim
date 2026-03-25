@@ -1,4 +1,4 @@
-"""create sessions table
+"""Create sessions table
 
 Revision ID: 036595491aee
 Revises: 24287f3ca93e

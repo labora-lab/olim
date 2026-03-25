@@ -3,6 +3,10 @@ from datetime import timedelta
 from pathlib import Path
 from typing import ClassVar
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 VERSION = "0.3.0-rc2"
 """Version of the application"""
 
@@ -24,11 +28,7 @@ debug = debug or "false"
 DEBUG = debug.lower() == "true"
 SECRET_KEY = os.getenv("SECRET_KEY", "6DUUwdKqwkaXPvjqCS4y")
 
-DB_HOST = os.getenv("DB_HOST")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_PORT = os.getenv("DB_PORT", "5432")
+DB_URL = os.getenv("DB_URL")
 
 SESSION_TYPE = "sqlalchemy"
 SESSION_PERMANENT = True
@@ -157,6 +157,21 @@ PERMISSIONS = {
         "get_help",
         "send_ticket",
         "redirect_to_project",
+        # ML Models Management (UI)
+        "models_list",
+        "model_detail",
+        "model_create",
+        "model_train",
+        "version_activate",
+        "model_link_label",
+        "model_unlink_label",
+        "model_delete",
+        "model_predict",
+        # ML Models API (REST)
+        "api.health_check",
+        "api.get_model_info",
+        "api.predict_single",
+        "api.predict_batch",
     ],
     "guest": ["static", "login"],
 }

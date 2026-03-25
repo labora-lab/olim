@@ -11,10 +11,35 @@ from .database import (
     link_dataset_to_project,
     new_dataset,
 )
-from .functions import check_is_setup
+from .functions import check_is_setup, ensure_dir
 from .project import update_session_project
 from .settings import ALLOWED_EXTENSIONS, CHUNK_SIZE, MAX_FILE_SIZE, UPLOAD_PATH
-from .tasks.upload_data import finalize_chunks_upload, save_chunk, upload_dataset
+from .tasks.upload_data import finalize_chunks_upload, upload_dataset
+
+ALLOWED_ENCODINGS = {"utf-8", "latin-1", "cp1252"}
+
+
+def _validate_csv_options(sep: str | None, encoding: str | None) -> tuple[str, str]:
+    """Validate and normalize sep and encoding from request params.
+
+    Returns (sep, encoding) tuple or raises ValueError with user-facing message.
+    """
+    # Encoding validation
+    enc = (encoding or "utf-8").strip()
+    if enc not in ALLOWED_ENCODINGS:
+        raise ValueError(_("Encoding inválido. Use utf-8, latin-1, ou cp1252."))
+
+    # Sep validation
+    s = sep if sep is not None else ","
+    if s == "":
+        raise ValueError(_("Separador não pode ser vazio."))
+    # Convert literal \t to actual tab (store converted value in DB)
+    if s == "\\t":
+        s = "\t"
+    if len(s) > 10:
+        raise ValueError(_("Separator too long."))
+
+    return s, enc
 
 
 @app.before_request  # type: ignore
@@ -50,15 +75,11 @@ def handle_large_upload() -> ...:
         return jsonify(error="File too large"), 413
 
     chunk = request.files["file"].read()
-
-    launch_task_with_tracking(
-        save_chunk,
-        chunk=chunk,
-        chunk_number=chunk_number,
-        file_id=file_id,
-        user_id=session["user_id"],
-        track_progress=False,
-    )
+    chunk_dir = UPLOAD_PATH / file_id
+    ensure_dir(chunk_dir)
+    chunk_path = chunk_dir / f"{chunk_number:04d}"
+    with open(chunk_path, "wb") as f:
+        f.write(chunk)
 
     return jsonify(success=True)
 
@@ -67,20 +88,47 @@ def handle_large_upload() -> ...:
 def finalize_upload(file_id) -> ...:
     filename = request.args.get("filename")
     total_chunks = request.args.get("total_chunks")
+
+    if not filename or not total_chunks:
+        return jsonify(error=_("filename and total_chunks are required")), 400
+
     final_path = UPLOAD_PATH / f"{file_id}_{filename}"
+
+    try:
+        sep, encoding = _validate_csv_options(
+            request.args.get("sep", ","),
+            request.args.get("encoding", "utf-8"),
+        )
+    except ValueError as e:
+        return jsonify(error=str(e)), 400
 
     res = launch_task_with_tracking(
         finalize_chunks_upload,
         file_id=file_id,
         filename=str(final_path),
         total_chunks=int(total_chunks),  # type: ignore
+        sep=sep,
+        encoding=encoding,
         user_id=session["user_id"],
         track_progress=False,
     )
 
-    columns = res.get()["columns"]
+    try:
+        result = res.get()
+    except Exception as e:
+        return jsonify(error=str(e)), 400
 
-    return jsonify(success=True, path=str(final_path), columns=columns)
+    if not result.get("success"):
+        return jsonify(error=result["error"], can_retry=result.get("can_retry", False)), 400
+    columns = result["columns"]
+
+    return jsonify(
+        success=True,
+        path=str(final_path),
+        columns=columns,
+        sep=result.get("sep", ","),
+        encoding=result.get("encoding", "utf-8"),
+    )
 
 
 @app.route("/upload-data", methods=["GET", "POST"])
@@ -115,6 +163,16 @@ def upload_data(project_id: int | None = None) -> ...:
         filename = request.form.get("filename")
         file_id = request.form.get("file_id")
 
+        # Extract and validate CSV options
+        try:
+            sep, encoding = _validate_csv_options(
+                request.form.get("sep", ","),
+                request.form.get("encoding", "utf-8"),
+            )
+        except ValueError as e:
+            flash(str(e), "error")
+            return redirect(request.url)
+
         # Validate required fields
         if not upload_type:
             flash(_("Upload type is required"), "error")
@@ -132,7 +190,7 @@ def upload_data(project_id: int | None = None) -> ...:
 
         # Create new dataset
         try:
-            dataset = new_dataset(dataset_name, session["user_id"])
+            dataset = new_dataset(dataset_name, session["user_id"], sep=sep, encoding=encoding)
 
             # Link to selected projects
             for project_id_str in projects:

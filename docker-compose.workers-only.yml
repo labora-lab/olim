@@ -16,11 +16,7 @@ x-app-base: &app-base
 
 # Environments for remote connections
 x-worker-env: &worker-env
-  DB_HOST: "${DB_HOST}"
-  DB_NAME: "${POSTGRES_DB}"
-  DB_USER: "${POSTGRES_USER}"
-  DB_PASSWORD: "${POSTGRES_PASSWORD}"
-  DB_PORT: "${POSTGRES_PORT:-5432}"
+  DB_URL: "${DB_URL}"
   DEBUG: "${DEBUG:-false}"
   ES_SERVER: "${ES_SERVER}"
   WORK_PATH: /app/work
@@ -38,9 +34,9 @@ services:
     volumes:
       - redis-data:/data
     ports:
-      - '${REDIS_PORT:-6379}:6379'
+      - "${REDIS_PORT:-6379}:6379"
     healthcheck:
-      test: [ 'CMD', 'redis-cli', 'ping' ]
+      test: ["CMD", "redis-cli", "ping"]
       interval: 30s
       timeout: 10s
       retries: 5

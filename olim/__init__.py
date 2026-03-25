@@ -4,17 +4,17 @@ from flask_migrate import Migrate
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 
-from .label_types import get_available_label_types, get_label_type_module, is_free_text_label
+from .label_types import (
+    get_available_label_types,
+    get_label_type_module,
+    is_free_text_label,
+)
 
 # from werkzeug.middleware.profiler import ProfilerMiddleware
 from .settings import (
     BABEL_DEFAULT_LOCALE,
     BABEL_TRANSLATION_DIRECTORIES,
-    DB_HOST,
-    DB_NAME,
-    DB_PASSWORD,
-    DB_PORT,
-    DB_USER,
+    DB_URL,
     DEBUG,
     HELP_URL,
     INTERFACE_SETTINGS,
@@ -33,12 +33,10 @@ app = Flask(__name__)
 app.config["DEBUG"] = DEBUG
 
 # Database configuration
-if all([DB_HOST, DB_NAME, DB_USER, DB_PASSWORD]):
-    app.config["SQLALCHEMY_DATABASE_URI"] = (
-        f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    )
+if DB_URL:
+    app.config["SQLALCHEMY_DATABASE_URI"] = DB_URL
 else:
-    print("Warning: Missing PostgreSQL configuration. Falling back to SQLite.")
+    print("Warning: DB_URL not set. Falling back to SQLite.")
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///olim.sqlite"
 
 
@@ -85,6 +83,7 @@ babel = Babel(app, locale_selector=get_locale)
 
 from . import active_learning  # noqa
 from . import analytics  # noqa
+from . import api_rest  # noqa
 from . import auth  # noqa
 from . import cli  # noqa
 from . import commands  # noqa
@@ -92,10 +91,16 @@ from . import database  # noqa
 from . import error_handlers  # noqa
 from . import issue  # noqa
 from . import labels  # noqa
+from . import ml_ui  # noqa
 from . import project  # noqa
 from . import settings_routes  # noqa
 from . import upload_data  # noqa
+from .ml import models as ml_models  # noqa
+from . import learning_tasks  # noqa
 from .utils.entry import have_hidden  # noqa
+
+# Register API blueprint
+app.register_blueprint(api_rest.api)
 
 # Global variables to templates
 app.jinja_env.globals.update(

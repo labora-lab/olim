@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Learning Tasks') }}{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Tasks List -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-list-task text-cyan-600 mr-2"></i>
+                    {{ _('Learning Tasks') }}
+                </h3>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">
+                                <div class="flex items-center">
+                                    <i class="bi bi-card-text mr-2"></i>
+                                    {{ _('Task Name') }}
+                                </div>
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-center">
+                                <div class="flex items-center justify-center">
+                                    <i class="bi bi-diagram-3 mr-2"></i>
+                                    {{ _('State') }}
+                                </div>
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-center">
+                                <div class="flex items-center justify-center">
+                                    <i class="bi bi-bar-chart-steps mr-2"></i>
+                                    {{ _('Progress') }}
+                                </div>
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-center">
+                                <div class="flex items-center justify-center">
+                                    <i class="bi bi-person mr-2"></i>
+                                    {{ _('Creator') }}
+                                </div>
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-center">
+                                <div class="flex items-center justify-center">
+                                    <i class="bi bi-gear mr-2"></i>
+                                    {{ _('Actions') }}
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
+                                        {{ task.name[0]|upper }}
+                                    </div>
+                                    <div class="font-medium text-gray-900">{{ task.name }}</div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {{ task.state }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                {% set total = task.initial_setup.get('sequence', [])|length if task.initial_setup else 0 %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    {{ task.position + 1 }} / {{ total }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex items-center justify-center">
+                                    <div class="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center text-white text-xs font-medium mr-2">
+                                        {{ task.creator.name[0]|upper if task.creator and task.creator.name else '?' }}
+                                    </div>
+                                    <span class="text-gray-700">{{ task.creator.name if task.creator and task.creator.name else task.creator.username if task.creator else 'Unknown' }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex items-center justify-center space-x-2">
+                                    <a href="{{ url_for('learning_task_view', project_id=project_id, task_id=task.id) }}"
+                                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 transition-colors"
+                                        title="{{ _('Open Task') }}">
+                                        <i class="bi bi-play-fill mr-1"></i>
+                                        {{ _('Open') }}
+                                    </a>
+                                    <form action="{{ url_for('reset_learning_task', project_id=project_id, task_id=task.id) }}" method="post" class="inline">
+                                        <button type="submit"
+                                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-yellow-500 rounded-lg hover:bg-yellow-600 focus:ring-4 focus:outline-none focus:ring-yellow-300 transition-colors"
+                                            title="{{ _('Reset Task') }}">
+                                            <i class="bi bi-arrow-counterclockwise mr-1"></i>
+                                            {{ _('Reset') }}
+                                        </button>
+                                    </form>
+                                    {% if has_permission('admin') %}
+                                    <button
+                                        onclick="confirmDelete('{{ task.name }}', '{{ url_for('delete_learning_task_route', project_id=project_id, task_id=task.id) }}')"
+                                        class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 transition-colors"
+                                        title="{{ _('Delete Task') }}">
+                                        <i class="bi bi-trash mr-1"></i>
+                                        {{ _('Delete') }}
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-12 text-center">
+                                <i class="bi bi-list-task text-4xl text-gray-400 mb-4"></i>
+                                <h3 class="text-lg font-medium text-gray-900 mb-2">{{ _('No learning tasks found') }}</h3>
+                                <p class="text-gray-500">{{ _('Create your first learning task to get started.') }}</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Task Form -->
+    <div class="lg:col-span-1 space-y-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-plus-circle text-green-600 mr-2"></i>
+                    {{ _('Create Learning Task') }}
+                </h3>
+            </div>
+
+            <div class="p-6">
+                <!-- Tabs -->
+                <div class="flex border-b border-gray-200 mb-4">
+                    <button type="button" id="tab-preset" onclick="switchTab('preset')"
+                        class="px-4 py-2 text-sm font-medium border-b-2 border-cyan-600 text-cyan-600">
+                        <i class="bi bi-collection mr-1"></i>
+                        {{ _('Preset') }}
+                    </button>
+                    <button type="button" id="tab-upload" onclick="switchTab('upload')"
+                        class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                        <i class="bi bi-upload mr-1"></i>
+                        {{ _('Upload JSON') }}
+                    </button>
+                </div>
+
+                <!-- Preset Tab -->
+                <form id="form-preset" action="{{ url_for('create_learning_task', project_id=project_id) }}" method="post" class="space-y-4">
+                    <input type="hidden" name="source" value="preset">
+
+                    <div>
+                        <label for="task_name_preset" class="block mb-2 text-sm font-medium text-gray-900">
+                            <i class="bi bi-card-text mr-1"></i>
+                            {{ _('Task Name') }}
+                        </label>
+                        <input type="text" id="task_name_preset" name="name" required
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                            placeholder="{{ _('Enter task name') }}">
+                    </div>
+
+                    <div>
+                        <label for="configuration" class="block mb-2 text-sm font-medium text-gray-900">
+                            <i class="bi bi-file-earmark-code mr-1"></i>
+                            {{ _('Configuration') }}
+                        </label>
+                        <select id="configuration" name="configuration" required
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                            {% if configurations %}
+                                {% for config in configurations %}
+                                <option value="{{ config.filename }}">{{ config.name }} ({{ config.steps }} {{ _('steps') }})</option>
+                                {% endfor %}
+                            {% else %}
+                                <option value="" disabled selected>{{ _('No configurations available') }}</option>
+                            {% endif %}
+                        </select>
+                        {% if configurations %}
+                        <p class="mt-1 text-xs text-gray-500" id="config-description">
+                            {{ configurations[0].description if configurations else '' }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" {% if not configurations %}disabled{% endif %}
+                        class="w-full text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        <i class="bi bi-plus-circle mr-2"></i>
+                        {{ _('Create Task') }}
+                    </button>
+                </form>
+
+                <!-- Upload Tab -->
+                <form id="form-upload" action="{{ url_for('create_learning_task', project_id=project_id) }}" method="post" enctype="multipart/form-data" class="space-y-4 hidden">
+                    <input type="hidden" name="source" value="upload">
+
+                    <div>
+                        <label for="task_name_upload" class="block mb-2 text-sm font-medium text-gray-900">
+                            <i class="bi bi-card-text mr-1"></i>
+                            {{ _('Task Name') }}
+                        </label>
+                        <input type="text" id="task_name_upload" name="name" required
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                            placeholder="{{ _('Enter task name') }}">
+                    </div>
+
+                    <div>
+                        <label for="config_file" class="block mb-2 text-sm font-medium text-gray-900">
+                            <i class="bi bi-file-earmark-arrow-up mr-1"></i>
+                            {{ _('Configuration File') }}
+                        </label>
+                        <input type="file" id="config_file" name="config_file" accept=".json" required
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                        <p class="mt-1 text-xs text-gray-500">{{ _('Upload a JSON file with the task configuration') }}</p>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                        <i class="bi bi-plus-circle mr-2"></i>
+                        {{ _('Create Task') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Upload Configuration Card -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-cloud-upload text-blue-600 mr-2"></i>
+                    {{ _('Save Configuration') }}
+                </h3>
+            </div>
+
+            <div class="p-6">
+                <form action="{{ url_for('upload_configuration', project_id=project_id) }}" method="post" enctype="multipart/form-data" class="space-y-4">
+                    <div>
+                        <label for="config_name" class="block mb-2 text-sm font-medium text-gray-900">
+                            <i class="bi bi-tag mr-1"></i>
+                            {{ _('Configuration Name') }}
+                        </label>
+                        <input type="text" id="config_name" name="config_name"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                            placeholder="{{ _('Optional - uses filename if empty') }}">
+                    </div>
+
+                    <div>
+                        <label for="save_config_file" class="block mb-2 text-sm font-medium text-gray-900">
+                            <i class="bi bi-file-earmark-arrow-up mr-1"></i>
+                            {{ _('Configuration File') }}
+                        </label>
+                        <input type="file" id="save_config_file" name="config_file" accept=".json" required
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                    </div>
+
+                    <button type="submit"
+                        class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                        <i class="bi bi-cloud-upload mr-2"></i>
+                        {{ _('Save to Presets') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="bi bi-exclamation-triangle text-red-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                            {{ _('Delete Learning Task') }}
+                        </h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500" id="deleteMessage">
+                                {{ _('Are you sure you want to delete this task? This action cannot be undone.') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="confirmDeleteBtn"
+                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    {{ _('Delete') }}
+                </button>
+                <button type="button" onclick="closeDeleteModal()"
+                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    {{ _('Cancel') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Tab switching
+    function switchTab(tab) {
+        const tabPreset = document.getElementById('tab-preset');
+        const tabUpload = document.getElementById('tab-upload');
+        const formPreset = document.getElementById('form-preset');
+        const formUpload = document.getElementById('form-upload');
+
+        if (tab === 'preset') {
+            tabPreset.classList.add('border-cyan-600', 'text-cyan-600');
+            tabPreset.classList.remove('border-transparent', 'text-gray-500');
+            tabUpload.classList.remove('border-cyan-600', 'text-cyan-600');
+            tabUpload.classList.add('border-transparent', 'text-gray-500');
+            formPreset.classList.remove('hidden');
+            formUpload.classList.add('hidden');
+        } else {
+            tabUpload.classList.add('border-cyan-600', 'text-cyan-600');
+            tabUpload.classList.remove('border-transparent', 'text-gray-500');
+            tabPreset.classList.remove('border-cyan-600', 'text-cyan-600');
+            tabPreset.classList.add('border-transparent', 'text-gray-500');
+            formUpload.classList.remove('hidden');
+            formPreset.classList.add('hidden');
+        }
+    }
+
+    // Delete confirmation
+    initProjectsPage();
+
+    // Configuration descriptions
+    const configDescriptions = {
+        {% for config in configurations %}
+        '{{ config.filename }}': '{{ config.description }}',
+        {% endfor %}
+    };
+
+    const configSelect = document.getElementById('configuration');
+    const configDescription = document.getElementById('config-description');
+
+    if (configSelect && configDescription) {
+        configSelect.addEventListener('change', function() {
+            configDescription.textContent = configDescriptions[this.value] || '';
+        });
+    }
+</script>
+{% endblock %}

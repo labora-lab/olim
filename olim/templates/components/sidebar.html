@@ -109,6 +109,40 @@
                 </li>
                 {% endif %}
 
+                {% if has_permission('labels') %}
+                <li>
+                    <a href="{{ url_for('models_list', project_id = project_id) }}" class="flex items-center p-2 rounded-lg group
+                                        {% if request.endpoint in ['models_list', 'model_detail', 'model_create', 'model_predict'] %}
+                                            bg-cyan-600 text-white
+                                        {% else %}
+                                            text-gray-300 hover:bg-gray-700
+                                        {% endif %}">
+                        <i class="bi bi-robot sidebar-item-icon
+                                        {% if request.endpoint in ['models_list', 'model_detail', 'model_create', 'model_predict'] %}
+                                            text-white
+                                        {% else %}
+                                            text-gray-400 group-hover:text-white
+                                        {% endif %}"></i>
+                        <span class="ms-3 sidebar-item-text">{{ _('ML Models') }}</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('learning_tasks_list', project_id = project_id) }}" class="flex items-center p-2 rounded-lg group
+                        {% if request.endpoint == 'learning_tasks_list' or request.endpoint == 'learning_task_view' %}
+                            bg-cyan-600 text-white
+                        {% else %}
+                            text-gray-300 hover:bg-gray-700
+                        {% endif %}">
+                        <i class="bi bi-list-task sidebar-item-icon
+                        {% if request.endpoint == 'learning_tasks_list' or request.endpoint == 'learning_task_view' %}
+                            text-white
+                        {% else %}
+                            text-gray-400 group-hover:text-white
+                        {% endif %}"></i>
+                        <span class="ms-3 sidebar-item-text">{{ _('Learning Tasks') }}</span>
+                    </a>
+                </li>
+                {% endif %}
 
                 {% if have_hidden() and has_permission('hidden') %}
                 <li>

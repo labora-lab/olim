@@ -1,0 +1,218 @@
+{% macro entry_sources_widget(sources, errors={}) %}
+<div>
+    <div class="flex items-center justify-between mb-2">
+        <label class="block text-sm font-medium text-gray-700">
+            {{ _('Entry Sources') }} <span class="text-red-500">*</span>
+        </label>
+        <button type="button" onclick="addSourceBlock()"
+            class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+            <i class="bi bi-plus-lg mr-1"></i>{{ _('Add source') }}
+        </button>
+    </div>
+    <p class="text-sm text-gray-500 mb-3">{{ _('Results from all sources are merged and deduplicated.') }}</p>
+
+    <div id="sources-list" class="space-y-3">
+        {% for src in sources %}{{ _source_block(loop.index0, src) }}{% endfor %}
+    </div>
+
+    <input type="hidden" id="num_sources" name="num_sources" value="{{ sources|length }}">
+
+    {% if errors.get('sources') %}
+    <p class="mt-2 text-sm text-red-500">{{ errors['sources'] }}</p>
+    {% endif %}
+</div>
+{% endmacro %}
+
+
+{% macro _source_block(idx, src) %}
+{% if src.type == 'search' %}{% set accent_classes = 'border-l-green-400' %}
+{% elif src.type == 'regex' %}{% set accent_classes = 'border-l-orange-400' %}
+{% elif src.type == 'manual' %}{% set accent_classes = 'border-l-gray-400' %}
+{% else %}{% set accent_classes = 'border-l-blue-400' %}{% endif %}
+<div class="source-block border border-gray-200 border-l-4 {{ accent_classes }} rounded-lg p-4 bg-white shadow-sm" data-index="{{ idx }}">
+    <!-- Type selector + remove -->
+    <div class="flex items-center gap-3 mb-3">
+        <select data-f="type" onchange="updateBlockType(this)"
+            class="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white">
+            <option value="random" {% if src.type == 'random' %}selected{% endif %}>{{ _('🔀 Random') }}</option>
+            <option value="search" {% if src.type == 'search' %}selected{% endif %}>{{ _('🔍 Search') }}</option>
+            <option value="regex"  {% if src.type == 'regex'  %}selected{% endif %}>{{ _('⚡ Regex') }}</option>
+            <option value="manual" {% if src.type == 'manual' %}selected{% endif %}>{{ _('📋 Manual IDs') }}</option>
+        </select>
+        <button type="button" onclick="removeBlock(this)"
+            class="remove-block-btn p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg border border-gray-200 transition-colors flex-shrink-0"
+            title="{{ _('Remove') }}">
+            <i class="bi bi-trash text-sm"></i>
+        </button>
+    </div>
+
+    <!-- Random -->
+    <div class="block-random {% if src.type != 'random' %}hidden{% endif %}">
+        <label class="block text-xs font-medium text-gray-600 mb-1">{{ _('Number of entries') }}</label>
+        <input data-f="count" type="number" value="{{ src.count or 10 }}" min="1" max="1000"
+            class="w-32 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+    </div>
+
+    <!-- Search -->
+    <div class="block-search {% if src.type != 'search' %}hidden{% endif %}">
+        <label class="block text-xs font-medium text-gray-600 mb-1">{{ _('Search term') }}</label>
+        <input data-f="term" type="text" value="{{ src.term or '' }}"
+            placeholder="{{ _('Keyword or phrase…') }}"
+            class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-2">
+        <label class="block text-xs font-medium text-gray-600 mb-1">{{ _('Max results per dataset') }}</label>
+        <input data-f="count" type="number" value="{{ src.count or 10 }}" min="1" max="500"
+            class="w-32 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+    </div>
+
+    <!-- Regex -->
+    <div class="block-regex {% if src.type != 'regex' %}hidden{% endif %}">
+        <label class="block text-xs font-medium text-gray-600 mb-1">{{ _('Regex pattern') }}</label>
+        <input data-f="pattern" type="text" value="{{ src.pattern or '' }}"
+            placeholder="\bword\b"
+            class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono mb-2">
+        <label class="block text-xs font-medium text-gray-600 mb-1">{{ _('Max results per dataset') }}</label>
+        <input data-f="count" type="number" value="{{ src.count or 10 }}" min="1" max="500"
+            class="w-32 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+        <p class="text-xs text-gray-400 mt-1">{{ _('Python regex · case-insensitive') }}</p>
+    </div>
+
+    <!-- Manual IDs -->
+    <div class="block-manual {% if src.type != 'manual' %}hidden{% endif %}">
+        <label class="block text-xs font-medium text-gray-600 mb-1">{{ _('Entry IDs (one per line)') }}</label>
+        <textarea data-f="ids" rows="4"
+            placeholder="{{ _('Enter entry IDs, one per line…') }}"
+            class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono">{{ src.ids_text or '' }}</textarea>
+    </div>
+</div>
+{% endmacro %}
+
+
+{% macro entry_sources_script() %}
+<!-- Template for new source blocks (cloned by addSourceBlock()) -->
+<template id="source-block-tpl">
+<div class="source-block border border-gray-200 border-l-4 border-l-blue-400 rounded-lg p-4 bg-white shadow-sm" data-index="0">
+    <div class="flex items-center gap-3 mb-3">
+        <select data-f="type" onchange="updateBlockType(this)"
+            class="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white">
+            <option value="random">🔀 Random</option>
+            <option value="search">🔍 Search</option>
+            <option value="regex">⚡ Regex</option>
+            <option value="manual">📋 Manual IDs</option>
+        </select>
+        <button type="button" onclick="removeBlock(this)"
+            class="remove-block-btn p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg border border-gray-200 transition-colors flex-shrink-0">
+            <i class="bi bi-trash text-sm"></i>
+        </button>
+    </div>
+    <div class="block-random">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Number of entries</label>
+        <input data-f="count" type="number" value="10" min="1" max="1000"
+            class="w-32 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div class="block-search hidden">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Search term</label>
+        <input data-f="term" type="text" placeholder="Keyword or phrase…"
+            class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-2">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Max results per dataset</label>
+        <input data-f="count" type="number" value="10" min="1" max="500"
+            class="w-32 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+    </div>
+    <div class="block-regex hidden">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Regex pattern</label>
+        <input data-f="pattern" type="text" placeholder="\bword\b"
+            class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono mb-2">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Max results per dataset</label>
+        <input data-f="count" type="number" value="10" min="1" max="500"
+            class="w-32 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+        <p class="text-xs text-gray-400 mt-1">Python regex · case-insensitive</p>
+    </div>
+    <div class="block-manual hidden">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Entry IDs (one per line)</label>
+        <textarea data-f="ids" rows="4" placeholder="Enter entry IDs, one per line…"
+            class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono"></textarea>
+    </div>
+</div>
+</template>
+
+<script>
+(function () {
+    const ACCENT = { random: 'border-l-blue-400', search: 'border-l-green-400', regex: 'border-l-orange-400', manual: 'border-l-gray-400' };
+    const ALL_ACCENTS = Object.values(ACCENT);
+
+    function setAccent(block, type) {
+        ALL_ACCENTS.forEach(c => block.classList.remove(c));
+        block.classList.add(ACCENT[type] || ACCENT.random);
+    }
+
+    function updateRemoveBtns() {
+        const blocks = document.querySelectorAll('#sources-list .source-block');
+        blocks.forEach(b => {
+            b.querySelector('.remove-block-btn').disabled = blocks.length <= 1;
+            b.querySelector('.remove-block-btn').classList.toggle('opacity-30', blocks.length <= 1);
+        });
+    }
+
+    window.updateBlockType = function (select) {
+        const block = select.closest('.source-block');
+        const type = select.value;
+        block.querySelector('.block-random').classList.toggle('hidden', type !== 'random');
+        block.querySelector('.block-search').classList.toggle('hidden', type !== 'search');
+        block.querySelector('.block-regex').classList.toggle('hidden', type !== 'regex');
+        block.querySelector('.block-manual').classList.toggle('hidden', type !== 'manual');
+        setAccent(block, type);
+    };
+
+    window.removeBlock = function (btn) {
+        const list = document.getElementById('sources-list');
+        if (list.querySelectorAll('.source-block').length > 1) {
+            btn.closest('.source-block').remove();
+            reindexBlocks();
+        }
+    };
+
+    window.addSourceBlock = function () {
+        const tpl = document.getElementById('source-block-tpl');
+        if (!tpl) return;
+        const clone = tpl.content.cloneNode(true);
+        document.getElementById('sources-list').appendChild(clone);
+        reindexBlocks();
+    };
+
+    function reindexBlocks() {
+        const blocks = document.querySelectorAll('#sources-list .source-block');
+        blocks.forEach((b, i) => b.dataset.index = i);
+        document.getElementById('num_sources').value = blocks.length;
+        updateRemoveBtns();
+    }
+
+    // Serialize blocks into source_N_* fields before HTMX POST
+    document.addEventListener('htmx:configRequest', function (evt) {
+        const form = evt.detail.elt.closest('form');
+        if (!form || !form.querySelector('#sources-list')) return;
+
+        const params = evt.detail.parameters;
+        Object.keys(params).forEach(k => { if (k.startsWith('source_')) delete params[k]; });
+
+        document.querySelectorAll('#sources-list .source-block').forEach((block, i) => {
+            const type = block.querySelector('[data-f="type"]').value;
+            params[`source_${i}_type`] = type;
+            if (type === 'random') {
+                params[`source_${i}_count`] = block.querySelector('.block-random [data-f="count"]')?.value || '10';
+            } else if (type === 'search') {
+                params[`source_${i}_term`]  = block.querySelector('.block-search [data-f="term"]')?.value  || '';
+                params[`source_${i}_count`] = block.querySelector('.block-search [data-f="count"]')?.value || '10';
+            } else if (type === 'regex') {
+                params[`source_${i}_pattern`] = block.querySelector('.block-regex [data-f="pattern"]')?.value || '';
+                params[`source_${i}_count`]   = block.querySelector('.block-regex [data-f="count"]')?.value   || '10';
+            } else if (type === 'manual') {
+                params[`source_${i}_ids`] = block.querySelector('.block-manual [data-f="ids"]')?.value || '';
+            }
+        });
+        params['num_sources'] = String(document.querySelectorAll('#sources-list .source-block').length);
+    });
+
+    // Initial state
+    updateRemoveBtns();
+})();
+</script>
+{% endmacro %}

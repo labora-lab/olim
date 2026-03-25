@@ -9,7 +9,6 @@ from ..database import (
     add_entry_label,
     check_entries_exist,
     get_entry,
-    get_label,
     get_labels,
     new_label,
 )
@@ -20,7 +19,6 @@ def label_upload(
     user_id: int | None = None,
     project_id: int | None = None,
     dataset_id: int = 1,
-    use_active_learning: bool = False,
 ) -> None:
     """Upload label data from a dataframe
 
@@ -74,76 +72,20 @@ def label_upload(
     # Store labels (only for existing entries)
     existing_ids_set = set(existing_ids)
 
-    if use_active_learning:
-        # Import here to avoid circular imports
-        from ..active_learning import submit_label_value
-        from ..celery_app import launch_task_with_tracking
-        from ..tasks.active_learning import create_label_al
+    # Normal upload pipeline
+    for entry_id, label_name, value, created in tqdm(group):
+        # Skip if entry doesn't exist
+        if str(entry_id) not in existing_ids_set:
+            continue
 
-        processed_count = 0
-        for entry_id, label_name, value, __ in tqdm(group, desc="Processing via active learning"):
-            # Skip if entry doesn't exist
-            if str(entry_id) not in existing_ids_set:
-                continue
+        # Get entry within selected dataset
+        entry = get_entry((dataset_id, str(entry_id)))
+        if entry is None:
+            continue
 
-            # Get entry within selected dataset
-            entry = get_entry((dataset_id, str(entry_id)))
-            if entry is None:
-                continue
-
-            # If the label doesn't exist create it
-            if label_name not in labels:
-                label = new_label(label_name, user_id, project_id)
-                labels[label_name] = label.id
-                # Initialize active learning for new label
-                launch_task_with_tracking(
-                    create_label_al,
-                    project_id=project_id,
-                    label_id=label.id,
-                    user_id=user_id,
-                    track_progress=False,
-                )
-
-            # Get the label object
-            label = get_label(labels[label_name])
-            if label is None:
-                continue
-
-            # Submit through active learning pipeline (suppress individual flashes)
-            skip_train = processed_count < len(group) - 1  # Skip training until the last value
-            submit_label_value(
-                label,
-                entry,
-                value,
-                user_id,
-                is_auto_label=False,
-                suppress_flash=True,
-                skip_train=skip_train,
-            )
-            processed_count += 1
-
-        # Show summary flash message
-        flash(
-            _("Successfully processed {count} labels through active learning pipeline").format(
-                count=processed_count
-            ),
-            category="success",
-        )
-    else:
-        # Normal upload pipeline
-        for entry_id, label_name, value, created in tqdm(group):
-            # Skip if entry doesn't exist
-            if str(entry_id) not in existing_ids_set:
-                continue
-
-            # Get entry within selected dataset
-            entry = get_entry((dataset_id, str(entry_id)))
-            if entry is None:
-                continue
-
-            # If the label doesnt exist create it
-            if label_name not in labels:
-                label = new_label(label_name, user_id, project_id)
-                labels[label_name] = label.id
-            # Add the label to the entry
-            add_entry_label(labels[label_name], entry.id, user_id, value, created=created)
+        # If the label doesnt exist create it
+        if label_name not in labels:
+            label = new_label(label_name, user_id, project_id)
+            labels[label_name] = label.id
+        # Add the label to the entry
+        add_entry_label(labels[label_name], entry.id, user_id, value, created=created)

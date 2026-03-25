@@ -1,17 +1,19 @@
+import csv
 import json
 import os
 from collections.abc import Generator
+from pathlib import Path
 from time import sleep, time
 from typing import Any
 
 import pandas as pd
+from charset_normalizer import from_bytes
 from elasticsearch import helpers
 from flask_babel import gettext as _
 
 from .. import app as flask_app, db, entry_types
 from ..celery_app import app
 from ..database import Dataset, Entry, LabelEntry, ProjectDataset, del_controled, register_entries
-from ..functions import ensure_dir
 from ..settings import ES_INDEX, ES_SERVER, UPLOAD_BATCH_SIZE, UPLOAD_PATH, WORK_PATH
 from ..utils.es import create_index, get_es_conn
 
@@ -363,6 +365,13 @@ def upload_dataset(
     index_name = ES_INDEX.format(dataset_id=dataset_id)
     create_index(index_name)
 
+    # Load CSV options from dataset record
+    with flask_app.app_context():
+        dataset_record = db.session.get(Dataset, dataset_id)
+        if dataset_record:
+            upload_params["sep"] = dataset_record.sep
+            upload_params["encoding"] = dataset_record.encoding
+
     # Check if JSONL file already exists and backup if needed
     dataset_dir = WORK_PATH / "datasets"
     dataset_dir.mkdir(parents=True, exist_ok=True)
@@ -394,23 +403,8 @@ def upload_dataset(
                 batch_size=UPLOAD_BATCH_SIZE,
                 **upload_params,
             )
-        except Exception as e:
-            if "CSV" in str(e) or "encoding" in str(e).lower():
-                raise Exception(
-                    _(
-                        "CSV file format error. Please check that your "
-                        "file is properly formatted and uses UTF-8 encoding."
-                    )
-                ) from e
-            elif "column" in str(e).lower():
-                raise Exception(
-                    _(
-                        "Required columns not found in CSV. Please check that "
-                        "your file contains the selected ID and text columns."
-                    )
-                ) from e
-            else:
-                raise Exception(_("File processing error: %(error)s", error=str(e))) from e
+        except Exception:
+            raise
 
         # Process batches sequentially
         total_records = 0
@@ -508,25 +502,41 @@ def upload_dataset(
         raise Exception(final_message) from e
 
 
-@app.task(bind=True, name="upload.save_chunk")
-def save_chunk(
-    self,
-    chunk: bytes,
-    chunk_number: int,
-    file_id: str,
-    **kwargs,
-) -> dict:
-    # Save chunk
-    chunk_dir = UPLOAD_PATH / file_id
-    ensure_dir(chunk_dir)
+_ENCODING_ALIASES: dict[str, str] = {
+    "utf-8": "utf-8",
+    "utf_8": "utf-8",
+    "utf-8-sig": "utf-8",
+    "ascii": "utf-8",
+    "latin-1": "latin-1",
+    "latin_1": "latin-1",
+    "iso-8859-1": "latin-1",
+    "iso8859-1": "latin-1",
+    "iso_8859_1": "latin-1",
+    "cp1252": "cp1252",
+    "windows-1252": "cp1252",
+    "windows_1252": "cp1252",
+}
 
-    chunk_path = chunk_dir / f"{chunk_number:04d}"
-    with open(chunk_path, "wb") as f:
-        f.write(chunk)
 
-    return {
-        "success": True,
-    }
+def _detect_csv_options(filename: str, sample_size: int = 32768) -> tuple[str, str]:
+    """Detect encoding and separator from the first bytes of a CSV file."""
+    with open(filename, "rb") as f:
+        raw = f.read(sample_size)
+
+    # Detect encoding via charset-normalizer
+    best = from_bytes(raw).best()
+    raw_encoding = str(best.encoding) if best else "utf-8"
+    encoding = _ENCODING_ALIASES.get(raw_encoding, "utf-8")
+
+    # Detect separator via stdlib sniffer
+    try:
+        sample_text = raw.decode(encoding, errors="replace")
+        dialect = csv.Sniffer().sniff(sample_text, delimiters=",;\t|")
+        sep = dialect.delimiter
+    except (csv.Error, UnicodeDecodeError):
+        sep = ","
+
+    return sep, encoding
 
 
 @app.task(bind=True, name="upload.finalize_upload")
@@ -535,84 +545,90 @@ def finalize_chunks_upload(
     file_id: str,
     filename: str,
     total_chunks: int,
+    sep: str = ",",
+    encoding: str = "utf-8",
     **kwargs,
 ) -> dict:
     chunk_dir = UPLOAD_PATH / file_id
-    chunks = sorted(chunk_dir.glob("*"))
+    final_path = Path(filename)
 
-    # Wait for all chunks to arrive with a timeout of 60 seconds
-    start_time = time()
-    while time() - start_time < 360:
+    if not final_path.exists():
+        # Wait for all chunks to arrive with a timeout of 360 seconds
+        start_time = time()
+        while time() - start_time < 360:
+            chunks = list(chunk_dir.glob("*"))
+            if len(chunks) == total_chunks:
+                break
+            sleep(1)
+
         chunks = list(chunk_dir.glob("*"))
-        if len(chunks) == total_chunks:
-            break
-        sleep(1)
-
-    if len(chunks) != total_chunks:
-        raise Exception(
-            _(
-                "File upload incomplete. Only %(received)d of %(total)d parts "
-                "received. Please try uploading again.",
-                received=len(chunks),
-                total=total_chunks,
-            )
-        )
-
-    # Sort the chunks to ensure correct order
-    chunks.sort()
-
-    try:
-        with open(filename, "wb") as output:
-            for chunk in chunks:
-                with open(chunk, "rb") as f:
-                    output.write(f.read())
-                chunk.unlink()  # Remove processed chunk
-
-        # Read columns from the first few rows of the CSV
-        try:
-            columns = list(pd.read_csv(filename, nrows=1).columns)
-
-            # Validate CSV structure
-            if not columns:
-                raise Exception(_("CSV file appears to be empty or has no columns."))
-
-            # Check for common CSV issues
-            if len(columns) == 1 and ";" in columns[0]:
-                raise Exception(
-                    _(
-                        "CSV file may be using semicolons as separators. "
-                        "Please use comma-separated format."
-                    )
-                )
-
-            return {
-                "success": True,
-                "columns": columns,
-            }
-
-        except pd.errors.EmptyDataError as e:
-            raise Exception(_("CSV file is empty. Please upload a file with data.")) from e
-        except pd.errors.ParserError as e:
-            if "delimiter" in str(e).lower():
-                raise Exception(
-                    _(
-                        "CSV format error. Please ensure your file uses "
-                        "comma separators and proper quoting."
-                    )
-                ) from e
-            else:
-                raise Exception(
-                    _("CSV parsing error: %(error)s. Please check your file format.", error=str(e))
-                ) from e
-        except UnicodeDecodeError as e:
+        if len(chunks) != total_chunks:
             raise Exception(
-                _("File encoding error. Please save your CSV file with UTF-8 encoding.")
-            ) from e
-        except Exception as e:
-            if "No such file" in str(e):
-                raise Exception(_("Uploaded file not found. Please try uploading again.")) from e
-            else:
-                # Retry for other errors
-                raise self.retry(countdown=2, exc=e) from e
+                _(
+                    "File upload incomplete. Only %(received)d of %(total)d parts "
+                    "received. Please try uploading again.",
+                    received=len(chunks),
+                    total=total_chunks,
+                )
+            )
+
+        chunks.sort()
+
+        try:
+            with open(filename, "wb") as output:
+                for chunk in chunks:
+                    with open(chunk, "rb") as f:
+                        output.write(f.read())
+                    chunk.unlink()  # Remove processed chunk
+        except OSError as e:
+            raise self.retry(countdown=2, exc=e) from e
+
+    # Auto-detect sep/encoding when the caller is using defaults
+    if sep == "," and encoding == "utf-8":
+        try:
+            sep, encoding = _detect_csv_options(filename)
+        except Exception:
+            pass  # Keep defaults on detection failure
+
+    # Read columns from the first few rows of the CSV
+    try:
+        read_kwargs: dict = {"nrows": 1, "sep": sep, "encoding": encoding}
+        if len(sep) > 1:
+            read_kwargs["engine"] = "python"
+        columns = list(pd.read_csv(filename, **read_kwargs).columns)
+
+        if not columns:
+            raise Exception(_("CSV file appears to be empty or has no columns."))
+
+        return {
+            "success": True,
+            "columns": columns,
+            "sep": sep,
+            "encoding": encoding,
+        }
+
+    except pd.errors.EmptyDataError as e:
+        raise Exception(_("CSV file is empty. Please upload a file with data.")) from e
+    except pd.errors.ParserError:
+        return {
+            "success": False,
+            "error": _(
+                "Could not read the CSV with separator '%(sep)s'. Try a different separator.",
+                sep=sep,
+            ),
+            "can_retry": True,
+        }
+    except UnicodeDecodeError:
+        return {
+            "success": False,
+            "error": _(
+                "Encoding error reading the file with '%(encoding)s'. Try a different encoding.",
+                encoding=encoding,
+            ),
+            "can_retry": True,
+        }
     except Exception as e:
-        raise self.retry(countdown=2, exc=e) from e
+        if "No such file" in str(e):
+            raise Exception(_("Uploaded file not found. Please try uploading again.")) from e
+        else:
+            raise self.retry(countdown=2, exc=e) from e

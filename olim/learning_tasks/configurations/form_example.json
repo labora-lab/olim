@@ -1,0 +1,97 @@
+{
+    "name": "Form Example",
+    "description": "Demonstrates the ReadData and ShowData states with form validation",
+    "sequence": [
+        {
+            "state": "StaticContent",
+            "params": {
+                "title": "Welcome",
+                "body": "<p>This example demonstrates how to collect and display user data.</p><p>Click <strong>Next</strong> to begin filling out the form.</p>",
+                "show_prev": false
+            }
+        },
+        {
+            "state": "ReadData",
+            "params": {
+                "title": "Personal Information",
+                "description": "Please provide your basic information.",
+                "fields": [
+                    {
+                        "name": "full_name",
+                        "label": "Full Name",
+                        "type": "text",
+                        "required": true,
+                        "min": 2,
+                        "max": 100,
+                        "placeholder": "Enter your full name"
+                    },
+                    {
+                        "name": "email",
+                        "label": "Email Address",
+                        "type": "email",
+                        "required": true,
+                        "placeholder": "your@email.com"
+                    },
+                    {
+                        "name": "age",
+                        "label": "Age",
+                        "type": "number",
+                        "min": 18,
+                        "max": 120,
+                        "placeholder": "Your age"
+                    },
+                    {
+                        "name": "experience",
+                        "label": "Experience Level",
+                        "type": "select",
+                        "required": true,
+                        "options": [
+                            {"value": "beginner", "label": "Beginner"},
+                            {"value": "intermediate", "label": "Intermediate"},
+                            {"value": "advanced", "label": "Advanced"}
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "state": "ReadData",
+            "params": {
+                "title": "Additional Details",
+                "description": "Tell us more about yourself.",
+                "fields": [
+                    {
+                        "name": "bio",
+                        "label": "Short Bio",
+                        "type": "textarea",
+                        "max": 500,
+                        "placeholder": "Tell us about yourself..."
+                    },
+                    {
+                        "name": "website",
+                        "label": "Website",
+                        "type": "text",
+                        "pattern": "^https?://.*",
+                        "pattern_message": "Must start with http:// or https://",
+                        "placeholder": "https://example.com"
+                    }
+                ]
+            }
+        },
+        {
+            "state": "ShowData",
+            "params": {
+                "title": "Review Your Information",
+                "format": "table"
+            }
+        },
+        {
+            "state": "StaticContent",
+            "params": {
+                "title": "Complete!",
+                "body": "<p class=\"text-green-600 font-medium\">Thank you for completing the form!</p><p>Your information has been recorded.</p>",
+                "show_next": false
+            }
+        }
+    ]
+}

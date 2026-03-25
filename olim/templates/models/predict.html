@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Test Predictions') }} - {{ model.name }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto max-w-5xl">
+    <!-- Header -->
+    <div class="mb-6">
+        <a href="{{ url_for('model_detail', model_id=model.id) }}" class="text-purple-600 hover:text-purple-700 flex items-center mb-4">
+            <i class="bi bi-arrow-left mr-2"></i>
+            {{ _('Back to Model') }}
+        </a>
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+            <i class="bi bi-lightning text-purple-600 mr-3"></i>
+            {{ _('Test Predictions') }}
+        </h1>
+        <p class="text-gray-600 mt-2">{{ _('Test your model with custom text inputs') }}</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Prediction Form -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <form method="POST" action="{{ url_for('model_predict', model_id=model.id) }}">
+                    <!-- Version Selection -->
+                    <div class="mb-6">
+                        <label for="version_id" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ _('Model Version') }}
+                        </label>
+                        <select name="version_id" id="version_id"
+                                class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                            {% if active_version %}
+                            <option value="{{ active_version.id }}" selected>
+                                v{{ active_version.version }} ({{ _('Active') }})
+                            </option>
+                            {% endif %}
+                            {% for version in versions %}
+                            {% if not active_version or version.id != active_version.id %}
+                            <option value="{{ version.id }}">v{{ version.version }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                        {% if not active_version and not versions %}
+                        <p class="mt-2 text-sm text-red-600">
+                            {{ _('No trained versions available. Train the model first.') }}
+                        </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Text Input -->
+                    <div class="mb-6">
+                        <label for="text" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ _('Input Text') }}
+                        </label>
+                        <textarea name="text" id="text" rows="8" required
+                                  class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                                  placeholder="{{ _('Enter the text you want to classify...') }}">{{ prediction_result.text if prediction_result else '' }}</textarea>
+                        <p class="mt-1 text-sm text-gray-500">{{ _('Enter any text to get a prediction from the model') }}</p>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="flex justify-end">
+                        <button type="submit"
+                                {% if not active_version and not versions %}disabled{% endif %}
+                                class="inline-flex items-center px-6 py-3 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors">
+                            <i class="bi bi-lightning-fill mr-2"></i>
+                            {{ _('Get Prediction') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Prediction Result -->
+            {% if prediction_result %}
+            <div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="bi bi-check-circle text-green-600 mr-2"></i>
+                    {{ _('Prediction Result') }}
+                </h2>
+
+                <!-- Predicted Class -->
+                {% if prediction_result.predicted_class %}
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ _('Predicted Class') }}</label>
+                    <div class="flex items-center">
+                        <span class="inline-flex items-center px-4 py-2 rounded-lg text-lg font-bold bg-linear-to-r from-purple-500 to-pink-600 text-white">
+                            {{ prediction_result.predicted_class }}
+                        </span>
+                        {% if prediction_result.confidence %}
+                        <span class="ml-3 text-sm text-gray-600">
+                            {{ _('Confidence:') }} <span class="font-semibold">{{ "%.1f"|format(prediction_result.confidence * 100) }}%</span>
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Prediction Set (Conformal Prediction) -->
+                {% if prediction_result.prediction_set %}
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ _('Prediction Set') }}</label>
+                    <div class="flex flex-wrap gap-2">
+                        {% for pred_class in prediction_result.prediction_set %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                            {{ pred_class }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    <p class="mt-2 text-xs text-gray-500">
+                        {{ _('Conformal prediction set: these are the possible classes with statistical guarantees') }}
+                    </p>
+                </div>
+                {% endif %}
+
+                <!-- Class Probabilities -->
+                {% if prediction_result.probabilities %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">{{ _('Class Probabilities') }}</label>
+                    <div class="space-y-3">
+                        {% for class_name, probability in prediction_result.probabilities.items()|sort(attribute='1', reverse=True) %}
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="font-medium text-gray-700">{{ class_name }}</span>
+                                <span class="text-gray-600">{{ "%.1f"|format(probability * 100) }}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-linear-to-r from-purple-500 to-pink-600 h-2 rounded-full transition-all duration-300"
+                                     style="width: {{ probability * 100 }}%"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar - Model Info -->
+        <div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-4">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">{{ _('Model Info') }}</h2>
+                <dl class="space-y-3">
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">{{ _('Model Name') }}</dt>
+                        <dd class="mt-1 text-sm text-gray-900 font-semibold">{{ model.name }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">{{ _('Algorithm') }}</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ model.algorithm }}</dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">{{ _('Project') }}</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ model.project.name }}</dd>
+                    </div>
+                    {% if active_version %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">{{ _('Active Version') }}</dt>
+                        <dd class="mt-1">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                v{{ active_version.version }}
+                            </span>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">{{ _('Training Samples') }}</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ active_version.n_train_samples }}</dd>
+                    </div>
+                    {% if active_version.metrics and 'accuracy' in active_version.metrics %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-500">{{ _('Accuracy') }}</dt>
+                        <dd class="mt-1 text-sm font-semibold text-purple-600">
+                            {{ "%.2f"|format(active_version.metrics.accuracy * 100) }}%
+                        </dd>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </dl>
+
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <a href="{{ url_for('model_detail', model_id=model.id) }}"
+                       class="block w-full px-4 py-2 text-center text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors">
+                        <i class="bi bi-info-circle mr-2"></i>
+                        {{ _('View Model Details') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{
+  "order": 60,
+  "name": "Active Learning — LLM Cold Start",
+  "description": "Auto-label a sample with Ollama, then train",
+  "show_progress": true,
+  "sequence": [
+    {
+      "state": "ALLabelSelect",
+      "params": {
+        "title": "Select Label for Active Learning"
+      }
+    },
+    {
+      "state": "OllamaQueueSetup",
+      "params": {
+        "title": "Select Entries to Auto-Label",
+        "label_from_data": true
+      }
+    },
+    {
+      "state": "OllamaModelConfig",
+      "params": {}
+    },
+    {
+      "state": "OllamaAutoLabel",
+      "params": {}
+    },
+    {
+      "state": "ActiveLearningLoop",
+      "params": {
+        "metric_goal": {"auc_roc": 0.85},
+        "retrain_every": 10,
+        "max_rounds": 10,
+        "cache_size": 100
+      }
+    }
+  ]
+}

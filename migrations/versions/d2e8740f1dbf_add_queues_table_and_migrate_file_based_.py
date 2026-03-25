@@ -1,4 +1,4 @@
-"""add queues table and migrate file-based queues
+"""Add queues table and migrate file-based queues
 
 Revision ID: d2e8740f1dbf
 Revises: e12788d3b67d

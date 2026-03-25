@@ -16,7 +16,6 @@ from .database import (
     get_project,
     get_projects,
     new_project,
-    random_entries,
 )
 from .functions import (
     get_def_nentries,
@@ -25,7 +24,7 @@ from .functions import (
 )
 from .settings import QUEUES_PATH
 from .utils.entry import get_all_hidden
-from .utils.queues import delete_queue, get_all_queues, get_queue, store_queue
+from .utils.queues import delete_queue, get_queue, store_queue
 
 
 def backup_old_queue_folder(project_id: int) -> None:
@@ -335,78 +334,6 @@ def search(project_id: int) -> ...:
 # endregion
 
 
-# region Queues routes and functions
-# --------------------------------
-
-
-@app.route("/<int:project_id>/queue", methods=["POST", "GET"])
-@app.route("/<int:project_id>/list-queue/<queue_id>", methods=["GET"])
-def queue(project_id: int, queue_id: str | None = None) -> ...:
-    # Check project_id
-    res = update_session_project(project_id)
-    if res is not None:
-        return res
-
-    # If a we have a queue_id load that queue
-    if queue_id is not None:
-        try:
-            queue = get_queue(queue_id, project_id)
-            datasets = {
-                dataset.id: dataset.name
-                for dataset in get_datasets(project_id=project_id, non_empty=True)
-            }
-            datasets = datasets if len(datasets) > 1 else None
-            return render_template(
-                "queue.html",
-                queue=queue,
-                queue_id=queue_id,
-                datasets=datasets,
-            )
-        except FileNotFoundError:
-            flash(_("Queue not found or has been deleted"), category="warning")
-            return redirect(
-                url_for("data_navigation", project_id=project_id, section="queue-management")
-            )
-
-    # Check if we have a rquest
-    type = request.form.get("type", "")
-    queue = []
-    # If our request is of type random
-    if type == "random":
-        try:
-            # Try to parse the number and store it
-            number = int(request.form.get("number", ""))
-            session["number_of_entries"] = number
-            # Generate the queue
-            queue = [
-                (entry.dataset_id, entry.entry_id) for entry in random_entries(number, project_id)
-            ]
-        except ValueError:
-            flash(_("Invalid number of entries"), category="error")
-    # If our request is of type list
-    # elif type == "list":
-    #     # Try to parse the list and store it
-    #     queue = parse_queue(request.form.get("text", ""))
-
-    # If we have a populated queue store it and redirect by the id
-    if len(queue) > 0:
-        extra_data: dict = {"Randomly generated": True}
-        queue_id = store_queue(
-            queue,
-            project_id,
-            queue_type="random",  # Auto-generate random queue name
-            **extra_data,
-        )
-        # Redirect to the first entry in the queue
-        return redirect(url_for("entry", project_id=project_id, queue_id=queue_id, queue_pos=1))
-    # If not redirect to data navigation
-    else:
-        return redirect(url_for("data_navigation", project_id=project_id))
-
-
-# endregion
-
-
 # region Data Navigation route
 # --------------------------------
 
@@ -422,24 +349,12 @@ def data_navigation(project_id: int) -> ...:
     # Get datasets
     datasets = list(get_datasets(project_id))
 
-    # Get queues
-    queues = get_all_queues(project_id)
-
-    # Get number of entries from session or default
-    number = session.get("number_of_entries", get_def_nentries())
-
-    # No stats calculation needed for data navigation page
-    stats = None
-
     # Get section parameter for directing to specific component
-    section = request.args.get("section", "entry-navigation")  # Default to entry navigation
+    section = request.args.get("section", "entry-navigation")
 
     return render_template(
         "data-navigation.html",
         datasets=datasets,
-        queues=queues,
-        number=number,
-        stats=stats,
         active_section=section,
     )
 
@@ -456,8 +371,6 @@ def data_navigation_component(project_id: int, component_name: str) -> ...:
     valid_components = [
         "entry-navigation",
         "text-search",
-        "random-queue",
-        "queue-management",
     ]
     if component_name not in valid_components:
         return "Invalid component", 404
@@ -468,18 +381,8 @@ def data_navigation_component(project_id: int, component_name: str) -> ...:
     # Always include project_id in context
     context["project_id"] = project_id
 
-    if component_name in ["entry-navigation", "text-search", "random-queue"]:
+    if component_name in ["entry-navigation", "text-search"]:
         context["datasets"] = list(get_datasets(project_id))
-
-    if component_name == "random-queue":
-        context["number"] = session.get("number_of_entries", get_def_nentries())
-
-    if component_name == "queue-management":
-        try:
-            context["queues"] = get_all_queues(project_id)
-        except Exception as e:
-            print(f"Error getting queues: {e}")
-            context["queues"] = []
 
     return render_template(f"components/{component_name}.html", **context)
 
@@ -549,14 +452,17 @@ def delete_queue_entries(project_id: int, queue_id: str) -> ...:
         queue_obj.length = len(current_queue)
         db.session.commit()
 
-        return jsonify(
-            {
-                "success": True,
-                "message": f"Successfully deleted {deleted_count} entries from queue",
-                "deleted_count": deleted_count,
-                "remaining_count": len(current_queue),
-            }
-        ), 200
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "message": f"Successfully deleted {deleted_count} entries from queue",
+                    "deleted_count": deleted_count,
+                    "remaining_count": len(current_queue),
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
         db.session.rollback()

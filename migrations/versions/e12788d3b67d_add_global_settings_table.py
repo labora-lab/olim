@@ -1,4 +1,4 @@
-"""add global_settings table
+"""Add global_settings table
 
 Revision ID: e12788d3b67d
 Revises: 69207104f4a6
