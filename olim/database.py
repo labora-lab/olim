@@ -111,6 +111,11 @@ class User(db.Model, CreationControl):
     # Session storage (replaces last_project_id)
     session_data: Mapped[dict | None] = db.mapped_column(db.JSON, nullable=True)
 
+    # API key for REST API authentication
+    api_key: Mapped[str | None] = db.mapped_column(
+        db.String(64), unique=True, nullable=True, index=True
+    )
+
 
 class LabelEntry(db.Model, CreationControl):
     __tablename__ = "label-patient"
@@ -266,9 +271,7 @@ class LearningTask(db.Model, CreationControl):
     position: Mapped[int] = db.mapped_column(default=0, nullable=False)
     data: Mapped[dict] = db.mapped_column(db.JSON, nullable=False)
     initial_setup: Mapped[dict] = db.mapped_column(db.JSON, nullable=False)
-    assigned_to: Mapped[int | None] = db.mapped_column(
-        db.ForeignKey("users.id"), nullable=True
-    )
+    assigned_to: Mapped[int | None] = db.mapped_column(db.ForeignKey("users.id"), nullable=True)
 
     # Relationships
     project: Mapped["Project"] = db.relationship(back_populates="learning_tasks")
@@ -490,6 +493,20 @@ def get_user(idt: int | str, by: str = "id") -> User | None:
     return get_by(User, by, idt, True)
 
 
+def get_user_by_api_key(api_key: str) -> User | None:
+    """Retrieve active user by API key.
+
+    Args:
+        api_key: Raw API key string
+
+    Returns:
+        User object or None if key not found or user is deleted
+    """
+    return db.session.execute(
+        db.select(User).filter_by(api_key=api_key, is_deleted=False)
+    ).scalar_one_or_none()
+
+
 def get_users() -> list[User]:
     """Retrieve all active users.
 
@@ -548,9 +565,7 @@ def get_or_create_llm_user() -> User:
         return user
 
     # Find any existing user to satisfy the created_by FK
-    creator_id: int = db.session.execute(
-        db.select(User.id).order_by(User.id).limit(1)
-    ).scalar_one()
+    creator_id: int = db.session.execute(db.select(User.id).order_by(User.id).limit(1)).scalar_one()
 
     user = User(
         name="LLM Auto-Labeler",
@@ -1414,9 +1429,7 @@ def add_model_prediction(
     return mp
 
 
-def get_model_predictions(
-    label_id: int, version_id: int | None = None
-) -> list[ModelPrediction]:
+def get_model_predictions(label_id: int, version_id: int | None = None) -> list[ModelPrediction]:
     """Return model predictions for a label, optionally filtered to one version."""
     q = db.select(ModelPrediction).filter_by(label_id=label_id)
     if version_id is not None:
@@ -1424,7 +1437,9 @@ def get_model_predictions(
     return list(db.session.execute(q).scalars())
 
 
-def export_model_predictions_csv(model_id: int, version_id: int | None = None, trusted_only: bool = False) -> str:
+def export_model_predictions_csv(
+    model_id: int, version_id: int | None = None, trusted_only: bool = False
+) -> str:
     """Export model predictions as a CSV string.
 
     Columns: entry_id, label, model_version, predicted_value, score, prediction_set, created_at
@@ -1459,17 +1474,29 @@ def export_model_predictions_csv(model_id: int, version_id: int | None = None, t
 
     buf = _io.StringIO()
     writer = _csv.writer(buf)
-    writer.writerow(["entry_id", "label", "model_version", "predicted_value", "score", "prediction_set", "created_at"])
+    writer.writerow(
+        [
+            "entry_id",
+            "label",
+            "model_version",
+            "predicted_value",
+            "score",
+            "prediction_set",
+            "created_at",
+        ]
+    )
     for row in rows:
-        writer.writerow([
-            row["entry_id"],
-            row["label"],
-            row["model_version"],
-            row["predicted_value"],
-            row["score"],
-            row["prediction_set"],
-            row["created_at"],
-        ])
+        writer.writerow(
+            [
+                row["entry_id"],
+                row["label"],
+                row["model_version"],
+                row["predicted_value"],
+                row["score"],
+                row["prediction_set"],
+                row["created_at"],
+            ]
+        )
     return buf.getvalue()
 
 
@@ -1699,9 +1726,7 @@ def get_learning_tasks(
     if assigned_to is not None:
         query = query.filter_by(assigned_to=assigned_to)
 
-    return list(
-        db.session.execute(query.order_by(LearningTask.created.desc())).scalars()
-    )
+    return list(db.session.execute(query.order_by(LearningTask.created.desc())).scalars())
 
 
 def assign_learning_task(task_id: int, assigned_to: int | None) -> LearningTask | None:
@@ -1989,7 +2014,7 @@ def get_ml_models(
     return query.order_by(desc(_MLModel.created)).limit(limit).offset(offset).all()
 
 
-def update_ml_model(model_id: int, **kwargs: Any) -> "MLModel":
+def update_ml_model(model_id: int, **kwargs: Any) -> "MLModel":  # noqa: ANN401
     """Update allowed fields on an ML model and commit.
 
     Allowed fields: name, description, model_config, training_config,
@@ -2004,7 +2029,15 @@ def update_ml_model(model_id: int, **kwargs: Any) -> "MLModel":
     if model is None:
         raise ValueError(f"Model {model_id} not found")
 
-    allowed = {"name", "description", "model_config", "training_config", "policy_type", "subsample_config", "status"}
+    allowed = {
+        "name",
+        "description",
+        "model_config",
+        "training_config",
+        "policy_type",
+        "subsample_config",
+        "status",
+    }
     for key, value in kwargs.items():
         if key in allowed:
             setattr(model, key, value)
@@ -2161,7 +2194,7 @@ def activate_ml_version(version_id: int) -> "MLModelVersion":
 # --------------------
 
 
-def update_label(label_id: int, **kwargs: Any) -> "Label | None":
+def update_label(label_id: int, **kwargs: Any) -> "Label | None":  # noqa: ANN401
     """Update fields on a Label and commit.
 
     Returns the updated Label, or None if not found.
@@ -2208,18 +2241,6 @@ def unlink_label_from_model(label_id: int, model_id: int) -> None:
 # -------------------------
 
 
-def get_celery_task(task_id: str | None) -> "CeleryTask | None":
-    """Retrieve a CeleryTask by its ID."""
-    if task_id is None:
-        return None
-    return db.session.get(CeleryTask, task_id)
-
-
-def get_started_celery_tasks() -> list["CeleryTask"]:
-    """Return all CeleryTask records currently in STARTED status."""
-    return CeleryTask.query.filter_by(status="STARTED").all()
-
-
 def get_celery_tasks_for_model(model_id: int | None = None, limit: int = 50) -> list["CeleryTask"]:
     """Return training CeleryTask records, optionally filtered to a specific ML model.
 
@@ -2233,12 +2254,6 @@ def get_celery_tasks_for_model(model_id: int | None = None, limit: int = 50) -> 
         result_filter = cast(CeleryTask.result["model_id"], String) == str(model_id)
         query = query.filter(or_(kwargs_filter, result_filter))
     return query.order_by(CeleryTask.created.desc()).limit(limit).all()
-
-
-def persist_celery_task(task: "CeleryTask") -> None:
-    """Add a new CeleryTask to the session and commit."""
-    db.session.add(task)
-    db.session.commit()
 
 
 # endregion
@@ -2301,14 +2316,14 @@ def cleanup_dataset(dataset_id: int, user_id: int) -> dict:
             return {"success": False, "error": "Dataset not found"}
 
         entries = (
-            db.session.execute(db.select(Entry).filter_by(dataset_id=dataset_id))
-            .scalars()
-            .all()
+            db.session.execute(db.select(Entry).filter_by(dataset_id=dataset_id)).scalars().all()
         )
         entries_deleted = 0
         for entry in entries:
             label_entries = (
-                db.session.execute(db.select(LabelEntry).filter_by(entry_id=entry.id, is_deleted=False))
+                db.session.execute(
+                    db.select(LabelEntry).filter_by(entry_id=entry.id, is_deleted=False)
+                )
                 .scalars()
                 .all()
             )
@@ -2318,7 +2333,9 @@ def cleanup_dataset(dataset_id: int, user_id: int) -> dict:
             entries_deleted += 1
 
         project_datasets = (
-            db.session.execute(db.select(ProjectDataset).filter_by(dataset_id=dataset_id, is_deleted=False))
+            db.session.execute(
+                db.select(ProjectDataset).filter_by(dataset_id=dataset_id, is_deleted=False)
+            )
             .scalars()
             .all()
         )
@@ -2330,7 +2347,11 @@ def cleanup_dataset(dataset_id: int, user_id: int) -> dict:
         del_controled(dataset, user_id)
         db.session.commit()
 
-        return {"success": True, "entries_deleted": entries_deleted, "associations_deleted": associations_deleted}
+        return {
+            "success": True,
+            "entries_deleted": entries_deleted,
+            "associations_deleted": associations_deleted,
+        }
 
     except Exception as e:
         try:

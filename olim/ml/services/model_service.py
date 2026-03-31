@@ -159,7 +159,8 @@ class MLModelService:
             model_id: ID of model to train
             user_id: ID of user triggering training
             force_retrain: Force retraining even if no new data
-            training_overrides: Optional per-run overrides (split, alpha, pool_size, n_clusters, cache_size)
+            training_overrides: Optional per-run overrides
+                (split, alpha, pool_size, n_clusters, cache_size)
 
         Returns:
             Created MLModelVersion instance

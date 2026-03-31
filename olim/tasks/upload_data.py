@@ -16,7 +16,6 @@ from flask_babel import gettext as _
 from .. import app as flask_app, entry_types
 from ..celery_app import app
 from ..database import cleanup_dataset, get_dataset, register_entries
-from ..functions import ensure_dir
 from ..settings import ES_INDEX, ES_SERVER, UPLOAD_BATCH_SIZE, UPLOAD_PATH, WORK_PATH
 from ..utils.es import create_index, get_es_conn
 

@@ -109,7 +109,9 @@ class TrainingOrchestrator:
 
             # 3. Rank unlabeled entries in batches → uncertainty cache
             labeled_ids = set(train_data.keys())
-            cache_entries, coverage = self._rank_entries_batched(conformal, model, fields, labeled_ids, overrides=overrides)
+            cache_entries, coverage = self._rank_entries_batched(
+                conformal, model, fields, labeled_ids, overrides=overrides
+            )
 
             # 4. Metrics from held-out validation split
             metrics = self._compute_metrics(conformal, val_list)
@@ -279,7 +281,7 @@ class TrainingOrchestrator:
             score  — Uncertainty score (higher = more uncertain)
             reason — "diverse" | "uncertainty" | "certain"
 
-        certain_rate (0–1) controls what fraction of the cache is filled with
+        certain_rate (0-1) controls what fraction of the cache is filled with
         low-uncertainty entries so the model also sees confident examples.
 
         Uses paginated DB queries to avoid loading the full dataset into RAM.
@@ -296,13 +298,17 @@ class TrainingOrchestrator:
         subsample_config = ml_model.subsample_config
         if not subsample_config or not isinstance(subsample_config, list):
             subsample_config = [1000, 20, 20]
-        pool_size    = int(overrides.get("pool_size",    subsample_config[0]))
-        cache_size   = int(overrides.get("cache_size",   subsample_config[-2] if len(subsample_config) >= 2 else 20))
-        n_clusters   = int(overrides.get("n_clusters",   subsample_config[-1] if len(subsample_config) >= 2 else 20))
+        pool_size = int(overrides.get("pool_size", subsample_config[0]))
+        cache_size = int(
+            overrides.get("cache_size", subsample_config[-2] if len(subsample_config) >= 2 else 20)
+        )
+        n_clusters = int(
+            overrides.get("n_clusters", subsample_config[-1] if len(subsample_config) >= 2 else 20)
+        )
         certain_rate = float(overrides.get("certain_rate", 0.0))
         certain_rate = max(0.0, min(0.5, certain_rate))  # cap at 50 %
 
-        n_certain  = int(cache_size * certain_rate)
+        n_certain = int(cache_size * certain_rate)
         n_uncertain = cache_size - n_certain
 
         scores: list[tuple[int, float]] = []
@@ -323,7 +329,9 @@ class TrainingOrchestrator:
                 n_total += len(texts)
                 # Only accumulate ranking candidates until we have enough
                 if len(scores) < pool_size * 3:
-                    scores.extend(zip([e.id for e in unlabeled], uncertainties.tolist(), strict=False))
+                    scores.extend(
+                        zip([e.id for e in unlabeled], uncertainties.tolist(), strict=False)
+                    )
             # Expire batch objects so SQLAlchemy doesn't accumulate them in the identity map
             db.session.expire_all()
             # No early break — scan full dataset for accurate coverage
@@ -341,7 +349,7 @@ class TrainingOrchestrator:
         if n_certain > 0:
             tail = scores[pool_size:] if len(scores) > pool_size else []
             # tail is sorted descending, so the last items are most certain
-            certain_candidates = list(reversed(tail[:n_certain * 3])) if tail else []
+            certain_candidates = list(reversed(tail[: n_certain * 3])) if tail else []
             certain_entries = [
                 {"id": eid, "score": round(sc, 4), "reason": "certain"}
                 for eid, sc in certain_candidates[:n_certain]
@@ -355,18 +363,21 @@ class TrainingOrchestrator:
                 {"id": eid, "score": round(sc, 4), "reason": "uncertainty"}
                 for eid, sc in top[:n_uncertain]
             ]
-            return self._interleave_certain(uncertain_entries, certain_entries, certain_rate), coverage
+            return self._interleave_certain(
+                uncertain_entries, certain_entries, certain_rate
+            ), coverage
 
         # KMeans clustering for diversity
         top_ids = [eid for eid, _ in top]
-        entry_map: dict[int, Entry] = {
-            e.id: e
-            for e in get_entries_by_ids(top_ids)
-        }
+        entry_map: dict[int, Entry] = {e.id: e for e in get_entries_by_ids(top_ids)}
         top_texts = [self._extract_entry_text(entry_map[eid], fields) for eid in top_ids]
 
         raw_embeddings = conformal.get_embeddings(top_texts)
-        embeddings = raw_embeddings.toarray() if hasattr(raw_embeddings, "toarray") else np.array(raw_embeddings)
+        embeddings = (
+            raw_embeddings.toarray()
+            if hasattr(raw_embeddings, "toarray")
+            else np.array(raw_embeddings)
+        )
         kmeans = KMeans(n_clusters=min(n_clusters, len(top_ids)), n_init="auto").fit(embeddings)
         centroid_idxs = dist_argmin(kmeans.cluster_centers_, embeddings)[0]
         best_ids = [top_ids[i] for i in centroid_idxs]
@@ -374,16 +385,20 @@ class TrainingOrchestrator:
         rest = [eid for eid in top_ids if eid not in diverse_set]
 
         uncertain_entries = (
-            [{"id": eid, "score": round(score_map[eid], 4), "reason": "diverse"} for eid in best_ids]
-            + [{"id": eid, "score": round(score_map[eid], 4), "reason": "uncertainty"} for eid in rest]
+            [
+                {"id": eid, "score": round(score_map[eid], 4), "reason": "diverse"}
+                for eid in best_ids
+            ]
+            + [
+                {"id": eid, "score": round(score_map[eid], 4), "reason": "uncertainty"}
+                for eid in rest
+            ]
         )[:n_uncertain]
 
         return self._interleave_certain(uncertain_entries, certain_entries, certain_rate), coverage
 
     @staticmethod
-    def _interleave_certain(
-        uncertain: list[dict], certain: list[dict], rate: float
-    ) -> list[dict]:
+    def _interleave_certain(uncertain: list[dict], certain: list[dict], rate: float) -> list[dict]:
         """Interleave certain entries into the uncertain list at the given rate.
 
         E.g. rate=0.2 → insert one certain entry every 5 positions.
@@ -427,13 +442,14 @@ class TrainingOrchestrator:
         then upserts one ModelPrediction row per entry.
         """
         entry_ids = [item["id"] for item in cache_entries]
-        entry_map: dict[int, Entry] = {
-            e.id: e
-            for e in get_entries_by_ids(entry_ids)
-        }
+        entry_map: dict[int, Entry] = {e.id: e for e in get_entries_by_ids(entry_ids)}
         score_map = {item["id"]: item["score"] for item in cache_entries}
 
-        texts = [self._extract_entry_text(entry_map[eid], fields) for eid in entry_ids if eid in entry_map]
+        texts = [
+            self._extract_entry_text(entry_map[eid], fields)
+            for eid in entry_ids
+            if eid in entry_map
+        ]
         valid_ids = [eid for eid in entry_ids if eid in entry_map]
         if not texts:
             return
@@ -483,9 +499,9 @@ class TrainingOrchestrator:
         if not val_list:
             return {}
 
-        val_texts  = [text for text, _ in val_list]
+        val_texts = [text for text, _ in val_list]
         val_labels = np.array([lbl for _, lbl in val_list])
-        preds      = np.array(conformal.model.predict(val_texts))
+        preds = np.array(conformal.model.predict(val_texts))
 
         metrics: dict[str, Any] = {}
         try:
@@ -564,8 +580,7 @@ class TrainingOrchestrator:
                     size=len(entry_ids),
                 )
                 id_to_src: dict[str, dict] = {
-                    hit["_id"]: hit["_source"]
-                    for hit in res.get("hits", {}).get("hits", [])
+                    hit["_id"]: hit["_source"] for hit in res.get("hits", {}).get("hits", [])
                 }
                 for i, entry in zip(indices, batch_entries, strict=False):
                     src = id_to_src.get(str(entry.entry_id), {})
@@ -573,7 +588,11 @@ class TrainingOrchestrator:
                     if not text_parts:
                         fallback = src.get("text", "")
                         text_parts = [str(fallback)] if fallback else []
-                    texts[i] = " ".join(text_parts) if text_parts else self._extract_entry_text(entry, fields)
+                    texts[i] = (
+                        " ".join(text_parts)
+                        if text_parts
+                        else self._extract_entry_text(entry, fields)
+                    )
             except Exception:
                 for i, entry in zip(indices, batch_entries, strict=False):
                     texts[i] = self._extract_entry_text(entry, fields)
@@ -638,19 +657,23 @@ class TrainingOrchestrator:
 
                 if threshold is not None and classes is not None:
                     entry_scores = 1 - np.array(proba)
-                    pred_set = [str(classes[i]) for i in range(len(proba)) if entry_scores[i] <= threshold]
+                    pred_set = [
+                        str(classes[i]) for i in range(len(proba)) if entry_scores[i] <= threshold
+                    ]
                 else:
                     pred_set = [predicted_class] if predicted_class else []
 
-                pending.append({
-                    "entry_id": entry.id,
-                    "label_id": ml_model.label_id,
-                    "model_id": ml_model.id,
-                    "version_id": version.id,
-                    "value": predicted_class,
-                    "score": score_map.get(entry.id),
-                    "prediction_set": pred_set,
-                })
+                pending.append(
+                    {
+                        "entry_id": entry.id,
+                        "label_id": ml_model.label_id,
+                        "model_id": ml_model.id,
+                        "version_id": version.id,
+                        "value": predicted_class,
+                        "score": score_map.get(entry.id),
+                        "prediction_set": pred_set,
+                    }
+                )
 
             if len(pending) >= insert_chunk:
                 bulk_append_model_predictions(pending)

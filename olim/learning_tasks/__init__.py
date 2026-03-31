@@ -72,13 +72,15 @@ def get_available_configurations() -> list[dict]:
             try:
                 with open(file_path, encoding="utf-8") as f:
                     config = json.load(f)
-                    configurations.append({
-                        "filename": file_path.stem,
-                        "name": config.get("name", file_path.stem),
-                        "description": config.get("description", ""),
-                        "steps": len(config.get("sequence", [])),
-                        "order": config.get("order", 999),
-                    })
+                    configurations.append(
+                        {
+                            "filename": file_path.stem,
+                            "name": config.get("name", file_path.stem),
+                            "description": config.get("description", ""),
+                            "steps": len(config.get("sequence", [])),
+                            "order": config.get("order", 999),
+                        }
+                    )
             except (OSError, json.JSONDecodeError):
                 continue
     configurations.sort(key=lambda c: (c["order"], c["name"].lower()))
@@ -236,7 +238,6 @@ def create_learning_task(project_id: int) -> ...:
 
     flash(_("Learning task created successfully"), "success")
     return redirect(url_for("learning_task_view", project_id=project_id, task_id=task.id))
-
 
 
 @app.route("/<int:project_id>/tasks/<int:task_id>/delete", methods=["GET", "POST"])

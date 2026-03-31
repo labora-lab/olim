@@ -57,10 +57,10 @@ class ArtifactManager:
         self,
         model_id: int,
         version: int,
-        model: Any,
-        encoder: Any,
-        policy: Any | None = None,
-        bandit: Any | None = None,
+        model: Any,  # noqa: ANN401
+        encoder: Any,  # noqa: ANN401
+        policy: Any | None = None,  # noqa: ANN401
+        bandit: Any | None = None,  # noqa: ANN401
         fields: list[str] | None = None,
     ) -> Path:
         """Save all model artifacts to disk

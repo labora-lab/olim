@@ -141,11 +141,13 @@ class SingleTextEntry(EntryTypeBase):
                     desc = " ".join(text.split()[:5]) + "..."
                 except IndexError:
                     desc = text
-                results.append({
-                    "entry_id": h["_id"],
-                    "description": desc,
-                    "type": self.entry_type,
-                })
+                results.append(
+                    {
+                        "entry_id": h["_id"],
+                        "description": desc,
+                        "type": self.entry_type,
+                    }
+                )
                 if len(results) >= number:
                     break
 

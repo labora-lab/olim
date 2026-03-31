@@ -149,6 +149,7 @@ PERMISSIONS = {
         "user_settings",
         "edit_password",
         "edit_language",
+        "regenerate_api_key",
         "logout",
         "active_learning",
         "create_al",
@@ -172,13 +173,18 @@ PERMISSIONS = {
         "api.get_model_info",
         "api.predict_single",
         "api.predict_batch",
+        "api.predict_entries",
+        "api.generate_api_key",
+        "api.list_datasets",
+        "api.ingest_entries",
+        "api.create_dataset_and_ingest",
         # Project home (redirects to learning tasks)
         "project_home",
         # Learning Tasks (assigned tasks visible to all users)
         "learning_tasks_list",
         "learning_task_view",
     ],
-    "guest": ["static", "login"],
+    "guest": ["static", "login", "api.generate_api_key"],
 }
 """Mapping of permissions to routes that can be accessed by roles"""
 

@@ -12,7 +12,13 @@ from pydantic_ai.providers.ollama import OllamaProvider
 
 from .. import app as flask_app, entry_types
 from ..celery_app import app
-from ..database import add_entry_label, get_entry, get_label, get_or_create_llm_user
+from ..database import (
+    add_entry_label,
+    get_entry,
+    get_label,
+    get_learning_task,
+    get_or_create_llm_user,
+)
 from ..label_types import get_label_type_module, is_free_text_label
 from ..settings import DEBUG
 
@@ -33,7 +39,7 @@ def label_queue_with_llm(
     system_prompt: str,
     prompt_template: str,
     thinking: bool = False,
-    **kwargs: Any,
+    **kwargs: Any,  # noqa: ANN401
 ) -> dict[str, Any]:
     """Label a queue of entries using an LLM via Ollama.
 
@@ -62,6 +68,11 @@ def label_queue_with_llm(
     """
     with flask_app.app_context():
         llm_user_id = get_or_create_llm_user().id
+
+        learning_task = get_learning_task(learning_task_id)
+        if not learning_task:
+            return {"success": False, "error": f"Learning task {learning_task_id} not found"}
+        queue_ids: list[str] = (learning_task.data or {}).get("queue_ids", [])
 
         # Setup Ollama model using OllamaProvider
         # This is the correct way to use Ollama with PydanticAI
@@ -178,12 +189,15 @@ def label_queue_with_llm(
                     # Capture raw conversation in debug mode
                     if DEBUG:
                         import json as _json
-                        debug_conversations.append({
-                            "entry_id": entry_id,
-                            "label": label.name,
-                            "predicted": predicted_value,
-                            "messages": _json.loads(result.all_messages_json()),
-                        })
+
+                        debug_conversations.append(
+                            {
+                                "entry_id": entry_id,
+                                "label": label.name,
+                                "predicted": predicted_value,
+                                "messages": _json.loads(result.all_messages_json()),
+                            }
+                        )
 
                     # Apply label to entry
                     add_entry_label(

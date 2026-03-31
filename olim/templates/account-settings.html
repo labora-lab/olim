@@ -130,6 +130,52 @@
             </div>
         </div>
 
+        <!-- API Key -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-key text-cyan-600 mr-2"></i>
+                    {{ _('API Key') }}
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">{{ _('Use this key to authenticate REST API requests') }}</p>
+            </div>
+
+            <div class="p-6 space-y-4">
+                {% if user.api_key %}
+                <div>
+                    <label class="block mb-2 text-sm font-medium text-gray-700">
+                        {{ _('Current API Key') }}
+                    </label>
+                    <div class="flex gap-2">
+                        <input id="api-key-input" type="password" readonly value="{{ user.api_key }}"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5 font-mono">
+                        <button type="button" onclick="toggleApiKey()"
+                            class="px-3 py-2.5 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
+                            title="{{ _('Show/hide key') }}">
+                            <i id="api-key-eye" class="bi bi-eye"></i>
+                        </button>
+                        <button type="button" onclick="copyApiKey()"
+                            class="px-3 py-2.5 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
+                            title="{{ _('Copy to clipboard') }}">
+                            <i id="api-key-copy-icon" class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500 italic">{{ _('No API key generated yet.') }}</p>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('regenerate_api_key', user_id=user['id']) }}"
+                    onsubmit="return confirm('{{ _('This will invalidate the current API key. Continue?') if user.api_key else '' }}');">
+                    <button type="submit"
+                        class="w-full text-white bg-cyan-600 hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                        <i class="bi bi-arrow-repeat mr-2"></i>
+                        {{ _('Regenerate API Key') if user.api_key else _('Generate API Key') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+
         <!-- Session Management -->
         {% if session.role == 'admin' %}
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -159,4 +205,26 @@
 
 {% block scripts %}
 {{ user_macro.password_scripts() }}
+<script>
+function toggleApiKey() {
+    const input = document.getElementById('api-key-input');
+    const icon = document.getElementById('api-key-eye');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+
+function copyApiKey() {
+    const input = document.getElementById('api-key-input');
+    navigator.clipboard.writeText(input.value).then(() => {
+        const icon = document.getElementById('api-key-copy-icon');
+        icon.className = 'bi bi-clipboard-check';
+        setTimeout(() => { icon.className = 'bi bi-clipboard'; }, 2000);
+    });
+}
+</script>
 {% endblock %}

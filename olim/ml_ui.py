@@ -152,7 +152,9 @@ def model_train(project_id: int, model_id: int) -> Response:
     return redirect(url_for("model_detail", project_id=project_id, model_id=model_id))
 
 
-@app.route("/<int:project_id>/models/<int:model_id>/versions/<int:version_id>/activate", methods=["POST"])
+@app.route(
+    "/<int:project_id>/models/<int:model_id>/versions/<int:version_id>/activate", methods=["POST"]
+)
 def version_activate(project_id: int, model_id: int, version_id: int) -> Response:
     """Activate a specific version."""
     get_model_or_404(project_id, model_id)
@@ -298,7 +300,9 @@ def model_export_predictions(project_id: int, model_id: int) -> FlaskResponse:
     version_id = request.args.get("version_id", type=int)
 
     trusted_only = request.args.get("trusted_only") == "1"
-    csv_content = export_model_predictions_csv(model_id, version_id=version_id, trusted_only=trusted_only)
+    csv_content = export_model_predictions_csv(
+        model_id, version_id=version_id, trusted_only=trusted_only
+    )
 
     filename = f"predictions_{model.slug}"
     if trusted_only:

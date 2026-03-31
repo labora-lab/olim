@@ -85,7 +85,7 @@ def sync_label_from_version(label: Label) -> None:
         update_label(label.id, **updates)
 
 
-def _update_label_in_context(label_id: int, **to_update: Any) -> None:
+def _update_label_in_context(label_id: int, **to_update: Any) -> None:  # noqa: ANN401
     """Update label fields within an app context (thin wrapper for Celery use)."""
     with flask_app.app_context():
         result = update_label(label_id, **to_update)

@@ -16,3 +16,6 @@ docs/
 # Editor settings
 .vscode/
 .idea/
+
+# Compiled translation files (generated at runtime by entrypoint)
+*.mo

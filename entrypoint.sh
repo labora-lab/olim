@@ -3,7 +3,7 @@
 # entrypoint.sh
 
 echo "Compiling translations"
-uv run pybabel compile -d olim/translations
+uv run pybabel compile -d olim/translations || echo "Warning: Translation compilation failed. Check write permissions on olim/translations/*/LC_MESSAGES/"
 
 # Check if database needs upgrading
 echo "Checking database state..."

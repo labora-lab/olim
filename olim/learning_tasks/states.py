@@ -352,13 +352,15 @@ class QueueSetup(BaseState):
             return self.data["_sources"]
         # Check for legacy automation param
         if "entry_source" in self.params:
-            return [{
-                "type": self.params.get("entry_source", "manual"),
-                "count": self.params.get("random_count", 10),
-                "term": "",
-                "pattern": "",
-                "ids_text": "",
-            }]
+            return [
+                {
+                    "type": self.params.get("entry_source", "manual"),
+                    "count": self.params.get("random_count", 10),
+                    "term": "",
+                    "pattern": "",
+                    "ids_text": "",
+                }
+            ]
         return [{"type": "manual", "count": 10, "term": "", "pattern": "", "ids_text": ""}]
 
     def render(self) -> str:
@@ -421,13 +423,15 @@ class QueueSetup(BaseState):
                     count = max(1, int(payload.get(f"source_{i}_count") or 10))
                 except (ValueError, TypeError):
                     count = 10
-                sources_state.append({
-                    "type": payload.get(f"source_{i}_type", "manual"),
-                    "count": count,
-                    "term":    (payload.get(f"source_{i}_term")    or "").strip(),
-                    "pattern": (payload.get(f"source_{i}_pattern") or "").strip(),
-                    "ids_text": payload.get(f"source_{i}_ids") or "",
-                })
+                sources_state.append(
+                    {
+                        "type": payload.get(f"source_{i}_type", "manual"),
+                        "count": count,
+                        "term": (payload.get(f"source_{i}_term") or "").strip(),
+                        "pattern": (payload.get(f"source_{i}_pattern") or "").strip(),
+                        "ids_text": payload.get(f"source_{i}_ids") or "",
+                    }
+                )
             self.data["_sources"] = sources_state
 
             entry_ids = resolve_sources(sources_state, project_id, datasets)
@@ -773,13 +777,15 @@ class OllamaQueueSetup(BaseState):
             return self.data["_sources"]
         # Automation mode: pre-populate from params
         if "entry_source" in self.params:
-            return [{
-                "type": self.params.get("entry_source", "random"),
-                "count": self.params.get("random_count", 10),
-                "term": "",
-                "pattern": "",
-                "ids_text": "",
-            }]
+            return [
+                {
+                    "type": self.params.get("entry_source", "random"),
+                    "count": self.params.get("random_count", 10),
+                    "term": "",
+                    "pattern": "",
+                    "ids_text": "",
+                }
+            ]
         return [{"type": "random", "count": 10, "term": "", "pattern": "", "ids_text": ""}]
 
     def render(self) -> str:
@@ -808,9 +814,9 @@ class OllamaQueueSetup(BaseState):
             if selected_label_ids:
                 selected_label_ids = [lbl["id"] for lbl in selected_label_ids]
             if not selected_label_ids and "labels" in self.params:
-                selected_label_ids = (
-                    self.params["labels"] or [lbl["id"] for lbl in available_labels]
-                )
+                selected_label_ids = self.params["labels"] or [
+                    lbl["id"] for lbl in available_labels
+                ]
 
         # Auto-submit when all required params are hardcoded (automation mode)
         auto_submit = (
@@ -828,7 +834,9 @@ class OllamaQueueSetup(BaseState):
             available_labels=available_labels,
             selected_label_ids=selected_label_ids,
             sources=self._default_sources(),
-            ollama_url=self.data.get("ollama_url", self.params.get("ollama_url", "http://localhost:11434/v1")),
+            ollama_url=self.data.get(
+                "ollama_url", self.params.get("ollama_url", "http://localhost:11434/v1")
+            ),
             errors=self.errors,
             show_prev=self.params.get("show_prev", True),
             is_last_step=self.params.get("is_last_step", False),
@@ -866,13 +874,15 @@ class OllamaQueueSetup(BaseState):
                     count = max(1, int(payload.get(f"source_{i}_count") or 10))
                 except (ValueError, TypeError):
                     count = 10
-                sources_state.append({
-                    "type": stype,
-                    "count": count,
-                    "term": (payload.get(f"source_{i}_term") or "").strip(),
-                    "pattern": (payload.get(f"source_{i}_pattern") or "").strip(),
-                    "ids_text": payload.get(f"source_{i}_ids") or "",
-                })
+                sources_state.append(
+                    {
+                        "type": stype,
+                        "count": count,
+                        "term": (payload.get(f"source_{i}_term") or "").strip(),
+                        "pattern": (payload.get(f"source_{i}_pattern") or "").strip(),
+                        "ids_text": payload.get(f"source_{i}_ids") or "",
+                    }
+                )
 
             self.data["_sources"] = sources_state
             entry_ids = resolve_sources(sources_state, project_id, datasets)
@@ -906,10 +916,9 @@ class OllamaQueueSetup(BaseState):
                 return 0
 
             # ── Ollama URL ───────────────────────────────────────────────────
-            ollama_url = (
-                payload.get("ollama_url", self.params.get("ollama_url", "http://localhost:11434/v1"))
-                .strip()
-            )
+            ollama_url = payload.get(
+                "ollama_url", self.params.get("ollama_url", "http://localhost:11434/v1")
+            ).strip()
             if not ollama_url:
                 self.errors["ollama_url"] = _("Ollama URL is required")
                 return 0
@@ -928,7 +937,9 @@ class OllamaQueueSetup(BaseState):
                 else:
                     missing_desc.append(lbl["name"])
             if missing_desc:
-                self.errors["labels"] = _("Description is required for: %(names)s", names=", ".join(missing_desc))
+                self.errors["labels"] = _(
+                    "Description is required for: %(names)s", names=", ".join(missing_desc)
+                )
                 return 0
 
             self.data["queue_ids"] = entry_ids
@@ -1251,7 +1262,7 @@ class OllamaAutoLabel(BaseState):
             task = launch_task_with_tracking(
                 label_queue_with_llm,
                 user_id=self.params["_user_id"],
-                queue_ids=self.data["queue_ids"],
+                learning_task_id=self.params["_task_id"],
                 label_configs=queue_labels,
                 datasets=[d.id for d in self.params["_datasets"]],
                 project_id=self.params["_project_id"],
@@ -1260,7 +1271,9 @@ class OllamaAutoLabel(BaseState):
                 system_prompt=self.data["llm_system_prompt"],
                 prompt_template=self.data["llm_prompt_template"],
                 thinking=self.data.get("llm_thinking", False),
-                description=f"LLM Auto-Labeling — {label_names}" if label_names else "LLM Auto-Labeling",
+                description=f"LLM Auto-Labeling — {label_names}"
+                if label_names
+                else "LLM Auto-Labeling",
             )
             self.data["llm_task_id"] = task.id
             return 0  # Stay on this step to show progress
@@ -1410,7 +1423,7 @@ class ColdStartSearchSetup(BaseState):
         queue_completion_mode: "any"
     """
 
-    def __init__(self, data: dict[str, Any], params: dict[str, Any] | None = None):
+    def __init__(self, data: dict[str, Any], params: dict[str, Any] | None = None) -> None:
         super().__init__(data, params)
         self.errors: dict[str, str] = {}
 
@@ -1536,7 +1549,7 @@ class ActiveLearningLoop(BaseState):
         al_setting_*: Runtime overrides for retrain_every / cache_size / max_rounds
     """
 
-    def _get_setting(self, key: str, default: Any) -> Any:
+    def _get_setting(self, key: str, default: Any) -> Any:  # noqa: ANN401
         """Return a runtime override from data if set, otherwise fall back to params."""
         override = self.data.get(f"al_setting_{key}")
         return override if override is not None else self.params.get(key, default)
@@ -1626,7 +1639,9 @@ class ActiveLearningLoop(BaseState):
                 elif direction != "below" and val >= float(mg_thr):
                     goal_met = True
                     break
-            self.data["al_goal_streak"] = (self.data.get("al_goal_streak", 0) + 1) if goal_met else 0
+            self.data["al_goal_streak"] = (
+                (self.data.get("al_goal_streak", 0) + 1) if goal_met else 0
+            )
 
         history: list[dict[str, Any]] = list(self.data.get("al_metrics_history", []))
         history.append({"round": self.data.get("al_round", 0), **metrics})
@@ -1682,7 +1697,7 @@ class ActiveLearningLoop(BaseState):
         # Mode: select label
         if not label_id:
             mg = self._get_setting("metric_goal", {})
-            mg_metric, mg_threshold = (list(mg.items()) + [("", "")])[0]
+            mg_metric, mg_threshold = [*list(mg.items()), ("", "")][0]
             return render_template(
                 "learning_tasks/active_learning_loop.html",
                 mode="select",
@@ -1718,7 +1733,9 @@ class ActiveLearningLoop(BaseState):
                         mode="train",
                         sub="error",
                         title=title,
-                        error=self.data.get("al_task_error", status.get("error", _("Unknown error"))),
+                        error=self.data.get(
+                            "al_task_error", status.get("error", _("Unknown error"))
+                        ),
                         round=self.data.get("al_round", 0),
                         is_last_step=self.params.get("is_last_step", False),
                     )
@@ -1749,7 +1766,7 @@ class ActiveLearningLoop(BaseState):
         # Mode: results (goal or rounds exhausted)
         if self._check_goal_reached():
             mg = self._get_setting("metric_goal", {})
-            mg_metric, mg_threshold = (list(mg.items()) + [("", "")])[0]
+            mg_metric, mg_threshold = [*list(mg.items()), ("", "")][0]
             return render_template(
                 "learning_tasks/active_learning_loop.html",
                 mode="results",
@@ -1869,7 +1886,9 @@ class ActiveLearningLoop(BaseState):
             if mg_metric and mg_threshold:
                 try:
                     self.data["al_setting_metric_goal"] = {mg_metric: float(mg_threshold)}
-                    self.data["al_setting_metric_direction"] = mg_direction if mg_direction in ("above", "below") else "above"
+                    self.data["al_setting_metric_direction"] = (
+                        mg_direction if mg_direction in ("above", "below") else "above"
+                    )
                     mg_consecutive_val = int(mg_consecutive_raw) if mg_consecutive_raw else 1
                     self.data["al_setting_mg_consecutive"] = max(1, mg_consecutive_val)
                 except ValueError:
