@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-VERSION = "0.4.0-rc1"
+VERSION = "0.4.0"
 """Version of the application"""
 
 ES_INDEX = "dataset-{dataset_id}"
