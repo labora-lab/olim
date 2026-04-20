@@ -1,0 +1,35 @@
+{
+  "order": 40,
+  "name": "Active Learning — Manual Cold Start",
+  "description": "Label random entries to build initial dataset, then train",
+  "show_progress": true,
+  "sequence": [
+    {
+      "state": "ALLabelSelect",
+      "params": {
+        "title": "Select Label for Active Learning"
+      }
+    },
+    {
+      "state": "QueueSetup",
+      "params": {
+        "title": "Build Initial Dataset",
+        "label_from_data": true,
+        "allow_label_selection": false
+      }
+    },
+    {
+      "state": "LabelEntry",
+      "params": {}
+    },
+    {
+      "state": "ActiveLearningLoop",
+      "params": {
+        "metric_goal": {"auc_roc": 0.85},
+        "retrain_every": 10,
+        "max_rounds": 10,
+        "cache_size": 100
+      }
+    }
+  ]
+}

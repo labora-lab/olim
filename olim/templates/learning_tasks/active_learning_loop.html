@@ -1,0 +1,532 @@
+{% import "macros/highlights.html" as highlights_macro with context %}
+
+{% if mode == "select" %}
+<!-- ─── Mode: select label ─────────────────────────────────────────── -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="bi bi-bullseye text-blue-600 mr-2"></i>
+            {{ title }}
+        </h3>
+        <p class="text-sm text-gray-500 mt-1">{{ _('Select the label to use for active learning.') }}</p>
+    </div>
+    <div class="p-6">
+        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
+            <input type="hidden" name="action" value="select_label">
+
+            <!-- Label selection -->
+            <div class="mb-4">
+                <label for="al-label-select" class="block text-sm font-medium text-gray-700 mb-1">
+                    {{ _('Label') }}
+                </label>
+                <select id="al-label-select" name="label_id" required
+                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">— {{ _('Select a label') }} —</option>
+                    {% for label in labels %}
+                    <option value="{{ label.id }}">{{ label.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Advanced settings (collapsible) -->
+            <div class="mb-5">
+                <button type="button" id="al-advanced-toggle"
+                    onclick="(function(){var p=document.getElementById('al-advanced-panel');var l=document.getElementById('al-advanced-label');var h=p.classList.contains('hidden');p.classList.toggle('hidden');l.textContent=h?'{{ _('Advanced settings') }} ▾':'{{ _('Advanced settings') }} ▸';})()"
+                    class="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                    <i class="bi bi-sliders"></i>
+                    <span id="al-advanced-label">{{ _('Advanced settings') }} ▸</span>
+                </button>
+
+                <div id="al-advanced-panel" class="hidden mt-3 p-4 border border-gray-200 rounded-lg bg-gray-50 space-y-4">
+                    <!-- Loop settings -->
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ _('Loop') }}</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <!-- Retrain every N labels -->
+                            <div>
+                                <label for="al-retrain-every" class="block text-xs font-medium text-gray-600 mb-1">
+                                    {{ _('Labels before retraining') }}
+                                </label>
+                                <input type="number" id="al-retrain-every" name="retrain_every" min="1" max="1000"
+                                    value="{{ setting_retrain_every }}"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-gray-400 mt-1">{{ _('default: 10') }}</p>
+                            </div>
+
+                            <!-- Cache size -->
+                            <div>
+                                <label for="al-cache-size" class="block text-xs font-medium text-gray-600 mb-1">
+                                    {{ _('Entries per round') }}
+                                </label>
+                                <input type="number" id="al-cache-size" name="cache_size" min="1" max="10000"
+                                    value="{{ setting_cache_size }}"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-gray-400 mt-1">{{ _('default: 100') }}</p>
+                            </div>
+
+                            <!-- Max rounds -->
+                            <div>
+                                <label for="al-max-rounds" class="block text-xs font-medium text-gray-600 mb-1">
+                                    {{ _('Max retraining rounds') }}
+                                </label>
+                                <input type="number" id="al-max-rounds" name="max_rounds" min="-1" max="1000"
+                                    value="{{ setting_max_rounds }}"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-gray-400 mt-1">{{ _('default: 10 · -1 = unlimited') }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Training settings -->
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ _('Training') }}</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Train/val split -->
+                            <div>
+                                <label for="al-split" class="block text-xs font-medium text-gray-600 mb-1">
+                                    {{ _('Train / val split ratio') }}
+                                </label>
+                                <input type="number" id="al-split" name="split" min="0.1" max="0.95" step="0.05"
+                                    value="{{ setting_split }}"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-gray-400 mt-1">{{ _('default: 0.8') }}</p>
+                            </div>
+
+                            <!-- Conformal alpha -->
+                            <div>
+                                <label for="al-alpha" class="block text-xs font-medium text-gray-600 mb-1">
+                                    {{ _('Conformal alpha (error rate)') }}
+                                </label>
+                                <input type="number" id="al-alpha" name="alpha" min="0.01" max="0.5" step="0.01"
+                                    value="{{ setting_alpha }}"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-gray-400 mt-1">{{ _('default: 0.1') }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sampling settings -->
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ _('Sampling') }}</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <!-- Pool size -->
+                            <div>
+                                <label for="al-pool-size" class="block text-xs font-medium text-gray-600 mb-1">
+                                    {{ _('Pool size (uncertainty candidates)') }}
+                                </label>
+                                <input type="number" id="al-pool-size" name="pool_size" min="10" max="50000"
+                                    value="{{ setting_pool_size }}"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-gray-400 mt-1">{{ _('default: 1000') }}</p>
+                            </div>
+
+                            <!-- N clusters -->
+                            <div>
+                                <label for="al-n-clusters" class="block text-xs font-medium text-gray-600 mb-1">
+                                    {{ _('Diversity clusters (KMeans k)') }}
+                                </label>
+                                <input type="number" id="al-n-clusters" name="n_clusters" min="1" max="500"
+                                    value="{{ setting_n_clusters }}"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-gray-400 mt-1">{{ _('default: 20') }}</p>
+                            </div>
+
+                            <!-- Certain rate -->
+                            <div>
+                                <label for="al-certain-rate" class="block text-xs font-medium text-gray-600 mb-1">
+                                    {{ _('Certain entry rate') }}
+                                </label>
+                                <input type="number" id="al-certain-rate" name="certain_rate" min="0" max="0.5" step="0.05"
+                                    value="{{ setting_certain_rate }}"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <p class="text-xs text-gray-400 mt-1">{{ _('0 = off, 0.2 = 1 in 5') }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Early stop metric -->
+                    <div>
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{{ _('Early stop') }}</p>
+                        <label class="block text-xs font-medium text-gray-600 mb-1">
+                            {{ _('Stop when metric reaches threshold') }}
+                        </label>
+                        <div class="flex gap-2 items-center flex-wrap">
+                            <select name="mg_metric"
+                                class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="" {% if not setting_mg_metric %}selected{% endif %}>{{ _('— no goal —') }}</option>
+                                {% for m in ['accuracy', 'auc_roc', 'coverage', 'conformal_threshold', 'precision', 'recall', 'specificity'] %}
+                                <option value="{{ m }}" {% if setting_mg_metric == m %}selected{% endif %}>{{ m }}</option>
+                                {% endfor %}
+                            </select>
+                            <select name="mg_direction"
+                                class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="above" {% if setting_mg_direction != 'below' %}selected{% endif %}>≥</option>
+                                <option value="below" {% if setting_mg_direction == 'below' %}selected{% endif %}>≤</option>
+                            </select>
+                            <input type="number" name="mg_threshold" min="0" max="1" step="0.01"
+                                value="{{ setting_mg_threshold if setting_mg_threshold else '' }}"
+                                placeholder="0.90"
+                                class="w-24 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <span class="text-xs text-gray-500">{{ _('for') }}</span>
+                            <input type="number" name="mg_consecutive" min="1" max="20"
+                                value="{{ setting_mg_consecutive if setting_mg_consecutive else '' }}"
+                                placeholder="1"
+                                class="w-16 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <span class="text-xs text-gray-500">{{ _('consecutive round(s)') }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-200 transition-colors">
+                <i class="bi bi-play-fill mr-2"></i>
+                {{ _('Start Active Learning') }}
+            </button>
+        </form>
+    </div>
+</div>
+
+{% elif mode == "train" %}
+<!-- ─── Mode: training (initial / no cache) ────────────────────────── -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="bi bi-cpu text-indigo-600 mr-2"></i>
+            {{ title }}
+            <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                {{ _('Round %(n)s', n=round) }}
+            </span>
+        </h3>
+    </div>
+
+    {% if sub == "error" %}
+    <div class="p-6">
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <div class="flex items-start">
+                <i class="bi bi-exclamation-triangle-fill text-red-500 mr-3 mt-0.5"></i>
+                <div>
+                    <h4 class="text-sm font-medium text-red-800">{{ _('Training failed') }}</h4>
+                    <p class="text-sm text-red-700 mt-1">{{ error }}</p>
+                </div>
+            </div>
+        </div>
+        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="inline">
+            <button type="submit" name="action" value="retry_train"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 border border-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-200 transition-colors">
+                <i class="bi bi-arrow-clockwise mr-2"></i>
+                {{ _('Retry') }}
+            </button>
+        </form>
+    </div>
+
+    {% else %}
+    <!-- sub == "progress" -->
+    <div class="p-6"
+        hx-post="" hx-vals='{"action": "poll_train"}' hx-trigger="every 3s" hx-target="#task-content" hx-swap="innerHTML">
+        <div class="flex flex-col items-center py-8">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+            <p class="text-sm font-medium text-gray-700">
+                {{ _('Training round %(n)s in background…', n=round) }}
+            </p>
+            {% if message %}
+            <p class="text-xs text-gray-500 mt-1">{{ message }}</p>
+            {% endif %}
+            {% if progress %}
+            <div class="w-full max-w-xs mt-4">
+                <div class="flex justify-between text-xs text-gray-500 mb-1">
+                    <span>{{ _('Progress') }}</span>
+                    <span>{{ progress }}%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-indigo-600 h-2 rounded-full transition-all" style="width: {{ progress }}%"></div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if metrics_history %}
+        <div class="border-t border-gray-100 pt-4 mt-4">
+            <p class="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">{{ _('Previous rounds') }}</p>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-xs">
+                    <thead>
+                        <tr class="text-gray-500">
+                            <th class="text-left py-1 pr-3">{{ _('Round') }}</th>
+                            {% for key in metrics_history[0].keys() if key != 'round' %}
+                            <th class="text-left py-1 pr-3">{{ key }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in metrics_history %}
+                        <tr class="border-t border-gray-100">
+                            <td class="py-1 pr-3 font-medium">{{ row.round }}</td>
+                            {% for key, val in row.items() if key != 'round' %}
+                            <td class="py-1 pr-3">
+                                {% if val is number %}{{ "%.4f"|format(val) }}{% else %}{{ val }}{% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% elif mode == "label" %}
+<!-- ─── Mode: label entry ──────────────────────────────────────────── -->
+
+<!-- Inline training error (background retrain failed but we still have cache) -->
+{% if task_error %}
+<div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3 flex items-start gap-2 text-sm">
+    <i class="bi bi-exclamation-triangle text-amber-500 mt-0.5 shrink-0"></i>
+    <span class="text-amber-800">{{ _('Retraining failed: %(err)s', err=task_error) }}</span>
+</div>
+{% endif %}
+
+<!-- Status bar -->
+<div class="flex items-center justify-between mb-3 text-xs text-gray-400">
+    <div>
+        {% if position > 1 %}
+        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="inline">
+            <button type="submit" name="action" value="prev_entry"
+                class="inline-flex items-center gap-1 text-gray-400 hover:text-gray-600 transition-colors">
+                <i class="bi bi-arrow-left"></i>{{ _('Previous') }}
+            </button>
+        </form>
+        {% endif %}
+    </div>
+    <div class="flex items-center gap-3">
+        <span>{{ position }}/{{ total }}</span>
+
+        <!-- Retrain progress mini-bar -->
+        <div class="flex items-center gap-1.5" title="{{ labels_this_round }}/{{ retrain_every }} {{ _('labels until next retrain') }}">
+            <div class="w-14 bg-gray-200 rounded-full h-1">
+                <div class="bg-indigo-400 h-1 rounded-full transition-all"
+                    style="width: {{ [[labels_this_round / retrain_every * 100, 100] | min, 0] | max }}%"></div>
+            </div>
+            <span>{{ labels_this_round }}/{{ retrain_every }}</span>
+        </div>
+
+        {% if retraining %}
+        <span class="inline-flex items-center gap-1 text-indigo-500">
+            <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            {{ _('retraining…') }}
+        </span>
+        {% endif %}
+
+        {% if metrics %}
+        {% for k, v in metrics.items() %}
+        <span class="bg-gray-100 rounded px-1.5 py-0.5">{{ k }}: {% if k == 'coverage' and v is number %}{{ "%.1f%%"|format(v * 100) }}{% elif v is number %}{{ "%.3f"|format(v) }}{% else %}{{ v }}{% endif %}</span>
+        {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+{% if valid_entry %}
+<!-- Main content: entry + labels -->
+<div class="flex flex-col lg:flex-row gap-6">
+    <!-- Entry Content -->
+    <div class="flex-1 lg:w-2/3">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-file-richtext text-green-600 mr-2"></i>
+                    {{ _('Entry Content') }}
+                    {% if entry %}
+                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        {{ entry.entry_id }}
+                    </span>
+                    {% endif %}
+                </h3>
+            </div>
+            <div class="prose">
+                {{ entry_html|safe }}
+            </div>
+        </div>
+
+        {% if entry_score is not none %}
+        <!-- Debug: selection reason -->
+        <div class="mt-2 flex items-center gap-2 text-xs text-gray-400">
+            <i class="bi bi-bug"></i>
+            {% if entry_reason == "diverse" %}
+            <span class="text-violet-500 font-medium">{{ _('diverse (cluster centroid)') }}</span>
+            {% elif entry_reason == "certain" %}
+            <span class="text-emerald-500 font-medium">{{ _('low uncertainty (certain)') }}</span>
+            {% else %}
+            <span class="text-orange-500 font-medium">{{ _('high uncertainty') }}</span>
+            {% endif %}
+            <span class="font-mono bg-gray-100 rounded px-1.5 py-0.5 text-gray-500">
+                score {{ "%.4f"|format(entry_score) }}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Labels Sidebar -->
+    <div class="lg:w-1/3 lg:min-w-96">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 sticky top-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-sm font-medium text-gray-700 flex items-center">
+                    <i class="bi bi-tags-fill text-blue-600 mr-2"></i>
+                    {% if label %}{{ label.name }}{% else %}{{ _('Labels') }}{% endif %}
+                </h3>
+            </div>
+            <div class="p-4 space-y-4">
+                <!-- Label buttons — each submits action=label with the chosen value -->
+                <div class="space-y-2">
+                    {% for label_str, type, icon, color in label_options %}
+                    {% set is_selected = labels_values.get(label.id) == label_str if label else false %}
+                    <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
+                        <input type="hidden" name="action" value="label">
+                        <input type="hidden" name="entry_id" value="{{ entry.id if entry else '' }}">
+                        <input type="hidden" name="value" value="{{ label_str }}">
+                        <button type="submit"
+                            class="w-full flex items-center px-4 py-3 rounded-lg border-2 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-{{ color }}-300
+                                {% if is_selected %}bg-{{ color }}-600 border-{{ color }}-600 text-white{% else %}bg-white border-gray-200 text-gray-700 hover:border-{{ color }}-400 hover:bg-{{ color }}-50 hover:text-{{ color }}-700{% endif %}">
+                            {% if type == 'icon' %}
+                            <i class="bi bi-{{ icon }} mr-3 text-lg {% if is_selected %}text-white{% else %}text-{{ color }}-500{% endif %}"></i>
+                            {% else %}
+                            <span class="font-bold mr-3 {% if is_selected %}text-white{% else %}text-{{ color }}-600{% endif %}">{{ icon }}</span>
+                            {% endif %}
+                            <span class="font-medium">{{ label_str }}</span>
+                            {% if is_selected %}<i class="bi bi-check-lg ml-auto"></i>{% endif %}
+                        </button>
+                    </form>
+                    {% endfor %}
+                </div>
+                {{ highlights_macro.highlights_section() }}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Entry not found -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-12 text-center">
+        <i class="bi bi-file-text text-4xl text-gray-400 mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">{{ _('Entry not found') }}</h3>
+        <p class="text-gray-500">{{ _('Could not load entry. It may have been deleted or the ID is invalid.') }}</p>
+        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="mt-4 inline-block">
+            <button type="submit" name="action" value="label"
+                class="inline-flex items-center px-4 py-2 text-sm font-medium text-purple-700 bg-white border border-purple-300 rounded-lg hover:bg-purple-50 transition-colors">
+                {{ _('Skip') }}
+                <i class="bi bi-arrow-right ml-2"></i>
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{{ highlights_macro.highlights_script() }}
+
+<script>
+(function () {
+    var highlightData = {{ highlight | tojson if highlight else '[]' }};
+    if (typeof initEntryHighlight === 'function') {
+        initEntryHighlight(highlightData);
+    }
+})();
+</script>
+
+{% elif mode == "results" %}
+<!-- ─── Mode: results ──────────────────────────────────────────────── -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="bi bi-trophy-fill text-yellow-500 mr-2"></i>
+            {{ title }}
+        </h3>
+        <p class="text-sm text-gray-500 mt-1">
+            {% if round %}
+            {{ _('Completed %(n)s round(s) of active learning.', n=round) }}
+            {% endif %}
+        </p>
+        {% if stop_reason == 'goal' and stop_mg_metric %}
+        <div class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <i class="bi bi-check-circle-fill"></i>
+            {% if stop_mg_consecutive and stop_mg_consecutive > 1 %}
+            {{ _('Goal reached: %(m)s %(d)s %(t)s for %(n)s consecutive rounds', m=stop_mg_metric, d='≥' if stop_mg_direction != 'below' else '≤', t=stop_mg_threshold, n=stop_mg_consecutive) }}
+            {% else %}
+            {{ _('Goal reached: %(m)s %(d)s %(t)s', m=stop_mg_metric, d='≥' if stop_mg_direction != 'below' else '≤', t=stop_mg_threshold) }}
+            {% endif %}
+        </div>
+        {% elif stop_reason == 'max_rounds' %}
+        <div class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            {{ _('Max rounds reached (%(n)s). Metric goal was not met.', n=stop_max_rounds) if stop_mg_metric else _('Max rounds reached (%(n)s).', n=stop_max_rounds) }}
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="p-6 space-y-6">
+        <!-- Final metrics -->
+        {% if metrics %}
+        <div>
+            <h4 class="text-sm font-medium text-gray-700 mb-3">{{ _('Final Metrics') }}</h4>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {% for k, v in metrics.items() %}
+                <div class="bg-gray-50 rounded-lg p-3 text-center">
+                    <p class="text-xs text-gray-500 mb-1">{{ k }}</p>
+                    <p class="text-lg font-semibold text-gray-900">
+                        {% if k == 'coverage' and v is number %}{{ "%.1f%%"|format(v * 100) }}{% elif v is number %}{{ "%.4f"|format(v) }}{% else %}{{ v }}{% endif %}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Metrics history table -->
+        {% if history %}
+        <div>
+            <h4 class="text-sm font-medium text-gray-700 mb-3">{{ _('Metrics History') }}</h4>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ _('Round') }}</th>
+                            {% for key in history[0].keys() if key != 'round' %}
+                            <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ key }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in history %}
+                        <tr class="border-t border-gray-100 {% if loop.last %}font-semibold bg-blue-50{% endif %}">
+                            <td class="px-4 py-2">{{ row.round }}</td>
+                            {% for key, val in row.items() if key != 'round' %}
+                            <td class="px-4 py-2">
+                                {% if val is number %}{{ "%.4f"|format(val) }}{% else %}{{ val }}{% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Continue / finish -->
+        <div class="flex gap-3 pt-2">
+            <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
+                <button type="submit" name="action" value="finish"
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-green-600 border border-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-200 transition-colors">
+                    <i class="bi bi-check-lg mr-2"></i>
+                    {% if is_last_step %}{{ _('Finish Task') }}{% else %}{{ _('Finish') }}{% endif %}
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}

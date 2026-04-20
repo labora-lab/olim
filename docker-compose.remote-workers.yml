@@ -18,11 +18,7 @@ x-app-base: &app-base
 
 # Environments
 x-app-env: &app-env
-  DB_HOST: "olim_db"
-  DB_NAME: "${POSTGRES_DB}"
-  DB_USER: "${POSTGRES_USER}"
-  DB_PASSWORD: "${POSTGRES_PASSWORD}"
-  DB_PORT: "${POSTGRES_PORT:-5432}"
+  DB_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@olim_db:${POSTGRES_PORT:-5432}/${POSTGRES_DB}"
   DEBUG: "${DEBUG:-false}"
   ES_SERVER: "http://olim_es:9200"
   WORK_PATH: /app/work

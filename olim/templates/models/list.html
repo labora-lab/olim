@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}{{ _('ML Models') }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto max-w-7xl">
+    <!-- Header -->
+    <div class="mb-6 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                <i class="bi bi-robot text-purple-600 mr-3"></i>
+                {{ _('ML Models') }}
+            </h1>
+            <p class="text-gray-600 mt-2">{{ _('Manage machine learning models for your projects') }}</p>
+        </div>
+        <a href="{{ url_for('model_create', project_id=project_id) }}"
+           class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 transition-colors">
+            <i class="bi bi-plus-lg mr-2"></i>
+            {{ _('Create Model') }}
+        </a>
+    </div>
+
+    <!-- Models List -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">
+                            <div class="flex items-center">
+                                <i class="bi bi-robot mr-2"></i>
+                                {{ _('Model Name') }}
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3">
+                            <div class="flex items-center">
+                                <i class="bi bi-folder mr-2"></i>
+                                {{ _('Project') }}
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center">
+                            <div class="flex items-center justify-center">
+                                <i class="bi bi-diagram-3 mr-2"></i>
+                                {{ _('Algorithm') }}
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center">
+                            <div class="flex items-center justify-center">
+                                <i class="bi bi-clock-history mr-2"></i>
+                                {{ _('Active Version') }}
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center">
+                            <div class="flex items-center justify-center">
+                                <i class="bi bi-circle-fill mr-2"></i>
+                                {{ _('Status') }}
+                            </div>
+                        </th>
+                        <th scope="col" class="px-6 py-3 text-center">
+                            <div class="flex items-center justify-center">
+                                <i class="bi bi-gear mr-2"></i>
+                                {{ _('Actions') }}
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for model in models %}
+                    <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
+                                    {{ model.name[0]|upper }}
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-900">{{ model.name }}</div>
+                                    <div class="text-xs text-gray-500">{{ model.slug }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-gray-700">{{ model.project.name }}</span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {{ model.algorithm }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            {% set active_version = model.get_active_version() %}
+                            {% if active_version %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                v{{ active_version.version }}
+                            </span>
+                            {% else %}
+                            <span class="text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            {% if model.status == 'active' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="bi bi-circle-fill text-green-600 mr-1" style="font-size: 0.5rem;"></i>
+                                {{ _('Active') }}
+                            </span>
+                            {% elif model.status == 'training' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                <i class="bi bi-circle-fill text-yellow-600 mr-1" style="font-size: 0.5rem;"></i>
+                                {{ _('Training') }}
+                            </span>
+                            {% elif model.status == 'draft' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                <i class="bi bi-circle-fill text-gray-600 mr-1" style="font-size: 0.5rem;"></i>
+                                {{ _('Draft') }}
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                {{ model.status }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex items-center justify-center space-x-2">
+                                <a href="{{ url_for('model_detail', project_id=project_id, model_id=model.id) }}"
+                                   class="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 transition-colors"
+                                   title="{{ _('View Details') }}">
+                                    <i class="bi bi-eye mr-1"></i>
+                                    {{ _('View') }}
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <i class="bi bi-robot text-4xl text-gray-400 mb-4"></i>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">{{ _('No models found') }}</h3>
+                            <p class="text-gray-500 mb-4">{{ _('Create your first ML model to get started.') }}</p>
+                            <a href="{{ url_for('model_create', project_id=project_id) }}"
+                               class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700">
+                                <i class="bi bi-plus-lg mr-2"></i>
+                                {{ _('Create Model') }}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

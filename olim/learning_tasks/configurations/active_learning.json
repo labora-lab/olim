@@ -1,0 +1,18 @@
+{
+  "order": 70,
+  "name": "Active Learning",
+  "description": "Iterative active learning loop — train a model and label the most uncertain entries each round",
+  "show_progress": true,
+  "sequence": [
+    {
+      "state": "ActiveLearningLoop",
+      "params": {
+        "title": "Active Learning",
+        "metric_goal": {"auc_roc": 0.85},
+        "max_rounds": 5,
+        "retrain_every": 10,
+        "cache_size": 100
+      }
+    }
+  ]
+}

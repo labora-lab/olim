@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Analytics') }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Chart Card -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div class="mb-4 flex items-center justify-between">
+            <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-bar-chart-line-fill text-blue-600 mr-2"></i>
+                {{ _('Labels Created per Day') }}
+            </h2>
+            <div class="flex items-center space-x-3">
+                <label for="mode-select" class="text-sm text-gray-600">{{ _('Mode') }}</label>
+                <select id="mode-select" class="border rounded px-2 py-1 text-sm">
+                    <option value="labels">{{ _('Labels') }}</option>
+                    <option value="entries">{{ _('Unique Entries') }}</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading-indicator" class="flex justify-center items-center py-12">
+            <div class="text-center">
+                <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mb-4"></div>
+                <p class="text-gray-600">{{ _('Loading data...') }}</p>
+            </div>
+        </div>
+
+        <!-- Chart Container -->
+        <div id="chart-container" class="hidden" style="height: 400px;">
+            <canvas id="labelsChart"></canvas>
+        </div>
+
+        <!-- No Data Message -->
+        <div id="no-data-message" class="hidden text-center py-12">
+            <i class="bi bi-inbox text-gray-400 text-6xl mb-4"></i>
+            <p class="text-gray-600 text-lg">{{ _('No labeling data available yet') }}</p>
+            <p class="text-gray-500 text-sm mt-2">{{ _('Start labeling entries to see statistics') }}</p>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-message" class="hidden">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div class="flex items-start">
+                    <i class="bi bi-exclamation-triangle text-red-600 mr-2 mt-0.5"></i>
+                    <div class="text-sm text-red-800">
+                        <p class="font-semibold mb-1">{{ _('Error loading data') }}</p>
+                        <p id="error-text"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Summary -->
+    <div id="stats-summary" class="hidden mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center">
+                <div class="bg-blue-100 rounded-lg p-3 mr-3">
+                    <i class="bi bi-tags-fill text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">{{ _('Total Labels') }}</p>
+                    <p id="total-labels" class="text-2xl font-bold text-gray-900">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center">
+                <div class="bg-green-100 rounded-lg p-3 mr-3">
+                    <i class="bi bi-people-fill text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">{{ _('Active Users') }}</p>
+                    <p id="active-users" class="text-2xl font-bold text-gray-900">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center">
+                <div class="bg-purple-100 rounded-lg p-3 mr-3">
+                    <i class="bi bi-calendar-range-fill text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">{{ _('Date Range') }}</p>
+                    <p id="date-range" class="text-2xl font-bold text-gray-900">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center">
+                <div class="bg-orange-100 rounded-lg p-3 mr-3">
+                    <i class="bi bi-graph-up-arrow text-orange-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600">{{ _('Avg per Day') }}</p>
+                    <p id="avg-per-day" class="text-2xl font-bold text-gray-900">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+    // Color palette for users
+    const COLORS = [
+        '#06b6d4', // cyan-500
+        '#8b5cf6', // violet-500
+        '#f59e0b', // amber-500
+        '#10b981', // emerald-500
+        '#ef4444', // red-500
+        '#3b82f6', // blue-500
+        '#ec4899', // pink-500
+        '#14b8a6', // teal-500
+        '#f97316', // orange-500
+        '#6366f1', // indigo-500
+    ];
+
+    let chart = null;
+
+    async function loadAnalytics() {
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const chartContainer = document.getElementById('chart-container');
+        const noDataMessage = document.getElementById('no-data-message');
+        const errorMessage = document.getElementById('error-message');
+        const statsSummary = document.getElementById('stats-summary');
+
+        try {
+            const mode = document.getElementById('mode-select') ? document.getElementById('mode-select').value : 'labels';
+            const response = await fetch('{{ url_for("analytics_data", project_id=project_id) }}?mode=' + encodeURIComponent(mode));
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Hide loading
+            loadingIndicator.classList.add('hidden');
+
+            if (data.dates.length === 0) {
+                // No data available
+                noDataMessage.classList.remove('hidden');
+                return;
+            }
+
+            // Show chart and stats
+            chartContainer.classList.remove('hidden');
+            statsSummary.classList.remove('hidden');
+
+            // Create datasets for each user
+            const datasets = data.users.map((user, index) => ({
+                label: user.name,
+                data: user.data,
+                borderColor: COLORS[index % COLORS.length],
+                backgroundColor: COLORS[index % COLORS.length] + '20', // 20% opacity
+                borderWidth: 2,
+                tension: 0.3,
+                fill: false,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+            }));
+
+            // Add total line
+            datasets.push({
+                label: '{{ _("Total") }}',
+                data: data.totals,
+                borderColor: '#374151', // gray-700
+                backgroundColor: '#37415120',
+                borderWidth: 3,
+                tension: 0.3,
+                fill: false,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                borderDash: [5, 5],
+            });
+
+            // Create chart
+            const ctx = document.getElementById('labelsChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.dates,
+                    datasets: datasets,
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15,
+                            },
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#1f2937',
+                            bodyColor: '#4b5563',
+                            borderColor: '#e5e7eb',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: true,
+                            callbacks: {
+                                label: function (context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.y;
+                                    const unit = mode === 'entries' ? '{{ _('entry') }}' : '{{ _('label') }}';
+                                    return `${label}: ${value} ${unit}${value !== 1 ? 's' : ''}`;
+                                }
+                            }
+                        },
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '{{ _("Date") }}',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold',
+                                },
+                            },
+                            grid: {
+                                display: false,
+                            },
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: mode === 'entries' ? '{{ _('Number of Entries Labeled') }}': '{{ _('Number of Labels') }}',
+                                font: {
+                                    size: 14,
+                                    weight: 'bold',
+                                },
+                            },
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0,
+                            },
+                            grid: {
+                                color: '#f3f4f6',
+                            },
+                        },
+                    },
+                },
+            });
+
+            // Update statistics
+            updateStatistics(data);
+
+        } catch (error) {
+            console.error('Error loading analytics:', error);
+            loadingIndicator.classList.add('hidden');
+            errorMessage.classList.remove('hidden');
+            document.getElementById('error-text').textContent = error.message;
+        }
+    }
+
+    function updateStatistics(data) {
+        // Total labels
+        const totalLabels = data.totals.reduce((a, b) => a + b, 0);
+        document.getElementById('total-labels').textContent = totalLabels.toLocaleString();
+
+        // Active users
+        document.getElementById('active-users').textContent = data.users.length;
+
+        // Date range
+        if (data.dates.length > 0) {
+            const firstDate = new Date(data.dates[0]).toLocaleDateString();
+            const lastDate = new Date(data.dates[data.dates.length - 1]).toLocaleDateString();
+            document.getElementById('date-range').textContent = data.dates.length === 1 ? firstDate : `${data.dates.length}d`;
+        }
+
+        // Average per day
+        const avgPerDay = data.dates.length > 0 ? (totalLabels / data.dates.length).toFixed(1) : 0;
+        document.getElementById('avg-per-day').textContent = avgPerDay;
+    }
+
+    // Load analytics on page load and when mode changes
+    document.addEventListener('DOMContentLoaded', () => {
+        const modeSelect = document.getElementById('mode-select');
+        if (modeSelect) {
+            modeSelect.addEventListener('change', () => {
+                // Destroy existing chart if present
+                if (chart) {
+                    chart.destroy();
+                    chart = null;
+                }
+                // Reset UI
+                document.getElementById('chart-container').classList.add('hidden');
+                document.getElementById('stats-summary').classList.add('hidden');
+                document.getElementById('loading-indicator').classList.remove('hidden');
+                loadAnalytics();
+            });
+        }
+        loadAnalytics();
+    });
+</script>
+{% endblock %}

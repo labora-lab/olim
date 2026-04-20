@@ -1,0 +1,174 @@
+{% import "macros/entry_sources.html" as es_macro %}
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-4 bg-gradient-to-r from-purple-600 to-indigo-600">
+            <h1 class="text-2xl font-bold text-white">{{ title }}</h1>
+        </div>
+
+        <!-- Form -->
+        <form id="queue-setup-form" hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="px-6 py-6">
+            {% if description %}
+            <p class="text-gray-600 mb-6">{{ description }}</p>
+            {% endif %}
+
+            <div class="space-y-6">
+                <!-- Entry Sources widget -->
+                {{ es_macro.entry_sources_widget(sources, errors) }}
+
+                <!-- Label Selection -->
+                {% if label_from_data and prefilled_label %}
+                <!-- Pre-filled label from active learning pipeline -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ _('Label') }}
+                    </label>
+                    <div class="flex items-center gap-2 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                        <i class="bi bi-tag-fill text-purple-600"></i>
+                        <span class="text-sm font-medium text-purple-800">{{ prefilled_label.name }}</span>
+                        <span class="text-xs text-purple-500 ml-auto">{{ _('pre-selected') }}</span>
+                    </div>
+                </div>
+                {% elif allow_label_selection and available_labels %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ _('Select Labels') }} <span class="text-red-500">*</span>
+                    </label>
+                    <p class="text-sm text-gray-500 mb-2">{{ _('Choose which labels will be available for labeling') }}</p>
+                    <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                        {% for label in available_labels %}
+                        <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input type="checkbox" name="labels" value="{{ label.id }}"
+                                {% if label.id in selected_label_ids %}checked{% endif %}
+                                class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 label-checkbox"
+                                data-label-id="{{ label.id }}" data-label-name="{{ label.name }}">
+                            <span class="text-sm text-gray-700">{{ label.name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% if errors.get('labels') %}
+                    <p class="mt-1 text-sm text-red-500">{{ errors['labels'] }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Required Labels -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ _('Required Labels') }}
+                    </label>
+                    <p class="text-sm text-gray-500 mb-2">{{ _('Select labels that must be filled before advancing to next entry') }}</p>
+                    <div id="required-labels-container" class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                        {% for label in available_labels %}
+                        <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded required-label-option {% if label.id not in selected_label_ids %}hidden{% endif %}" data-for-label="{{ label.id }}">
+                            <input type="checkbox" name="required_labels" value="{{ label.id }}"
+                                {% if label.id in required_label_ids %}checked{% endif %}
+                                class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            <span class="text-sm text-gray-700">{{ label.name }}</span>
+                            <span class="text-xs text-red-500">{{ _('(required)') }}</span>
+                        </label>
+                        {% endfor %}
+                        <p id="no-labels-selected" class="text-sm text-gray-400 italic {% if selected_label_ids %}hidden{% endif %}">
+                            {{ _('Select labels above first') }}
+                        </p>
+                    </div>
+                    {% if errors.get('required_labels') %}
+                    <p class="mt-1 text-sm text-red-500">{{ errors['required_labels'] }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Completion Mode -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ _('Completion criteria') }}
+                    </label>
+                    <p class="text-sm text-gray-500 mb-2">{{ _('When is an entry considered labeled?') }}</p>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 rounded hover:bg-gray-50">
+                            <input type="radio" name="completion_mode" value="any"
+                                {% if completion_mode != 'all' %}checked{% endif %}
+                                class="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500">
+                            <span class="text-sm text-gray-700">{{ _('At least one label') }}</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer p-2 rounded hover:bg-gray-50">
+                            <input type="radio" name="completion_mode" value="all"
+                                {% if completion_mode == 'all' %}checked{% endif %}
+                                class="w-4 h-4 text-purple-600 border-gray-300 focus:ring-purple-500">
+                            <span class="text-sm text-gray-700">{{ _('All labels') }}</span>
+                        </label>
+                    </div>
+                </div>
+
+                {% elif available_labels %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ _('Labels to use') }}
+                    </label>
+                    <div class="flex flex-wrap gap-2">
+                        {% for label in available_labels %}
+                        <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+                            {{ label.name }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Navigation -->
+            <div class="mt-6 pt-4 border-t border-gray-200 flex justify-between items-center">
+                <div>
+                    {% if show_prev %}
+                    <button type="submit" name="action" value="prev"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors">
+                        <i class="bi bi-chevron-left mr-2"></i>
+                        {{ _('Previous') }}
+                    </button>
+                    {% endif %}
+                </div>
+                <div>
+                    <button type="submit" name="action" value="submit"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 transition-colors">
+                        {{ _('Start Labeling') }}
+                        <i class="bi bi-chevron-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{ es_macro.entry_sources_script() }}
+
+<script>
+(function () {
+    const labelCheckboxes = document.querySelectorAll('.label-checkbox');
+    const requiredLabelOptions = document.querySelectorAll('.required-label-option');
+    const noLabelsMessage = document.getElementById('no-labels-selected');
+
+    function updateRequiredLabels() {
+        const selectedIds = Array.from(labelCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.dataset.labelId);
+
+        let anyVisible = false;
+        requiredLabelOptions.forEach(option => {
+            const labelId = option.dataset.forLabel;
+            if (selectedIds.includes(labelId)) {
+                option.classList.remove('hidden');
+                anyVisible = true;
+            } else {
+                option.classList.add('hidden');
+                const checkbox = option.querySelector('input[type="checkbox"]');
+                if (checkbox) checkbox.checked = false;
+            }
+        });
+
+        if (noLabelsMessage) {
+            noLabelsMessage.classList.toggle('hidden', anyVisible);
+        }
+    }
+
+    labelCheckboxes.forEach(cb => cb.addEventListener('change', updateRequiredLabels));
+    updateRequiredLabels();
+})();
+</script>

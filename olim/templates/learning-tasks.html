@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Learning Tasks') }}{% endblock %}
+
+{% block content %}
+
+{# ── My Tasks ──────────────────────────────────────────────────────────────── #}
+<div class="mb-8">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-person-check text-cyan-600 mr-2"></i>
+                {{ _('My Tasks') }}
+            </h3>
+            <span class="text-xs text-gray-400">{{ _('Tasks assigned to you') }}</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left text-gray-500">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">{{ _('Task Name') }}</th>
+                        <th scope="col" class="px-6 py-3 text-center">{{ _('Progress') }}</th>
+                        <th scope="col" class="px-6 py-3 text-center">{{ _('Actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in my_tasks %}
+                    <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
+                                    {{ task.name[0]|upper }}
+                                </div>
+                                <span class="font-medium text-gray-900">{{ task.name }}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            {% set total = task.initial_setup.get('sequence', [])|length if task.initial_setup else 0 %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                {{ task.position + 1 }} / {{ total }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <a href="{{ url_for('learning_task_view', project_id=project_id, task_id=task.id) }}"
+                                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 transition-colors">
+                                <i class="bi bi-play-fill mr-1"></i>{{ _('Open') }}
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="px-6 py-10 text-center text-gray-400">
+                            <i class="bi bi-inbox text-3xl block mb-2"></i>
+                            {{ _('No tasks assigned to you.') }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{# ── Admin section ─────────────────────────────────────────────────────────── #}
+{% if is_admin %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    {# All tasks table #}
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-list-task text-purple-600 mr-2"></i>
+                    {{ _('All Tasks') }}
+                </h3>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">{{ _('Task Name') }}</th>
+                            <th scope="col" class="px-6 py-3 text-center">{{ _('State') }}</th>
+                            <th scope="col" class="px-6 py-3 text-center">{{ _('Progress') }}</th>
+                            <th scope="col" class="px-6 py-3 text-center">{{ _('Assigned To') }}</th>
+                            <th scope="col" class="px-6 py-3 text-center">{{ _('Creator') }}</th>
+                            <th scope="col" class="px-6 py-3 text-center">{{ _('Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in all_tasks %}
+                        <tr class="bg-white border-b border-gray-200 hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
+                                        {{ task.name[0]|upper }}
+                                    </div>
+                                    <span class="font-medium text-gray-900">{{ task.name }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {{ task.state }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                {% set total = task.initial_setup.get('sequence', [])|length if task.initial_setup else 0 %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    {{ task.position + 1 }} / {{ total }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                {% if task.assignee %}
+                                <div class="flex items-center justify-center gap-1">
+                                    <div class="w-5 h-5 bg-cyan-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                                        {{ task.assignee.name[0]|upper if task.assignee.name else '?' }}
+                                    </div>
+                                    <span class="text-gray-700 text-xs">{{ task.assignee.name or task.assignee.username }}</span>
+                                </div>
+                                {% else %}
+                                <span class="text-gray-400 text-xs">{{ _('Unassigned') }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex items-center justify-center">
+                                    <div class="w-5 h-5 bg-gray-400 rounded-full flex items-center justify-center text-white text-xs font-medium mr-1">
+                                        {{ task.creator.name[0]|upper if task.creator and task.creator.name else '?' }}
+                                    </div>
+                                    <span class="text-gray-700 text-xs">{{ task.creator.name if task.creator and task.creator.name else task.creator.username if task.creator else '?' }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <div class="flex items-center justify-center gap-1 flex-wrap">
+                                    <a href="{{ url_for('learning_task_view', project_id=project_id, task_id=task.id) }}"
+                                        class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 transition-colors">
+                                        <i class="bi bi-play-fill mr-1"></i>{{ _('Open') }}
+                                    </a>
+                                    {# Assign dropdown #}
+                                    <div class="relative" x-data="{ open: false }">
+                                        <button type="button" @click="open = !open"
+                                            class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                            {% if task.assignee %}
+                                            <div class="w-4 h-4 bg-cyan-500 rounded-full flex items-center justify-center text-white text-xs font-medium mr-1">{{ task.assignee.name[0]|upper if task.assignee.name else '?' }}</div>
+                                            {{ task.assignee.name or task.assignee.username }}
+                                            {% else %}
+                                            <i class="bi bi-person-plus mr-1"></i>{{ _('Assign') }}
+                                            {% endif %}
+                                        </button>
+                                        <div x-show="open" @click.outside="open = false"
+                                            class="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1">
+                                            <form action="{{ url_for('assign_learning_task_route', project_id=project_id, task_id=task.id) }}" method="post">
+                                                <button type="submit" name="assigned_to" value=""
+                                                    class="w-full text-left px-4 py-2 text-xs text-gray-500 hover:bg-gray-50 italic">
+                                                    {{ _('Unassign') }}
+                                                </button>
+                                                {% for user in users %}
+                                                <button type="submit" name="assigned_to" value="{{ user.id }}"
+                                                    class="w-full text-left px-4 py-2 text-xs {% if task.assigned_to == user.id %}text-cyan-700 font-semibold bg-cyan-50{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
+                                                    {{ user.name or user.username }}
+                                                </button>
+                                                {% endfor %}
+                                            </form>
+                                        </div>
+                                    </div>
+                                    <form action="{{ url_for('reset_learning_task', project_id=project_id, task_id=task.id) }}" method="post" class="inline">
+                                        <button type="submit"
+                                            class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-white bg-yellow-500 rounded-lg hover:bg-yellow-600 transition-colors">
+                                            <i class="bi bi-arrow-counterclockwise mr-1"></i>{{ _('Reset') }}
+                                        </button>
+                                    </form>
+                                    <button
+                                        onclick="confirmDelete('{{ task.name }}', '{{ url_for('delete_learning_task_route', project_id=project_id, task_id=task.id) }}')"
+                                        class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+                                        <i class="bi bi-trash mr-1"></i>{{ _('Delete') }}
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <i class="bi bi-list-task text-4xl text-gray-400 mb-4 block"></i>
+                                <p class="text-gray-500">{{ _('No learning tasks yet. Create one using the form.') }}</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {# Right column: create form #}
+    <div class="lg:col-span-1 space-y-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="bi bi-plus-circle text-green-600 mr-2"></i>
+                    {{ _('Create Learning Task') }}
+                </h3>
+            </div>
+
+            <div class="p-6">
+                <!-- Tabs -->
+                <div class="flex border-b border-gray-200 mb-4">
+                    <button type="button" id="tab-preset" onclick="switchTab('preset')"
+                        class="px-4 py-2 text-sm font-medium border-b-2 border-cyan-600 text-cyan-600">
+                        <i class="bi bi-collection mr-1"></i>{{ _('Preset') }}
+                    </button>
+                    <button type="button" id="tab-upload" onclick="switchTab('upload')"
+                        class="px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                        <i class="bi bi-upload mr-1"></i>{{ _('Upload JSON') }}
+                    </button>
+                </div>
+
+                <!-- Preset form -->
+                <form id="form-preset" action="{{ url_for('create_learning_task', project_id=project_id) }}" method="post" class="space-y-4">
+                    <input type="hidden" name="source" value="preset">
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-900">{{ _('Task Name') }}</label>
+                        <input type="text" name="name" required
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                            placeholder="{{ _('Enter task name') }}">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-900">{{ _('Configuration') }}</label>
+                        <select id="configuration" name="configuration" required
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                            {% if configurations %}
+                                {% for config in configurations %}
+                                <option value="{{ config.filename }}">{{ config.name }} ({{ config.steps }} {{ _('steps') }})</option>
+                                {% endfor %}
+                            {% else %}
+                                <option value="" disabled selected>{{ _('No configurations available') }}</option>
+                            {% endif %}
+                        </select>
+                        {% if configurations %}
+                        <p class="mt-1 text-xs text-gray-500" id="config-description">{{ configurations[0].description if configurations else '' }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-900">{{ _('Assign To') }}</label>
+                        <select name="assigned_to"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                            <option value="">{{ _('— unassigned —') }}</option>
+                            {% for u in users %}
+                            <option value="{{ u.id }}" {% if u.id == session['user_id'] %}selected{% endif %}>{{ u.name or u.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" {% if not configurations %}disabled{% endif %}
+                        class="w-full text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                        <i class="bi bi-plus-circle mr-2"></i>{{ _('Create Task') }}
+                    </button>
+                </form>
+
+                <!-- Upload form -->
+                <form id="form-upload" action="{{ url_for('create_learning_task', project_id=project_id) }}" method="post" enctype="multipart/form-data" class="space-y-4 hidden">
+                    <input type="hidden" name="source" value="upload">
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-900">{{ _('Task Name') }}</label>
+                        <input type="text" name="name" required
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5"
+                            placeholder="{{ _('Enter task name') }}">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-900">{{ _('Configuration File') }}</label>
+                        <input type="file" name="config_file" accept=".json" required
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-900">{{ _('Assign To') }}</label>
+                        <select name="assigned_to"
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                            <option value="">{{ _('— unassigned —') }}</option>
+                            {% for u in users %}
+                            <option value="{{ u.id }}" {% if u.id == session['user_id'] %}selected{% endif %}>{{ u.name or u.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit"
+                        class="w-full text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                        <i class="bi bi-plus-circle mr-2"></i>{{ _('Create Task') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endif %}
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="relative inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <i class="bi bi-exclamation-triangle text-red-600"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">{{ _('Delete Learning Task') }}</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500" id="deleteMessage">
+                                {{ _('Are you sure you want to delete this task? This action cannot be undone.') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" id="confirmDeleteBtn"
+                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    {{ _('Delete') }}
+                </button>
+                <button type="button" onclick="closeDeleteModal()"
+                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    {{ _('Cancel') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function switchTab(tab) {
+        const tabPreset = document.getElementById('tab-preset');
+        const tabUpload = document.getElementById('tab-upload');
+        const formPreset = document.getElementById('form-preset');
+        const formUpload = document.getElementById('form-upload');
+        if (tab === 'preset') {
+            tabPreset.classList.add('border-cyan-600', 'text-cyan-600');
+            tabPreset.classList.remove('border-transparent', 'text-gray-500');
+            tabUpload.classList.remove('border-cyan-600', 'text-cyan-600');
+            tabUpload.classList.add('border-transparent', 'text-gray-500');
+            formPreset.classList.remove('hidden');
+            formUpload.classList.add('hidden');
+        } else {
+            tabUpload.classList.add('border-cyan-600', 'text-cyan-600');
+            tabUpload.classList.remove('border-transparent', 'text-gray-500');
+            tabPreset.classList.remove('border-cyan-600', 'text-cyan-600');
+            tabPreset.classList.add('border-transparent', 'text-gray-500');
+            formUpload.classList.remove('hidden');
+            formPreset.classList.add('hidden');
+        }
+    }
+
+    initProjectsPage();
+
+    const configDescriptions = {
+        {% for config in configurations %}
+        '{{ config.filename }}': '{{ config.description }}',
+        {% endfor %}
+    };
+    const configSelect = document.getElementById('configuration');
+    const configDescription = document.getElementById('config-description');
+    if (configSelect && configDescription) {
+        configSelect.addEventListener('change', function() {
+            configDescription.textContent = configDescriptions[this.value] || '';
+        });
+    }
+
+    // Alpine-style assign dropdown (plain JS fallback if Alpine not loaded)
+    document.querySelectorAll('[x-data]').forEach(function(el) {
+        if (typeof Alpine === 'undefined') {
+            const btn = el.querySelector('button[type="button"]');
+            const dropdown = el.querySelector('[x-show]');
+            if (btn && dropdown) {
+                dropdown.style.display = 'none';
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+                });
+                document.addEventListener('click', function() {
+                    dropdown.style.display = 'none';
+                });
+            }
+        }
+    });
+</script>
+{% endblock %}

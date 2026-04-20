@@ -1,3 +1,6 @@
+# Superpowers specs/plans (local only)
+docs/superpowers/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -5,6 +8,7 @@ __pycache__/
 
 # Mac OS
 *.DS_Store
+.DS_Store
 
 # C extensions
 *.so
@@ -184,3 +188,8 @@ CLAUDE.md
 node_modules/
 package-lock.json
 package.json
+
+# Nixos stuffs
+.evvrc
+shell.nix
+.direnv/

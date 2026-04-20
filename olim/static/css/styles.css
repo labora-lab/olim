@@ -79,3 +79,215 @@
     bottom: 10%;
     left: 7%;
 }
+
+/* ========================================
+   Sidebar and Layout Styles
+   ======================================== */
+
+/* No sidebar layout */
+.no-sidebar #main-content,
+.no-sidebar nav,
+.no-sidebar footer {
+    margin-left: 0 !important;
+    max-width: 100vw !important;
+    width: 100vw !important;
+    box-sizing: border-box;
+}
+
+/* HTMX indicator styles */
+.htmx-indicator {
+    opacity: 0;
+    transition: opacity 200ms ease-in;
+}
+
+.htmx-request .htmx-indicator {
+    opacity: 1;
+}
+
+.htmx-request.htmx-indicator {
+    opacity: 1;
+}
+
+/* Sidebar collapsed state styles */
+.sidebar-collapsed .sidebar-item-text {
+    display: none;
+}
+
+.sidebar-collapsed .project-name-header {
+    display: none;
+}
+
+.sidebar-collapsed .task-section-title {
+    display: none;
+}
+
+.sidebar-collapsed .task-counter {
+    display: flex;
+}
+
+.sidebar-collapsed .task-list {
+    display: none;
+}
+
+.sidebar-collapsed .task-counter-collapsed {
+    display: flex !important;
+}
+
+.sidebar-collapsed .bottom-icons {
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sidebar-collapsed .bottom-icons>* {
+    margin-right: 0;
+}
+
+/* Navigation items when collapsed - only override inactive items */
+.sidebar-collapsed ul.space-y-1 li a.text-gray-300 {
+    background-color: transparent !important;
+}
+
+.sidebar-collapsed ul.space-y-1 li a.text-gray-300:hover {
+    background-color: #374151 !important; /* gray-700 */
+}
+
+/* Keep active items highlighted - no override needed for bg-cyan-600 */
+
+/* Project dropdown button when collapsed */
+.sidebar-collapsed #project-dropdown-btn {
+    background-color: transparent !important;
+}
+
+.sidebar-collapsed #project-dropdown-btn:hover {
+    background-color: #374151 !important; /* gray-700 */
+}
+
+.sidebar-collapsed .sidebar-item-icon {
+    margin-right: 0;
+}
+
+.sidebar-collapsed .flex.items-center {
+    justify-content: center;
+}
+
+.sidebar-collapsed .px-2.py-2.mb-2 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.5rem;
+}
+
+.sidebar-collapsed .task-section-icon {
+    display: none;
+}
+
+.sidebar-collapsed .bottom-icons {
+    right: 50%;
+    transform: translateX(50%);
+}
+
+.task-counter {
+    display: none;
+}
+
+.sidebar-collapsed .task-counter {
+    display: flex;
+}
+
+.sidebar-collapsed #project-dropdown-btn span {
+    display: none;
+}
+
+.sidebar-collapsed #project-dropdown-btn i {
+    margin-left: 0.5rem;
+}
+
+.sidebar-collapsed #project-dropdown {
+    left: 4rem;
+    top: 0;
+    width: 200px;
+}
+
+.sidebar-collapsed #settings-dropdown {
+    left: 4rem;
+    bottom: -1rem;
+    width: 220px;
+}
+
+.sidebar-collapsed .border-t.border-b.border-gray-600.bg-gray-700 {
+    background-color: transparent !important;
+    border-top: none !important;
+    border-bottom: none !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+.sidebar-collapsed .task-counter-collapsed {
+    margin-top: -2rem !important;
+}
+
+/* Task counter styling when collapsed */
+.sidebar-collapsed .task-counter-collapsed button {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.sidebar-collapsed .task-counter-collapsed button:hover {
+    background-color: #374151 !important;
+}
+
+/* Task counter when running jobs */
+.sidebar-collapsed .task-counter-collapsed button.bg-blue-600 {
+    background-color: #2563eb !important;
+}
+
+.sidebar-collapsed .task-counter-collapsed button.bg-blue-600:hover {
+    background-color: #1d4ed8 !important;
+}
+
+.sidebar-collapsed .border-t.border-gray-600.pt-2.mt-2 {
+    border-top: none !important;
+    padding-top: 0 !important;
+    margin-top: -0.5rem !important;
+}
+
+.sidebar-collapsed .flex.items-center.p-2 {
+    padding: 0.5rem !important;
+    justify-content: center !important;
+}
+
+.sidebar-collapsed .sidebar-item-icon {
+    margin: 0 !important;
+}
+
+.task-counter {
+    display: none;
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+    text-align: center;
+    line-height: 20px;
+    font-weight: bold;
+}
+
+/* Preload collapsed state to prevent flash */
+.sidebar-preload-collapsed #sidebar {
+    width: 4rem !important;
+}
+
+.sidebar-preload-collapsed #main-content {
+    margin-left: 4rem !important;
+}
+
+@media (max-width: 640px) {
+    .sidebar-preload-collapsed #main-content {
+        margin-left: 0 !important;
+    }
+}

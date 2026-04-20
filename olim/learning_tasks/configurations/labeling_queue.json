@@ -1,0 +1,20 @@
+{
+    "order": 10,
+    "name": "Labeling Queue",
+    "description": "Label a batch of entries - enter IDs, select labels, then label each entry",
+    "sequence": [
+        {
+            "state": "QueueSetup",
+            "params": {
+                "title": "Setup Labeling Queue",
+                "description": "Enter the entry IDs you want to label (one per line) and select which labels to use.",
+                "allow_label_selection": true,
+                "show_prev": false
+            }
+        },
+        {
+            "state": "LabelEntry",
+            "params": {}
+        }
+    ]
+}

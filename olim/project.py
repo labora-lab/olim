@@ -16,7 +16,6 @@ from .database import (
     get_project,
     get_projects,
     new_project,
-    random_entries,
 )
 from .functions import (
     get_def_nentries,
@@ -25,7 +24,7 @@ from .functions import (
 )
 from .settings import QUEUES_PATH
 from .utils.entry import get_all_hidden
-from .utils.queues import delete_queue, get_all_queues, get_queue, store_queue
+from .utils.queues import delete_queue, get_queue, store_queue
 
 
 def backup_old_queue_folder(project_id: int) -> None:
@@ -151,19 +150,48 @@ def entry(
             queue_pos = get_queue_pos(queue_id)
         try:
             queue = get_queue(queue_id, project_id)
-            dataset_id, entry_id = queue[queue_pos - 1]
-            update_queue_pos(queue_id, queue_pos)
-            data.update(
-                {
-                    "queue_id": queue_id,
-                    "queue_len": len(queue),
-                    "queue_pos": queue_pos,
-                }
-            )
-        except Exception as e:
-            print(e)
+
+            # Check if queue is empty
+            if len(queue) == 0:
+                flash(
+                    _("Queue {queue_id} is empty").format(queue_id=queue_id),
+                    category="error",
+                )
+                queue_id = None
+            # Check if position is out of range
+            elif queue_pos < 1 or queue_pos > len(queue):
+                flash(
+                    _(
+                        "Position {pos} is out of range for queue (size: {size}). "
+                        "Redirecting to position 1."
+                    ).format(pos=queue_pos, size=len(queue)),
+                    category="warning",
+                )
+                # Reset to position 1 and redirect
+                update_queue_pos(queue_id, 1)
+                return redirect(
+                    url_for("entry", project_id=project_id, queue_id=queue_id, queue_pos=1)
+                )
+            else:
+                dataset_id, entry_id = queue[queue_pos - 1]
+                update_queue_pos(queue_id, queue_pos)
+                data.update(
+                    {
+                        "queue_id": queue_id,
+                        "queue_len": len(queue),
+                        "queue_pos": queue_pos,
+                    }
+                )
+        except FileNotFoundError:
             flash(
                 _("Queue {queue_id} not found").format(queue_id=queue_id),
+                category="error",
+            )
+            queue_id = None
+        except Exception as e:
+            app.logger.error(f"Error loading queue {queue_id}: {e}", exc_info=True)
+            flash(
+                _("Error loading queue: {error}").format(error=str(e)),
                 category="error",
             )
             queue_id = None
@@ -284,7 +312,8 @@ def search(project_id: int) -> ...:
         queue_id = store_queue(
             [(row["dataset_id"], row["entry_id"]) for _, row in df_results.iterrows()],
             project_id,
-            highlight,
+            highlight=highlight,
+            queue_type="search",  # Auto-generate search queue name
             **extra_data,
         )
     else:
@@ -305,73 +334,6 @@ def search(project_id: int) -> ...:
 # endregion
 
 
-# region Queues routes and functions
-# --------------------------------
-
-
-@app.route("/<int:project_id>/queue", methods=["POST", "GET"])
-@app.route("/<int:project_id>/list-queue/<queue_id>", methods=["GET"])
-def queue(project_id: int, queue_id: str | None = None) -> ...:
-    # Check project_id
-    res = update_session_project(project_id)
-    if res is not None:
-        return res
-
-    # If a we have a queue_id load that queue
-    if queue_id is not None:
-        try:
-            queue = get_queue(queue_id, project_id)
-            datasets = {
-                dataset.id: dataset.name
-                for dataset in get_datasets(project_id=project_id, non_empty=True)
-            }
-            datasets = datasets if len(datasets) > 1 else None
-            return render_template(
-                "queue.html",
-                queue=queue,
-                queue_id=queue_id,
-                datasets=datasets,
-            )
-        except FileNotFoundError:
-            flash(_("Queue not found or has been deleted"), category="warning")
-            return redirect(
-                url_for("data_navigation", project_id=project_id, section="queue-management")
-            )
-
-    # Check if we have a rquest
-    type = request.form.get("type", "")
-    queue = []
-    # If our request is of type random
-    if type == "random":
-        try:
-            # Try to parse the number and store it
-            number = int(request.form.get("number", ""))
-            session["number_of_entries"] = number
-            # Generate the queue
-            queue = [
-                (entry.dataset_id, entry.entry_id) for entry in random_entries(number, project_id)
-            ]
-        except ValueError:
-            flash(_("Invalid number of entries"), category="error")
-    # If our request is of type list
-    # elif type == "list":
-    #     # Try to parse the list and store it
-    #     queue = parse_queue(request.form.get("text", ""))
-
-    # If we have a populated queue store it and redirect by the id
-    if len(queue) > 0:
-        extra_data: dict = {"Randomly generated": True}
-        queue_id = store_queue(queue, project_id, **extra_data)
-        # Redirect to the first entry in the queue
-        return redirect(url_for("entry", project_id=project_id, queue_id=queue_id, queue_pos=1))
-    # If not redirect to data navigation
-    else:
-        return redirect(url_for("data_navigation", project_id=project_id))
-
-
-# endregion
-
-
 # region Data Navigation route
 # --------------------------------
 
@@ -387,24 +349,12 @@ def data_navigation(project_id: int) -> ...:
     # Get datasets
     datasets = list(get_datasets(project_id))
 
-    # Get queues
-    queues = get_all_queues(project_id)
-
-    # Get number of entries from session or default
-    number = session.get("number_of_entries", get_def_nentries())
-
-    # No stats calculation needed for data navigation page
-    stats = None
-
     # Get section parameter for directing to specific component
-    section = request.args.get("section", "entry-navigation")  # Default to entry navigation
+    section = request.args.get("section", "entry-navigation")
 
     return render_template(
         "data-navigation.html",
         datasets=datasets,
-        queues=queues,
-        number=number,
-        stats=stats,
         active_section=section,
     )
 
@@ -421,8 +371,6 @@ def data_navigation_component(project_id: int, component_name: str) -> ...:
     valid_components = [
         "entry-navigation",
         "text-search",
-        "random-queue",
-        "queue-management",
     ]
     if component_name not in valid_components:
         return "Invalid component", 404
@@ -433,18 +381,8 @@ def data_navigation_component(project_id: int, component_name: str) -> ...:
     # Always include project_id in context
     context["project_id"] = project_id
 
-    if component_name in ["entry-navigation", "text-search", "random-queue"]:
+    if component_name in ["entry-navigation", "text-search"]:
         context["datasets"] = list(get_datasets(project_id))
-
-    if component_name == "random-queue":
-        context["number"] = session.get("number_of_entries", get_def_nentries())
-
-    if component_name == "queue-management":
-        try:
-            context["queues"] = get_all_queues(project_id)
-        except Exception as e:
-            print(f"Error getting queues: {e}")
-            context["queues"] = []
 
     return render_template(f"components/{component_name}.html", **context)
 
@@ -466,6 +404,71 @@ def delete_queue_route(project_id: int, queue_id: str) -> ...:
         return "", 404
 
 
+@app.route("/<int:project_id>/queue/<queue_id>/delete-entries", methods=["POST"])
+def delete_queue_entries(project_id: int, queue_id: str) -> ...:
+    """Delete selected entries from a queue"""
+    from flask import jsonify
+
+    from . import auth
+    from .database import db, get_queue_by_id
+
+    # Check project_id
+    res = update_session_project(project_id)
+    if res is not None:
+        return res
+
+    # Check admin permission
+    if not auth.role_has_permission(role="admin"):
+        return jsonify({"error": "Admin permission required"}), 403
+
+    try:
+        # Get indices to delete from request
+        if request.json is None:
+            return jsonify({"error": "No JSON data provided"}), 400
+        indices_to_delete = request.json.get("indices", [])
+        if not indices_to_delete:
+            return jsonify({"error": "No indices provided"}), 400
+
+        # Load the queue from database
+        queue_obj = get_queue_by_id(queue_id, project_id)
+        if not queue_obj:
+            return jsonify({"error": "Queue not found"}), 404
+
+        # Get current queue data
+        current_queue = queue_obj.queue_data.copy()
+
+        # Sort indices in descending order to avoid index shifting issues
+        indices_to_delete = sorted(set(indices_to_delete), reverse=True)
+
+        # Remove entries at specified indices (0-based)
+        deleted_count = 0
+        for idx in indices_to_delete:
+            if 0 <= idx < len(current_queue):
+                del current_queue[idx]
+                deleted_count += 1
+
+        # Update queue in database
+        queue_obj.queue_data = current_queue
+        queue_obj.length = len(current_queue)
+        db.session.commit()
+
+        return (
+            jsonify(
+                {
+                    "success": True,
+                    "message": f"Successfully deleted {deleted_count} entries from queue",
+                    "deleted_count": deleted_count,
+                    "remaining_count": len(current_queue),
+                }
+            ),
+            200,
+        )
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/<int:project_id>/create-queue", methods=["GET", "POST"])
 def create_queue(project_id: int) -> ...:
     """Create a queue manually from a list of entry IDs"""
@@ -483,6 +486,7 @@ def create_queue(project_id: int) -> ...:
     # Handle POST request
     entry_ids_text = request.form.get("entry_ids", "").strip()
     highlight_terms = request.form.get("highlight_terms", "").strip()
+    queue_name = request.form.get("queue_name", "").strip() or None  # Optional custom name
 
     if not entry_ids_text:
         flash(_("Please enter at least one entry ID"), "error")
@@ -563,7 +567,13 @@ def create_queue(project_id: int) -> ...:
 
     # Store the queue
     try:
-        store_queue(queue_entries, project_id, highlight=highlights)
+        store_queue(
+            queue_entries,
+            project_id,
+            highlight=highlights,
+            name=queue_name,  # Use custom name if provided
+            queue_type="manual",  # Auto-generate if no name provided
+        )
         flash(
             _("Queue created successfully with {count} entries").format(count=len(queue_entries)),
             "success",

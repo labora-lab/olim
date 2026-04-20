@@ -1,0 +1,33 @@
+{
+    "order": 30,
+    "name": "LLM Auto-Labeling (Ollama - Automated)",
+    "description": "Fully automated LLM labeling with llama3.2 - no user interaction needed. Uses 20 random entries.",
+    "sequence": [
+        {
+            "state": "OllamaQueueSetup",
+            "params": {
+                "title": "Queue Setup",
+                "show_prev": false,
+                "entry_source": "random",
+                "random_count": 20,
+                "ollama_url": "http://localhost:11434/v1"
+            }
+        },
+        {
+            "state": "OllamaModelConfig",
+            "params": {
+                "title": "LLM Configuration",
+                "model": "llama3.2",
+                "system_prompt": "You are a precise labeling assistant. You MUST respond with ONLY the exact label value - nothing else. No explanations, no punctuation, no formatting.",
+                "prompt_template": "Classify this text for the label '{label_name}'.\n\nText:\n{text}\n\n--- VALID OPTIONS (choose one exactly as shown) ---\n{label_options}\n\nIMPORTANT: Return ONLY the exact value from the options above. Copy it character-for-character. Do not add any other text, explanation, punctuation, or formatting.\n\nYour response:"
+            }
+        },
+        {
+            "state": "OllamaAutoLabel",
+            "params": {
+                "title": "Auto-Labeling",
+                "is_last_step": true
+            }
+        }
+    ]
+}

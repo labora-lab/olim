@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Create ML Model') }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto max-w-3xl">
+    <!-- Header -->
+    <div class="mb-6">
+        <a href="{{ url_for('models_list', project_id=project_id) }}" class="text-purple-600 hover:text-purple-700 flex items-center mb-4">
+            <i class="bi bi-arrow-left mr-2"></i>
+            {{ _('Back to Models') }}
+        </a>
+        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+            <i class="bi bi-plus-circle text-purple-600 mr-3"></i>
+            {{ _('Create ML Model') }}
+        </h1>
+        <p class="text-gray-600 mt-2">{{ _('Configure a new machine learning model') }}</p>
+    </div>
+
+    <!-- Create Form -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <form method="POST" action="{{ url_for('model_create', project_id=project_id) }}">
+            <!-- Model Name -->
+            <div class="mb-6">
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ _('Model Name') }} <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="name" id="name" required
+                       class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                       placeholder="{{ _('e.g., Patient Diagnosis Classifier') }}">
+                <p class="mt-1 text-sm text-gray-500">{{ _('A descriptive name for your model') }}</p>
+            </div>
+
+            <!-- Algorithm -->
+            <div class="mb-6">
+                <label for="algorithm" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ _('Algorithm') }}
+                </label>
+                <select name="algorithm" id="algorithm"
+                        class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500">
+                    <option value="TfidfXGBoostClassifier" selected>TF-IDF + XGBoost Classifier</option>
+                    <option value="TfidfLogisticRegression">TF-IDF + Logistic Regression</option>
+                    <option value="BertClassifier">BERT Classifier</option>
+                </select>
+                <p class="mt-1 text-sm text-gray-500">{{ _('Machine learning algorithm to use') }}</p>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-6">
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ _('Description') }}
+                </label>
+                <textarea name="description" id="description" rows="4"
+                          class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500"
+                          placeholder="{{ _('Optional description of what this model does...') }}"></textarea>
+            </div>
+
+            <!-- Advanced Configuration (Collapsible) -->
+            <div class="mb-6">
+                <button type="button"
+                        onclick="document.getElementById('advanced-config').classList.toggle('hidden')"
+                        class="flex items-center text-sm font-medium text-purple-600 hover:text-purple-700">
+                    <i class="bi bi-chevron-right mr-2" id="advanced-chevron"></i>
+                    {{ _('Advanced Configuration') }}
+                </button>
+                <div id="advanced-config" class="hidden mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <p class="text-sm text-gray-600 mb-4">
+                        {{ _('Advanced options will be configurable in future versions. For now, default settings will be used.') }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+                <a href="{{ url_for('models_list', project_id=project_id) }}"
+                   class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors">
+                    {{ _('Cancel') }}
+                </a>
+                <button type="submit"
+                        class="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 transition-colors">
+                    <i class="bi bi-plus-lg mr-2"></i>
+                    {{ _('Create Model') }}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.getElementById('advanced-config').addEventListener('transitionend', function() {
+    const chevron = document.getElementById('advanced-chevron');
+    if (this.classList.contains('hidden')) {
+        chevron.classList.remove('bi-chevron-down');
+        chevron.classList.add('bi-chevron-right');
+    } else {
+        chevron.classList.remove('bi-chevron-right');
+        chevron.classList.add('bi-chevron-down');
+    }
+});
+</script>
+{% endblock %}

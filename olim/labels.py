@@ -6,7 +6,6 @@ from flask import Response, flash, redirect, render_template, request, session, 
 from flask_babel import _
 
 from . import app, db, entry_types
-from .celery_app import launch_task_with_tracking
 from .database import (
     CeleryTask,
     del_label,
@@ -18,12 +17,15 @@ from .database import (
     new_label,
 )
 from .project import update_session_project
-from .tasks.active_learning import create_label_al
 from .utils.label import label_upload
 from .utils.queues import store_queue
 
 
 @app.route("/<int:project_id>", methods=["GET"])
+def project_home(project_id: int) -> ...:
+    return redirect(url_for("learning_tasks_list", project_id=project_id))
+
+
 @app.route("/<int:project_id>/labels", methods=["GET"])
 def labels(project_id: int) -> ...:
     # Check project_id and require data
@@ -34,14 +36,21 @@ def labels(project_id: int) -> ...:
     labels_values = {label.id: {} for label in get_labels(project_id)}
     possible_values = []
     for label in get_labels(project_id):
+        # Check if this label is free text type
+        from olim.label_types import is_free_text_label
+
+        is_free_text = is_free_text_label(label.label_type)
+
         for entry in label.entries:
             if not entry.is_deleted:
                 if entry.value in labels_values[label.id]:
                     labels_values[label.id][entry.value] += 1
                 else:
                     labels_values[label.id][entry.value] = 1
-            if entry.value not in possible_values:
-                possible_values.append(entry.value)
+
+                # Only add to possible_values if it's NOT from a free text label
+                if not is_free_text and entry.value not in possible_values:
+                    possible_values.append(entry.value)
     possible_values.append("Total")
     for label_id in labels_values:
         labels_values[label_id]["Total"] = sum(labels_values[label_id].values())
@@ -64,14 +73,8 @@ def create_label(project_id: int) -> ...:
         return res
 
     label_name = request.form.get("label")
-    label = new_label(label_name, session["user_id"], project_id)
-    launch_task_with_tracking(
-        create_label_al,
-        project_id=project_id,
-        label_id=label.id,
-        user_id=session["user_id"],
-        track_progress=True,
-    )
+    label_type = request.form.get("label_type") or None
+    label = new_label(label_name, session["user_id"], project_id, label_type=label_type)
     flash(
         _("Label {label_name} successfully created").format(label_name=label.name),
         category="success",
@@ -124,7 +127,22 @@ def extract_labels(label_id: int) -> ...:
 
     label_str = label.name
     df = pd.read_sql(get_labeled(label_id), db.engine)
-    print(df.head())
+
+    # Replace __llm__ username with llm:<model_name> using stored metadata
+    def _resolve_creator(row: pd.Series) -> str:
+        if row["created_by"] == "__llm__":
+            meta = row.get("label_metadata") or {}
+            if isinstance(meta, str):
+                try:
+                    meta = json.loads(meta)
+                except Exception:
+                    meta = {}
+            return f"llm:{meta.get('model', 'llm')}"
+        return str(row["created_by"])
+
+    df["created_by"] = df.apply(_resolve_creator, axis=1)
+    df = df.drop(columns=["label_metadata"])
+
     dfs_entries = []
     for le in label.entries:
         if not le.is_deleted:
@@ -191,7 +209,9 @@ def catch_queue(label_id: int) -> ...:
         for label in label.entries
         if not label.is_deleted and label.value
     ]
-    queue_id = store_queue(queue, project_id)
+    # Create queue with label name
+    queue_name = _("Label: {label_name}").format(label_name=label.name)
+    queue_id = store_queue(queue, project_id, name=queue_name)
     # Redirect to queue
     return redirect(url_for("entry", project_id=project_id, queue_id=queue_id))
 

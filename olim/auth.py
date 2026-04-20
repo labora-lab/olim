@@ -1,3 +1,5 @@
+import secrets
+
 from elasticsearch import Elasticsearch
 from flask import abort, flash, redirect, render_template, request, session, url_for
 from flask_babel import _
@@ -6,10 +8,12 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from . import app, settings
 from .database import (
     User,
+    clear_session,
     get_project,
     get_projects,
     get_setup_step,
     get_user,
+    get_user_by_api_key,
     get_users,
     init_db,
     insert_user,
@@ -88,6 +92,31 @@ def get_user_role(user_id: str | None = None) -> str:
         return "guest"
     else:
         return user.role
+
+
+@app.before_request
+def inject_api_key_user() -> None:
+    """Inject session data from Bearer token on /api/ paths.
+
+    Runs before check_permission. If a valid Authorization: Bearer <key>
+    header is present and the path starts with /api/, the corresponding
+    user is loaded into the session as if they had logged in normally.
+    """
+    if not request.path.startswith("/api/"):
+        return None
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return None
+    api_key = auth_header.removeprefix("Bearer ").strip()
+    if not api_key:
+        return None
+    user = get_user_by_api_key(api_key)
+    if user is None:
+        return None  # let check_permission handle the 401
+    session["user_id"] = user.id
+    session["role"] = user.role
+    session["language"] = user.language
+    return None
 
 
 @app.before_request
@@ -445,6 +474,46 @@ def edit_language(user_id: int | None = None) -> ...:
                     _("Changed language for {user_name} to Automatic!").format(user_name=user.name),
                     category="success",
                 )
+
+    return redirect(url_for("user_settings", user_id=to_change_user.id))
+
+
+@app.route("/user/<int:user_id>/clear/session", methods=["POST"])
+def clear_user_session(user_id: int | None = None) -> ...:
+    """Clear all session data for a user."""
+    to_change_user = get_user_obj(user_id)
+
+    if to_change_user is None:
+        # If user_id was provided but user not found, it's a 404
+        if user_id is not None:
+            abort(404)
+        # If no permission, it's a 403
+        abort(403)
+
+    if request.method == "POST":
+        clear_session(to_change_user.id)
+        flash(
+            _("Session data cleared for {user_name}!").format(user_name=to_change_user.name),
+            category="success",
+        )
+
+    return redirect(url_for("user_settings", user_id=to_change_user.id))
+
+
+@app.route("/user/<int:user_id>/regenerate-api-key", methods=["POST"])
+def regenerate_api_key(user_id: int) -> ...:
+    """Generate or reset the API key for a user."""
+    to_change_user = get_user_obj(user_id)
+
+    if to_change_user is None:
+        abort(404)
+
+    new_key = secrets.token_hex(32)
+    update_user(to_change_user.id, api_key=new_key)
+    flash(
+        _("API key regenerated for {user_name}!").format(user_name=to_change_user.name),
+        category="success",
+    )
 
     return redirect(url_for("user_settings", user_id=to_change_user.id))
 

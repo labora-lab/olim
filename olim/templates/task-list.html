@@ -3,7 +3,7 @@
     {% for task in tasks %}
     {% if task.status == "STARTED" %}
     <div class="flex items-center justify-between p-2 bg-blue-100 border-l-3 border-blue-400 rounded-r-lg">
-        <div class="flex-1">
+        <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-gray-700">{{ task.name }}</div>
             <div class="text-xs text-gray-600">{{ _('Running') }}</div>
         </div>
@@ -14,7 +14,7 @@
     </div>
     {% elif task.status == "SUCCESS" %}
     <div class="flex items-center justify-between p-2 bg-green-100 border-l-3 border-green-400 rounded-r-lg">
-        <div class="flex-1">
+        <div class="flex-1 min-w-0">
             <div class="text-sm font-medium text-gray-700">{{ task.name }}</div>
             <div class="text-xs text-gray-600">{{ _('Completed') }}</div>
         </div>
@@ -25,7 +25,7 @@
         <div class="flex items-center justify-between p-2{% if task.error %} cursor-pointer{% endif %}" {% if task.error
             %}data-task-name="{{ task.name }}" data-error-text="{{ ''.join(task.error)|e }}"
             onclick="showErrorModalFromData(this)" {% endif %}>
-            <div class="flex-1">
+            <div class="flex-1 min-w-0">
                 <div class="text-sm font-medium text-gray-700">{{ task.name }}</div>
                 <div class="text-xs text-gray-600">{{ _('Failed') }}</div>
             </div>
@@ -42,7 +42,7 @@
         <div class="flex items-center justify-between p-2{% if task.error %} cursor-pointer{% endif %}" {% if task.error
             %}data-task-name="{{ task.name }}" data-error-text="{{ ''.join(task.error)|e }}"
             onclick="showErrorModalFromData(this)" {% endif %}>
-            <div class="flex-1 ml-1">
+            <div class="flex-1 ml-1 min-w-0">
                 <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
                 <div class="text-xs text-gray-400">{{ _('Canceled') }}</div>
             </div>
@@ -56,7 +56,7 @@
     </div>
     {% elif task.status == "PENDING" or task.status == "RETRY" %}
     <div class="flex items-center justify-between p-2 bg-gray-600 border-l-3 border-yellow-400 rounded-r-lg">
-        <div class="flex-1 ml-1">
+        <div class="flex-1 ml-1 min-w-0">
             <div class="text-sm font-medium text-gray-200">{{ task.name }}</div>
             <div class="text-xs text-gray-400">{{ _('Pending') }}</div>
         </div>

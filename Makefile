@@ -1,6 +1,6 @@
 .PHONY: format lint lint-fix test clean setup help check analyze install install-dev
 
-SHELL := /bin/bash
+SHELL := /bin/sh
 
 # Python executables
 PYTHON_DOCKER := .venv/bin/python

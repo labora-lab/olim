@@ -202,8 +202,10 @@ def gateway_timeout(error) -> ...:
 @app.errorhandler(Exception)
 def handle_exception(error) -> ...:
     """Handle any unhandled exceptions."""
+    from werkzeug.exceptions import HTTPException
+
     # If it's already an HTTP error, let the specific handler deal with it
-    if hasattr(error, "code"):
+    if isinstance(error, HTTPException):
         return error
 
     # For any other exception, treat as 500 error

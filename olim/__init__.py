@@ -1,23 +1,23 @@
-import json
-
 from flask import Flask, request, session
 from flask_babel import Babel
 from flask_migrate import Migrate
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 
+from .label_types import (
+    get_available_label_types,
+    get_label_type_module,
+    is_free_text_label,
+)
+
 # from werkzeug.middleware.profiler import ProfilerMiddleware
 from .settings import (
     BABEL_DEFAULT_LOCALE,
     BABEL_TRANSLATION_DIRECTORIES,
-    DB_HOST,
-    DB_NAME,
-    DB_PASSWORD,
-    DB_PORT,
-    DB_USER,
+    DB_URL,
     DEBUG,
     HELP_URL,
-    LABELS,
+    INTERFACE_SETTINGS,
     LANGUAGES,
     PERMANENT_SESSION_LIFETIME,
     SECRET_KEY,
@@ -33,12 +33,10 @@ app = Flask(__name__)
 app.config["DEBUG"] = DEBUG
 
 # Database configuration
-if all([DB_HOST, DB_NAME, DB_USER, DB_PASSWORD]):
-    app.config["SQLALCHEMY_DATABASE_URI"] = (
-        f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-    )
+if DB_URL:
+    app.config["SQLALCHEMY_DATABASE_URI"] = DB_URL
 else:
-    print("Warning: Missing PostgreSQL configuration. Falling back to SQLite.")
+    print("Warning: DB_URL not set. Falling back to SQLite.")
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///olim.sqlite"
 
 
@@ -84,6 +82,8 @@ babel = Babel(app, locale_selector=get_locale)
 #     db.create_all()
 
 from . import active_learning  # noqa
+from . import analytics  # noqa
+from . import api_rest  # noqa
 from . import auth  # noqa
 from . import cli  # noqa
 from . import commands  # noqa
@@ -91,19 +91,27 @@ from . import database  # noqa
 from . import error_handlers  # noqa
 from . import issue  # noqa
 from . import labels  # noqa
+from . import ml_ui  # noqa
 from . import project  # noqa
+from . import settings_routes  # noqa
 from . import upload_data  # noqa
+from .ml import models as ml_models  # noqa
+from . import learning_tasks  # noqa
 from .utils.entry import have_hidden  # noqa
+
+# Register API blueprint
+app.register_blueprint(api_rest.api)
 
 # Global variables to templates
 app.jinja_env.globals.update(
     have_hidden=have_hidden,
     has_permission=auth.role_has_permission,
-    labels_types=LABELS,
-    labels_rev=LABELS[::-1],
-    labels_array=json.dumps([label_values[0].replace(" ", "_") for label_values in LABELS]),
+    get_label_type_module=get_label_type_module,
+    get_available_label_types=get_available_label_types,
+    is_free_text_label=is_free_text_label,
     has_learner=True,
     version=VERSION,
     has_help=HELP_URL is not None,
     debug=DEBUG,
+    settings=INTERFACE_SETTINGS,
 )
