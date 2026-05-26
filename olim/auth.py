@@ -211,6 +211,22 @@ def add_projects() -> ...:
         )
 
 
+@app.after_request
+def rollback_on_error(response):
+    """Roll back any aborted transaction before flask-session saves.
+
+    PostgreSQL marks a transaction as aborted on any exception. If left open,
+    the subsequent save_session query (which runs in process_response, after
+    after_request but before teardown) fails with InFailedSqlTransaction.
+    Rolling back here resets the connection state in time.
+    """
+    if response.status_code >= 400:
+        from . import db
+
+        db.session.rollback()
+    return response
+
+
 @app.teardown_request
 def save_database_session(exc=None) -> None:
     """Persist Flask session changes to database."""

@@ -322,6 +322,10 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
     if task.project_id != project_id:
         abort(404, "Learning task not found in this project")
 
+    # Annotators can only access tasks assigned to them
+    if session.get("role") == "annotator" and task.assigned_to != session.get("user_id"):
+        abort(403)
+
     # Get sequence from initial_setup
     initial_setup = task.initial_setup or {}
     sequence = initial_setup.get("sequence", [])

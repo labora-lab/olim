@@ -46,6 +46,19 @@ def get_highlights() -> list | dict:
         return []
 
 
+def _build_labels_values(label_entries) -> dict:
+    """Build label_id → value mapping, scoped to the current user if annotator role."""
+    user_id = session.get("user_id")
+    role = session.get("role")
+    if role == "annotator":
+        return {
+            le.label_id: le.value
+            for le in label_entries
+            if not le.is_deleted and le.created_by == user_id
+        }
+    return {le.label_id: le.value for le in label_entries if not le.is_deleted}
+
+
 def render_entry(entry_id: str | None, dataset_id: int | None, data: dict | None = None) -> dict:
     if data is None:
         data = {}
@@ -62,11 +75,7 @@ def render_entry(entry_id: str | None, dataset_id: int | None, data: dict | None
                             highlight=get_highlights(),
                         ),
                         "entry": entry,
-                        "labels_values": {
-                            label.label_id: label.value
-                            for label in entry.labels
-                            if not label.is_deleted
-                        },
+                        "labels_values": _build_labels_values(entry.labels),
                         "valid_entry": True,
                     }
                 )

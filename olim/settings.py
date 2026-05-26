@@ -184,6 +184,21 @@ PERMISSIONS = {
         "learning_tasks_list",
         "learning_task_view",
     ],
+    "annotator": [
+        "static",
+        "login",
+        "logout",
+        "user_settings",
+        "edit_password",
+        "edit_language",
+        "regenerate_api_key",
+        "redirect_to_project",
+        # Project home (redirects to learning tasks)
+        "project_home",
+        # Learning Tasks (only tasks assigned to this user)
+        "learning_tasks_list",
+        "learning_task_view",
+    ],
     "guest": ["static", "login", "api.generate_api_key"],
 }
 """Mapping of permissions to routes that can be accessed by roles"""
