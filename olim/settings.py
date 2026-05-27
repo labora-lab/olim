@@ -188,6 +188,7 @@ PERMISSIONS = {
         "static",
         "login",
         "logout",
+        "commands",
         "user_settings",
         "edit_password",
         "edit_language",
