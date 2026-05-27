@@ -132,7 +132,7 @@ def label_queue_with_llm(
 
                     # Get label type module and options
                     label_module = get_label_type_module(label.label_type)
-                    options = label_module.get_label_options()
+                    options = label_module.get_label_options(label)
 
                     # Determine if this is a predefined label or free text
                     if is_free_text_label(label.label_type):

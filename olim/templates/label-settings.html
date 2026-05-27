@@ -133,6 +133,27 @@
         {% endif %}
     </div>
 
+    <!-- Type Configuration -->
+    {% if label.label_type %}
+    {% set ltm = get_label_type_module(label.label_type) %}
+    {% if ltm and ltm.render_config is defined %}
+    {% set config_html = ltm.render_config(label) %}
+    {% if config_html %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-sliders text-purple-600 mr-2"></i>
+                {{ _('Type Configuration') }}
+            </h3>
+        </div>
+        <div class="p-6">
+            {{ config_html | safe }}
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+    {% endif %}
+
     <!-- Debug Information -->
     {% if debug %}
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">

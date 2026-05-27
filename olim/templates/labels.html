@@ -191,21 +191,76 @@
                             <i class="bi bi-gear mr-1"></i>
                             {{ _('Label Type') }}
                         </label>
-                        <select id="label_type" name="label_type"
+                        <select id="label_type" name="label_type" onchange="onLabelTypeChange(this.value)"
                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
                             <option value="">{{ _('Choose label type') }}</option>
                             {% for type_id, type_name in get_available_label_types() %}
                             <option value="{{ type_id }}">{{ type_name }}</option>
                             {% endfor %}
                         </select>
+                        <p id="label_type_preset_note" class="hidden mt-1 text-xs text-amber-600 flex items-center gap-1">
+                            <i class="bi bi-lock-fill"></i> {{ _('Preset type — options are fixed') }}
+                        </p>
                     </div>
 
-                    <button type="submit"
+                    <!-- Dynamic config panels (rendered server-side, shown/hidden via JS) -->
+                    {% for type_id, type_name in get_available_label_types() %}
+                    {% set ltm = get_label_type_module(type_id) %}
+                    {% if ltm and ltm.render_creation_config is defined %}
+                    {% set panel = ltm.render_creation_config() %}
+                    {% if panel %}
+                    <div class="label-creation-config-panel hidden border border-gray-200 rounded-lg p-4 bg-gray-50" data-for-type="{{ type_id }}">
+                        {{ panel | safe }}
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+
+                    <button type="submit" onclick="serializeAllMcConfigs()"
                         class="w-full text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
                         <i class="bi bi-plus-circle mr-2"></i>
                         {{ _('Create Label') }}
                     </button>
                 </form>
+
+<script>
+const PRESET_TYPES = new Set(["sim_nao", "sim_nao_ns", "yes_no", "check", "yes_no_unknown", "yes_no_idk"]);
+
+function onLabelTypeChange(val) {
+    document.querySelectorAll('.label-creation-config-panel').forEach(p => p.classList.add('hidden'));
+    const panel = document.querySelector(`.label-creation-config-panel[data-for-type="${val}"]`);
+    if (panel) panel.classList.remove('hidden');
+    const note = document.getElementById('label_type_preset_note');
+    if (note) note.classList.toggle('hidden', !PRESET_TYPES.has(val) || val === '');
+}
+
+function serializeAllMcConfigs() {
+    const panel = document.querySelector('.label-creation-config-panel:not(.hidden)');
+    if (!panel) return;
+    // Multiple choice
+    const mcRowsEl = panel.querySelector('[id$="_rows"]');
+    if (mcRowsEl) {
+        const cfgId = mcRowsEl.id.replace('_rows', '');
+        if (typeof mcSerializeToHidden === 'function') mcSerializeToHidden(cfgId);
+        return;
+    }
+    // Long text
+    const ltEl = panel.querySelector('[id$="_rows"]') || panel.querySelector('input[type="number"]');
+    const ltHidden = panel.querySelector('[id$="_hidden"]');
+    if (ltHidden && ltHidden.id.startsWith('lt_cfg_')) {
+        const cfgId = ltHidden.id.replace('_hidden', '');
+        if (typeof ltSerialize === 'function') ltSerialize(cfgId);
+        return;
+    }
+    // Short text
+    const stHidden = panel.querySelector('[id$="_hidden"]');
+    if (stHidden && stHidden.id.startsWith('st_cfg_')) {
+        const cfgId = stHidden.id.replace('_hidden', '');
+        if (typeof stSerialize === 'function') stSerialize(cfgId);
+        return;
+    }
+}
+</script>
             </div>
         </div>
 

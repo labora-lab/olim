@@ -1,29 +1,34 @@
 from flask import render_template
 
+from . import multiple_choice
+
 LABEL_TYPE = "yes_no"
 
-# Label configuration - similar to the original LabelTypes.YES_NO
-LABEL_CONFIG = [
-    ("yes", "icon", "check-circle-fill", "green"),
-    ("no", "icon", "x-circle-fill", "red"),
-]
+PRESET_SETTINGS = {
+    "options": [
+        {"value": "yes", "type": "icon", "icon": "check-circle-fill", "color": "green", "helper": ""},
+        {"value": "no", "type": "icon", "icon": "x-circle-fill", "color": "red", "helper": ""},
+    ],
+    "single_select": True,
+    "items_per_line": 2,
+}
+
+LABEL_CONFIG = [(o["value"], o["type"], o["icon"], o["color"]) for o in PRESET_SETTINGS["options"]]
 
 
 def render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry, **kwargs) -> str:
-    """Render the yes/no label type"""
-    return render_template(
-        "label_types/yes_no.html",
-        label=label,
-        entry=entry,
-        labels_values=labels_values,
-        hidden_labels=hidden_labels,
-        show_hidden=show_hidden,
-        valid_entry=valid_entry,
-        label_config=LABEL_CONFIG,
-        **kwargs,
-    )
+    if not (label.label_settings and label.label_settings.get("options")):
+        kwargs["_preset_settings"] = PRESET_SETTINGS
+    return multiple_choice.render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry, **kwargs)
 
 
-def get_label_options() -> list:
-    """Get the available options for this label type"""
+def get_label_options(label=None) -> list:
     return LABEL_CONFIG
+
+
+def render_config(label) -> str | None:
+    return render_template("label_types/preset_config.html", label=label, preset=PRESET_SETTINGS)
+
+
+def render_creation_config() -> str | None:
+    return None

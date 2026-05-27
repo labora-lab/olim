@@ -1,0 +1,32 @@
+{% set cfg_id = 'lt_cfg_' ~ (label.id if label else 'new') %}
+{% set rows = settings.get('rows', 4) %}
+
+<div id="{{ cfg_id }}" class="space-y-4">
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+            {{ _('Number of rows') }}
+        </label>
+        <input type="number" id="{{ cfg_id }}_rows" min="2" max="20" value="{{ rows }}"
+            class="w-24 text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        <p class="mt-1 text-xs text-gray-500">{{ _('Height of the text area (2–20 rows)') }}</p>
+    </div>
+
+    {% if is_edit and save_url %}
+    <form method="post" action="{{ save_url }}" onsubmit="ltSerialize('{{ cfg_id }}'); return true;">
+        <input type="hidden" name="label_settings" id="{{ cfg_id }}_hidden">
+        <button type="submit"
+            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition-colors">
+            <i class="bi bi-check2 mr-2"></i>{{ _('Save settings') }}
+        </button>
+    </form>
+    {% else %}
+    <input type="hidden" name="label_settings" id="{{ cfg_id }}_hidden">
+    {% endif %}
+</div>
+
+<script>
+window.ltSerialize = function(cfgId) {
+    const rows = parseInt(document.getElementById(cfgId + '_rows')?.value) || 4;
+    document.getElementById(cfgId + '_hidden').value = JSON.stringify({ rows });
+};
+</script>

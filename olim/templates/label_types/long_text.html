@@ -1,0 +1,75 @@
+{% set current_value = labels_values.get(label.id, '') %}
+<div class="grid grid-cols-1 gap-2">
+    <div id="current_value_{{ label.id }}" {% if not current_value %}style="display: none;"{% endif %}>
+        <div class="p-3 text-sm text-white bg-blue-600 border-2 border-blue-600 rounded-lg shadow-sm">
+            <div class="flex items-start justify-between">
+                <div class="flex items-start gap-2">
+                    <i class="bi bi-chat-square-text mt-0.5 flex-shrink-0"></i>
+                    <span id="current_text_{{ label.id }}" class="whitespace-pre-wrap break-words">{{ current_value }}</span>
+                </div>
+                <button type="button" onclick="clearLongText({{ entry.id }}, {{ label.id }})"
+                    class="ml-2 text-blue-200 hover:text-white flex-shrink-0">
+                    <i class="bi bi-x-circle"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="input_form_{{ label.id }}" {% if current_value %}style="display: none;"{% endif %}>
+        <textarea id="text_input_{{ label.id }}" rows="{{ rows | default(4) }}"
+            class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 resize-y"
+            placeholder="{{ _('Enter text...') }}">{{ current_value }}</textarea>
+        <div class="flex space-x-2 mt-2">
+            <button type="button" onclick="submitLongText({{ entry.id }}, {{ label.id }})"
+                class="px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-200 transition-colors">
+                <i class="bi bi-check-circle mr-1"></i>{{ _('Save') }}
+            </button>
+            {% if current_value %}
+            <button type="button" onclick="cancelLongText({{ label.id }})"
+                class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="bi bi-x mr-1"></i>{{ _('Cancel') }}
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="edit_button_{{ label.id }}" {% if not current_value %}style="display: none;"{% endif %}>
+        <button type="button" onclick="editLongText({{ label.id }})"
+            class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 focus:outline-none transition-all duration-200 shadow-sm">
+            <i class="bi bi-pencil mr-2"></i>{{ _('Edit') }}
+        </button>
+    </div>
+</div>
+
+<script>
+function submitLongText(entryId, labelId) {
+    const input = document.getElementById('text_input_' + labelId);
+    const text = input.value.trim();
+    if (!text) return;
+    addEntryLabel(entryId, labelId, text);
+    document.getElementById('current_text_' + labelId).textContent = text;
+    document.getElementById('current_value_' + labelId).style.display = 'block';
+    document.getElementById('input_form_' + labelId).style.display = 'none';
+    document.getElementById('edit_button_' + labelId).style.display = 'block';
+}
+function clearLongText(entryId, labelId) {
+    addEntryLabel(entryId, labelId, '');
+    document.getElementById('current_value_' + labelId).style.display = 'none';
+    document.getElementById('input_form_' + labelId).style.display = 'block';
+    document.getElementById('edit_button_' + labelId).style.display = 'none';
+    document.getElementById('text_input_' + labelId).value = '';
+}
+function editLongText(labelId) {
+    document.getElementById('input_form_' + labelId).style.display = 'block';
+    document.getElementById('current_value_' + labelId).style.display = 'none';
+    document.getElementById('edit_button_' + labelId).style.display = 'none';
+    const textarea = document.getElementById('text_input_' + labelId);
+    textarea.value = document.getElementById('current_text_' + labelId).textContent;
+    textarea.focus();
+}
+function cancelLongText(labelId) {
+    document.getElementById('input_form_' + labelId).style.display = 'none';
+    document.getElementById('current_value_' + labelId).style.display = 'block';
+    document.getElementById('edit_button_' + labelId).style.display = 'block';
+}
+</script>

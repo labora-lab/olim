@@ -1,0 +1,108 @@
+{% set current_value = labels_values.get(label.id, '') %}
+{% set has_pattern = pattern is defined and pattern %}
+<div class="grid grid-cols-1 gap-2">
+    <div id="current_value_{{ label.id }}" {% if not current_value %}style="display: none;"{% endif %}>
+        <div class="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-blue-600 border-2 border-blue-600 rounded-lg shadow-sm">
+            <i class="bi bi-chat-text mr-2"></i>
+            <span id="current_text_{{ label.id }}">{{ current_value }}</span>
+            <button type="button" onclick="clearShortText({{ entry.id }}, {{ label.id }})"
+                class="ml-2 text-blue-200 hover:text-white">
+                <i class="bi bi-x-circle"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="input_form_{{ label.id }}" {% if current_value %}style="display: none;"{% endif %}>
+        <div class="flex space-x-2">
+            <input type="text" id="text_input_{{ label.id }}"
+                class="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2"
+                placeholder="{{ _('Enter text...') }}" value="{{ current_value }}"
+                {% if has_pattern %}pattern="{{ pattern }}"{% endif %}
+                onkeydown="if(event.key==='Enter'){submitShortText({{ entry.id }}, {{ label.id }}); event.preventDefault();}">
+            <button type="button" onclick="submitShortText({{ entry.id }}, {{ label.id }})"
+                class="px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-200 transition-colors">
+                <i class="bi bi-check-circle mr-1"></i>{{ _('Save') }}
+            </button>
+            {% if current_value %}
+            <button type="button" onclick="cancelShortText({{ label.id }})"
+                class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="bi bi-x"></i>
+            </button>
+            {% endif %}
+        </div>
+        {% if has_pattern and pattern_hint %}
+        <p class="mt-1 text-xs text-gray-500 flex items-center gap-1">
+            <i class="bi bi-info-circle"></i> {{ pattern_hint }}
+        </p>
+        {% endif %}
+        <p id="pattern_error_{{ label.id }}" class="hidden mt-1 text-xs text-red-500 flex items-center gap-1">
+            <i class="bi bi-exclamation-circle"></i>
+            {{ _('Value does not match the required format.') }}
+            {% if has_pattern and pattern_hint %} {{ pattern_hint }}{% endif %}
+        </p>
+    </div>
+
+    <div id="edit_button_{{ label.id }}" {% if not current_value %}style="display: none;"{% endif %}>
+        <button type="button" onclick="editShortText({{ label.id }})"
+            class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 focus:outline-none transition-all duration-200 shadow-sm">
+            <i class="bi bi-pencil mr-2"></i>{{ _('Edit') }}
+        </button>
+    </div>
+</div>
+
+<script>
+(function() {
+    const PATTERN_{{ label.id }} = {{ ('/' ~ pattern ~ '/') if has_pattern else 'null' }};
+
+    window.submitShortText = window.submitShortText || function() {};
+
+    function _submitShortText_{{ label.id }}(entryId, labelId) {
+        const input = document.getElementById('text_input_' + labelId);
+        const text = input.value.trim();
+        if (!text) return;
+        if (PATTERN_{{ label.id }} && !PATTERN_{{ label.id }}.test(text)) {
+            document.getElementById('pattern_error_' + labelId).classList.remove('hidden');
+            input.classList.add('border-red-400', 'focus:border-red-500', 'focus:ring-red-200');
+            return;
+        }
+        document.getElementById('pattern_error_' + labelId).classList.add('hidden');
+        input.classList.remove('border-red-400', 'focus:border-red-500', 'focus:ring-red-200');
+        addEntryLabel(entryId, labelId, text);
+        document.getElementById('current_text_' + labelId).textContent = text;
+        document.getElementById('current_value_' + labelId).style.display = 'block';
+        document.getElementById('input_form_' + labelId).style.display = 'none';
+        document.getElementById('edit_button_' + labelId).style.display = 'block';
+    }
+
+    // Register per-label function and global fallback
+    window['submitShortText_{{ label.id }}'] = function(entryId) { _submitShortText_{{ label.id }}(entryId, {{ label.id }}); };
+    // Override generic for this label's keydown handler
+    const _prevSubmit = window.submitShortText;
+    window.submitShortText = function(entryId, labelId) {
+        if (labelId == {{ label.id }}) { _submitShortText_{{ label.id }}(entryId, labelId); }
+        else if (_prevSubmit) _prevSubmit(entryId, labelId);
+    };
+})();
+
+function clearShortText(entryId, labelId) {
+    addEntryLabel(entryId, labelId, '');
+    document.getElementById('current_value_' + labelId).style.display = 'none';
+    document.getElementById('input_form_' + labelId).style.display = 'block';
+    document.getElementById('edit_button_' + labelId).style.display = 'none';
+    document.getElementById('text_input_' + labelId).value = '';
+}
+function editShortText(labelId) {
+    document.getElementById('input_form_' + labelId).style.display = 'block';
+    document.getElementById('current_value_' + labelId).style.display = 'none';
+    document.getElementById('edit_button_' + labelId).style.display = 'none';
+    document.getElementById('text_input_' + labelId).focus();
+}
+function cancelShortText(labelId) {
+    document.getElementById('input_form_' + labelId).style.display = 'none';
+    document.getElementById('current_value_' + labelId).style.display = 'block';
+    document.getElementById('edit_button_' + labelId).style.display = 'block';
+    const current = document.getElementById('current_text_' + labelId).textContent;
+    document.getElementById('text_input_' + labelId).value = current;
+    document.getElementById('pattern_error_' + labelId).classList.add('hidden');
+}
+</script>

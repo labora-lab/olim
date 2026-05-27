@@ -1,0 +1,39 @@
+{% set options = preset.get('options', []) %}
+{% set single_select = preset.get('single_select', True) %}
+{% set items_per_line = preset.get('items_per_line', 2) %}
+
+<div class="space-y-4">
+    <div class="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+        <i class="bi bi-lock-fill flex-shrink-0"></i>
+        <span>{{ _('This is a preset type — options are fixed and cannot be changed.') }}</span>
+    </div>
+
+    <div>
+        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{{ _('Options') }}</p>
+        <div class="flex flex-wrap gap-2">
+            {% for opt in options %}
+            {% set color = opt.get('color', 'blue') %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
+                bg-{{ color }}-100 text-{{ color }}-800 border border-{{ color }}-200">
+                {% if opt.get('type') == 'icon' %}
+                <i class="bi bi-{{ opt.get('icon', '') }}"></i>
+                {% else %}
+                <span class="font-bold">{{ opt.get('icon', '') }}</span>
+                {% endif %}
+                {{ opt.get('value', '') }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+        <span class="flex items-center gap-1.5">
+            <i class="bi bi-{{ 'toggle-on text-green-600' if single_select else 'toggle2-on text-blue-600' }}"></i>
+            {{ _('Single select') if single_select else _('Multi-select') }}
+        </span>
+        <span class="flex items-center gap-1.5">
+            <i class="bi bi-grid text-gray-400"></i>
+            {{ _('{n} per row').format(n=items_per_line) }}
+        </span>
+    </div>
+</div>

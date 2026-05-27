@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from .label_types import (
     get_available_label_types,
     get_label_type_module,
+    is_configurable_label,
     is_free_text_label,
 )
 
@@ -127,6 +128,7 @@ app.jinja_env.globals.update(
     get_label_type_module=get_label_type_module,
     get_available_label_types=get_available_label_types,
     is_free_text_label=is_free_text_label,
+    is_configurable_label=is_configurable_label,
     has_learner=True,
     version=VERSION,
     has_help=HELP_URL is not None,

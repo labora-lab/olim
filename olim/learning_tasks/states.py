@@ -1799,7 +1799,7 @@ class ActiveLearningLoop(BaseState):
         label_options: list = []
         if label_obj:
             ltype = get_label_type_module(label_obj.label_type)
-            label_options = ltype.get_label_options() if ltype else []
+            label_options = ltype.get_label_options(label_obj) if ltype else []
         cache_scores: dict = self.data.get("al_cache_scores", {})
         entry_score_info: dict = cache_scores.get(str(entry_db_id), {})
         return render_template(
