@@ -81,19 +81,18 @@
                     </div>
 
                     <div class="upload-option p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-colors"
-                        data-value="text_pdf_url">
+                        data-value="flexible_text">
                         <div class="flex items-start">
                             <div class="flex items-center h-5">
-                                <input id="format-text-pdf" name="format" type="radio" value="text_pdf_url"
+                                <input id="format-flexible" name="format" type="radio" value="flexible_text"
                                     class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2">
                             </div>
                             <div class="ml-3">
-                                <label for="format-text-pdf" class="text-sm font-medium text-gray-900 cursor-pointer">
-                                    {{ _('Text + PDF URL') }}
+                                <label for="format-flexible" class="text-sm font-medium text-gray-900 cursor-pointer">
+                                    {{ _('Flexible Text') }}
                                 </label>
                                 <p class="text-sm text-gray-500 mt-1">
-                                    {{ _('Use this option if your CSV contains text content and PDF URLs. You need to specify which columns are equivalent to') }}
-                                    <strong>text</strong>, <strong>text_id</strong>, {{ _('and') }} <strong>pdf_url</strong>.
+                                    {{ _('Configurable columns — render extra columns as text, HTML, PDF, image, or JSON metadata. Supports tabs.') }}
                                 </p>
                             </div>
                         </div>
@@ -198,10 +197,95 @@
                 <input type="hidden" name="filename" id="filename" value="">
                 <input type="hidden" name="file_id" id="file_id" value="">
                 <input type="hidden" name="upload_type" id="upload_type" value="single_text">
+                <input type="hidden" name="extra_columns_config" id="extra_columns_config" value="[]">
 
                 <!-- Additional Fields (Column Selection) -->
                 <div id="additional-fields" class="hidden space-y-4">
                     <!-- Dynamic content will be added here -->
+                </div>
+
+                <!-- Flexible Text Options (shown after columns are selected, flexible_text only) -->
+                <div id="flexible-options" class="hidden space-y-4 border border-blue-200 rounded-lg p-4 bg-blue-50">
+                    <h4 class="text-sm font-semibold text-gray-800">
+                        <i class="bi bi-sliders mr-1"></i>
+                        {{ _('Flexible Text Options') }}
+                    </h4>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                            <input type="checkbox" name="text_is_html" id="text_is_html"
+                                class="w-4 h-4 text-blue-600 rounded">
+                            {{ _('Main text is raw HTML') }}
+                        </label>
+                        <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                            <input type="checkbox" name="text_hidden" id="text_hidden"
+                                class="w-4 h-4 text-blue-600 rounded">
+                            {{ _('Hide main text column') }}
+                        </label>
+                        <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                            <input type="checkbox" name="show_remaining_as_metadata" id="show_remaining_as_metadata"
+                                checked class="w-4 h-4 text-blue-600 rounded">
+                            {{ _('Show remaining columns as metadata') }}
+                        </label>
+                    </div>
+
+                    <!-- Extra Columns -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-700">{{ _('Extra Columns') }}</span>
+                            <button type="button" id="add-extra-col-btn" onclick="showAddColumnPicker()"
+                                class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-lg hover:bg-blue-200 transition-colors">
+                                <i class="bi bi-plus-lg mr-1"></i>
+                                {{ _('Add extra column') }}
+                            </button>
+                        </div>
+
+                        <!-- Add column picker (hidden by default) -->
+                        <div id="add-col-picker" class="hidden mb-3 p-3 bg-white border border-gray-200 rounded-lg space-y-2">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1">{{ _('Column') }}</label>
+                                    <select id="picker-column"
+                                        class="w-full text-sm border border-gray-300 rounded-lg p-2 bg-gray-50">
+                                        <option value="">{{ _('Select column') }}</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1">{{ _('Render as') }}</label>
+                                    <select id="picker-render-as"
+                                        class="w-full text-sm border border-gray-300 rounded-lg p-2 bg-gray-50">
+                                        <option value="text">{{ _('Plain text') }}</option>
+                                        <option value="html">{{ _('Raw HTML') }}</option>
+                                        <option value="pdf">{{ _('PDF (iframe)') }}</option>
+                                        <option value="image">{{ _('Image') }}</option>
+                                        <option value="json">{{ _('JSON / Metadata') }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <label class="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+                                    <input type="checkbox" id="picker-show-title" class="w-3.5 h-3.5">
+                                    {{ _('Show title') }}
+                                </label>
+                                <label class="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+                                    <input type="checkbox" id="picker-as-tab" class="w-3.5 h-3.5">
+                                    {{ _('Show as tab') }}
+                                </label>
+                            </div>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="confirmAddColumn()"
+                                    class="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+                                    {{ _('Add') }}
+                                </button>
+                                <button type="button" onclick="hideAddColumnPicker()"
+                                    class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+                                    {{ _('Cancel') }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Extra columns list -->
+                        <div id="extra-cols-list" class="space-y-2"></div>
+                    </div>
                 </div>
             </div>
 
@@ -322,12 +406,7 @@
             const idColumn = document.getElementById('id_column');
             const textColumn = document.getElementById('text_column');
             if (idColumn && textColumn) {
-                if (uploadType.value === 'text_pdf_url') {
-                    const pdfUrlColumn = document.getElementById('pdf_url_column');
-                    isColumnSelectionValid = !!(idColumn.value && textColumn.value && pdfUrlColumn?.value);
-                } else {
-                    isColumnSelectionValid = !!(idColumn.value && textColumn.value);
-                }
+                isColumnSelectionValid = !!(idColumn.value && textColumn.value);
             }
 
             const canSubmit = isFormatSelected && isFileReady && isNameValid && isProjectSelected && isColumnSelectionValid;
@@ -354,12 +433,7 @@
             const idColumn = document.getElementById('id_column');
             const textColumn = document.getElementById('text_column');
             if (idColumn && textColumn) {
-                if (uploadType.value === 'text_pdf_url') {
-                    const pdfUrlColumn = document.getElementById('pdf_url_column');
-                    isColumnSelectionValid = !!(idColumn.value && textColumn.value && pdfUrlColumn?.value);
-                } else {
-                    isColumnSelectionValid = !!(idColumn.value && textColumn.value);
-                }
+                isColumnSelectionValid = !!(idColumn.value && textColumn.value);
             }
 
             return {
@@ -426,12 +500,82 @@
             `;
         }
 
+        // Extra columns state (for flexible_text)
+        window._extraColumns = [];
+
+        window.showAddColumnPicker = function() {
+            const idVal = document.getElementById('id_column')?.value || '';
+            const textVal = document.getElementById('text_column')?.value || '';
+            const used = new Set([idVal, textVal, ...window._extraColumns.map(c => c.column)]);
+            const pickerCol = document.getElementById('picker-column');
+            pickerCol.innerHTML = '<option value="">{{ _("Select column") }}</option>';
+            (window._uploadState.columns || []).forEach(col => {
+                if (!used.has(col)) {
+                    const opt = document.createElement('option');
+                    opt.value = col;
+                    opt.textContent = col;
+                    pickerCol.appendChild(opt);
+                }
+            });
+            document.getElementById('picker-show-title').checked = false;
+            document.getElementById('picker-as-tab').checked = false;
+            document.getElementById('picker-render-as').value = 'text';
+            document.getElementById('add-col-picker').classList.remove('hidden');
+        };
+
+        window.hideAddColumnPicker = function() {
+            document.getElementById('add-col-picker').classList.add('hidden');
+        };
+
+        window.confirmAddColumn = function() {
+            const col = document.getElementById('picker-column').value;
+            if (!col) return;
+            const renderAs = document.getElementById('picker-render-as').value;
+            const showTitle = document.getElementById('picker-show-title').checked;
+            const asTab = document.getElementById('picker-as-tab').checked;
+            window._extraColumns.push({ column: col, render_as: renderAs, show_title: showTitle, as_tab: asTab });
+            document.getElementById('extra_columns_config').value = JSON.stringify(window._extraColumns);
+            renderExtraColsList();
+            window.hideAddColumnPicker();
+        };
+
+        window.removeExtraColumn = function(idx) {
+            window._extraColumns.splice(idx, 1);
+            document.getElementById('extra_columns_config').value = JSON.stringify(window._extraColumns);
+            renderExtraColsList();
+        };
+
+        function renderExtraColsList() {
+            const list = document.getElementById('extra-cols-list');
+            if (!list) return;
+            list.innerHTML = '';
+            window._extraColumns.forEach((c, i) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-2 p-2 bg-white border border-gray-200 rounded-lg text-sm';
+                const icons = { pdf: '📄', image: '🖼', html: '</>', json: '{}', text: 'T' };
+                row.innerHTML = `
+                    <span class="font-medium text-gray-800 flex-1">${c.column}</span>
+                    <span class="px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600">${c.render_as}</span>
+                    ${c.show_title ? '<span class="text-xs text-gray-500">title</span>' : ''}
+                    ${c.as_tab ? '<span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">tab</span>' : ''}
+                    <button type="button" onclick="removeExtraColumn(${i})"
+                        class="ml-auto text-red-400 hover:text-red-600 transition-colors">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                `;
+                list.appendChild(row);
+            });
+        }
+
         // Populate column selection dropdowns
         function populateColumns(columns, currentUploadType) {
             addFields.innerHTML = '';
 
-            if (currentUploadType !== 'single_text' && currentUploadType !== 'text_pdf_url') {
+            const flexibleOptions = document.getElementById('flexible-options');
+
+            if (currentUploadType !== 'single_text' && currentUploadType !== 'flexible_text') {
                 addFields.classList.add('hidden');
+                if (flexibleOptions) flexibleOptions.classList.add('hidden');
                 return;
             }
 
@@ -466,23 +610,6 @@
             textDiv.appendChild(textColumn);
             addFields.appendChild(textDiv);
 
-            // PDF URL column selector (text_pdf_url only)
-            if (currentUploadType === 'text_pdf_url') {
-                const pdfUrlDiv = document.createElement('div');
-                const pdfUrlLabel = document.createElement('label');
-                pdfUrlLabel.htmlFor = 'pdf_url_column';
-                pdfUrlLabel.className = 'block mb-2 text-sm font-medium text-gray-900';
-                pdfUrlLabel.innerHTML = '<i class="bi bi-file-earmark-pdf mr-1"></i>{{ _("PDF URL column") }}';
-                pdfUrlDiv.appendChild(pdfUrlLabel);
-                const pdfUrlColumn = document.createElement('select');
-                pdfUrlColumn.id = 'pdf_url_column';
-                pdfUrlColumn.name = 'pdf_url_column';
-                pdfUrlColumn.className = 'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5';
-                pdfUrlColumn.innerHTML = '<option value="" disabled selected>{{ _("Select PDF URL column") }}</option>';
-                pdfUrlDiv.appendChild(pdfUrlColumn);
-                addFields.appendChild(pdfUrlDiv);
-            }
-
             // Populate options
             columns.forEach(col => {
                 [idColumn, textColumn].forEach(sel => {
@@ -491,23 +618,22 @@
                     opt.textContent = col;
                     sel.appendChild(opt);
                 });
-                if (currentUploadType === 'text_pdf_url') {
-                    const pdfUrlSel = document.getElementById('pdf_url_column');
-                    if (pdfUrlSel) {
-                        const opt = document.createElement('option');
-                        opt.value = col;
-                        opt.textContent = col;
-                        pdfUrlSel.appendChild(opt);
-                    }
-                }
             });
 
             addFields.classList.remove('hidden');
             idColumn.addEventListener('change', window.validateForm);
             textColumn.addEventListener('change', window.validateForm);
-            if (currentUploadType === 'text_pdf_url') {
-                document.getElementById('pdf_url_column')?.addEventListener('change', window.validateForm);
+
+            // Show flexible options panel for flexible_text
+            if (currentUploadType === 'flexible_text' && flexibleOptions) {
+                window._extraColumns = [];
+                document.getElementById('extra_columns_config').value = '[]';
+                renderExtraColsList();
+                flexibleOptions.classList.remove('hidden');
+            } else if (flexibleOptions) {
+                flexibleOptions.classList.add('hidden');
             }
+
             window.validateForm();
         }
 
@@ -659,7 +785,11 @@
             window._uploadState = { file: null, fileId: null, totalChunks: null, finalized: false, columns: [] };
             document.getElementById('filename').value = '';
             document.getElementById('file_id').value = '';
+            document.getElementById('extra_columns_config').value = '[]';
+            window._extraColumns = [];
             addFields.classList.add('hidden');
+            const flexOpts = document.getElementById('flexible-options');
+            if (flexOpts) flexOpts.classList.add('hidden');
             const parseErrorArea = document.getElementById('parse-error-area');
             if (parseErrorArea) parseErrorArea.classList.add('hidden');
             // Reset sep/encoding to defaults so auto-detection runs on the next file
@@ -734,11 +864,13 @@
 
                 fileSelector.style.display = val === 'sample_data' ? 'none' : 'block';
 
+                const flexibleOptions = document.getElementById('flexible-options');
                 if (window._uploadState.finalized && val !== 'sample_data') {
                     // Re-populate columns for new format — no re-upload needed
                     populateColumns(window._uploadState.columns, val);
                 } else {
                     addFields.classList.add('hidden');
+                    if (flexibleOptions) flexibleOptions.classList.add('hidden');
                 }
 
                 window.validateForm();
@@ -764,16 +896,12 @@
                 } else if (!validation.isColumnSelectionValid) {
                     const idColumn = document.getElementById('id_column');
                     const textColumn = document.getElementById('text_column');
-                    const pdfUrlColumn = document.getElementById('pdf_url_column');
                     if (idColumn && !idColumn.value) {
                         idColumn.focus();
                         idColumn.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     } else if (textColumn && !textColumn.value) {
                         textColumn.focus();
                         textColumn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    } else if (pdfUrlColumn && !pdfUrlColumn.value) {
-                        pdfUrlColumn.focus();
-                        pdfUrlColumn.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 }
                 return;

@@ -51,7 +51,17 @@ def backup_old_queue_folder(project_id: int) -> None:
 @app.route("/")
 def redirect_to_project() -> ...:
     project_id = session.get("project_id")
-    project_id = project_id or get_projects()[0].id
+    if project_id is not None:
+        p = get_project(project_id)
+        if p is None or p.is_deleted:
+            project_id = None
+            session.pop("project_id", None)
+            session.pop("project_name", None)
+    if project_id is None:
+        projects = get_projects()
+        if not projects:
+            return redirect(url_for("projects"))
+        project_id = projects[0].id
     session["project_id"] = project_id
     return redirect(f"/{project_id}")
 
@@ -627,6 +637,9 @@ def delete_project(project_id) -> ...:
     if project:
         del_controled(project, session["user_id"])
         flash(_("Project deleted successfully"), "success")
+        if session.get("project_id") == project_id:
+            session.pop("project_id", None)
+            session.pop("project_name", None)
     return redirect(url_for("projects"))
 
 

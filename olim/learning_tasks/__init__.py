@@ -383,7 +383,25 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
             return redirect(url_for("learning_tasks_list", project_id=project_id))
 
         # Process interaction and get relative position change
-        delta = state.handle(action, payload)
+        try:
+            delta = state.handle(action, payload)
+        except Exception as e:
+            app.logger.error(f"Error in task {task_id} state {state_name} handle: {e}", exc_info=True)
+            err_msg = _("An error occurred while processing your request. Please try again.")
+            if is_htmx:
+                try:
+                    body = state.render()
+                except Exception:
+                    body = ""
+                resp = make_response(body, 200)
+                if not body:
+                    resp.headers["HX-Reswap"] = "none"
+                resp.headers["HX-Trigger"] = json.dumps(
+                    {"showFlash": [{"message": err_msg, "category": "error"}]}
+                )
+                return resp
+            flash(err_msg, "error")
+            return redirect(request.url)
 
         # Calculate new position
         raw_new_position = position + delta
@@ -429,7 +447,17 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
 
     # HTMX partial response: return only the state content + OOB progress bar
     if is_htmx:
-        body = state.render()
+        try:
+            body = state.render()
+        except Exception as e:
+            app.logger.error(f"Error rendering task {task_id} state {state_name}: {e}", exc_info=True)
+            err_msg = _("An error occurred while loading the content. Please refresh the page.")
+            resp = make_response("", 200)
+            resp.headers["HX-Reswap"] = "none"
+            resp.headers["HX-Trigger"] = json.dumps(
+                {"showFlash": [{"message": err_msg, "category": "error"}]}
+            )
+            return resp
 
         # Append OOB progress bar update
         if show_progress:

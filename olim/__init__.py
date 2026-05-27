@@ -102,6 +102,24 @@ from .utils.entry import have_hidden  # noqa
 # Register API blueprint
 app.register_blueprint(api_rest.api)
 
+import re as _re
+
+
+def _gdrive_pdf_url(url: str) -> str:
+    """Convert a Google Drive URL to the embeddable /preview form."""
+    s = str(url)
+    if "drive.google.com" not in s:
+        return s
+    m = _re.search(r"/file/d/([a-zA-Z0-9_-]+)", s)
+    if not m:
+        m = _re.search(r"[?&]id=([a-zA-Z0-9_-]+)", s)
+    if m:
+        return f"https://drive.google.com/file/d/{m.group(1)}/preview"
+    return s
+
+
+app.jinja_env.filters["gdrive_pdf_url"] = _gdrive_pdf_url
+
 # Global variables to templates
 app.jinja_env.globals.update(
     have_hidden=have_hidden,

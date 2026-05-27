@@ -1,4 +1,5 @@
 {% import "macros/highlights.html" as highlights_macro with context %}
+{% import "macros/entry-content-card.html" as card_macro %}
 
 {% if mode == "select" %}
 <!-- ─── Mode: select label ─────────────────────────────────────────── -->
@@ -337,17 +338,7 @@
     <!-- Entry Content -->
     <div class="flex-1 lg:w-2/3">
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                    <i class="bi bi-file-richtext text-green-600 mr-2"></i>
-                    {{ _('Entry Content') }}
-                    {% if entry %}
-                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        {{ entry.entry_id }}
-                    </span>
-                    {% endif %}
-                </h3>
-            </div>
+            {{ card_macro.entry_card_header(entry, entry_tab_nav|default('')) }}
             <div class="prose">
                 {{ entry_html|safe }}
             </div>

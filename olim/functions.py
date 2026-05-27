@@ -67,13 +67,22 @@ def render_entry(entry_id: str | None, dataset_id: int | None, data: dict | None
         if entry is not None:
             try:
                 e_type = getattr(entry_types, entry.type)
+                result = e_type.render(
+                    entry_id,
+                    dataset_id,
+                    highlight=get_highlights(),
+                    column_config=getattr(entry.dataset, "column_config", None),
+                )
+                if isinstance(result, dict):
+                    entry_html = result.get("html", "")
+                    entry_tab_nav = result.get("tab_nav", "")
+                else:
+                    entry_html = result
+                    entry_tab_nav = ""
                 data.update(
                     {
-                        "entry_html": e_type.render(
-                            entry_id,
-                            dataset_id,
-                            highlight=get_highlights(),
-                        ),
+                        "entry_html": entry_html,
+                        "entry_tab_nav": entry_tab_nav,
                         "entry": entry,
                         "labels_values": _build_labels_values(entry.labels),
                         "valid_entry": True,

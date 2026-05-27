@@ -43,7 +43,7 @@ class EntryTypeBase(ABC):
     custom_commands: ClassVar[dict[str, Callable]] = {}
 
     @abstractmethod
-    def render(self, entry_id: str, **kwargs) -> str:
+    def render(self, entry_id: str, **kwargs) -> str | dict:
         """Render entry HTML for display.
 
         Args:

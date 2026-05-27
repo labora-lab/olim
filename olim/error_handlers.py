@@ -1,6 +1,7 @@
+import json
 import traceback
 
-from flask import abort, render_template
+from flask import abort, make_response, render_template, request
 from flask_babel import gettext as _
 
 from . import app
@@ -140,6 +141,12 @@ def too_many_requests(error) -> ...:
 @app.errorhandler(500)
 def internal_server_error(error) -> ...:
     """Handle 500 Internal Server Error."""
+    if request.headers.get("HX-Request") == "true":
+        msg = _("An unexpected error occurred. Please try again.")
+        resp = make_response("", 200)
+        resp.headers["HX-Reswap"] = "none"
+        resp.headers["HX-Trigger"] = json.dumps({"showFlash": [{"message": msg, "category": "error"}]})
+        return resp
     return render_template(
         "error.html",
         error_code=500,
@@ -208,8 +215,16 @@ def handle_exception(error) -> ...:
     if isinstance(error, HTTPException):
         return error
 
-    # For any other exception, treat as 500 error
     app.logger.error(f"Unhandled exception: {error}", exc_info=True)
+
+    # HTMX requests: don't replace the page — send a toast and leave content intact
+    if request.headers.get("HX-Request") == "true":
+        msg = _("An unexpected error occurred. Please try again.")
+        resp = make_response("", 200)
+        resp.headers["HX-Reswap"] = "none"
+        resp.headers["HX-Trigger"] = json.dumps({"showFlash": [{"message": msg, "category": "error"}]})
+        return resp
+
     return render_template(
         "error.html",
         error_code=500,

@@ -647,6 +647,7 @@ class LabelEntry(BaseState):
             # Entry data
             entry=entry_data.get("entry"),
             entry_html=entry_data.get("entry_html", ""),
+            entry_tab_nav=entry_data.get("entry_tab_nav", ""),
             valid_entry=entry_data.get("valid_entry", False),
             labels_values=labels_values,
             # Labels
@@ -1807,6 +1808,7 @@ class ActiveLearningLoop(BaseState):
             title=title,
             entry=entry_data.get("entry"),
             entry_html=entry_data.get("entry_html", ""),
+            entry_tab_nav=entry_data.get("entry_tab_nav", ""),
             valid_entry=entry_data.get("valid_entry", False),
             labels_values=entry_data.get("labels_values", {}),
             label=label_obj,

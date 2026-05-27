@@ -63,6 +63,7 @@ class Dataset(db.Model, CreationControl):
     learner_key: Mapped[str] = db.mapped_column(nullable=True)
     sep: Mapped[str] = db.mapped_column(nullable=False, default=",")
     encoding: Mapped[str] = db.mapped_column(nullable=False, default="utf-8")
+    column_config: Mapped[dict | None] = db.mapped_column(db.JSON, nullable=True)
 
     # Relationships
     project_datasets: Mapped[list["ProjectDataset"]] = db.relationship(back_populates="dataset")
@@ -748,7 +749,7 @@ def get_project(idt: int | str, by: str = "id") -> Project | None:
 
 # region Dataset Management
 # ------------------------
-def new_dataset(dataset_name, user_id, learner_key=None, sep=",", encoding="utf-8") -> Dataset:
+def new_dataset(dataset_name, user_id, learner_key=None, sep=",", encoding="utf-8", column_config=None) -> Dataset:
     """Create new dataset.
 
     Args:
@@ -769,6 +770,7 @@ def new_dataset(dataset_name, user_id, learner_key=None, sep=",", encoding="utf-
         is_deleted=False,
         sep=sep,
         encoding=encoding,
+        column_config=column_config,
     )
     db.session.add(dataset)
     db.session.commit()
