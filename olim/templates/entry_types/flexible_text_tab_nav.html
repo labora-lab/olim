@@ -1,0 +1,18 @@
+{% for col_def in tabbed_cols %}
+<button type="button"
+    class="flex-header-tab-btn inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors bg-gray-50 text-gray-500 border-gray-200 hover:text-gray-700"
+    onclick="switchFlexPanel('flex-panel-tab-{{ loop.index }}', this)">
+    {% if col_def.render_as in ['pdf', 'pdf_url'] %}
+        <i class="bi bi-file-earmark-pdf mr-1 text-red-500"></i>
+    {% elif col_def.render_as == 'image' %}
+        <i class="bi bi-image mr-1 text-green-500"></i>
+    {% elif col_def.render_as == 'html' %}
+        <i class="bi bi-code-slash mr-1 text-purple-500"></i>
+    {% elif col_def.render_as == 'json' %}
+        <i class="bi bi-braces mr-1 text-orange-500"></i>
+    {% else %}
+        <i class="bi bi-file-text mr-1"></i>
+    {% endif %}
+    {{ col_def.column }}
+</button>
+{% endfor %}

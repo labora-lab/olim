@@ -16,6 +16,7 @@ from .database import (
     get_labels,
     new_label,
 )
+from .label_types import get_preset_settings
 from .project import update_session_project
 from .utils.label import label_upload
 from .utils.queues import store_queue
@@ -74,7 +75,19 @@ def create_label(project_id: int) -> ...:
 
     label_name = request.form.get("label")
     label_type = request.form.get("label_type") or None
-    label = new_label(label_name, session["user_id"], project_id, label_type=label_type)
+    label_settings = None
+
+    if label_type == "multiple_choice":
+        raw = request.form.get("label_settings", "").strip()
+        if raw:
+            try:
+                label_settings = json.loads(raw)
+            except json.JSONDecodeError:
+                pass
+    elif label_type:
+        label_settings = get_preset_settings(label_type)
+
+    label = new_label(label_name, session["user_id"], project_id, label_type=label_type, label_settings=label_settings)
     flash(
         _("Label {label_name} successfully created").format(label_name=label.name),
         category="success",
@@ -378,6 +391,32 @@ def upload_auto_labels(label_id: int) -> ...:
 
     except Exception as e:
         flash(_("Error processing file: {error}").format(error=str(e)), category="error")
+
+    return redirect(url_for("label_settings", label_id=label_id))
+
+
+@app.route("/label/<int:label_id>/update-type-settings", methods=["POST"])
+def update_label_type_settings(label_id: int) -> ...:
+    """Update the label_settings JSON for a configurable label type."""
+    if session.get("role") != "admin":
+        flash(_("Admin access required"), category="error")
+        return redirect(url_for("label_settings", label_id=label_id))
+
+    label = get_label(label_id)
+    if label is None:
+        flash(_("Label not found"), category="error")
+        return redirect("/")
+
+    raw = request.form.get("label_settings", "").strip()
+    if raw:
+        try:
+            label.label_settings = json.loads(raw)
+            db.session.commit()
+            flash(_("Label settings updated successfully"), category="success")
+        except json.JSONDecodeError:
+            flash(_("Invalid settings format"), category="error")
+    else:
+        flash(_("No settings provided"), category="warning")
 
     return redirect(url_for("label_settings", label_id=label_id))
 

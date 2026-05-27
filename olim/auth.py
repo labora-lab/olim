@@ -202,12 +202,20 @@ def check_elasticsearch() -> ...:
 @app.before_request  # type: ignore
 def add_projects() -> ...:
     if check_is_setup():
-        if "project_id" not in session:
-            session["project_id"] = get_projects()[0].id
+        projects = list(get_projects())
+        # Validate session project — clear if deleted or missing
+        if "project_id" in session:
+            current = get_project(session["project_id"])
+            if current is None or current.is_deleted:
+                session.pop("project_id", None)
+                session.pop("project_name", None)
+        if "project_id" not in session and projects:
+            session["project_id"] = projects[0].id
+        project = get_project(session["project_id"]) if "project_id" in session else None
         app.jinja_env.globals.update(
-            projects=list(get_projects()),
-            project_id=session["project_id"],
-            project_name=get_project(session["project_id"]).name,  # type: ignore
+            projects=projects,
+            project_id=session.get("project_id"),
+            project_name=project.name if project else "",
         )
 
 

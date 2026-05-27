@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% import "macros/highlights.html" as highlights_macro %}
+{% import "macros/entry-content-card.html" as card_macro %}
 
 {% block title %}
 {{ _('Active Learning - ') }} {{ label.name }}
@@ -9,7 +10,8 @@
 <div class="flex flex-col lg:flex-row gap-6 h-full">
   <!-- Main Content Area -->
   <div class="flex-1 lg:w-2/3">
-    <div class="p-2 bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+      {{ card_macro.entry_card_header(entry, entry_tab_nav|default('')) }}
       <div class="prose">
         {{ entry_html|safe }}
       </div>

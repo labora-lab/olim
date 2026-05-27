@@ -1,3 +1,5 @@
+import json
+
 from flask import flash, jsonify, redirect, render_template, request, session, url_for
 from flask_babel import _
 
@@ -188,9 +190,26 @@ def upload_data(project_id: int | None = None) -> ...:
             else:
                 return redirect(request.url)
 
+        # Parse column_config for flexible_text
+        column_config = None
+        if upload_type == "flexible_text":
+            text_is_html = request.form.get("text_is_html") == "on"
+            text_hidden = request.form.get("text_hidden") == "on"
+            show_remaining = request.form.get("show_remaining_as_metadata", "on") == "on"
+            try:
+                extra_columns = json.loads(request.form.get("extra_columns_config", "[]"))
+            except (ValueError, TypeError):
+                extra_columns = []
+            column_config = {
+                "text_is_html": text_is_html,
+                "text_hidden": text_hidden,
+                "extra_columns": extra_columns,
+                "show_remaining_as_metadata": show_remaining,
+            }
+
         # Create new dataset
         try:
-            dataset = new_dataset(dataset_name, session["user_id"], sep=sep, encoding=encoding)
+            dataset = new_dataset(dataset_name, session["user_id"], sep=sep, encoding=encoding, column_config=column_config)
 
             # Link to selected projects
             for project_id_str in projects:
@@ -209,13 +228,9 @@ def upload_data(project_id: int | None = None) -> ...:
             "text_column": request.form.get("text_column"),
         }
 
-        # Add PDF URL column for text_pdf_url format
-        if upload_type == "text_pdf_url":
-            upload_params["pdf_url_column"] = request.form.get("pdf_url_column")
-
         # Handle sample data specially
         if upload_type == "sample_data":
-            upload_type = "single_text"
+            upload_type = "flexible_text"
             upload_params.update(
                 {
                     "filename": "./data/sample_data.csv",
@@ -223,7 +238,6 @@ def upload_data(project_id: int | None = None) -> ...:
                     "text_column": "text",
                 }
             )
-            upload_type = "single_text"
         else:
             # Validate file upload for non-sample data
             if not filename or not file_id:
@@ -233,20 +247,10 @@ def upload_data(project_id: int | None = None) -> ...:
             # Construct actual file path
             upload_params["filename"] = str(UPLOAD_PATH / f"{file_id}_{filename}")
 
-            # Validate required columns for single_text format
-            if upload_type == "single_text":
+            # Validate required columns
+            if upload_type in ("single_text", "flexible_text"):
                 if not upload_params["id_column"] or not upload_params["text_column"]:
                     flash(_("ID and Text columns are required"), "error")
-                    return redirect(request.url)
-
-            # Validate required columns for text_pdf_url format
-            if upload_type == "text_pdf_url":
-                if (
-                    not upload_params["id_column"]
-                    or not upload_params["text_column"]
-                    or not upload_params["pdf_url_column"]
-                ):
-                    flash(_("ID, Text, and PDF URL columns are required"), "error")
                     return redirect(request.url)
 
         # Start upload task chain

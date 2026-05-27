@@ -1,92 +1,59 @@
 import json
 
-from flask import render_template
+from flask import render_template, url_for
 
 LABEL_TYPE = "multiple_choice"
 
-# Default placeholder config - actual options come from label_settings
 LABEL_CONFIG = [
     ("option_1", "text", "1", "blue"),
     ("option_2", "text", "2", "blue"),
     ("option_3", "text", "3", "blue"),
 ]
 
-#   How to Use:
 
-#   1. Create a label with multiple choice type:
-
-#   When creating a label through the UI or API, set:
-#   - Label Type: multiple_choice
-#   - Label Settings (JSON):
-#   {
-#     "options": [
-#       {"value": "Option 1", "color": "blue", "icon": "1", "type": "text"},
-#       {"value": "Option 2", "color": "green", "icon": "2", "type": "text"},
-#       {"value": "Option 3", "color": "red", "icon": "3", "type": "text"}
-#     ]
-#   }
-
-#   Or use simple strings:
-#   {
-#     "options": ["Fever", "Cough", "Headache", "Fatigue"]
-#   }
-
-#   2. Data Storage:
-
-#   The selected values are stored in LabelEntry.value as a JSON string:
-#   ["Option 1", "Option 3"]
-
-#   3. Example Usage:
-
-#   For a medical annotation project, you might create a "Symptoms" label:
-#   {
-#     "options": [
-#       {"value": "Fever", "color": "red"},
-#       {"value": "Cough", "color": "orange"},
-#       {"value": "Headache", "color": "yellow"},
-#       {"value": "Nausea", "color": "green"},
-#       {"value": "Fatigue", "color": "blue"}
-#     ]
-#   }
+def _resolve_settings(label, override: dict | None = None) -> dict:
+    """Return effective settings: override > label.label_settings > empty dict."""
+    if override:
+        return override
+    if label.label_settings and label.label_settings.get("options"):
+        return label.label_settings
+    return {}
 
 
-def render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry, **kwargs) -> str:
-    """Render the multiple choice label type"""
-    # Get options from label settings if available
-    label_options = []
-    if label.label_settings and "options" in label.label_settings:
-        options = label.label_settings["options"]
-        # Convert options to the format expected by the template
-        # Each option: (value, type, icon, color)
-        for i, option in enumerate(options):
-            if isinstance(option, dict):
-                # Support for {value: "name", color: "blue", icon: "check"}
-                label_options.append(
-                    (
-                        option.get("value", f"option_{i}"),
-                        option.get("type", "text"),
-                        option.get("icon", str(i + 1)),
-                        option.get("color", "blue"),
-                    )
+def _build_label_options(settings: dict) -> list[tuple]:
+    """Convert settings["options"] to (value, type, icon, color) tuples."""
+    options = settings.get("options", [])
+    result = []
+    for i, opt in enumerate(options):
+        if isinstance(opt, dict):
+            result.append(
+                (
+                    opt.get("value", f"option_{i}"),
+                    opt.get("type", "text"),
+                    opt.get("icon", str(i + 1)),
+                    opt.get("color", "blue"),
                 )
-            else:
-                # Simple string option
-                label_options.append((str(option), "text", str(i + 1), "blue"))
-    else:
-        # Use default config if no options configured
-        label_options = LABEL_CONFIG
+            )
+        else:
+            result.append((str(opt), "text", str(i + 1), "blue"))
+    return result or LABEL_CONFIG
 
-    # Parse the current selected values (stored as JSON list)
+
+def render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry, _preset_settings=None, **kwargs) -> str:
+    settings = _resolve_settings(label, _preset_settings)
+    label_options = _build_label_options(settings)
+    single_select = settings.get("single_select", False)
+    items_per_line = settings.get("items_per_line", 2)
+    helper_map = {opt.get("value", ""): opt.get("helper", "") for opt in settings.get("options", []) if isinstance(opt, dict)}
+
     selected_values = []
     current_value = labels_values.get(label.id)
     if current_value:
         try:
-            selected_values = json.loads(current_value)
-            if not isinstance(selected_values, list):
-                selected_values = [current_value]
+            parsed = json.loads(current_value)
+            selected_values = parsed if isinstance(parsed, list) else [current_value]
         except (json.JSONDecodeError, TypeError):
-            # If not valid JSON, treat as single value
-            selected_values = [current_value] if current_value else []
+            selected_values = [current_value]
 
     return render_template(
         "label_types/multiple_choice.html",
@@ -98,15 +65,42 @@ def render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry,
         valid_entry=valid_entry,
         label_config=label_options,
         selected_values=selected_values,
+        single_select=single_select,
+        items_per_line=items_per_line,
+        helper_map=helper_map,
         **kwargs,
     )
 
 
-def get_label_options() -> list:
-    """Get the available options for this label type"""
+def get_label_options(label=None) -> list:
+    if label is not None:
+        settings = _resolve_settings(label)
+        if settings:
+            return _build_label_options(settings)
     return LABEL_CONFIG
 
 
 def is_multiple_choice() -> bool:
-    """Indicates this is a multiple choice label type"""
     return True
+
+
+def render_config(label) -> str | None:
+    """Render the settings-page config editor for this label."""
+    return render_template(
+        "label_types/multiple_choice_config.html",
+        label=label,
+        settings=label.label_settings or {},
+        save_url=url_for("update_label_type_settings", label_id=label.id),
+        is_edit=True,
+    )
+
+
+def render_creation_config() -> str | None:
+    """Render the creation-form inline config panel (empty, for new labels)."""
+    return render_template(
+        "label_types/multiple_choice_config.html",
+        label=None,
+        settings={},
+        save_url=None,
+        is_edit=False,
+    )

@@ -23,8 +23,7 @@ def render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry,
     )
 
 
-def get_label_options() -> list:
-    """Get the available options for this label type"""
+def get_label_options(label=None) -> list:
     return LABEL_CONFIG
 
 

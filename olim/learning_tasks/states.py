@@ -647,6 +647,7 @@ class LabelEntry(BaseState):
             # Entry data
             entry=entry_data.get("entry"),
             entry_html=entry_data.get("entry_html", ""),
+            entry_tab_nav=entry_data.get("entry_tab_nav", ""),
             valid_entry=entry_data.get("valid_entry", False),
             labels_values=labels_values,
             # Labels
@@ -1798,7 +1799,7 @@ class ActiveLearningLoop(BaseState):
         label_options: list = []
         if label_obj:
             ltype = get_label_type_module(label_obj.label_type)
-            label_options = ltype.get_label_options() if ltype else []
+            label_options = ltype.get_label_options(label_obj) if ltype else []
         cache_scores: dict = self.data.get("al_cache_scores", {})
         entry_score_info: dict = cache_scores.get(str(entry_db_id), {})
         return render_template(
@@ -1807,6 +1808,7 @@ class ActiveLearningLoop(BaseState):
             title=title,
             entry=entry_data.get("entry"),
             entry_html=entry_data.get("entry_html", ""),
+            entry_tab_nav=entry_data.get("entry_tab_nav", ""),
             valid_entry=entry_data.get("valid_entry", False),
             labels_values=entry_data.get("labels_values", {}),
             label=label_obj,

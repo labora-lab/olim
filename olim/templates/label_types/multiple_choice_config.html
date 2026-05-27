@@ -1,0 +1,222 @@
+{% set options = settings.get('options', []) %}
+{% set single_select = settings.get('single_select', True) %}
+{% set items_per_line = settings.get('items_per_line', 2) %}
+{% set config_id = 'mc_cfg_' ~ (label.id if label else 'new') %}
+
+<div id="{{ config_id }}" class="space-y-5">
+
+    <!-- Options list -->
+    <div>
+        <div class="flex items-center justify-between mb-2">
+            <p class="text-sm font-medium text-gray-700">{{ _('Options') }}</p>
+            <button type="button" onclick="mcAddOption('{{ config_id }}')"
+                class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-green-700 bg-green-50 border border-green-300 rounded-lg hover:bg-green-100 transition-colors">
+                <i class="bi bi-plus-circle"></i> {{ _('Add option') }}
+            </button>
+        </div>
+
+        <div id="{{ config_id }}_rows" class="space-y-3">
+            {% for opt in options %}
+            {% set color = opt.get('color', 'blue') %}
+            {% set icon = opt.get('icon', '') %}
+            <div class="mc-option-row border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2">
+                <!-- Line 1: value -->
+                <input type="text" placeholder="{{ _('Label text') }}"
+                    class="mc-val w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    value="{{ opt.get('value', '') }}">
+                <!-- Line 2: icon input + live preview + color select + swatch + delete -->
+                <div class="flex items-center gap-2">
+                    <input type="text" placeholder="{{ _('Icon (optional)') }}"
+                        class="mc-icon flex-1 text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white focus:ring-2 focus:ring-blue-500"
+                        value="{{ icon }}"
+                        title="{{ _('Bootstrap icon name (e.g. check-circle-fill) or a single character') }}">
+                    <!-- Live icon preview -->
+                    <div class="mc-icon-preview flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-sm font-bold transition-colors"
+                         style="color: {{ _MC_COLORS[color] if _MC_COLORS is defined else '#2563eb' }};">
+                        {% if icon %}
+                            {% if icon | length == 1 or '-' not in icon %}
+                                {{ icon }}
+                            {% else %}
+                                <i class="bi bi-{{ icon }}"></i>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-gray-300 text-xs">—</span>
+                        {% endif %}
+                    </div>
+                    <!-- Color select + swatch -->
+                    <select class="mc-color w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:ring-2 focus:ring-blue-500">
+                        {% for c in ['green', 'red', 'blue', 'orange', 'yellow', 'purple', 'gray', 'pink', 'teal'] %}
+                        <option value="{{ c }}" {% if color == c %}selected{% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="mc-color-swatch flex-shrink-0 w-5 h-5 rounded-full border border-gray-300 transition-colors"
+                         style="background-color: var(--mc-color-{{ color }}, #2563eb);"></div>
+                    <button type="button" onclick="this.closest('.mc-option-row').remove()"
+                        class="text-gray-400 hover:text-red-600 transition-colors px-1 flex-shrink-0">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                <!-- Line 3: helper -->
+                <input type="text" placeholder="{{ _('Tooltip shown to annotators (optional)') }}"
+                    class="mc-helper w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white focus:ring-2 focus:ring-blue-500"
+                    value="{{ opt.get('helper', '') }}">
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Items per line -->
+    <div class="flex items-center gap-3">
+        <label class="text-sm font-medium text-gray-700 whitespace-nowrap">{{ _('Buttons per row') }}</label>
+        <input type="number" id="{{ config_id }}_ipl" min="1" max="6" value="{{ items_per_line }}"
+            class="w-20 text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+    </div>
+
+    <!-- Selection mode -->
+    <div>
+        <p class="text-sm font-medium text-gray-700 mb-2">{{ _('Selection mode') }}</p>
+        <div class="flex gap-4">
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="{{ config_id }}_select_mode" value="single"
+                    {% if single_select %}checked{% endif %}
+                    class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                <span class="text-sm text-gray-700">{{ _('Single select') }}</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="{{ config_id }}_select_mode" value="multi"
+                    {% if not single_select %}checked{% endif %}
+                    class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                <span class="text-sm text-gray-700">{{ _('Multi-select') }}</span>
+            </label>
+        </div>
+    </div>
+
+    {% if is_edit and save_url %}
+    <form method="post" action="{{ save_url }}" onsubmit="mcSerializeToHidden('{{ config_id }}'); return true;">
+        <input type="hidden" name="label_settings" id="{{ config_id }}_hidden">
+        <button type="submit"
+            class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 transition-colors">
+            <i class="bi bi-check2 mr-2"></i>{{ _('Save settings') }}
+        </button>
+    </form>
+    {% else %}
+    <input type="hidden" name="label_settings" id="{{ config_id }}_hidden">
+    {% endif %}
+</div>
+
+<style>
+:root {
+    --mc-color-green: #16a34a;
+    --mc-color-red: #dc2626;
+    --mc-color-blue: #2563eb;
+    --mc-color-orange: #ea580c;
+    --mc-color-yellow: #ca8a04;
+    --mc-color-purple: #9333ea;
+    --mc-color-gray: #6b7280;
+    --mc-color-pink: #ec4899;
+    --mc-color-teal: #0d9488;
+}
+</style>
+
+<script>
+(function() {
+    const MC_COLORS = {
+        green: '#16a34a', red: '#dc2626', blue: '#2563eb', orange: '#ea580c',
+        yellow: '#ca8a04', purple: '#9333ea', gray: '#6b7280', pink: '#ec4899', teal: '#0d9488'
+    };
+
+    function buildIconPreviewHTML(icon) {
+        if (!icon) return '<span class="text-gray-300 text-xs">—</span>';
+        if (icon.length === 1 || !icon.includes('-')) return `<span>${icon}</span>`;
+        return `<i class="bi bi-${icon}"></i>`;
+    }
+
+    function updateRowPreviews(row) {
+        const icon = row.querySelector('.mc-icon')?.value?.trim() || '';
+        const color = row.querySelector('.mc-color')?.value || 'blue';
+        const hex = MC_COLORS[color] || '#2563eb';
+
+        const preview = row.querySelector('.mc-icon-preview');
+        if (preview) {
+            preview.innerHTML = buildIconPreviewHTML(icon);
+            preview.style.color = hex;
+        }
+
+        const swatch = row.querySelector('.mc-color-swatch');
+        if (swatch) swatch.style.backgroundColor = hex;
+    }
+
+    const _newRowHTML = () => `
+        <div class="mc-option-row border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2">
+            <input type="text" placeholder="{{ _('Label text') }}"
+                class="mc-val w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <div class="flex items-center gap-2">
+                <input type="text" placeholder="{{ _('Icon (optional)') }}"
+                    class="mc-icon flex-1 text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white focus:ring-2 focus:ring-blue-500"
+                    title="{{ _('Bootstrap icon name (e.g. check-circle-fill) or a single character') }}">
+                <div class="mc-icon-preview flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-sm font-bold"
+                     style="color: ${MC_COLORS.blue};">
+                    <span class="text-gray-300 text-xs">—</span>
+                </div>
+                <select class="mc-color w-28 text-sm border border-gray-300 rounded-lg px-2 py-1.5 bg-white focus:ring-2 focus:ring-blue-500">
+                    ${Object.keys(MC_COLORS).map(c => `<option value="${c}">${c}</option>`).join('')}
+                </select>
+                <div class="mc-color-swatch flex-shrink-0 w-5 h-5 rounded-full border border-gray-300"
+                     style="background-color: ${MC_COLORS.blue};"></div>
+                <button type="button" onclick="this.closest('.mc-option-row').remove()"
+                    class="text-gray-400 hover:text-red-600 transition-colors px-1 flex-shrink-0">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+            <input type="text" placeholder="{{ _('Tooltip shown to annotators (optional)') }}"
+                class="mc-helper w-full text-sm border border-gray-300 rounded-lg px-2.5 py-1.5 bg-white focus:ring-2 focus:ring-blue-500">
+        </div>`;
+
+    window.mcAddOption = function(cfgId) {
+        const rows = document.getElementById(cfgId + '_rows');
+        const tmp = document.createElement('div');
+        tmp.innerHTML = _newRowHTML().trim();
+        rows.appendChild(tmp.firstChild);
+    };
+
+    // Event delegation for live previews
+    document.querySelectorAll('[id$="_rows"]').forEach(container => {
+        container.addEventListener('input', e => {
+            if (e.target.classList.contains('mc-icon')) {
+                updateRowPreviews(e.target.closest('.mc-option-row'));
+            }
+        });
+        container.addEventListener('change', e => {
+            if (e.target.classList.contains('mc-color')) {
+                updateRowPreviews(e.target.closest('.mc-option-row'));
+            }
+        });
+    });
+
+    window.mcSerializeToHidden = function(cfgId) {
+        const container = document.getElementById(cfgId);
+        const rows = container.querySelectorAll('.mc-option-row');
+        const options = [];
+        rows.forEach(row => {
+            const val = row.querySelector('.mc-val')?.value?.trim();
+            if (!val) return;
+            const icon = row.querySelector('.mc-icon')?.value?.trim() || '';
+            const iconType = (icon.length === 1 || (icon.length > 0 && !icon.includes('-'))) ? 'text' : 'icon';
+            options.push({
+                value: val,
+                color: row.querySelector('.mc-color')?.value || 'blue',
+                type: iconType,
+                icon,
+                helper: row.querySelector('.mc-helper')?.value?.trim() || '',
+            });
+        });
+        const itemsPerLine = parseInt(document.getElementById(cfgId + '_ipl')?.value) || 2;
+        const modeRadio = container.querySelector(`input[name="${cfgId}_select_mode"]:checked`);
+        const singleSelect = modeRadio ? modeRadio.value === 'single' : true;
+        document.getElementById(cfgId + '_hidden').value = JSON.stringify({
+            options, single_select: singleSelect, items_per_line: itemsPerLine
+        });
+        return true;
+    };
+})();
+</script>
