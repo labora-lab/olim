@@ -1848,19 +1848,21 @@ def set_setting(
     if user_id is None:
         user_id = session.get("user_id", 1)  # Fallback to user 1 if no session
 
-    setting = get_setting(key)
+    # Look up including soft-deleted rows so we can restore instead of re-inserting
+    setting = db.session.get(GlobalSetting, key)
     if setting:
-        # Update existing setting
         setting.value = value
         setting.display_name = display_name
         setting.type = setting_type
         setting.default_value = default_value
         setting.description = description
         setting.category = category
+        setting.is_deleted = False
+        setting.deleted = None
+        setting.deleted_by = None
         db.session.commit()
         return setting
     else:
-        # Create new setting
         setting = GlobalSetting(
             key=key,
             display_name=display_name,
