@@ -1347,10 +1347,11 @@ def add_entry_label(
     if not entry or not label:
         raise ValueError("Invalid entry or label")
 
-    # Remove existing labels
-    for le in db.session.execute(
-        db.select(LabelEntry).filter_by(label=label, entry=entry, is_deleted=False)
-    ).scalars():
+    # Remove existing labels — scoped to current user when isolation is enabled
+    query = db.select(LabelEntry).filter_by(label=label, entry=entry, is_deleted=False)
+    if is_label_isolation_enabled():
+        query = query.filter(LabelEntry.created_by == user_id)
+    for le in db.session.execute(query).scalars():
         del_controled(le, user_id)
 
     if value != "":
@@ -1911,6 +1912,11 @@ def get_setting_value(key: str, default: str | None = None) -> str | None:
     if setting:
         return setting.value
     return default
+
+
+def is_label_isolation_enabled() -> bool:
+    """Return True when label values are isolated per user."""
+    return get_setting_value("isolate_label_values", "false") == "true"
 
 
 # endregion

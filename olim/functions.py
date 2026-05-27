@@ -8,7 +8,7 @@ from flask import flash, session
 from flask_babel import _
 
 from . import entry_types
-from .database import get_entry, get_setup_step
+from .database import get_entry, get_setup_step, is_label_isolation_enabled
 from .utils.es import get_es_conn
 
 
@@ -47,10 +47,9 @@ def get_highlights() -> list | dict:
 
 
 def _build_labels_values(label_entries) -> dict:
-    """Build label_id → value mapping, scoped to the current user if annotator role."""
+    """Build label_id → value mapping, scoped to the current user when isolation is enabled."""
     user_id = session.get("user_id")
-    role = session.get("role")
-    if role == "annotator":
+    if is_label_isolation_enabled():
         return {
             le.label_id: le.value
             for le in label_entries
