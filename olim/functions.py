@@ -1,15 +1,49 @@
 ## Auxiliary functions
 # All functions here must have type hints and docstrings
 import json
+import re
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlparse
 
-from flask import flash, session
+from flask import current_app, flash, session
 from flask_babel import _
+from werkzeug.exceptions import NotFound
+from werkzeug.routing import RequestRedirect
 
 from . import entry_types
 from .database import get_entry, get_setup_step, is_label_isolation_enabled
 from .utils.es import get_es_conn
+
+
+def gdrive_pdf_url(url: str) -> str:
+    """Convert a Google Drive URL to the embeddable /preview form."""
+    s = str(url)
+    if "drive.google.com" not in s:
+        return s
+    m = re.search(r"/file/d/([a-zA-Z0-9_-]+)", s)
+    if not m:
+        m = re.search(r"[?&]id=([a-zA-Z0-9_-]+)", s)
+    if m:
+        return f"https://drive.google.com/file/d/{m.group(1)}/preview"
+    return s
+
+
+def is_url(value: str) -> bool:
+    """Return True if value is a valid absolute URL or a registered server-relative route."""
+    s = str(value).strip()
+    if not s:
+        return False
+    parsed = urlparse(s)
+    if parsed.scheme in ("http", "https") and parsed.netloc:
+        return True
+    if s.startswith("/"):
+        try:
+            current_app.url_map.bind("").match(s)
+            return True
+        except (NotFound, RequestRedirect):
+            return False
+    return False
 
 
 def ensure_dir(path) -> None:

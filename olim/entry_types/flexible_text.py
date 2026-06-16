@@ -61,6 +61,7 @@ class FlexibleTextEntry(EntryTypeBase):
             tab_nav_html = render_template(
                 "entry_types/flexible_text_tab_nav.html",
                 tabbed_cols=tabbed_cols,
+                src=res.get("_source", {}),
             )
             return {"html": content_html, "tab_nav": tab_nav_html}
 

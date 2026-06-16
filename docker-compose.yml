@@ -35,11 +35,13 @@ services:
       - es-data:/usr/share/elasticsearch/data
     environment:
       - node.name=olim_es
-      - bootstrap.memory_lock=true
+      - bootstrap.memory_lock=false
       - discovery.type=single-node
       - xpack.security.enabled=false
       - xpack.security.enrollment.enabled=false
       - cluster.routing.allocation.disk.threshold_enabled=false
+      - node.processors=4
+      - "ES_JAVA_OPTS=-Xms512m -Xmx1g"
     mem_limit: 4G
     restart: unless-stopped
     networks:
@@ -96,7 +98,7 @@ services:
   worker:
     <<: *app-base
     container_name: olim_worker
-    command: celery -A olim.celery_app worker --loglevel=info
+    command: celery -A olim.celery_app worker --loglevel=info --concurrency=2
     entrypoint: '' # Skips entrypoint script
     environment:
       <<: *app-env

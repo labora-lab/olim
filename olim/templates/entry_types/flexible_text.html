@@ -9,6 +9,12 @@
    PDF render helper — used in both tabbed and sequential layouts
    ===================================================================== #}
 {% macro render_pdf(value) %}
+{% if not (value | is_url) %}
+<div class="flex items-center gap-2 p-4 rounded-lg bg-gray-50 border border-gray-200 text-gray-500 text-sm">
+    <i class="bi bi-link-45deg text-gray-400 text-lg"></i>
+    <span>{{ _('No valid link available for this document.') }}</span>
+</div>
+{% else %}
 {% set embed_url = value | gdrive_pdf_url %}
 <div class="mb-2">
     <button type="button"
@@ -30,6 +36,7 @@
         </p>
     </iframe>
 </div>
+{% endif %}
 {% endmacro %}
 
 {# =====================================================================
