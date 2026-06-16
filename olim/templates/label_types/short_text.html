@@ -72,6 +72,8 @@
         document.getElementById('current_value_' + labelId).style.display = 'block';
         document.getElementById('input_form_' + labelId).style.display = 'none';
         document.getElementById('edit_button_' + labelId).style.display = 'block';
+        var c = document.getElementById('label_' + labelId);
+        if (c) c.dataset.filled = 'true';
     }
 
     // Register per-label function and global fallback
@@ -90,6 +92,8 @@ function clearShortText(entryId, labelId) {
     document.getElementById('input_form_' + labelId).style.display = 'block';
     document.getElementById('edit_button_' + labelId).style.display = 'none';
     document.getElementById('text_input_' + labelId).value = '';
+    var c = document.getElementById('label_' + labelId);
+    if (c) c.dataset.filled = 'false';
 }
 function editShortText(labelId) {
     document.getElementById('input_form_' + labelId).style.display = 'block';

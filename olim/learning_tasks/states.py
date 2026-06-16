@@ -19,7 +19,7 @@ from ..database import (
     random_entries,
 )
 from ..entry_types.registry import get_entry_type_instance
-from ..functions import render_entry
+from ..functions import get_highlights, render_entry
 from ..label_types import get_label_type_module
 from ..ml.services import MLModelService
 from ..tasks.active_learning import train_model
@@ -662,6 +662,7 @@ class LabelEntry(BaseState):
             total=total,
             show_back=(self.params.get("show_back", True) and queue_position > 0),
             is_last_step=self.params.get("is_last_step", False),
+            highlight=get_highlights(),
         )
 
     def handle(self, action: str, payload: dict[str, Any]) -> int:

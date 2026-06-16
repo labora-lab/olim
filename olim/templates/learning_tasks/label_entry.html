@@ -1,5 +1,6 @@
 {% import "macros/labels-menu.html" as labels_macro %}
 {% import "macros/entry-content-card.html" as card_macro %}
+{% import "macros/highlights.html" as highlights_macro %}
 
 {% if required_label_ids %}
 <style>
@@ -61,7 +62,7 @@
     <div class="flex-1 lg:w-2/3">
         <div class="bg-white rounded-lg shadow-sm border border-gray-200">
             {{ card_macro.entry_card_header(entry, entry_tab_nav|default('')) }}
-            <div class="prose">
+            <div class="prose highlightable">
                 {{ entry_html|safe }}
             </div>
         </div>
@@ -90,6 +91,8 @@
                     <span class="text-red-500">*</span> {{ _('Required') }}
                 </p>
                 {% endif %}
+
+                {{ highlights_macro.highlights_section() }}
             </div>
         </div>
     </div>
@@ -103,15 +106,10 @@
     const mode = '{{ completion_mode }}';
 
     form.addEventListener('submit', function(e) {
-        // Check which labels are currently missing by inspecting the DOM
         const missing = checkLabels.filter(function(labelId) {
             var container = document.getElementById('label_' + labelId);
             if (!container) return true;
-            // A label is filled if any _unsel_ button is visible (not hidden)
-            var unselButtons = container.querySelectorAll('[id$="_unsel_' + labelId + '"]:not(.apply-all-btn)');
-            return !Array.from(unselButtons).some(function(btn) {
-                return !btn.classList.contains('hidden');
-            });
+            return container.dataset.filled !== 'true';
         });
 
         if (missing.length === 0) return;
@@ -144,3 +142,13 @@
     </div>
 </div>
 {% endif %}
+
+{{ highlights_macro.highlights_script() }}
+<script>
+(function() {
+    var highlightData = {{ highlight | tojson if highlight else '[]' }};
+    if (typeof initEntryHighlight === 'function') {
+        initEntryHighlight(highlightData);
+    }
+})();
+</script>

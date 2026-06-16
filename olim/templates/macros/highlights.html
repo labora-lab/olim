@@ -1,5 +1,5 @@
 {% macro highlights_section() %}
-{% if show_highlights %}
+{% if settings.show_highlights %}
 <!-- Highlights Section -->
 <div class="pt-4">
     <h4 class="text-sm font-medium text-gray-700 mb-3 flex items-center">
@@ -50,47 +50,45 @@
     }
 
     function highlightText(term) {
-        const contentArea = document.querySelector('.prose');
-        if (!contentArea || !term) return;
+        const areas = document.querySelectorAll('.highlightable');
+        if (!areas.length || !term) return;
 
         const color = getHighlightColor(term);
         const regex = new RegExp(`(${escapeRegExp(term)})`, 'gi');
-        const walker = document.createTreeWalker(
-            contentArea,
-            NodeFilter.SHOW_TEXT,
-            null,
-            false
-        );
 
-        const textNodes = [];
-        let node;
-        while (node = walker.nextNode()) {
-            if (regex.test(node.textContent)) {
-                textNodes.push(node);
-            }
-        }
+        areas.forEach(function(contentArea) {
+            const walker = document.createTreeWalker(
+                contentArea,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
 
-        textNodes.forEach(textNode => {
-            const parent = textNode.parentNode;
-            if (parent.tagName !== 'MARK') {
-                const highlightedHTML = textNode.textContent.replace(regex, `<mark class="${color.bg} ${color.text} px-1 rounded" data-highlight-term="${escapeHtml(term)}">$1</mark>`);
-                const temp = document.createElement('div');
-                temp.innerHTML = highlightedHTML;
-
-                while (temp.firstChild) {
-                    parent.insertBefore(temp.firstChild, textNode);
+            const textNodes = [];
+            let node;
+            while (node = walker.nextNode()) {
+                if (regex.test(node.textContent)) {
+                    textNodes.push(node);
                 }
-                parent.removeChild(textNode);
             }
+
+            textNodes.forEach(textNode => {
+                const parent = textNode.parentNode;
+                if (parent.tagName !== 'MARK') {
+                    const highlightedHTML = textNode.textContent.replace(regex, `<mark class="${color.bg} ${color.text} px-1 rounded" data-highlight-term="${escapeHtml(term)}">$1</mark>`);
+                    const temp = document.createElement('div');
+                    temp.innerHTML = highlightedHTML;
+                    while (temp.firstChild) {
+                        parent.insertBefore(temp.firstChild, textNode);
+                    }
+                    parent.removeChild(textNode);
+                }
+            });
         });
     }
 
     function unhighlightText(term) {
-        const contentArea = document.querySelector('.prose');
-        if (!contentArea) return;
-
-        const highlights = contentArea.querySelectorAll(`mark[data-highlight-term="${term}"]`);
-        highlights.forEach(mark => {
+        document.querySelectorAll(`mark[data-highlight-term="${term}"]`).forEach(mark => {
             const parent = mark.parentNode;
             parent.replaceChild(document.createTextNode(mark.textContent), mark);
             parent.normalize();
@@ -101,22 +99,16 @@
         const chips = document.querySelectorAll('#highlights-list [data-term]');
         const terms = Array.from(chips).map(chip => chip.dataset.term);
 
-        // Create session data with terms and their color assignments
         const sessionData = {
             terms: terms,
             colorAssignments: window.highlightColorAssignments,
             colorCounter: window.highlightColorCounter
         };
 
-        // Send update to server via commands endpoint
-        const params = new URLSearchParams({
-            cmd: 'update-session',
-            parameter: 'highlight',
+        fetch('/commands?' + new URLSearchParams({
+            cmd: 'update-highlights',
             data: JSON.stringify(sessionData)
-        });
-
-        fetch('/commands?' + params.toString())
-            .catch(console.error);
+        }).toString()).catch(console.error);
     }
 
     function initEntryHighlight(highlightData) {

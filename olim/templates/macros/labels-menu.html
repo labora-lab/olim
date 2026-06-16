@@ -1,5 +1,6 @@
 {% macro labels_menu(label, entry, labels_rev, labels_values, hidden_labels, show_hidden, valid_entry) %}
 <div id="label_{{ label.id }}"
+    data-filled="{{ 'true' if labels_values.get(label.id) else 'false' }}"
     class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow duration-200 {% if label.id in hidden_labels %}hidden-entry{% if not show_hidden %} hidden{% endif %}{% endif %}">
     <div class="flex items-center justify-between mb-3">
         <div class="flex items-center space-x-3">

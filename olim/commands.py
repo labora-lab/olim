@@ -85,22 +85,30 @@ def manage_label(**args) -> dict[str, str] | None:
         }
 
 
-def update_session(**args) -> dict[str, str]:
-    parameter = args.get("parameter", None)
+def update_highlights(**args) -> dict[str, str]:
     data = args.get("data", None)
 
-    if parameter is None:
-        return {
-            "type": "error",
-            "text": _("Missing parameter"),
-        }
     if data is None:
         return {
             "type": "error",
             "text": _("Missing data"),
         }
 
-    session[parameter] = json.loads(data)
+    try:
+        parsed = json.loads(data)
+    except (json.JSONDecodeError, ValueError):
+        return {
+            "type": "error",
+            "text": _("Invalid data"),
+        }
+
+    if not isinstance(parsed, (list, dict)):
+        return {
+            "type": "error",
+            "text": _("Invalid highlight data format"),
+        }
+
+    session["highlight"] = parsed
     return {
         "type": "silentOK",
     }
@@ -109,7 +117,7 @@ def update_session(**args) -> dict[str, str]:
 COMMANDS = {
     "add-label": add_label,
     "manage-label": manage_label,
-    "update-session": update_session,
+    "update-highlights": update_highlights,
 }
 
 for mod in dir(entry_types):

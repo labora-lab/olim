@@ -110,5 +110,9 @@ function updateMultipleChoiceUI(labelId, selectedValues) {
         if (circleIcon) circleIcon.classList.toggle('hidden', isSelected);
         if (mainIcon) mainIcon.classList.toggle('opacity-60', !isSelected);
     });
+
+    if (labelContainer) {
+        labelContainer.dataset.filled = selectedValues.length > 0 ? 'true' : 'false';
+    }
 }
 </script>

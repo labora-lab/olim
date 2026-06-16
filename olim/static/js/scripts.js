@@ -342,6 +342,8 @@ function markLabel(labelId, value) {
         if (unselElement) unselElement.classList.remove('hidden');
         if (selElement) selElement.classList.add('hidden');
     }
+
+    labelContainer.dataset.filled = (value && value.trim() !== '') ? 'true' : 'false';
 }
 
 // Utility functions

@@ -69,7 +69,7 @@
    ===================================================================== #}
 {% macro render_main_text() %}
 {% if not column_config.get('text_hidden', False) %}
-<div class="p-6 text-entry">
+<div class="p-6 text-entry highlightable">
     <div class="text-lg font-semibold text-gray-900 mb-2">
         {% if column_config.get('text_is_html', False) %}
             {{ src['text'] | replace('\n', '<br><br>') | safe }}
@@ -88,7 +88,7 @@
 {% for col_def in inline_cols %}
 {% set value = src.get(col_def.column) %}
 {% if value %}
-<div class="px-6 pb-4 text-entry">
+<div class="px-6 pb-4 text-entry highlightable">
     {% if col_def.get('show_title', False) %}
     <h4 class="text-sm font-semibold text-gray-700 mb-2">{{ col_def.column }}</h4>
     {% endif %}
@@ -134,7 +134,7 @@
 {% for col_def in tabbed_cols %}
 {% set panel_id = 'flex-panel-tab-' ~ loop.index %}
 {% set value = src.get(col_def.column) %}
-<div id="{{ panel_id }}" class="flex-tab-content-panel hidden p-6">
+<div id="{{ panel_id }}" class="flex-tab-content-panel highlightable hidden p-6">
     {% if value %}
         {% if col_def.get('show_title', False) %}
         <h4 class="text-sm font-semibold text-gray-700 mb-2">{{ col_def.column }}</h4>
