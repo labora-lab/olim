@@ -14,18 +14,25 @@ class FieldValidationError(Exception):
 
 @dataclass(frozen=True, slots=True)
 class AnnotationValue:
-    """The typed value an annotator submits for a field. Exactly one of these
-    is set, decided by the field's kind."""
+    """The value an annotator submits for a field, decided by the field's kind:
+    select uses option_ids (a one-element list when not multi); numeric/text/
+    boolean use their value_* attribute."""
 
-    option_id: int | None = None
+    option_ids: list[int] | None = None
     value_num: float | None = None
     value_text: str | None = None
     value_bool: bool | None = None
 
 
 class FieldKind:
-    """Rules for one field type: which value a field of this type accepts and
-    how to validate it. One subclass per FieldType; the registry dispatches."""
+    """Rules for one field type: how to read the client's raw value, which value
+    a field of this type accepts, and how to validate it. One subclass per
+    FieldType; the registry dispatches. Adding a type is one new subclass."""
+
+    def parse(self, field: Field, raw: object) -> AnnotationValue:
+        """Turn the client's single `value` into the typed AnnotationValue for
+        this field's column. Raise FieldValidationError on a wrong-shaped value."""
+        raise NotImplementedError
 
     def validate(self, field: Field, value: AnnotationValue) -> None:
         """Raise FieldValidationError if `value` is not valid for `field`."""
