@@ -1,13 +1,8 @@
 from pydantic import BaseModel
 
-from olim.models import LabelMode
+from olim.api.schemas.field import FieldIn
 
 
 class SchemeCreateIn(BaseModel):
     name: str
-    label_mode: LabelMode = "single"
-    allow_extra_label: bool = False
-
-
-class LabelCreateIn(BaseModel):
-    name: str
+    fields: list[FieldIn] = []
