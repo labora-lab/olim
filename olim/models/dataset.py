@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from olim.models.base import Base
 
 if TYPE_CHECKING:
-    from olim.models.labeling import Annotation, LabelScheme
+    from olim.models.labeling import Annotation, Scheme
 
 DataType = Literal["text"]
 
@@ -19,7 +19,7 @@ class Dataset(Base):
     data_type: Mapped[DataType] = mapped_column(default="text")
 
     items: Mapped[list[Item]] = relationship(back_populates="dataset")
-    schemes: Mapped[list[LabelScheme]] = relationship(back_populates="dataset")
+    schemes: Mapped[list[Scheme]] = relationship(back_populates="dataset")
 
 
 class Item(Base):
