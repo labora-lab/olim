@@ -9,11 +9,13 @@ from olim.dto.pipeline import (
     PipelineCreate,
     PipelineDTO,
 )
+from olim.dto.run import BlockRunDTO, PipelineRunCreate, PipelineRunDTO
 from olim.dto.scheme import SchemeCreate, SchemeDTO
 
 __all__ = [
     "AnnotationCreate",
     "AnnotationDTO",
+    "BlockRunDTO",
     "DatasetCreate",
     "DatasetDTO",
     "FieldDTO",
@@ -24,6 +26,8 @@ __all__ = [
     "PipelineBlockSpec",
     "PipelineCreate",
     "PipelineDTO",
+    "PipelineRunCreate",
+    "PipelineRunDTO",
     "SchemeCreate",
     "SchemeDTO",
 ]
