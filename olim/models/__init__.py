@@ -8,6 +8,7 @@ from olim.models.labeling import (
     Option,
     Scheme,
 )
+from olim.models.pipeline import Pipeline, PipelineBlock
 
 __all__ = [
     "Annotation",
@@ -19,5 +20,7 @@ __all__ = [
     "FieldType",
     "Item",
     "Option",
+    "Pipeline",
+    "PipelineBlock",
     "Scheme",
 ]
