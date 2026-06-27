@@ -1,11 +1,13 @@
 from datetime import datetime
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from sqlalchemy import ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from .base import Base
-from .dataset import Dataset, Item
+from olim.models.base import Base
+
+if TYPE_CHECKING:
+    from olim.models.dataset import Dataset, Item
 
 LabelMode = Literal["single", "multi"]
 AnnotationSource = Literal["human", "llm"]
