@@ -9,9 +9,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:
-      - target: 5432
-        published: ${POSTGRES_EXPOSE_PORT:-}
-        protocol: tcp
+      - ${POSTGRES_EXPOSE_PORT:-}:5432
 
 volumes:
   db-data:
