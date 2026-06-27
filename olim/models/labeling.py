@@ -1,13 +1,11 @@
-from datetime import datetime  # noqa: TC003 SQLAlchemy resolve Mapped[] em runtime
-from typing import TYPE_CHECKING, Literal
+from datetime import datetime
+from typing import Literal
 
 from sqlalchemy import ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
-
-if TYPE_CHECKING:
-    from .dataset import Dataset, Item
+from .dataset import Dataset, Item
 
 LabelMode = Literal["single", "multi"]
 AnnotationSource = Literal["human", "llm"]

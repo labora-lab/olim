@@ -1,12 +1,10 @@
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .base import Base
-
-if TYPE_CHECKING:
-    from .labeling import Annotation, LabelScheme
+from .labeling import Annotation, LabelScheme
 
 DataType = Literal["text"]
 
