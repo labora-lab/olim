@@ -3,6 +3,11 @@ x-app: &app
   image: olim
   environment:
     DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-olim}:${POSTGRES_PASSWORD:-a-very-strong-pwd}@db:5432/${POSTGRES_DB:-olim}
+    CELERY_BROKER_URL: redis://redis:6379/0
+    CELERY_RESULT_BACKEND: redis://redis:6379/1
+    ARTIFACT_ROOT: /artifacts
+  volumes:
+    - artifacts:/artifacts
 
 services:
   db:
@@ -28,6 +33,15 @@ services:
         condition: service_healthy
     restart: "no"
 
+  redis:
+    image: redis:alpine
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
   api:
     <<: *app
     ports:
@@ -35,3 +49,27 @@ services:
     depends_on:
       init:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  worker:
+    <<: *app
+    command:
+      [
+        "celery",
+        "-A",
+        "olim.worker",
+        "worker",
+        "-Q",
+        "light,heavy",
+        "--concurrency",
+        "2",
+      ]
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+volumes:
+  artifacts:

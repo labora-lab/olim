@@ -5,6 +5,7 @@ description = "Open Labeller for Interactive Machine Learning"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "celery[redis]>=5.6.3",
     "environs>=15.0.1",
     "fastapi[standard-no-fastapi-cloud-cli]>=0.138.1",
     "psycopg[binary]>=3.3.4",
