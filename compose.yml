@@ -1,3 +1,9 @@
+x-app: &app
+  build: .
+  image: olim
+  environment:
+    DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-olim}:${POSTGRES_PASSWORD:-a-very-strong-pwd}@db:5432/${POSTGRES_DB:-olim}
+
 services:
   db:
     image: postgres:18-alpine
@@ -8,3 +14,24 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-olim}
     ports:
       - ${POSTGRES_EXPOSE_PORT:-}:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-olim}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  init:
+    <<: *app
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    <<: *app
+    ports:
+      - ${API_EXPOSE_PORT:-7543}:8000
+    depends_on:
+      init:
+        condition: service_completed_successfully
