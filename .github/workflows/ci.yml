@@ -37,4 +37,4 @@ jobs:
         run: uv sync --locked
 
       - name: Run checks (ty, ruff, tests)
-        run: prek run --all-files --show-diff-on-failure --color=always
+        run: uv run prek run --all-files --show-diff-on-failure --color=always
