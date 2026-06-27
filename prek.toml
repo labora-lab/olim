@@ -17,3 +17,11 @@ hooks = [
     { id = "ruff-check", args = [ "--fix" ] },
     { id = "ruff-format" },
 ]
+
+
+[[repos]]
+repo = "local"
+hooks = [
+    { id = "check-blanket-ty-ignore", name = "check-blanket-ty-ignore", entry = '#\s*ty:\s*ignore\s*($|[^\[])', language = "pygrep", types = [ "python" ] },
+    { id = "pytest", name = "pytest", entry = "uv run pytest -q -m 'not slow'", language = "system", pass_filenames = false },
+]
