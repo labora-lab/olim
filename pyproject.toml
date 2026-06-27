@@ -15,3 +15,60 @@ dev = [
     "ruff>=0.15.20",
     "ty>=0.0.55",
 ]
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+preview = true
+
+[tool.ruff.lint]
+select = [
+    "F",      # Pyflakes = no dead code or broken references.
+    "E",      # pycodestyle (Errors) = formatting layout conventions
+    "W",      # pycodestyle (Warnings) = formatting layout conventions
+    "I",      # isort = deduplicates groups, and alphabetically sort imports
+    "N",      # pep8-naming = rejects un-Pythonic name convention
+    "UP",     # pyupgrade = strips deprecated syntax, remove unnecessary quotes arounts types, etc.
+    "ASYNC",  # flake8-async = avoid common multi-threading anti-patterns
+    "B",      # flake8-bugbear = prevents deeply hidden bugs, design issues and subtle gotchas
+    "A",      # flake8-builtins = rejects shadowing python's bultins namespace attrs
+    "C4",     # flake8-comprehensions = clean performance
+    "DTZ",    # flake8-datetimez = no naive datetimes (must carry tzinfo)
+    "T10",    # flake8-debugger = no stray breakpoint()/pdb.set_trace() left in code
+    "FA",     # flake8-future-annotations = enforce `from __future__ import annotations`
+    "ISC",    # flake8-implicit-str-concat = catch accidental "a" "b" string concat
+    "ICN",    # flake8-import-conventions = standard aliases (np, pd, etc.)
+    "LOG",    # flake8-logging = correct logging API usage
+    "G",      # flake8-logging-format = lazy %-args, not f-strings, in log calls
+    "T20",    # flake8-print = no leftover print() statements
+    "PT",     # flake8-pytest-style = consistent fixtures/marks/raises in tests
+    "RSE",    # flake8-raise = no redundant parens, e.g. `raise ValueError`
+    "RET",    # flake8-return = flat returns, no else-after-return
+    "SLF",    # flake8-self = no access to another object's _private members
+    "SIM",    # flake8-simplify = collapse redundant if/ternary/with into shortest form
+    "TCH",    # flake8-type-checking = move type-only imports under `if TYPE_CHECKING`
+    "ARG",    # flake8-unused-arguments = flag declared-but-unused params
+    "PTH",    # flake8-use-pathlib = prefer pathlib.Path over os.path
+    "S",      # flake8-bandit = security scan (hardcoded secrets, eval, weak crypto)
+    "PERF",   # Perflint = catch slow loop/allocation patterns
+    "FURB",   # refurb = rewrite to modern built-ins (preview-only)
+    "RUF",    # Ruff-specific rules = Astral's own extra lints
+]
+
+ignore = [
+    "E501",   # Line too long (handled automatically by ruff format)
+    "COM812", # Missing trailing comma (conflicts with ruff format)
+    "ISC001", # Implicit single-line string concatenation (conflicts with ruff format)
+]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+# forced-separate = ["tests"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = true
