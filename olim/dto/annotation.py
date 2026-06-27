@@ -9,10 +9,9 @@ class AnnotationDTO:
     item_id: int
     field_id: int
     source: AnnotationSource
-    option_id: int | None
-    value_num: float | None
-    value_text: str | None
-    value_bool: bool | None
+    # the single saved value, whichever column the field's type uses (an option
+    # id, a number, a string, or a bool). Multi-select yields one row per option.
+    value: int | float | str | bool | None
 
 
 @dataclass(frozen=True, slots=True)
