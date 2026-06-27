@@ -1,6 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
-from olim.models import LabelMode
+from olim.dto.field import FieldDTO
 
 
 @dataclass(frozen=True, slots=True)
@@ -8,13 +8,10 @@ class SchemeDTO:
     id: int
     dataset_id: int
     name: str
-    label_mode: LabelMode
-    allow_extra_label: bool
+    fields: list[FieldDTO] = field(default_factory=list)
 
 
 @dataclass(frozen=True, slots=True)
 class SchemeCreate:
     dataset_id: int
     name: str
-    label_mode: LabelMode = "single"
-    allow_extra_label: bool = False

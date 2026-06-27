@@ -2,13 +2,13 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True, slots=True)
-class LabelDTO:
+class OptionDTO:
     id: int
-    scheme_id: int
+    field_id: int
     name: str
 
 
 @dataclass(frozen=True, slots=True)
-class LabelCreate:
-    scheme_id: int
+class OptionCreate:
+    field_id: int
     name: str
