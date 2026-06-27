@@ -1,10 +1,13 @@
+from typing import Any
+
+
 class APIError(Exception):
     """Base for errors the API maps to an HTTP response via a global handler."""
 
     status_code: int = 400
 
-    def __init__(self, detail: str) -> None:
-        super().__init__(detail)
+    def __init__(self, detail: Any) -> None:
+        super().__init__(str(detail))
         self.detail = detail
 
 
@@ -22,3 +25,29 @@ class SchemeNotFoundError(NotFoundError):
     def __init__(self, scheme_id: int) -> None:
         super().__init__(f"scheme {scheme_id} not found")
         self.scheme_id = scheme_id
+
+
+class ItemNotFoundError(NotFoundError):
+    def __init__(self, item_id: int) -> None:
+        super().__init__(f"item {item_id} not found")
+        self.item_id = item_id
+
+
+class FieldNotFoundError(NotFoundError):
+    def __init__(self, field_id: int) -> None:
+        super().__init__(f"field {field_id} not found")
+        self.field_id = field_id
+
+
+class AnnotationValidationError(APIError):
+    """One or more answers in a batch failed validation. All-or-nothing, so the
+    batch is rejected and every error is reported together."""
+
+    status_code = 422
+
+    def __init__(self, errors: dict[int, str]) -> None:
+        # field_id -> message
+        super().__init__([
+            {"field_id": fid, "error": msg} for fid, msg in errors.items()
+        ])
+        self.errors = errors

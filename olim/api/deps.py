@@ -4,7 +4,12 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from olim.api.services import DatasetService, ItemService, SchemeService
+from olim.api.services import (
+    AnnotationService,
+    DatasetService,
+    ItemService,
+    SchemeService,
+)
 from olim.database import SessionLocal
 
 
@@ -28,6 +33,11 @@ def get_scheme_service(session: SessionDep) -> SchemeService:
     return SchemeService(session)
 
 
+def get_annotation_service(session: SessionDep) -> AnnotationService:
+    return AnnotationService(session)
+
+
 DatasetServiceDep = Annotated[DatasetService, Depends(get_dataset_service)]
 ItemServiceDep = Annotated[ItemService, Depends(get_item_service)]
 SchemeServiceDep = Annotated[SchemeService, Depends(get_scheme_service)]
+AnnotationServiceDep = Annotated[AnnotationService, Depends(get_annotation_service)]
