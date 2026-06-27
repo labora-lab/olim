@@ -9,11 +9,13 @@ from olim.models.labeling import (
     Scheme,
 )
 from olim.models.pipeline import Pipeline, PipelineBlock
+from olim.models.run import BlockRun, PipelineRun, RunStatus
 
 __all__ = [
     "Annotation",
     "AnnotationSource",
     "Base",
+    "BlockRun",
     "DataType",
     "Dataset",
     "Field",
@@ -22,5 +24,7 @@ __all__ = [
     "Option",
     "Pipeline",
     "PipelineBlock",
+    "PipelineRun",
+    "RunStatus",
     "Scheme",
 ]
