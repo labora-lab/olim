@@ -2,7 +2,7 @@
 the queue routing in the run service. No broker, no database — the store writes
 to a tmp dir and the stub runner is pure logic."""
 
-import pickle
+import pickle  # noqa: S403  round-trips worker-written artifacts in tests
 from pathlib import Path
 from typing import get_args
 
@@ -31,7 +31,8 @@ def test_stub_runner_writes_artifact_and_reads_upstream(tmp_path: Path):
 
     assert result.artifact_ref == "runs/1/1.pkl"
     assert result.metrics == {"stub": True}
-    assert pickle.loads(store.get(result.artifact_ref))["config"] == {"k": "v"}
+    loaded = pickle.loads(store.get(result.artifact_ref))  # noqa: S301  trusted test data
+    assert loaded["config"] == {"k": "v"}
 
 
 def test_every_block_type_has_a_runner():

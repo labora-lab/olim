@@ -38,7 +38,11 @@ def make_pipeline(client, block_types=("tfidf", "train_test_split", "logreg")):
         json={
             "name": "s",
             "fields": [
-                {"type": "select", "name": "f", "options": [{"name": "a"}, {"name": "b"}]}
+                {
+                    "type": "select",
+                    "name": "f",
+                    "options": [{"name": "a"}, {"name": "b"}],
+                }
             ],
         },
     ).json()["id"]

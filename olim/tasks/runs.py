@@ -30,12 +30,7 @@ def run_block(run_id: int, position: int) -> None:
             raise
 
         repo.complete_block(
-            block.id,
-            run_id,
-            position,
-            result.artifact_ref,
-            result.metrics,
-            commit=True,
+            block.id, run_id, position, result.artifact_ref, result.metrics, commit=True
         )
 
 

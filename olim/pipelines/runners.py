@@ -1,4 +1,4 @@
-import pickle
+import pickle  # noqa: S403  artifacts are worker-written, never untrusted input
 from dataclasses import dataclass
 from typing import Protocol, get_args
 
