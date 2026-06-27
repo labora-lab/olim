@@ -1,8 +1,8 @@
 from olim.dto.annotation import AnnotationCreate, AnnotationDTO
 from olim.dto.dataset import DatasetCreate, DatasetDTO
-from olim.dto.field import FieldCreate, FieldDTO
+from olim.dto.field import FieldDTO
 from olim.dto.item import ItemCreate, ItemDTO
-from olim.dto.option import OptionCreate, OptionDTO
+from olim.dto.option import OptionDTO
 from olim.dto.scheme import SchemeCreate, SchemeDTO
 
 __all__ = [
@@ -10,11 +10,9 @@ __all__ = [
     "AnnotationDTO",
     "DatasetCreate",
     "DatasetDTO",
-    "FieldCreate",
     "FieldDTO",
     "ItemCreate",
     "ItemDTO",
-    "OptionCreate",
     "OptionDTO",
     "SchemeCreate",
     "SchemeDTO",

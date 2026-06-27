@@ -20,19 +20,6 @@ class FieldDTO:
 
 
 @dataclass(frozen=True, slots=True)
-class FieldCreate:
-    scheme_id: int
-    name: str
-    type: FieldType
-    min: float | None = None
-    max: float | None = None
-    step: float | None = None
-    multi: bool = False
-    allow_other: bool = False
-    nullable: bool = False
-
-
-@dataclass(frozen=True, slots=True)
 class FieldSpec:
     """A field plus its option names, for creating a scheme in one shot.
     scheme_id is filled in by the repository once the scheme exists."""
