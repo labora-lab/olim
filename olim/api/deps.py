@@ -8,6 +8,7 @@ from olim.api.services import (
     AnnotationService,
     DatasetService,
     ItemService,
+    PipelineService,
     SchemeService,
 )
 from olim.database import SessionLocal
@@ -37,7 +38,12 @@ def get_annotation_service(session: SessionDep) -> AnnotationService:
     return AnnotationService(session)
 
 
+def get_pipeline_service(session: SessionDep) -> PipelineService:
+    return PipelineService(session)
+
+
 DatasetServiceDep = Annotated[DatasetService, Depends(get_dataset_service)]
 ItemServiceDep = Annotated[ItemService, Depends(get_item_service)]
 SchemeServiceDep = Annotated[SchemeService, Depends(get_scheme_service)]
 AnnotationServiceDep = Annotated[AnnotationService, Depends(get_annotation_service)]
+PipelineServiceDep = Annotated[PipelineService, Depends(get_pipeline_service)]

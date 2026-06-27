@@ -39,6 +39,26 @@ class FieldNotFoundError(NotFoundError):
         self.field_id = field_id
 
 
+class PipelineNotFoundError(NotFoundError):
+    def __init__(self, pipeline_id: int) -> None:
+        super().__init__(f"pipeline {pipeline_id} not found")
+        self.pipeline_id = pipeline_id
+
+
+class BlockNotApplicableError(APIError):
+    """A block can't be appended: its required inputs aren't available yet at
+    this point in the pipeline."""
+
+    status_code = 422
+
+    def __init__(self, block_type: str, missing: list[str]) -> None:
+        super().__init__(
+            f"block {block_type!r} needs {missing} which are not available here"
+        )
+        self.block_type = block_type
+        self.missing = missing
+
+
 class AnnotationValidationError(APIError):
     """One or more answers in a batch failed validation. All-or-nothing, so the
     batch is rejected and every error is reported together."""
