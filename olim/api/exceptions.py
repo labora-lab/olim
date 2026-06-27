@@ -45,6 +45,18 @@ class PipelineNotFoundError(NotFoundError):
         self.pipeline_id = pipeline_id
 
 
+class RunNotFoundError(NotFoundError):
+    def __init__(self, run_id: int) -> None:
+        super().__init__(f"run {run_id} not found")
+        self.run_id = run_id
+
+
+class PipelineNotRunnableError(APIError):
+    """A pipeline can't be run as composed (e.g. it has no blocks)."""
+
+    status_code = 422
+
+
 class BlockNotApplicableError(APIError):
     """A block can't be appended: its required inputs aren't available yet at
     this point in the pipeline."""

@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 
-from olim.api.deps import PipelineServiceDep
+from olim.api.deps import PipelineRunServiceDep, PipelineServiceDep
 from olim.api.schemas.pipeline import BlockIn, CandidateOut, PipelineCreateIn
-from olim.dto import PipelineDTO
+from olim.dto import PipelineDTO, PipelineRunDTO
 
 router = APIRouter(prefix="/pipelines", tags=["pipelines"])
 
@@ -39,3 +39,13 @@ def append_block(
     pipeline_id: int, payload: BlockIn, service: PipelineServiceDep
 ) -> PipelineDTO:
     return service.append_block(pipeline_id, payload)
+
+
+@router.post("/{pipeline_id}/runs", status_code=201)
+def start_run(pipeline_id: int, service: PipelineRunServiceDep) -> PipelineRunDTO:
+    return service.create(pipeline_id)
+
+
+@router.get("/{pipeline_id}/runs")
+def list_runs(pipeline_id: int, service: PipelineRunServiceDep) -> list[PipelineRunDTO]:
+    return service.list_by_pipeline(pipeline_id)
