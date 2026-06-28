@@ -2,3 +2,6 @@
 .git
 __pycache__
 *.pyc
+web-client/node_modules
+web-client/build
+web-client/.react-router

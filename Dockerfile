@@ -1,3 +1,15 @@
+FROM oven/bun:1-alpine AS web
+WORKDIR /web
+
+RUN apk add --no-cache nodejs
+
+COPY web-client/package.json web-client/bun.lock* ./
+RUN bun install --frozen-lockfile
+
+COPY web-client/ .
+
+RUN bun run build
+
 FROM python:3.14-slim-trixie
 COPY --from=ghcr.io/astral-sh/uv:0.11 /uv /uvx /bin/
 
@@ -12,6 +24,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
+
+COPY --from=web /web/build/client/ /app/web-client/
 
 ENV PATH="/app/.venv/bin:$PATH"
 

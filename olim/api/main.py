@@ -18,3 +18,5 @@ app.include_router(schemes.router)
 app.include_router(annotations.router)
 app.include_router(pipelines.router)
 app.include_router(runs.router)
+
+app.frontend("/", directory="web-client", check_dir=False)
