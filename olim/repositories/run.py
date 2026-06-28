@@ -103,8 +103,12 @@ class PipelineRunRepository(Repository[PipelineRun, PipelineRunDTO, PipelineRunC
             finished_at=func.now(),
         )
         if self._is_last_position(run_id, position):
+            # never resurrect a run the errback already marked failed.
             self.update_where(
-                PipelineRun.id == run_id, status="succeeded", finished_at=func.now()
+                PipelineRun.id == run_id,
+                PipelineRun.status != "failed",
+                status="succeeded",
+                finished_at=func.now(),
             )
 
     @writes

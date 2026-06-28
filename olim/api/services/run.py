@@ -7,7 +7,7 @@ from olim.api.exceptions import (
     RunNotFoundError,
 )
 from olim.dto import PipelineRunDTO
-from olim.pipelines import BlockType, kind_for
+from olim.pipelines import BlockType, is_runnable, kind_for
 from olim.repositories import PipelineRepository, PipelineRunRepository
 from olim.worker import app as celery_app
 
@@ -32,6 +32,15 @@ class PipelineRunService:
             raise PipelineNotFoundError(pipeline_id)
         if not pipeline.blocks:
             raise PipelineNotRunnableError(f"pipeline {pipeline_id} has no blocks")
+        # composition allows any catalog block, but a run can't start unless every
+        # block has a real runner — reject here rather than fail mid-chain.
+        unrunnable = sorted({
+            b.type for b in pipeline.blocks if not is_runnable(b.type)
+        })
+        if unrunnable:
+            raise PipelineNotRunnableError(
+                f"pipeline {pipeline_id} has blocks with no runner yet: {unrunnable}"
+            )
 
         run_id = self.repo.create_run(pipeline, commit=True)
 

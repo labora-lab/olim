@@ -19,6 +19,7 @@ from olim.pipelines.runners import (
     BlockRunner,
     NoRunnerError,
     RunResult,
+    is_runnable,
     runner_for,
 )
 
@@ -40,6 +41,7 @@ __all__ = [
     "candidates",
     "get_store",
     "is_applicable",
+    "is_runnable",
     "kind_for",
     "load_training_data",
     "runner_for",

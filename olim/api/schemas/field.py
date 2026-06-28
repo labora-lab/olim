@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class OptionIn(BaseModel):
@@ -17,6 +17,13 @@ class SelectFieldIn(_FieldInBase):
     multi: bool = False
     allow_other: bool = False
     options: list[OptionIn] = []
+
+    @model_validator(mode="after")
+    def _require_options(self) -> SelectFieldIn:
+        # a select with no fixed options is only usable if it accepts free text.
+        if not self.options and not self.allow_other:
+            raise ValueError("a select field needs at least one option")
+        return self
 
 
 class NumericFieldIn(_FieldInBase):

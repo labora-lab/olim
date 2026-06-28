@@ -26,3 +26,9 @@ def runner_for(block_type: BlockType) -> BlockRunner:
     if runner is None:
         raise NoRunnerError(f"block {block_type!r} is not executable yet")
     return runner
+
+
+def is_runnable(block_type: BlockType) -> bool:
+    """Whether a real runner exists for this block type. The API uses this to
+    reject building a pipeline that could never execute."""
+    return block_type in _RUNNERS

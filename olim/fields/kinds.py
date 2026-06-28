@@ -70,8 +70,9 @@ class NumericKind(FieldKind):
             raise FieldValidationError(f"value below min {field.min}")
         if field.max is not None and v > field.max:
             raise FieldValidationError(f"value above max {field.max}")
-        if field.step is not None and field.min is not None:
-            steps = (v - field.min) / field.step
+        if field.step is not None:
+            anchor = field.min if field.min is not None else 0.0
+            steps = (v - anchor) / field.step
             if abs(steps - round(steps)) > 1e-9:
                 raise FieldValidationError(f"value not a multiple of step {field.step}")
 

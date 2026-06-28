@@ -1,6 +1,6 @@
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class AnswerIn(BaseModel):
@@ -15,5 +15,5 @@ class AnswerIn(BaseModel):
 
 class AnnotateIn(BaseModel):
     # A batch of answers for one item. May be partial (some fields) or a single
-    # answer (a one-element list) — same path either way.
-    answers: list[AnswerIn]
+    # answer (a one-element list) — same path either way, but never empty.
+    answers: Annotated[list[AnswerIn], Field(min_length=1)]

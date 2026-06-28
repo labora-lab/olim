@@ -40,6 +40,14 @@ class BlockRunner(ABC):
     def load(self, ctx: BlockContext) -> dict:
         """The accumulator from the prior block, or a fresh one at position 0."""
         if ctx.upstream_ref is None:
+            if ctx.position > 0:
+                # the prior block produced no artifact (e.g. an eval block) but
+                # this one needs the accumulator: a None ref past position 0 is a
+                # broken chain, not a fresh start. Fail loudly, don't reset to {}.
+                raise ValueError(
+                    f"block at position {ctx.position} has no upstream accumulator;"
+                    " the previous block produced no artifact"
+                )
             return {}
         return pickle.loads(ctx.store.get(ctx.upstream_ref))  # noqa: S301  trusted
 
