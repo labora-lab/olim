@@ -4,7 +4,7 @@ from repositron import Repository, on, writes
 from sqlalchemy import func, select, update
 
 from olim.dto import BlockRunDTO, PipelineDTO, PipelineRunCreate, PipelineRunDTO
-from olim.models import BlockRun, PipelineRun
+from olim.models import BlockRun, Pipeline, PipelineRun
 
 
 class PipelineRunRepository(Repository[PipelineRun, PipelineRunDTO, PipelineRunCreate]):
@@ -59,10 +59,15 @@ class PipelineRunRepository(Repository[PipelineRun, PipelineRunDTO, PipelineRunC
             )
         ).scalar_one()
 
-    # --- worker-side transitions: one @writes per unit of work the task does ---
-    # Each commits atomically (the task passes commit=True). BlockRun updates use
-    # an explicit update(BlockRun) since update_where targets the repo's own model
-    # (PipelineRun); the run-level transitions below use update_where.
+    def training_ids(self, run_id: int) -> tuple[int, int]:
+        """The (dataset_id, scheme_id) for a run, via its pipeline — what the
+        runners need to load the labeled training set."""
+        row = self.session.execute(
+            select(Pipeline.dataset_id, Pipeline.scheme_id)
+            .join(PipelineRun, PipelineRun.pipeline_id == Pipeline.id)
+            .where(PipelineRun.id == run_id)
+        ).one()
+        return (row.dataset_id, row.scheme_id)
 
     @writes
     def start_block(

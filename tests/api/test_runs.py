@@ -1,5 +1,6 @@
 """End-to-end HTTP tests for pipeline execution. Celery runs eager (inline, no
-broker) so the chain executes within the test; artifacts go to a tmp dir.
+broker) so the chain executes within the test; artifacts go to a tmp dir, and
+the real sklearn runners train on seeded labeled data.
 
 The DB session is the rolled-back test session (see conftest)."""
 
@@ -9,6 +10,8 @@ import pytest
 
 from olim import pipelines
 from olim.worker import app as celery_app
+
+_REAL_PATH = ("tfidf", "train_test_split", "logreg", "classification_metrics")
 
 
 @pytest.fixture
@@ -31,23 +34,44 @@ def eager(tmp_path, monkeypatch, session):
     celery_app.conf.task_eager_propagates = False
 
 
-def make_pipeline(client, block_types=("tfidf", "train_test_split", "logreg")):
+def make_labeled_pipeline(client, block_types=_REAL_PATH):
+    """A dataset with two trivially-separable classes, a select scheme, a label
+    on every item, and a pipeline of the given blocks."""
     dataset_id = client.post("/datasets", json={"name": "d"}).json()["id"]
-    scheme_id = client.post(
+
+    texts = [("good " * 3) if i % 2 == 0 else ("bad " * 3) for i in range(20)]
+    item_ids = client.post(
+        f"/items?dataset_id={dataset_id}", json={"contents": texts}
+    ).json()
+    item_ids = [it["id"] for it in item_ids]
+
+    scheme = client.post(
         f"/schemes?dataset_id={dataset_id}",
         json={
             "name": "s",
             "fields": [
                 {
                     "type": "select",
-                    "name": "f",
-                    "options": [{"name": "a"}, {"name": "b"}],
+                    "name": "label",
+                    "options": [{"name": "good"}, {"name": "bad"}],
                 }
             ],
         },
-    ).json()["id"]
+    ).json()
+    field = scheme["fields"][0]
+    good, bad = (o["id"] for o in field["options"])
+
+    for i, item_id in enumerate(item_ids):
+        opt = good if i % 2 == 0 else bad
+        r = client.post(
+            f"/annotations?item_id={item_id}",
+            json={"answers": [{"field_id": field["id"], "value": opt}]},
+        )
+        assert r.status_code == 201, r.text
+
     pid = client.post(
-        f"/pipelines?dataset_id={dataset_id}&scheme_id={scheme_id}", json={"name": "p"}
+        f"/pipelines?dataset_id={dataset_id}&scheme_id={scheme['id']}",
+        json={"name": "p"},
     ).json()["id"]
     for t in block_types:
         r = client.post(f"/pipelines/{pid}/blocks", json={"type": t})
@@ -57,27 +81,31 @@ def make_pipeline(client, block_types=("tfidf", "train_test_split", "logreg")):
 
 class TestRun:
     def test_full_run_succeeds_and_records_each_block(self, client, eager):
-        pid = make_pipeline(client)
+        pid = make_labeled_pipeline(client)
         r = client.post(f"/pipelines/{pid}/runs")
         assert r.status_code == 201, r.text
         run = r.json()
         assert run["status"] == "succeeded"
 
         blocks = run["blocks"]
-        assert [b["position"] for b in blocks] == [0, 1, 2]
+        assert [b["position"] for b in blocks] == [0, 1, 2, 3]
         assert all(b["status"] == "succeeded" for b in blocks)
-        assert all(b["artifact_ref"] for b in blocks)
-        assert all(b["metrics"] == {"stub": True} for b in blocks)
+        # the eval block produces only metrics (no heavy artifact)
+        assert all(b["artifact_ref"] for b in blocks[:3])
+        assert blocks[3]["artifact_ref"] is None
+        # real metrics: trivially-separable classes -> near-perfect accuracy
+        assert blocks[3]["metrics"]["accuracy"] >= 0.99
+        assert "f1_macro" in blocks[3]["metrics"]
 
     def test_get_run_returns_nested_block_runs(self, client, eager):
-        pid = make_pipeline(client)
+        pid = make_labeled_pipeline(client)
         run_id = client.post(f"/pipelines/{pid}/runs").json()["id"]
         r = client.get(f"/runs/{run_id}")
         assert r.status_code == 200
-        assert len(r.json()["blocks"]) == 3
+        assert len(r.json()["blocks"]) == 4
 
     def test_run_history_newest_first(self, client, eager):
-        pid = make_pipeline(client)
+        pid = make_labeled_pipeline(client)
         first = client.post(f"/pipelines/{pid}/runs").json()["id"]
         second = client.post(f"/pipelines/{pid}/runs").json()["id"]
         r = client.get(f"/pipelines/{pid}/runs")
