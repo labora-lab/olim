@@ -17,7 +17,6 @@ def _bundle():
         texts=texts,
         labels=labels,
         classes=[10, 20],  # class idx -> option_id
-        n_classes=2,
     )
 
 

@@ -48,7 +48,6 @@ def test_bundle_is_row_aligned_and_drops_unlabeled(session):
 
     assert bundle.item_ids == [it.id for it in items[:3]]  # item 3 dropped
     assert bundle.texts == ["text 0", "text 1", "text 2"]
-    assert bundle.n_classes == 2
     assert bundle.classes == sorted([pos.id, neg.id])
     # labels are class indices into `classes`, row-aligned to texts/item_ids
     expected = [bundle.classes.index(o.id) for o in (pos, neg, pos)]

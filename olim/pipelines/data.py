@@ -20,8 +20,7 @@ class DataBundle:
     item_ids: list[int]
     texts: list[str]
     labels: list[int]
-    classes: list[int]  # class idx -> option_id
-    n_classes: int
+    classes: list[int]  # class idx -> option_id; n_classes is len(classes)
 
 
 def load_training_data(session: Session, dataset_id: int, scheme_id: int) -> DataBundle:
@@ -65,10 +64,4 @@ def load_training_data(session: Session, dataset_id: int, scheme_id: int) -> Dat
             texts.append(item.content)
             labels.append(class_idx[label_by_item[item.id]])
 
-    return DataBundle(
-        item_ids=item_ids,
-        texts=texts,
-        labels=labels,
-        classes=classes,
-        n_classes=len(classes),
-    )
+    return DataBundle(item_ids=item_ids, texts=texts, labels=labels, classes=classes)

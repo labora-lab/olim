@@ -7,17 +7,21 @@ from olim.repositories import PipelineRunRepository
 
 @shared_task(name="run_block")
 def run_block(run_id: int, position: int) -> None:
-    """Execute one block of a run: load its snapshot and the labeled data, run
-    its runner over the upstream artifact, persist the result. Re-raises on
-    failure so the chain halts and its errback marks the run failed."""
+    """Execute one block of a run: load its snapshot, run its runner over the
+    upstream artifact, persist the result. Re-raises on failure so the chain
+    halts and its errback marks the run failed."""
     with worker_session() as session:
         repo = PipelineRunRepository(session)
         block = repo.get_block_run(run_id, position)
         upstream_ref = repo.upstream_ref(run_id, position)
         repo.start_block(block.id, run_id, is_first=position == 0, commit=True)
 
-        dataset_id, scheme_id = repo.training_ids(run_id)
-        data = load_training_data(session, dataset_id, scheme_id)
+        # only the first block (the vectorizer) reads the labeled set; later
+        # blocks work off the upstream accumulator, so don't re-query it.
+        data = None
+        if position == 0:
+            dataset_id, scheme_id = repo.training_ids(run_id)
+            data = load_training_data(session, dataset_id, scheme_id)
         ctx = BlockContext(
             config=block.config,
             upstream_ref=upstream_ref,
