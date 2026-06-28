@@ -54,6 +54,23 @@ def test_bundle_is_row_aligned_and_drops_unlabeled(session):
     assert bundle.labels == expected
 
 
+def test_llm_label_does_not_shadow_human_label(session):
+    # item 1 is human-labeled neg; add a contradicting llm pos on it. Training
+    # must keep the human neg, regardless of row order.
+    ds, scheme, items, (pos, neg) = _labeled_dataset(session)
+    target = next(f for f in scheme.fields if f.type == "select")
+    session.add(
+        Annotation(
+            item_id=items[1].id, field_id=target.id, option_id=pos.id, source="llm"
+        )
+    )
+    session.flush()
+
+    bundle = load_training_data(session, ds.id, scheme.id)
+    row = bundle.item_ids.index(items[1].id)
+    assert bundle.labels[row] == bundle.classes.index(neg.id)
+
+
 def test_no_select_field_raises(session):
     ds = Dataset(name="d")
     session.add(ds)

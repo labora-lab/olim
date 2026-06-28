@@ -38,14 +38,19 @@ def load_training_data(session: Session, dataset_id: int, scheme_id: int) -> Dat
     scheme = SchemeRepository(session).get(scheme_id)
     if scheme is None:
         raise NoTargetFieldError(f"scheme {scheme_id} not found")
-    target = next((f for f in scheme.fields if f.type == "select"), None)
+    # single-label classification needs one label per item, so the target must be
+    # a single (non-multi) select. Multi-select fields yield several rows per item.
+    target = next(
+        (f for f in scheme.fields if f.type == "select" and not f.multi), None
+    )
     if target is None:
-        raise NoTargetFieldError(f"scheme {scheme_id} has no select field")
+        raise NoTargetFieldError(f"scheme {scheme_id} has no single-select field")
 
-    # item_id -> option_id (first annotation per item; the value of a select
-    # annotation is its option_id).
+    # item_id -> option_id. Train on human labels only; an item the LLM has also
+    # annotated must not have its ground-truth label shadowed by a machine guess.
+    # A single-select target has at most one human row per item.
     label_by_item: dict[int, int] = {}
-    for ann in AnnotationRepository(session).list(field_id=target.id):
+    for ann in AnnotationRepository(session).list(field_id=target.id, source="human"):
         if ann.item_id not in label_by_item and isinstance(ann.value, int):
             label_by_item[ann.item_id] = ann.value
 
