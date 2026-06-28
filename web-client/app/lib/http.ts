@@ -1,5 +1,7 @@
 import type { HTTPValidationError } from "~/types/common";
 
+const BASE_URL = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+
 type Query = Record<string, string | number | boolean | undefined>;
 
 export class HttpError extends Error {
@@ -18,7 +20,7 @@ function url(path: string, query?: Query): string {
     if (v !== undefined) params.set(k, String(v));
   }
   const qs = params.toString();
-  return qs ? `${path}?${qs}` : path;
+  return `${BASE_URL}${path}${qs ? `?${qs}` : ""}`;
 }
 
 async function request<T>(
