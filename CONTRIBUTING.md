@@ -19,8 +19,12 @@ Python **3.14** (see `.python-version`). Lazy annotations are native (PEP 649) â
 uv sync                    # install deps into .venv
 docker compose up -d db    # Postgres for the app and the tests
 uv run alembic upgrade head
-prek install               # setup pre-commit hooks 
+prek install               # setup pre-commit hooks
 ```
+
+The full stack (API + Postgres + Redis + Celery worker) comes up with
+`docker compose up -d --build`. For local app work, `docker compose up -d db` is enough;
+add `redis` and run a worker when you need to execute pipelines (see the README).
 
 ## Day-to-day
 
@@ -53,8 +57,17 @@ uv run pytest -m integration   # everything that needs Postgres
 
 ## Migrations
 
-During early development there's no production data to preserve, so the preferred flow
-when models change is to recreate the init migration from scratch:
+When you change models, generate an incremental revision and apply it:
+
+```sh
+uv run alembic revision --autogenerate -m "describe the change"
+uv run alembic upgrade head
+```
+
+Review the generated file before committing - autogenerate is a draft, not gospel.
+
+If migrations get tangled during early development (there's no production data to
+preserve yet), reset from scratch instead:
 
 ```sh
 docker compose down --volumes
