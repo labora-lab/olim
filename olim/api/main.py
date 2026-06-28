@@ -1,10 +1,19 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from olim import config
 from olim.api.exceptions import APIError
 from olim.api.routers import annotations, datasets, items, pipelines, runs, schemes
 
 app = FastAPI(title="OLIM", description="Open Labeller for Interative Machine Learning")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=config.CORS_ORIGINS,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.exception_handler(APIError)
