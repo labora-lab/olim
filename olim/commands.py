@@ -12,8 +12,19 @@ def add_label(**args) -> dict[str, str]:
     entry_id = args.get("entry_id")
     label_id = args.get("label_id")
     value = args.get("value", "")
-    # TODO: handle the typecheck correctly
-    label_obj = get_label(label_id)  # type: ignore [label_id as str | Unknown is safe]
+
+    if entry_id is None:
+        return {
+            "type": "error",
+            "text": _("No entry ID passed"),
+        }
+    if label_id is None:
+        return {
+            "type": "error",
+            "text": _("No label passed"),
+        }
+
+    label_obj = get_label(label_id)
     if label_obj is None:
         raise Exception("Label not found")
 
@@ -35,21 +46,10 @@ def add_label(**args) -> dict[str, str]:
     else:
         msg = f"{label}: {value} for the entry {entry_id}"
 
-    if entry_id is None:
-        return {
-            "type": "error",
-            "text": _("No entry ID passed"),
-        }
-    elif label is None:
-        return {
-            "type": "error",
-            "text": _("No label passed"),
-        }
-    else:
-        return {
-            "type": "OK",
-            "text": msg,
-        }
+    return {
+        "type": "OK",
+        "text": msg,
+    }
 
 
 def manage_label(**args) -> dict[str, str] | None:

@@ -237,7 +237,7 @@ def _get_instance() -> FlexibleTextEntry:
     return _instance
 
 
-def render(entry_id: str, dataset_id: int, **pars) -> str:
+def render(entry_id: str, dataset_id: int, **pars) -> str | dict:
     return _get_instance().render(entry_id, dataset_id=dataset_id, **pars)
 
 
