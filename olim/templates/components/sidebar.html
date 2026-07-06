@@ -16,11 +16,11 @@
                 <div class="relative">
                     <button id="project-dropdown-btn"
                         class="w-full flex items-center justify-between p-2 text-gray-300 rounded-lg hover:bg-gray-700 group">
-                        <div class="flex items-center">
+                        <div class="flex items-center min-w-0 flex-1">
                             <i class="bi bi-folder text-gray-400 group-hover:text-white sidebar-item-icon"></i>
-                            <span class="ms-3 truncate sidebar-item-text">{{ project_name }}</span>
+                            <span class="ms-3 truncate sidebar-item-text" title="{{ project_name }}">{{ project_name }}</span>
                         </div>
-                        <i class="bi bi-chevron-down text-gray-400 group-hover:text-white sidebar-item-text"></i>
+                        <i class="bi bi-chevron-down text-gray-400 group-hover:text-white sidebar-item-text shrink-0"></i>
                     </button>
                     <div id="project-dropdown"
                         class="hidden absolute top-full left-0 right-0 mt-1 bg-gray-700 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
