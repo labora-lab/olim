@@ -39,12 +39,25 @@ def _build_label_options(settings: dict) -> list[tuple]:
     return result or LABEL_CONFIG
 
 
-def render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry, _preset_settings=None, **kwargs) -> str:
+def render(
+    label,
+    entry,
+    labels_values,
+    hidden_labels,
+    show_hidden,
+    valid_entry,
+    _preset_settings=None,
+    **kwargs,
+) -> str:
     settings = _resolve_settings(label, _preset_settings)
     label_options = _build_label_options(settings)
     single_select = settings.get("single_select", False)
     items_per_line = settings.get("items_per_line", 2)
-    helper_map = {opt.get("value", ""): opt.get("helper", "") for opt in settings.get("options", []) if isinstance(opt, dict)}
+    helper_map = {
+        opt.get("value", ""): opt.get("helper", "")
+        for opt in settings.get("options", [])
+        if isinstance(opt, dict)
+    }
 
     selected_values = []
     current_value = labels_values.get(label.id)

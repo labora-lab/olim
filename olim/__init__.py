@@ -103,7 +103,7 @@ from .utils.entry import have_hidden  # noqa
 # Register API blueprint
 app.register_blueprint(api_rest.api)
 
-from .functions import gdrive_pdf_url, is_url
+from .functions import gdrive_pdf_url, is_url  # noqa
 
 app.jinja_env.filters["gdrive_pdf_url"] = gdrive_pdf_url
 app.jinja_env.filters["is_url"] = is_url

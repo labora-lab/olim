@@ -38,7 +38,9 @@ class FlexibleTextEntry(EntryTypeBase):
             raise ValueError("dataset_id required for flexible_text entries")
 
         query = {"bool": {"must": [{"terms": {"_id": [entry_id]}}]}}
-        res = es_search(query=query, index=ES_INDEX.format(dataset_id=dataset_id))["hits"]["hits"][0]
+        res = es_search(query=query, index=ES_INDEX.format(dataset_id=dataset_id))["hits"]["hits"][
+            0
+        ]
 
         column_config = kwargs.pop("column_config", None)
 
@@ -55,7 +57,9 @@ class FlexibleTextEntry(EntryTypeBase):
             }
 
         tabbed_cols = [c for c in column_config.get("extra_columns", []) if c.get("as_tab")]
-        content_html = render_template(self.template_path, res=res, column_config=column_config, **kwargs)
+        content_html = render_template(
+            self.template_path, res=res, column_config=column_config, **kwargs
+        )
 
         if tabbed_cols:
             tab_nav_html = render_template(
@@ -73,7 +77,9 @@ class FlexibleTextEntry(EntryTypeBase):
             raise ValueError("dataset_id required for flexible_text entries")
 
         query = {"bool": {"must": [{"terms": {"_id": [entry_id]}}]}}
-        res = es_search(query=query, index=ES_INDEX.format(dataset_id=dataset_id))["hits"]["hits"][0]
+        res = es_search(query=query, index=ES_INDEX.format(dataset_id=dataset_id))["hits"]["hits"][
+            0
+        ]
         return pd.DataFrame({"entry_id": [entry_id], "text": res["_source"]["text"]})
 
     def search(
@@ -239,5 +245,7 @@ def extract_texts(entry_id: str, dataset_id: int, **pars) -> pd.DataFrame:
     return _get_instance().extract_texts(entry_id, dataset_id=dataset_id, **pars)
 
 
-def generate_upload_batches(filename: str, id_column: str, text_column: str, **pars):
+def generate_upload_batches(
+    filename: str, id_column: str, text_column: str, **pars
+) -> Generator[list[dict[str, Any]]]:
     return _get_instance().generate_upload_batches(filename, id_column, text_column, **pars)

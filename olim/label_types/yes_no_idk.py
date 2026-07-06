@@ -6,7 +6,13 @@ LABEL_TYPE = "yes_no_idk"
 
 PRESET_SETTINGS = {
     "options": [
-        {"value": "yes", "type": "icon", "icon": "check-circle-fill", "color": "green", "helper": ""},
+        {
+            "value": "yes",
+            "type": "icon",
+            "icon": "check-circle-fill",
+            "color": "green",
+            "helper": "",
+        },
         {"value": "no", "type": "icon", "icon": "x-circle-fill", "color": "red", "helper": ""},
         {"value": "don't know", "type": "text", "icon": "?", "color": "orange", "helper": ""},
     ],
@@ -20,7 +26,9 @@ LABEL_CONFIG = [(o["value"], o["type"], o["icon"], o["color"]) for o in PRESET_S
 def render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry, **kwargs) -> str:
     if not (label.label_settings and label.label_settings.get("options")):
         kwargs["_preset_settings"] = PRESET_SETTINGS
-    return multiple_choice.render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry, **kwargs)
+    return multiple_choice.render(
+        label, entry, labels_values, hidden_labels, show_hidden, valid_entry, **kwargs
+    )
 
 
 def get_label_options(label=None) -> list:

@@ -102,7 +102,7 @@ def update_highlights(**args) -> dict[str, str]:
             "text": _("Invalid data"),
         }
 
-    if not isinstance(parsed, (list, dict)):
+    if not isinstance(parsed, list | dict):
         return {
             "type": "error",
             "text": _("Invalid highlight data format"),

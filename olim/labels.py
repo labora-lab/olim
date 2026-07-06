@@ -87,7 +87,13 @@ def create_label(project_id: int) -> ...:
     elif label_type:
         label_settings = get_preset_settings(label_type)
 
-    label = new_label(label_name, session["user_id"], project_id, label_type=label_type, label_settings=label_settings)
+    label = new_label(
+        label_name,
+        session["user_id"],
+        project_id,
+        label_type=label_type,
+        label_settings=label_settings,
+    )
     flash(
         _("Label {label_name} successfully created").format(label_name=label.name),
         category="success",

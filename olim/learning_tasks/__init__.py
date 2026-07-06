@@ -386,7 +386,9 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
         try:
             delta = state.handle(action, payload)
         except Exception as e:
-            app.logger.error(f"Error in task {task_id} state {state_name} handle: {e}", exc_info=True)
+            app.logger.error(
+                f"Error in task {task_id} state {state_name} handle: {e}", exc_info=True
+            )
             err_msg = _("An error occurred while processing your request. Please try again.")
             if is_htmx:
                 try:
@@ -450,7 +452,9 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
         try:
             body = state.render()
         except Exception as e:
-            app.logger.error(f"Error rendering task {task_id} state {state_name}: {e}", exc_info=True)
+            app.logger.error(
+                f"Error rendering task {task_id} state {state_name}: {e}", exc_info=True
+            )
             err_msg = _("An error occurred while loading the content. Please refresh the page.")
             resp = make_response("", 200)
             resp.headers["HX-Reswap"] = "none"

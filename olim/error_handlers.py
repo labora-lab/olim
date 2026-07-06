@@ -145,7 +145,9 @@ def internal_server_error(error) -> ...:
         msg = _("An unexpected error occurred. Please try again.")
         resp = make_response("", 200)
         resp.headers["HX-Reswap"] = "none"
-        resp.headers["HX-Trigger"] = json.dumps({"showFlash": [{"message": msg, "category": "error"}]})
+        resp.headers["HX-Trigger"] = json.dumps(
+            {"showFlash": [{"message": msg, "category": "error"}]}
+        )
         return resp
     return render_template(
         "error.html",
@@ -222,7 +224,9 @@ def handle_exception(error) -> ...:
         msg = _("An unexpected error occurred. Please try again.")
         resp = make_response("", 200)
         resp.headers["HX-Reswap"] = "none"
-        resp.headers["HX-Trigger"] = json.dumps({"showFlash": [{"message": msg, "category": "error"}]})
+        resp.headers["HX-Trigger"] = json.dumps(
+            {"showFlash": [{"message": msg, "category": "error"}]}
+        )
         return resp
 
     return render_template(

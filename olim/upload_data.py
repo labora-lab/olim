@@ -209,7 +209,13 @@ def upload_data(project_id: int | None = None) -> ...:
 
         # Create new dataset
         try:
-            dataset = new_dataset(dataset_name, session["user_id"], sep=sep, encoding=encoding, column_config=column_config)
+            dataset = new_dataset(
+                dataset_name,
+                session["user_id"],
+                sep=sep,
+                encoding=encoding,
+                column_config=column_config,
+            )
 
             # Link to selected projects
             for project_id_str in projects:

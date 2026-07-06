@@ -1,7 +1,7 @@
 import secrets
 
 from elasticsearch import Elasticsearch
-from flask import abort, flash, redirect, render_template, request, session, url_for
+from flask import Response, abort, flash, redirect, render_template, request, session, url_for
 from flask_babel import _
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -220,7 +220,7 @@ def add_projects() -> ...:
 
 
 @app.after_request
-def rollback_on_error(response):
+def rollback_on_error(response: Response) -> Response:
     """Roll back any aborted transaction before flask-session saves.
 
     PostgreSQL marks a transaction as aborted on any exception. If left open,

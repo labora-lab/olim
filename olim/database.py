@@ -749,7 +749,9 @@ def get_project(idt: int | str, by: str = "id") -> Project | None:
 
 # region Dataset Management
 # ------------------------
-def new_dataset(dataset_name, user_id, learner_key=None, sep=",", encoding="utf-8", column_config=None) -> Dataset:
+def new_dataset(
+    dataset_name, user_id, learner_key=None, sep=",", encoding="utf-8", column_config=None
+) -> Dataset:
     """Create new dataset.
 
     Args:

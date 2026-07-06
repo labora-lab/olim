@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Any
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances_argmin_min as dist_argmin
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 from olim import db
@@ -246,9 +247,29 @@ class TrainingOrchestrator:
         alpha = float(overrides.get("alpha", training_config.get("alpha", global_alpha)))
 
         all_items: list[tuple[str, int]] = list(train_data.values())
-        split = max(1, int(len(all_items) * split_ratio))
-        train_list = all_items[:split]
-        val_list = all_items[split:]
+        item_labels = [label for _, label in all_items]
+        # Seed with the model id so the split is deterministic across
+        # retrains of the same model, without sharing an identical split
+        # pattern across different models.
+        split_seed = model.id
+        try:
+            # Stratify so every class is represented in both splits in
+            # roughly the same proportion instead of a positional slice,
+            # which can leave a rare class entirely out of training.
+            train_list, val_list = train_test_split(
+                all_items,
+                test_size=1 - split_ratio,
+                random_state=split_seed,
+                stratify=item_labels,
+            )
+        except ValueError:
+            # A class with too few samples to stratify (e.g. a single
+            # example); fall back to a plain shuffled split.
+            train_list, val_list = train_test_split(
+                all_items,
+                test_size=1 - split_ratio,
+                random_state=split_seed,
+            )
 
         model_cls = AVAILABLE_MODELS.get(model.algorithm, TfidfXGBoostClassifier)
         inner = model_cls(**{**model_config, "n_classes": n_classes})
