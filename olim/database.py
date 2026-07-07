@@ -514,12 +514,16 @@ def get_users() -> list[User]:
     Returns:
         List of User objects sorted by username
     """
-    return db.session.execute(
-        db.select(User)
-        .filter_by(is_deleted=False)
-        .filter(User.username != LLM_USER_USERNAME)
-        .order_by(User.username)
-    ).scalars()
+    return (
+        db.session.execute(
+            db.select(User)
+            .filter_by(is_deleted=False)
+            .filter(User.username != LLM_USER_USERNAME)
+            .order_by(User.username)
+        )
+        .scalars()
+        .all()
+    )
 
 
 def insert_user(username: str, hashed_password: str, role: str, creator: int, **kwargs) -> User:
