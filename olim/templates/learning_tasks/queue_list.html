@@ -128,7 +128,8 @@
 
     <!-- Navigation -->
     <div class="flex justify-between items-center">
-        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
+        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML"
+            hx-confirm="{{ _('Going back to setup will reset this task\'s entry queue and its labeling progress. Are you sure you want to continue?') }}">
             <button type="submit" name="action" value="back_to_setup"
                 class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors">
                 <i class="bi bi-chevron-left mr-2"></i>
