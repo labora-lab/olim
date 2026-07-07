@@ -19,7 +19,7 @@ from ..database import (
     random_entries,
 )
 from ..entry_types.registry import get_entry_type_instance
-from ..functions import get_highlights, render_entry
+from ..functions import _build_labels_values, get_highlights, render_entry
 from ..label_types import get_label_type_module
 from ..ml.services import MLModelService
 from ..tasks.active_learning import train_model
@@ -488,7 +488,6 @@ class QueueSetup(BaseState):
             self.data["queue_required_labels"] = required_labels
             self.data["queue_completion_mode"] = completion_mode
             self.data["queue_position"] = 0
-            self.data["queue_completed"] = []
 
             return 1
 
@@ -509,7 +508,6 @@ class LabelEntry(BaseState):
         queue_required_labels: List of required labels
         queue_completion_mode: "any" or "all" (default: "any")
         queue_position: Current position in queue
-        queue_completed: List of entry IDs that meet completion criteria
         queue_view_mode: "label" or "list" (default: "label")
     """
 
@@ -550,34 +548,45 @@ class LabelEntry(BaseState):
 
         return labels, label_ids, required_label_ids, completion_mode
 
-    def _update_completion(
+    def _compute_completed_entries(
         self,
-        entry_id: str,
-        labels_values: dict,
+        queue_ids: list[str],
         label_ids: list[int],
         required_label_ids: list[int],
         completion_mode: str,
-    ) -> None:
-        """Update completion tracking for an entry."""
-        completed = set(self.data.get("queue_completed", []))
-        if self._check_entry_complete(
-            labels_values, label_ids, required_label_ids, completion_mode
-        ):
-            completed.add(entry_id)
-        else:
-            completed.discard(entry_id)
-        self.data["queue_completed"] = list(completed)
+    ) -> list[str]:
+        """Recompute, from the database, which queue entries meet the completion criteria."""
+        datasets = self.params.get("_datasets", [])
+        completed: list[str] = []
+        for entry_id in queue_ids:
+            entry = None
+            for dataset in datasets:
+                entry = get_entry((dataset.id, entry_id), "composite")
+                if entry is not None:
+                    break
+            if entry is None:
+                continue
+            labels_values = _build_labels_values(entry.labels)
+            if self._check_entry_complete(
+                labels_values, label_ids, required_label_ids, completion_mode
+            ):
+                completed.append(entry_id)
+        return completed
 
     def render(self) -> str:
         queue_ids = self.data.get("queue_ids", [])
         queue_position = self.data.get("queue_position", 0)
-        queue_completed = self.data.get("queue_completed", [])
         view_mode = self.data.get("queue_view_mode", "label")
 
         total = len(queue_ids)
         position = queue_position + 1  # 1-indexed for display
 
         labels, label_ids, required_label_ids, completion_mode = self._get_labels_context()
+
+        # recompute completed entries for the whole queue
+        queue_completed = self._compute_completed_entries(
+            queue_ids, label_ids, required_label_ids, completion_mode
+        )
 
         # List view mode
         if view_mode == "list":
@@ -616,15 +625,6 @@ class LabelEntry(BaseState):
                 break
 
         labels_values = entry_data.get("labels_values", {})
-
-        # Update completion tracking for current entry
-        self._update_completion(
-            current_id,
-            labels_values,
-            label_ids,
-            required_label_ids,
-            completion_mode,
-        )
 
         # Compute missing labels for warning
         check_ids = required_label_ids if required_label_ids else label_ids
@@ -1420,7 +1420,6 @@ class ColdStartSearchSetup(BaseState):
         queue_ids: List of string entry IDs
         queue_labels: [{"id": ..., "name": ...}]
         queue_position: 0
-        queue_completed: []
         queue_required_labels: []
         queue_completion_mode: "any"
     """
@@ -1513,7 +1512,6 @@ class ColdStartSearchSetup(BaseState):
             self.data["queue_ids"] = found_ids
             self.data["queue_labels"] = queue_labels
             self.data["queue_position"] = 0
-            self.data["queue_completed"] = []
             self.data["queue_required_labels"] = []
             self.data["queue_completion_mode"] = "any"
             return 1
