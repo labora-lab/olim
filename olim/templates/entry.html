@@ -22,7 +22,7 @@
                 {{ _('Previous') }}
             </button>
 
-            <a href="{{ url_for('queue', project_id=project_id, queue_id=queue_id) }}" target="_blank"
+            <a href="{{ url_for('entry', project_id=project_id, queue_id=queue_id) }}" target="_blank"
                 class="flex-1 w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-purple-600 bg-purple-100 border border-purple-300 rounded-lg hover:bg-purple-200 focus:ring-4 focus:outline-none focus:ring-purple-300 transition-colors">
                 <i class="bi bi-list-ol mr-2"></i>
                 {{ queue_pos }}/{{ queue_len }}
