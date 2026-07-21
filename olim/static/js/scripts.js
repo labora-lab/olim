@@ -366,7 +366,9 @@ function showNotification(message, type = 'info') {
         warning: 'bg-yellow-100 border-yellow-500 text-yellow-700'
     };
 
-    notification.className = `fixed top-4 right-4 px-4 py-3 border-l-4 rounded shadow-lg ${colors[type] || colors.info} transform transition-all duration-300 translate-x-full opacity-0 z-50`;
+    notification.className = `fixed right-4 px-4 py-3 border-l-4 rounded shadow-lg ${colors[type] || colors.info} transform transition-all duration-300 translate-x-full opacity-0 z-50`;
+    // Sit just above the h-12 (48px) footer bar.
+    notification.style.bottom = '3.5rem';
     notification.innerHTML = `
         <div class="flex items-center">
             <i class="bi bi-info-circle mr-2"></i>
@@ -1037,10 +1039,13 @@ function updateTaskCounter() {
 // Toast notification system (replaces M.toast)
 function showToast(message, type = 'success', duration = 3000) {
     // Get or create toast container
-    let container = document.querySelector('.fixed.top-20');
+    let container = document.getElementById('app-toast-container');
     if (!container) {
         container = document.createElement('div');
-        container.className = 'fixed top-20 sm:top-4 right-4 z-50 w-96 space-y-2';
+        container.id = 'app-toast-container';
+        container.className = 'fixed right-4 z-50 w-96 space-y-2';
+        // Sit just above the h-12 (48px) footer bar.
+        container.style.bottom = '3.5rem';
         document.body.appendChild(container);
     }
 
