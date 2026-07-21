@@ -19,17 +19,21 @@ depends_on = None
 
 
 def upgrade():
+    # Seed the setting with an existing user as creator. On a fresh install no
+    # users exist yet, so the SELECT yields no rows and the insert is skipped;
+    # the app falls back to the column default until the setting is created.
     op.execute(
         sa.text(
             """
             INSERT INTO global_settings
                 (key, display_name, value, default_value, type, description, category,
                  created, created_by, is_deleted)
-            VALUES
-                ('isolate_label_values', 'Isolate Label Values', 'false', 'false', 'bool',
+            SELECT
+                'isolate_label_values', 'Isolate Label Values', 'false', 'false', 'bool',
                  'When enabled, each user''s label values are stored and displayed independently. '
                  'Adding a label will not overwrite another user''s value for the same entry.',
-                 'Labeling', :now, 1, false)
+                 'Labeling', :now, (SELECT MIN(id) FROM users), false
+            WHERE EXISTS (SELECT 1 FROM users)
             ON CONFLICT (key) DO NOTHING
             """
         ).bindparams(now=datetime.now())
