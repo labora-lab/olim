@@ -136,32 +136,18 @@
                                         <i class="bi bi-play-fill mr-1"></i>{{ _('Open') }}
                                     </a>
                                     {# Assign dropdown #}
-                                    <div class="relative" x-data="{ open: false }">
-                                        <button type="button" @click="open = !open"
-                                            class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                                            {% if task.assignee %}
-                                            <div class="w-4 h-4 bg-cyan-500 rounded-full flex items-center justify-center text-white text-xs font-medium mr-1">{{ task.assignee.name[0]|upper if task.assignee.name else '?' }}</div>
-                                            {{ task.assignee.name or task.assignee.username }}
-                                            {% else %}
-                                            <i class="bi bi-person-plus mr-1"></i>{{ _('Assign') }}
-                                            {% endif %}
-                                        </button>
-                                        <div x-show="open" @click.outside="open = false"
-                                            class="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10 py-1">
-                                            <form action="{{ url_for('assign_learning_task_route', project_id=project_id, task_id=task.id) }}" method="post">
-                                                <button type="submit" name="assigned_to" value=""
-                                                    class="w-full text-left px-4 py-2 text-xs text-gray-500 hover:bg-gray-50 italic">
-                                                    {{ _('Unassign') }}
-                                                </button>
-                                                {% for user in users %}
-                                                <button type="submit" name="assigned_to" value="{{ user.id }}"
-                                                    class="w-full text-left px-4 py-2 text-xs {% if task.assigned_to == user.id %}text-cyan-700 font-semibold bg-cyan-50{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
-                                                    {{ user.name or user.username }}
-                                                </button>
-                                                {% endfor %}
-                                            </form>
-                                        </div>
-                                    </div>
+                                    <form action="{{ url_for('assign_learning_task_route', project_id=project_id, task_id=task.id) }}"
+                                        method="post" class="inline">
+                                        <label for="assign-{{ task.id }}" class="sr-only">{{ _('Assign To') }}</label>
+                                        <select id="assign-{{ task.id }}" name="assigned_to" onchange="this.form.requestSubmit()"
+                                            class="text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg pl-2 pr-8 py-1.5 cursor-pointer focus:ring-2 focus:ring-cyan-200 focus:border-cyan-500 transition-colors
+                                        ">
+                                            <option value="" {% if not task.assignee %}selected{% endif %}>{{ _('unassigned') }}</option>
+                                            {% for user in users %}
+                                            <option value="{{ user.id }}" {% if task.assigned_to == user.id %}selected{% endif %}>{{ user.name or user.username }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </form>
                                     <form action="{{ url_for('reset_learning_task', project_id=project_id, task_id=task.id) }}" method="post" class="inline">
                                         <button type="submit"
                                             class="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-white bg-yellow-500 rounded-lg hover:bg-yellow-600 transition-colors">
@@ -364,23 +350,5 @@
             configDescription.textContent = configDescriptions[this.value] || '';
         });
     }
-
-    // Alpine-style assign dropdown (plain JS fallback if Alpine not loaded)
-    document.querySelectorAll('[x-data]').forEach(function(el) {
-        if (typeof Alpine === 'undefined') {
-            const btn = el.querySelector('button[type="button"]');
-            const dropdown = el.querySelector('[x-show]');
-            if (btn && dropdown) {
-                dropdown.style.display = 'none';
-                btn.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-                });
-                document.addEventListener('click', function() {
-                    dropdown.style.display = 'none';
-                });
-            }
-        }
-    });
 </script>
 {% endblock %}

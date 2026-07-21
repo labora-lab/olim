@@ -17,7 +17,7 @@
             </div>
 
             <div class="text-center">
-                <a href="{{url_for('queue', project_id=project_id, queue_id=queue_id)}}"
+                <a href="{{url_for('entry', project_id=project_id, queue_id=queue_id)}}"
                    class="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 transition-colors">
                     <i class="bi bi-send mr-2"></i>
                     {{ _('Open Queue') }}
