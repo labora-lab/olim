@@ -29,12 +29,12 @@ def _validate_csv_options(sep: str | None, encoding: str | None) -> tuple[str, s
     # Encoding validation
     enc = (encoding or "utf-8").strip()
     if enc not in ALLOWED_ENCODINGS:
-        raise ValueError(_("Encoding inválido. Use utf-8, latin-1, ou cp1252."))
+        raise ValueError(_("Invalid encoding. Use utf-8, latin-1, or cp1252."))
 
     # Sep validation
     s = sep if sep is not None else ","
     if s == "":
-        raise ValueError(_("Separador não pode ser vazio."))
+        raise ValueError(_("Separator cannot be empty."))
     # Convert literal \t to actual tab (store converted value in DB)
     if s == "\\t":
         s = "\t"

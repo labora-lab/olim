@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2026-08-19 10:24-0300\n"
+"POT-Creation-Date: 2026-08-19 10:55-0300\n"
 "PO-Revision-Date: 2025-03-20 20:21+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: en_US\n"
@@ -699,11 +699,11 @@ msgid "Invalid JSON file"
 msgstr ""
 
 #: olim/upload_data.py:32
-msgid "Encoding inválido. Use utf-8, latin-1, ou cp1252."
+msgid "Invalid encoding. Use utf-8, latin-1, or cp1252."
 msgstr ""
 
 #: olim/upload_data.py:37
-msgid "Separador não pode ser vazio."
+msgid "Separator cannot be empty."
 msgstr ""
 
 #: olim/upload_data.py:42
@@ -1898,16 +1898,16 @@ msgid "Remove All"
 msgstr ""
 
 #: olim/templates/hidden.html:35
-msgid "Remover todas as entradas ocultas"
-msgstr "Remove all hidden entries"
+msgid "Remove all hidden entries"
+msgstr ""
 
 #: olim/templates/hidden.html:58
 msgid "Hidden"
 msgstr ""
 
 #: olim/templates/hidden.html:70
-msgid "Remover esta entrada das ocultas"
-msgstr "Remove this entry from hidden entries"
+msgid "Remove this entry from hidden entries"
+msgstr ""
 
 #: olim/templates/hidden.html:81 olim/templates/hidden.html:195
 msgid "Show more..."
@@ -1918,8 +1918,8 @@ msgid "View Details"
 msgstr ""
 
 #: olim/templates/hidden.html:101
-msgid "Ver detalhes completos desta entrada"
-msgstr "View full details of this entry"
+msgid "View full details of this entry"
+msgstr ""
 
 #: olim/templates/hidden.html:108
 msgid "Hidden entry"
@@ -5232,5 +5232,23 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "95% CI"
+#~ msgstr ""
+
+#~ msgid "Encoding inválido. Use utf-8, latin-1, ou cp1252."
+#~ msgstr ""
+
+#~ msgid "Separador não pode ser vazio."
+#~ msgstr ""
+
+#~ msgid "Remover todas as entradas ocultas"
+#~ msgstr "Remove all hidden entries"
+
+#~ msgid "Remover esta entrada das ocultas"
+#~ msgstr "Remove this entry from hidden entries"
+
+#~ msgid "Ver detalhes completos desta entrada"
+#~ msgstr "View full details of this entry"
+
+#~ msgid "Remove this entry from hidden"
 #~ msgstr ""
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2026-08-19 10:24-0300\n"
+"POT-Creation-Date: 2026-08-19 10:55-0300\n"
 "PO-Revision-Date: 2025-05-16 01:02+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: pt_BR\n"
@@ -180,7 +180,7 @@ msgstr "Dados de sessão limpos para {user_name}!"
 #: olim/auth.py:538
 #, python-brace-format
 msgid "API key regenerated for {user_name}!"
-msgstr ""
+msgstr "Chave de API regenerada para {user_name}!"
 
 #: olim/commands.py:19
 msgid "No entry ID passed"
@@ -226,11 +226,11 @@ msgstr "Dados faltantes"
 
 #: olim/commands.py:102
 msgid "Invalid data"
-msgstr ""
+msgstr "Dados inválidos"
 
 #: olim/commands.py:108
 msgid "Invalid highlight data format"
-msgstr ""
+msgstr "Formato de dados de destaque inválido"
 
 #: olim/commands.py:128
 msgid "No command passed"
@@ -309,7 +309,7 @@ msgstr "Você fez muitas requisições em um curto período."
 
 #: olim/error_handlers.py:145 olim/error_handlers.py:224
 msgid "An unexpected error occurred. Please try again."
-msgstr ""
+msgstr "Ocorreu um erro inesperado. Tente novamente."
 
 #: olim/error_handlers.py:155 olim/error_handlers.py:235
 msgid "Internal Server Error"
@@ -434,15 +434,15 @@ msgstr "Erro ao processar arquivo: {error}"
 
 #: olim/labels.py:421
 msgid "Label settings updated successfully"
-msgstr ""
+msgstr "Configurações do rótulo atualizadas com sucesso"
 
 #: olim/labels.py:423
 msgid "Invalid settings format"
-msgstr ""
+msgstr "Formato de configurações inválido"
 
 #: olim/labels.py:425
 msgid "No settings provided"
-msgstr ""
+msgstr "Nenhuma configuração fornecida"
 
 #: olim/labels.py:440
 msgid "No datasets available for this project"
@@ -723,11 +723,11 @@ msgid "Invalid JSON file"
 msgstr "Arquivo JSON inválido"
 
 #: olim/upload_data.py:32
-msgid "Encoding inválido. Use utf-8, latin-1, ou cp1252."
+msgid "Invalid encoding. Use utf-8, latin-1, or cp1252."
 msgstr "Encoding inválido. Use utf-8, latin-1, ou cp1252."
 
 #: olim/upload_data.py:37
-msgid "Separador não pode ser vazio."
+msgid "Separator cannot be empty."
 msgstr "Separador não pode ser vazio."
 
 #: olim/upload_data.py:42
@@ -885,11 +885,11 @@ msgstr "Tarefa concluída!"
 
 #: olim/learning_tasks/__init__.py:457
 msgid "An error occurred while processing your request. Please try again."
-msgstr ""
+msgstr "Ocorreu um erro ao processar sua solicitação. Tente novamente."
 
 #: olim/learning_tasks/__init__.py:529
 msgid "An error occurred while loading the content. Please refresh the page."
-msgstr ""
+msgstr "Ocorreu um erro ao carregar o conteúdo. Atualize a página."
 
 #: olim/learning_tasks/states.py:164
 msgid "Input"
@@ -1385,19 +1385,19 @@ msgstr "Atualize sua senha para manter sua conta segura"
 
 #: olim/templates/account-settings.html:138
 msgid "API Key"
-msgstr ""
+msgstr "Chave de API"
 
 #: olim/templates/account-settings.html:140
 msgid "Use this key to authenticate REST API requests"
-msgstr ""
+msgstr "Use esta chave para autenticar solicitações da API REST"
 
 #: olim/templates/account-settings.html:147
 msgid "Current API Key"
-msgstr ""
+msgstr "Chave de API Atual"
 
 #: olim/templates/account-settings.html:154
 msgid "Show/hide key"
-msgstr ""
+msgstr "Mostrar/ocultar chave"
 
 #: olim/templates/account-settings.html:159 olim/templates/error.html:67
 msgid "Copy to clipboard"
@@ -1405,19 +1405,19 @@ msgstr "Copiar para a área de transferência"
 
 #: olim/templates/account-settings.html:165
 msgid "No API key generated yet."
-msgstr ""
+msgstr "Nenhuma chave de API gerada ainda."
 
 #: olim/templates/account-settings.html:169
 msgid "This will invalidate the current API key. Continue?"
-msgstr ""
+msgstr "Isso invalidará a chave de API atual. Continuar?"
 
 #: olim/templates/account-settings.html:173
 msgid "Regenerate API Key"
-msgstr ""
+msgstr "Regenerar Chave de API"
 
 #: olim/templates/account-settings.html:173
 msgid "Generate API Key"
-msgstr ""
+msgstr "Gerar Chave de API"
 
 #: olim/templates/account-settings.html:185
 msgid "Session Management"
@@ -1965,7 +1965,7 @@ msgid "Remove All"
 msgstr "Remover Todas"
 
 #: olim/templates/hidden.html:35
-msgid "Remover todas as entradas ocultas"
+msgid "Remove all hidden entries"
 msgstr "Remover todas as entradas ocultas"
 
 #: olim/templates/hidden.html:58
@@ -1973,7 +1973,7 @@ msgid "Hidden"
 msgstr "Oculto"
 
 #: olim/templates/hidden.html:70
-msgid "Remover esta entrada das ocultas"
+msgid "Remove this entry from hidden entries"
 msgstr "Remover esta entrada das ocultas"
 
 #: olim/templates/hidden.html:81 olim/templates/hidden.html:195
@@ -1985,7 +1985,7 @@ msgid "View Details"
 msgstr "Ver Detalhes"
 
 #: olim/templates/hidden.html:101
-msgid "Ver detalhes completos desta entrada"
+msgid "View full details of this entry"
 msgstr "Ver detalhes completos desta entrada"
 
 #: olim/templates/hidden.html:108
@@ -2197,7 +2197,7 @@ msgstr "Métricas do Modelo"
 
 #: olim/templates/label-settings.html:146
 msgid "Type Configuration"
-msgstr ""
+msgstr "Configuração do Tipo"
 
 #: olim/templates/label-settings.html:163
 msgid "Debug Information"
@@ -2295,7 +2295,7 @@ msgstr "Escolha o tipo de rótulo"
 
 #: olim/templates/labels.html:202
 msgid "Preset type — options are fixed"
-msgstr ""
+msgstr "Tipo predefinido — as opções são fixas"
 
 #: olim/templates/labels.html:273
 msgid "Upload Labels"
@@ -2771,15 +2771,15 @@ msgstr "Buscar"
 
 #: olim/templates/entry_types/flexible_text.html:15
 msgid "No valid link available for this document."
-msgstr ""
+msgstr "Nenhum link válido disponível para este documento."
 
 #: olim/templates/entry_types/flexible_text.html:23
 msgid "Open in popup"
-msgstr ""
+msgstr "Abrir em popup"
 
 #: olim/templates/entry_types/flexible_text.html:32
 msgid "Your browser does not support PDF viewing."
-msgstr ""
+msgstr "Seu navegador não oferece suporte à visualização de PDF."
 
 #: olim/templates/entry_types/flexible_text.html:34
 msgid "Click here to open the PDF in a new tab"
@@ -2792,11 +2792,11 @@ msgstr "Informações Adicionais"
 
 #: olim/templates/entry_types/flexible_text.html:144
 msgid "No data"
-msgstr ""
+msgstr "Sem dados"
 
 #: olim/templates/entry_types/flexible_text_tab_nav.html:7
 msgid "No data available for this column"
-msgstr ""
+msgstr "Nenhum dado disponível para esta coluna"
 
 #: olim/templates/entry_types/patient.html:7
 #: olim/templates/entry_types/patient.html:17
@@ -2880,11 +2880,11 @@ msgstr "Salvar"
 
 #: olim/templates/label_types/long_text_config.html:7
 msgid "Number of rows"
-msgstr ""
+msgstr "Número de linhas"
 
 #: olim/templates/label_types/long_text_config.html:11
 msgid "Height of the text area (2–20 rows)"
-msgstr ""
+msgstr "Altura da área de texto (2–20 linhas)"
 
 #: olim/templates/label_types/long_text_config.html:19
 #: olim/templates/label_types/multiple_choice_config.html:99
@@ -2895,95 +2895,99 @@ msgstr "Salvar configurações"
 
 #: olim/templates/label_types/multiple_choice.html:34
 msgid "Clear"
-msgstr ""
+msgstr "Limpar"
 
 #: olim/templates/label_types/multiple_choice_config.html:11
 #: olim/templates/label_types/preset_config.html:12
 msgid "Options"
-msgstr ""
+msgstr "Opções"
 
 #: olim/templates/label_types/multiple_choice_config.html:14
 msgid "Add option"
-msgstr ""
+msgstr "Adicionar opção"
 
 #: olim/templates/label_types/multiple_choice_config.html:24
 #: olim/templates/label_types/multiple_choice_config.html:151
 msgid "Label text"
-msgstr ""
+msgstr "Texto do rótulo"
 
 #: olim/templates/label_types/multiple_choice_config.html:29
 #: olim/templates/label_types/multiple_choice_config.html:154
 msgid "Icon (optional)"
-msgstr ""
+msgstr "Ícone (opcional)"
 
 #: olim/templates/label_types/multiple_choice_config.html:32
 #: olim/templates/label_types/multiple_choice_config.html:156
 msgid "Bootstrap icon name (e.g. check-circle-fill) or a single character"
-msgstr ""
+msgstr "Nome do ícone Bootstrap (ex.: check-circle-fill) ou um único caractere"
 
 #: olim/templates/label_types/multiple_choice_config.html:60
 #: olim/templates/label_types/multiple_choice_config.html:171
 msgid "Tooltip shown to annotators (optional)"
-msgstr ""
+msgstr "Dica exibida aos anotadores (opcional)"
 
 #: olim/templates/label_types/multiple_choice_config.html:70
 msgid "Buttons per row"
-msgstr ""
+msgstr "Botões por linha"
 
 #: olim/templates/label_types/multiple_choice_config.html:77
 msgid "Selection mode"
-msgstr ""
+msgstr "Modo de seleção"
 
 #: olim/templates/label_types/multiple_choice_config.html:83
 #: olim/templates/label_types/preset_config.html:32
 msgid "Single select"
-msgstr ""
+msgstr "Seleção única"
 
 #: olim/templates/label_types/multiple_choice_config.html:89
 #: olim/templates/label_types/preset_config.html:32
 msgid "Multi-select"
-msgstr ""
+msgstr "Seleção múltipla"
 
 #: olim/templates/label_types/preset_config.html:8
 msgid "This is a preset type — options are fixed and cannot be changed."
 msgstr ""
+"Este é um tipo predefinido — as opções são fixas e não podem ser "
+"alteradas."
 
 #: olim/templates/label_types/preset_config.html:36
 #, python-brace-format
 msgid "{n} per row"
-msgstr ""
+msgstr "{n} por linha"
 
 #: olim/templates/label_types/short_text.html:40
 msgid "Value does not match the required format."
-msgstr ""
+msgstr "O valor não corresponde ao formato exigido."
 
 #: olim/templates/label_types/short_text_config.html:8
 msgid "Regex validation pattern"
-msgstr ""
+msgstr "Padrão de validação regex"
 
 #: olim/templates/label_types/short_text_config.html:9
 msgid "(optional)"
-msgstr ""
+msgstr "(opcional)"
 
 #: olim/templates/label_types/short_text_config.html:14
 msgid "JavaScript-compatible regex. Leave blank to allow any input."
 msgstr ""
+"Regex compatível com JavaScript. Deixe em branco para permitir qualquer "
+"entrada."
 
 #: olim/templates/label_types/short_text_config.html:16
 msgid "Invalid regex pattern"
-msgstr ""
+msgstr "Padrão de regex inválido"
 
 #: olim/templates/label_types/short_text_config.html:22
 msgid "Validation hint"
-msgstr ""
+msgstr "Dica de validação"
 
 #: olim/templates/label_types/short_text_config.html:23
 msgid "(shown to annotators on error)"
-msgstr ""
+msgstr "(exibida aos anotadores em caso de erro)"
 
 #: olim/templates/label_types/short_text_config.html:26
 msgid "e.g. Must be a 4-digit number"
-msgstr ""
+msgstr "ex.: Deve ser um número de 4 dígitos"
 
 #: olim/templates/learning_tasks/_al_history_table.html:16
 msgid "Round"
@@ -4073,6 +4077,8 @@ msgid ""
 "Going back to setup will reset this task's entry queue and its labeling "
 "progress. Are you sure you want to continue?"
 msgstr ""
+"Voltar para a configuração vai reiniciar a fila de entradas desta tarefa "
+"e seu progresso de rotulagem. Tem certeza de que deseja continuar?"
 
 #: olim/templates/learning_tasks/queue_list.html:136
 msgid "Back to Setup"
@@ -4092,6 +4098,8 @@ msgid ""
 "This project has no labels. Please create labels in the project settings "
 "before setting up a labeling queue."
 msgstr ""
+"Este projeto não possui rótulos. Crie rótulos nas configurações do "
+"projeto antes de configurar uma fila de rotulagem."
 
 #: olim/templates/learning_tasks/queue_setup.html:48
 msgid "Choose which labels will be available for labeling"
@@ -4385,13 +4393,15 @@ msgstr "e"
 
 #: olim/templates/macros/upload-form.html:92
 msgid "Flexible Text"
-msgstr ""
+msgstr "Texto Flexível"
 
 #: olim/templates/macros/upload-form.html:95
 msgid ""
 "Configurable columns — render extra columns as text, HTML, PDF, image, or"
 " JSON metadata. Supports tabs."
 msgstr ""
+"Colunas configuráveis — exiba colunas extras como texto, HTML, PDF, "
+"imagem ou metadados JSON. Suporta abas."
 
 #: olim/templates/macros/upload-form.html:110
 msgid "Sample Data"
@@ -4440,72 +4450,72 @@ msgstr "Tentar novamente com novas configurações"
 
 #: olim/templates/macros/upload-form.html:211
 msgid "Flexible Text Options"
-msgstr ""
+msgstr "Opções de Texto Flexível"
 
 #: olim/templates/macros/upload-form.html:217
 msgid "Main text is raw HTML"
-msgstr ""
+msgstr "O texto principal é HTML puro"
 
 #: olim/templates/macros/upload-form.html:222
 msgid "Hide main text column"
-msgstr ""
+msgstr "Ocultar coluna de texto principal"
 
 #: olim/templates/macros/upload-form.html:227
 msgid "Show remaining columns as metadata"
-msgstr ""
+msgstr "Mostrar colunas restantes como metadados"
 
 #: olim/templates/macros/upload-form.html:234
 msgid "Extra Columns"
-msgstr ""
+msgstr "Colunas Extras"
 
 #: olim/templates/macros/upload-form.html:238
 msgid "Add extra column"
-msgstr ""
+msgstr "Adicionar coluna extra"
 
 #: olim/templates/macros/upload-form.html:246
 msgid "Column"
-msgstr ""
+msgstr "Coluna"
 
 #: olim/templates/macros/upload-form.html:249
 #: olim/templates/macros/upload-form.html:511
 msgid "Select column"
-msgstr ""
+msgstr "Selecionar coluna"
 
 #: olim/templates/macros/upload-form.html:253
 msgid "Render as"
-msgstr ""
+msgstr "Exibir como"
 
 #: olim/templates/macros/upload-form.html:256
 msgid "Plain text"
-msgstr ""
+msgstr "Texto simples"
 
 #: olim/templates/macros/upload-form.html:257
 msgid "Raw HTML"
-msgstr ""
+msgstr "HTML puro"
 
 #: olim/templates/macros/upload-form.html:258
 msgid "PDF (iframe)"
-msgstr ""
+msgstr "PDF (iframe)"
 
 #: olim/templates/macros/upload-form.html:259
 msgid "Image"
-msgstr ""
+msgstr "Imagem"
 
 #: olim/templates/macros/upload-form.html:260
 msgid "JSON / Metadata"
-msgstr ""
+msgstr "JSON / Metadados"
 
 #: olim/templates/macros/upload-form.html:267
 msgid "Show title"
-msgstr ""
+msgstr "Mostrar título"
 
 #: olim/templates/macros/upload-form.html:271
 msgid "Show as tab"
-msgstr ""
+msgstr "Mostrar como aba"
 
 #: olim/templates/macros/upload-form.html:277
 msgid "Add"
-msgstr ""
+msgstr "Adicionar"
 
 #: olim/templates/macros/upload-form.html:297
 msgid ""
@@ -5487,4 +5497,16 @@ msgstr "Destaque: {highlight}"
 
 #~ msgid "95% CI"
 #~ msgstr "IC 95%"
+
+#~ msgid "Separador não pode ser vazio."
+#~ msgstr "Separador não pode ser vazio."
+
+#~ msgid "Remover todas as entradas ocultas"
+#~ msgstr "Remover todas as entradas ocultas"
+
+#~ msgid "Remover esta entrada das ocultas"
+#~ msgstr "Remover esta entrada das ocultas"
+
+#~ msgid "Ver detalhes completos desta entrada"
+#~ msgstr "Ver detalhes completos desta entrada"
 
