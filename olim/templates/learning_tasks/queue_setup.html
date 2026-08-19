@@ -1,4 +1,5 @@
 {% import "macros/entry_sources.html" as es_macro %}
+{% import "macros/label_selector.html" as label_selector_macro %}
 <div class="max-w-3xl mx-auto">
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <!-- Header -->
@@ -42,24 +43,16 @@
                 </div>
                 {% elif allow_label_selection %}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        {{ _('Select Labels') }} <span class="text-red-500">*</span>
-                    </label>
-                    <p class="text-sm text-gray-500 mb-2">{{ _('Choose which labels will be available for labeling') }}</p>
-                    <div class="space-y-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                        {% for label in available_labels %}
-                        <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
-                            <input type="checkbox" name="labels" value="{{ label.id }}"
-                                {% if label.id in selected_label_ids %}checked{% endif %}
-                                class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500 label-checkbox"
-                                data-label-id="{{ label.id }}" data-label-name="{{ label.name }}">
-                            <span class="text-sm text-gray-700">{{ label.name }}</span>
-                        </label>
-                        {% endfor %}
-                    </div>
-                    {% if errors.get('labels') %}
-                    <p class="mt-1 text-sm text-red-500">{{ errors['labels'] }}</p>
-                    {% endif %}
+                    {{ label_selector_macro.label_selector(
+                        'labels', available_labels, selected_label_ids, project_id,
+                        mode='multi',
+                        label_text=_('Select Labels') + ' *',
+                        help_text=_('Choose which labels will be available for labeling'),
+                        required=true,
+                        error=errors.get('labels'),
+                        accent='purple',
+                        checkbox_class='label-checkbox'
+                    ) }}
                 </div>
 
                 <!-- Required Labels -->

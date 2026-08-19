@@ -335,6 +335,8 @@ class TestMaintenanceScreens:
             setting_specs=MaintenanceScan.SETTING_SPECS,
             rank_signals=RANK_SIGNALS,
             errors={},
+            available_labels=[{"id": 1, "name": "Suspeita de sepse"}],
+            project_id=1,
             may_configure=True,
             scanned=False,
             is_last_step=False,
@@ -344,6 +346,7 @@ class TestMaintenanceScreens:
             'name="audit_sample_size"',
             'name="accuracy_threshold"',
             'name="measure_coverage"',
+            'name="label_ids"',
         ):
             assert probe in html, probe
 

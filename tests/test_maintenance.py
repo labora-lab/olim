@@ -6,10 +6,12 @@ parts; the ranking, the preset integrity and the settings validation need no DB.
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from flask import session
 
+import olim.ml.monitoring as monitoring
 from olim import app
 from olim.learning_tasks import (
     CONFIGURATIONS_PATH,
@@ -19,7 +21,7 @@ from olim.learning_tasks import (
     validate_configuration,
 )
 from olim.learning_tasks.states import MaintenanceScan
-from olim.ml.monitoring import RANK_SIGNALS, ModelHealth, rank_models
+from olim.ml.monitoring import RANK_SIGNALS, ModelHealth, audit_sample, rank_models
 
 
 def health(**kwargs) -> ModelHealth:
@@ -99,6 +101,54 @@ class TestDegradedVerdict:
         assert health().is_degraded(0.8, 0.1) is False
 
 
+def _confident(entry_id: int, value: str) -> SimpleNamespace:
+    return SimpleNamespace(entry_id=entry_id, value=value)
+
+
+class TestAuditSample:
+    """audit_sample() balances the audit queue across predicted answers.
+
+    A model that predicts the majority class far more often than the minority ones
+    would otherwise fill the whole audit with majority-class entries, and the
+    resulting accuracy figure would say nothing about the classes that matter most.
+    """
+
+    def _patched(self, monkeypatch, predictions):
+        monkeypatch.setattr(
+            monitoring, "_unchecked_confident_predictions", lambda label_id, version_id: predictions
+        )
+
+    def test_round_robins_across_predicted_values(self, monkeypatch):
+        # Ten "yes" (most recent first) against two "no".
+        predictions = [_confident(i, "yes") for i in range(110, 100, -1)] + [
+            _confident(i, "no") for i in range(20, 18, -1)
+        ]
+        self._patched(monkeypatch, predictions)
+
+        sample = audit_sample(label_id=1, version_id=1, n=4)
+
+        values = [p.value for e in sample for p in predictions if p.entry_id == e]
+        assert values.count("no") == 2
+        assert values.count("yes") == 2
+
+    def test_never_returns_more_than_available(self, monkeypatch):
+        self._patched(monkeypatch, [_confident(1, "yes"), _confident(2, "no")])
+        assert len(audit_sample(label_id=1, version_id=1, n=20)) == 2
+
+    def test_exhausted_class_stops_contributing_but_others_continue(self, monkeypatch):
+        predictions = [_confident(1, "no")] + [_confident(i, "yes") for i in range(10, 4, -1)]
+        self._patched(monkeypatch, predictions)
+
+        sample = audit_sample(label_id=1, version_id=1, n=4)
+        assert len(sample) == 4
+        assert 1 in sample  # the lone "no" is never starved out by round-robin
+
+    def test_zero_or_negative_n_returns_nothing(self, monkeypatch):
+        self._patched(monkeypatch, [_confident(1, "yes")])
+        assert audit_sample(label_id=1, version_id=1, n=0) == []
+        assert audit_sample(label_id=1, version_id=1, n=-5) == []
+
+
 class TestMaintenanceSettings:
     def _state(self):
         return MaintenanceScan({}, {"_project_id": 1, "_user_id": 1})
@@ -132,6 +182,22 @@ class TestMaintenanceSettings:
     def test_preset_params_are_the_default_when_nothing_is_overridden(self):
         state = MaintenanceScan({}, {"_project_id": 1, "_user_id": 1, "audit_sample_size": 5})
         assert state._current_settings()["audit_sample_size"] == 5
+
+    def test_label_ids_default_to_empty_meaning_every_model(self):
+        state = self._state()
+        assert state._current_settings()["label_ids"] == []
+
+    def test_label_ids_are_stored_as_ints(self):
+        state = self._state()
+        state._apply_settings({"label_ids": ["3", "7"]})
+        assert state.data["maint_setting_label_ids"] == [3, 7]
+        assert state._current_settings()["label_ids"] == [3, 7]
+
+    def test_label_ids_clear_when_none_are_checked_again(self):
+        state = self._state()
+        state._apply_settings({"label_ids": ["3"]})
+        state._apply_settings({})
+        assert state.data["maint_setting_label_ids"] == []
 
 
 class TestPresetCatalogue:

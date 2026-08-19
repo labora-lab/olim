@@ -1716,6 +1716,9 @@
   .min-w-48 {
     min-width: calc(var(--spacing) * 48);
   }
+  .min-w-\[10rem\] {
+    min-width: 10rem;
+  }
   .min-w-full {
     min-width: 100%;
   }
@@ -1733,6 +1736,9 @@
   }
   .flex-grow {
     flex-grow: 1;
+  }
+  .basis-full {
+    flex-basis: 100%;
   }
   .-translate-x-full {
     --tw-translate-x: -100%;

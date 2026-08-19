@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2026-08-19 10:55-0300\n"
+"POT-Creation-Date: 2026-08-19 11:28-0300\n"
 "PO-Revision-Date: 2025-05-16 01:02+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: pt_BR\n"
@@ -369,90 +369,94 @@ msgstr ""
 msgid "Ticket sent. Thank you very much."
 msgstr "Ticket enviado. Muito obrigado."
 
-#: olim/labels.py:98
+#: olim/labels.py:107 olim/labels.py:152
 #, python-brace-format
 msgid "Label {label_name} successfully created"
 msgstr "Rótulo {label_name} criado com sucesso"
 
-#: olim/labels.py:110 olim/labels.py:133 olim/labels.py:183 olim/labels.py:213
-#: olim/labels.py:243
+#: olim/labels.py:141
+msgid "Enter a name for the new label."
+msgstr "Digite um nome para o novo rótulo."
+
+#: olim/labels.py:189 olim/labels.py:212 olim/labels.py:262 olim/labels.py:292
+#: olim/labels.py:322
 #, python-brace-format
 msgid "Label id: {label_id} not found!"
 msgstr "ID do rótulo: {label_id} não encontrado!"
 
-#: olim/labels.py:122
+#: olim/labels.py:201
 #, python-brace-format
 msgid "Label {label_name} sucessfully deleted"
 msgstr "Rótulo {label_name} excluído com sucesso"
 
-#: olim/labels.py:144 olim/labels.py:194 olim/labels.py:224 olim/labels.py:256
-#: olim/labels.py:271 olim/labels.py:349 olim/labels.py:413
+#: olim/labels.py:223 olim/labels.py:273 olim/labels.py:303 olim/labels.py:335
+#: olim/labels.py:350 olim/labels.py:428 olim/labels.py:492
 msgid "Label not found"
 msgstr "Rótulo não encontrado"
 
-#: olim/labels.py:232
+#: olim/labels.py:311
 #, python-brace-format
 msgid "Label: {label_name}"
 msgstr "Rótulo: {label_name}"
 
-#: olim/labels.py:266 olim/labels.py:344 olim/labels.py:408
+#: olim/labels.py:345 olim/labels.py:423 olim/labels.py:487
 msgid "Admin access required"
 msgstr "Acesso de administrador necessário"
 
-#: olim/labels.py:323
+#: olim/labels.py:402
 msgid "Learner parameters updated successfully"
 msgstr "Parâmetros do aprendiz atualizados com sucesso"
 
-#: olim/labels.py:327
+#: olim/labels.py:406
 #, python-brace-format
 msgid "Error converting parameter values: {error}"
 msgstr "Erro ao converter valores de parâmetros: {error}"
 
-#: olim/labels.py:332
+#: olim/labels.py:411
 #, python-brace-format
 msgid "Error updating parameters: {error}"
 msgstr "Erro ao atualizar parâmetros: {error}"
 
-#: olim/labels.py:353 olim/labels.py:358
+#: olim/labels.py:432 olim/labels.py:437
 msgid "No file selected"
 msgstr "Nenhum arquivo selecionado"
 
-#: olim/labels.py:370
+#: olim/labels.py:449
 #, python-brace-format
 msgid "Missing required columns: {columns}"
 msgstr "Colunas obrigatórias faltantes: {columns}"
 
-#: olim/labels.py:394
+#: olim/labels.py:473
 #, python-brace-format
 msgid "Successfully uploaded {count} auto-labels"
 msgstr "{count} auto-rótulos carregados com sucesso"
 
-#: olim/labels.py:399
+#: olim/labels.py:478
 #, python-brace-format
 msgid "Error processing file: {error}"
 msgstr "Erro ao processar arquivo: {error}"
 
-#: olim/labels.py:421
+#: olim/labels.py:500
 msgid "Label settings updated successfully"
 msgstr "Configurações do rótulo atualizadas com sucesso"
 
-#: olim/labels.py:423
+#: olim/labels.py:502
 msgid "Invalid settings format"
 msgstr "Formato de configurações inválido"
 
-#: olim/labels.py:425
+#: olim/labels.py:504
 msgid "No settings provided"
 msgstr "Nenhuma configuração fornecida"
 
-#: olim/labels.py:440
+#: olim/labels.py:519
 msgid "No datasets available for this project"
 msgstr "Nenhum conjunto de dados disponível para este projeto"
 
-#: olim/labels.py:451
+#: olim/labels.py:530
 msgid "Dataset selection required"
 msgstr "Seleção de conjunto de dados necessária"
 
-#: olim/labels.py:459 olim/labels.py:462
+#: olim/labels.py:538 olim/labels.py:541
 msgid "Invalid dataset selection"
 msgstr "Seleção de conjunto de dados inválida"
 
@@ -896,8 +900,8 @@ msgid "Input"
 msgstr "Entrada"
 
 #: olim/learning_tasks/states.py:168
-#: olim/templates/learning_tasks/al_label_select.html:40
-#: olim/templates/learning_tasks/maintenance_scan.html:208
+#: olim/templates/learning_tasks/al_label_select.html:37
+#: olim/templates/learning_tasks/maintenance_scan.html:221
 #: olim/templates/learning_tasks/queue_complete.html:30
 #: olim/templates/learning_tasks/queue_list.html:20
 #: olim/templates/learning_tasks/show_data.html:62
@@ -964,7 +968,7 @@ msgid "Please select at least one label"
 msgstr "Por favor, selecione pelo menos um rótulo"
 
 #: olim/learning_tasks/states.py:499
-#: olim/templates/learning_tasks/queue_setup.html:37
+#: olim/templates/learning_tasks/queue_setup.html:38
 msgid "No labels available"
 msgstr "Nenhum rótulo disponível"
 
@@ -1037,11 +1041,11 @@ msgstr "Rotulagem Automática em Andamento"
 msgid "Select Label"
 msgstr "Selecionar Rótulo"
 
-#: olim/learning_tasks/states.py:1497
+#: olim/learning_tasks/states.py:1498
 msgid "Search per Class"
 msgstr "Buscar por Classe"
 
-#: olim/learning_tasks/states.py:1802
+#: olim/learning_tasks/states.py:1803
 #, python-format
 msgid ""
 "The last training never reported back after %(mins)s minute(s) and was "
@@ -1050,96 +1054,96 @@ msgstr ""
 "O último treinamento não deu retorno após %(mins)s minuto(s) e foi "
 "abandonado. Um novo será iniciado."
 
-#: olim/learning_tasks/states.py:1947
+#: olim/learning_tasks/states.py:1948
 #, python-format
 msgid "%(n)s more round(s) needed before the goal can be evaluated"
 msgstr "faltam %(n)s rodada(s) para a meta poder ser avaliada"
 
-#: olim/learning_tasks/states.py:1952
+#: olim/learning_tasks/states.py:1953
 #, python-format
 msgid "%(m)s was not reported this round"
 msgstr "%(m)s não foi reportada nesta rodada"
 
-#: olim/learning_tasks/states.py:1956
+#: olim/learning_tasks/states.py:1957
 #, python-format
 msgid "needs %(need)s validation examples, smallest recent round had %(have)s"
 msgstr ""
 "precisa de %(need)s exemplos de validação; a menor rodada recente teve "
 "%(have)s"
 
-#: olim/learning_tasks/states.py:2033 olim/learning_tasks/states.py:2064
-#: olim/learning_tasks/states.py:2460
+#: olim/learning_tasks/states.py:2034 olim/learning_tasks/states.py:2065
+#: olim/learning_tasks/states.py:2474
 msgid "Enter a number."
 msgstr "Digite um número."
 
-#: olim/learning_tasks/states.py:2042
+#: olim/learning_tasks/states.py:2043
 #, python-format
 msgid "Must be between %(lo)s and %(hi)s (or %(extra)s)."
 msgstr "Deve estar entre %(lo)s e %(hi)s (ou %(extra)s)."
 
-#: olim/learning_tasks/states.py:2048 olim/learning_tasks/states.py:2464
+#: olim/learning_tasks/states.py:2049 olim/learning_tasks/states.py:2478
 #, python-format
 msgid "Must be between %(lo)s and %(hi)s."
 msgstr "Deve estar entre %(lo)s e %(hi)s."
 
-#: olim/learning_tasks/states.py:2059
+#: olim/learning_tasks/states.py:2060
 msgid "Unknown metric."
 msgstr "Métrica desconhecida."
 
-#: olim/learning_tasks/states.py:2067
+#: olim/learning_tasks/states.py:2068
 msgid "Must be between 0 and 1."
 msgstr "Deve estar entre 0 e 1."
 
-#: olim/learning_tasks/states.py:2075
+#: olim/learning_tasks/states.py:2076
 msgid "Set a threshold, or clear the metric to run without a goal."
 msgstr "Defina um limiar ou limpe a métrica para rodar sem meta."
 
-#: olim/learning_tasks/states.py:2121
+#: olim/learning_tasks/states.py:2122
 msgid "Active Learning"
 msgstr "Aprendizado Ativo"
 
-#: olim/learning_tasks/states.py:2153 olim/learning_tasks/states.py:2266
-#: olim/learning_tasks/states.py:2335 olim/learning_tasks/states.py:2616
+#: olim/learning_tasks/states.py:2154 olim/learning_tasks/states.py:2267
+#: olim/learning_tasks/states.py:2336 olim/learning_tasks/states.py:2633
 msgid "Unknown error"
 msgstr "Erro desconhecido"
 
-#: olim/learning_tasks/states.py:2165
+#: olim/learning_tasks/states.py:2166
 msgid "Processing..."
 msgstr "Processando..."
 
-#: olim/learning_tasks/states.py:2177
+#: olim/learning_tasks/states.py:2178
 msgid "Starting training..."
 msgstr "Iniciando treinamento..."
 
-#: olim/learning_tasks/states.py:2472
+#: olim/learning_tasks/states.py:2486
 msgid "Unknown signal."
 msgstr "Sinal desconhecido."
 
-#: olim/learning_tasks/states.py:2485
+#: olim/learning_tasks/states.py:2499
 msgid "Scan pending…"
 msgstr "Verificação pendente…"
 
-#: olim/learning_tasks/states.py:2491 olim/learning_tasks/states.py:2588
+#: olim/learning_tasks/states.py:2505 olim/learning_tasks/states.py:2605
 msgid "Scanning…"
 msgstr "Verificando…"
 
-#: olim/learning_tasks/states.py:2505
+#: olim/learning_tasks/states.py:2520
 msgid "Model health check"
 msgstr "Verificação de saúde dos modelos"
 
-#: olim/learning_tasks/states.py:2550
+#: olim/learning_tasks/states.py:2565
 msgid "Model Health Check"
 msgstr "Verificação de Saúde dos Modelos"
 
-#: olim/learning_tasks/states.py:2572
+#: olim/learning_tasks/states.py:2589
 msgid "Starting scan…"
 msgstr "Iniciando verificação…"
 
-#: olim/learning_tasks/states.py:2680
+#: olim/learning_tasks/states.py:2697
 msgid "No trained model was selected."
 msgstr "Nenhum modelo treinado foi selecionado."
 
-#: olim/learning_tasks/states.py:2720
+#: olim/learning_tasks/states.py:2737
 msgid "Health Check Results"
 msgstr "Resultados da Verificação"
 
@@ -1791,13 +1795,13 @@ msgstr "Entrada "
 
 #: olim/templates/entry.html:22
 #: olim/templates/learning_tasks/active_learning_loop.html:105
-#: olim/templates/learning_tasks/al_label_select.html:34
+#: olim/templates/learning_tasks/al_label_select.html:31
 #: olim/templates/learning_tasks/cold_start_search_setup.html:55
 #: olim/templates/learning_tasks/label_entry.html:24
 #: olim/templates/learning_tasks/ollama_auto_label.html:47
 #: olim/templates/learning_tasks/ollama_model_config.html:137
 #: olim/templates/learning_tasks/ollama_queue_setup.html:86
-#: olim/templates/learning_tasks/queue_setup.html:135
+#: olim/templates/learning_tasks/queue_setup.html:128
 #: olim/templates/learning_tasks/read_data.html:84
 #: olim/templates/learning_tasks/show_data.html:48
 msgid "Previous"
@@ -2128,6 +2132,7 @@ msgid "Project Labels"
 msgstr "Rótulos do Projeto"
 
 #: olim/templates/init-config.html:183 olim/templates/labels.html:186
+#: olim/templates/macros/label_selector.html:57
 msgid "Enter label name"
 msgstr "Digite o nome do rótulo"
 
@@ -2239,11 +2244,11 @@ msgstr "Excluir"
 
 #: olim/templates/labels.html:23
 #: olim/templates/learning_tasks/_al_settings.html:69
-#: olim/templates/learning_tasks/al_label_select.html:13
-#: olim/templates/learning_tasks/maintenance_scan.html:174
+#: olim/templates/learning_tasks/al_label_select.html:16
+#: olim/templates/learning_tasks/maintenance_scan.html:187
 #: olim/templates/learning_tasks/ollama_auto_label.html:249
 #: olim/templates/learning_tasks/ollama_queue_setup.html:22
-#: olim/templates/learning_tasks/queue_setup.html:24
+#: olim/templates/learning_tasks/queue_setup.html:25
 msgid "Label"
 msgstr "Rótulo"
 
@@ -2256,7 +2261,7 @@ msgid "Show this label in entry forms"
 msgstr "Mostrar este rótulo em formulários de entrada"
 
 #: olim/templates/labels.html:132
-#: olim/templates/learning_tasks/maintenance_scan.html:12
+#: olim/templates/learning_tasks/maintenance_scan.html:14
 msgid "Settings"
 msgstr "Configurações"
 
@@ -3016,7 +3021,7 @@ msgid "The question the model learns to answer."
 msgstr "A pergunta que o modelo aprende a responder."
 
 #: olim/templates/learning_tasks/_al_settings.html:79
-#: olim/templates/learning_tasks/al_label_select.html:18
+#: olim/templates/macros/label_selector.html:20
 msgid "Select a label"
 msgstr "Selecionar um rótulo"
 
@@ -3509,7 +3514,7 @@ msgstr "Concluir Tarefa"
 msgid "Finish"
 msgstr "Concluir"
 
-#: olim/templates/learning_tasks/al_label_select.html:15
+#: olim/templates/learning_tasks/al_label_select.html:17
 msgid "Select the label you want to train the active learning model for."
 msgstr ""
 "Selecione o rótulo para o qual deseja treinar o modelo de aprendizado "
@@ -3614,7 +3619,7 @@ msgid "Before this check"
 msgstr "Antes desta verificação"
 
 #: olim/templates/learning_tasks/maintenance_review.html:59
-#: olim/templates/learning_tasks/maintenance_scan.html:174
+#: olim/templates/learning_tasks/maintenance_scan.html:187
 msgid "Measured accuracy"
 msgstr "Acurácia medida"
 
@@ -3631,7 +3636,7 @@ msgid "Right"
 msgstr "Certas"
 
 #: olim/templates/learning_tasks/maintenance_review.html:79
-#: olim/templates/learning_tasks/maintenance_scan.html:174
+#: olim/templates/learning_tasks/maintenance_scan.html:187
 msgid "Checked"
 msgstr "Conferidas"
 
@@ -3648,11 +3653,11 @@ msgstr "Completar os rótulos"
 msgid "Label some more anyway"
 msgstr "Rotular mais mesmo assim"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:10
+#: olim/templates/learning_tasks/maintenance_scan.html:12
 msgid "Health check settings"
 msgstr "Configurações da verificação"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:26
+#: olim/templates/learning_tasks/maintenance_scan.html:28
 msgid ""
 "Checks whether your trained models still agree with what people are "
 "labelling now."
@@ -3660,39 +3665,49 @@ msgstr ""
 "Verifica se os seus modelos treinados ainda concordam com o que as "
 "pessoas estão rotulando agora."
 
-#: olim/templates/learning_tasks/maintenance_scan.html:37
+#: olim/templates/learning_tasks/maintenance_scan.html:42
+msgid "Labels to check"
+msgstr "Rótulos a verificar"
+
+#: olim/templates/learning_tasks/maintenance_scan.html:43
+msgid "Leave everything unchecked to scan every trained model in the project."
+msgstr ""
+"Deixe tudo desmarcado para verificar todos os modelos treinados do "
+"projeto."
+
+#: olim/templates/learning_tasks/maintenance_scan.html:50
 msgid "Decide \"worst\" by"
 msgstr "Definir o \"pior\" por"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:38
+#: olim/templates/learning_tasks/maintenance_scan.html:51
 msgid "Which signal picks the model to work on when they disagree."
 msgstr "Qual sinal escolhe o modelo a trabalhar quando eles discordam."
 
-#: olim/templates/learning_tasks/maintenance_scan.html:43
+#: olim/templates/learning_tasks/maintenance_scan.html:56
 msgid "Measured accuracy — how often it was actually right"
 msgstr "Acurácia medida — com que frequência ele realmente acertou"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:44
+#: olim/templates/learning_tasks/maintenance_scan.html:57
 msgid "Confidence drop — how much surer it used to be"
 msgstr "Queda de confiança — o quanto ele já teve mais certeza"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:45
+#: olim/templates/learning_tasks/maintenance_scan.html:58
 msgid "Unchecked predictions — how much it has committed to unseen"
 msgstr "Previsões não conferidas — o quanto ele afirmou sem ninguém verificar"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:54
+#: olim/templates/learning_tasks/maintenance_scan.html:67
 msgid "Entries to check"
 msgstr "Entradas a conferir"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:54
+#: olim/templates/learning_tasks/maintenance_scan.html:67
 msgid "How many of the model's confident answers you will be asked to adjudicate."
 msgstr "Quantas das respostas confiantes do modelo você será solicitado a julgar."
 
-#: olim/templates/learning_tasks/maintenance_scan.html:55
+#: olim/templates/learning_tasks/maintenance_scan.html:68
 msgid "Minimum before believing it"
 msgstr "Mínimo para acreditar"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:55
+#: olim/templates/learning_tasks/maintenance_scan.html:68
 msgid ""
 "Accuracy measured on fewer entries than this is treated as no evidence at"
 " all."
@@ -3700,19 +3715,19 @@ msgstr ""
 "Acurácia medida em menos entradas do que isto é tratada como nenhuma "
 "evidência."
 
-#: olim/templates/learning_tasks/maintenance_scan.html:56
+#: olim/templates/learning_tasks/maintenance_scan.html:69
 msgid "Accuracy below which it needs work"
 msgstr "Acurácia abaixo da qual precisa de trabalho"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:56
+#: olim/templates/learning_tasks/maintenance_scan.html:69
 msgid "Measured agreement under this counts as degraded."
 msgstr "Concordância medida abaixo disto conta como degradado."
 
-#: olim/templates/learning_tasks/maintenance_scan.html:57
+#: olim/templates/learning_tasks/maintenance_scan.html:70
 msgid "Confidence drop that counts"
 msgstr "Queda de confiança que conta"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:57
+#: olim/templates/learning_tasks/maintenance_scan.html:70
 msgid ""
 "How much of its former certainty a model can lose before it needs "
 "attention."
@@ -3720,11 +3735,11 @@ msgstr ""
 "Quanta da sua certeza anterior um modelo pode perder antes de precisar de"
 " atenção."
 
-#: olim/templates/learning_tasks/maintenance_scan.html:76
+#: olim/templates/learning_tasks/maintenance_scan.html:89
 msgid "Re-score the data to measure confidence"
 msgstr "Repontuar os dados para medir a confiança"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:77
+#: olim/templates/learning_tasks/maintenance_scan.html:90
 msgid ""
 "Compares how sure each model is now against how sure it was when trained."
 " The slow part of the check — one pass over your entries per model."
@@ -3733,28 +3748,28 @@ msgstr ""
 "treinou. É a parte lenta da verificação — uma passagem pelas suas "
 "entradas por modelo."
 
-#: olim/templates/learning_tasks/maintenance_scan.html:86
+#: olim/templates/learning_tasks/maintenance_scan.html:99
 msgid "Back to results"
 msgstr "Voltar aos resultados"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:92
+#: olim/templates/learning_tasks/maintenance_scan.html:105
 msgid "Run health check"
 msgstr "Rodar verificação"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:120
+#: olim/templates/learning_tasks/maintenance_scan.html:133
 msgid "Health check failed"
 msgstr "A verificação falhou"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:127
+#: olim/templates/learning_tasks/maintenance_scan.html:140
 msgid "Try again"
 msgstr "Tentar de novo"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:139
+#: olim/templates/learning_tasks/maintenance_scan.html:152
 #, python-format
 msgid "Working on: %(name)s"
 msgstr "Trabalhando em: %(name)s"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:143
+#: olim/templates/learning_tasks/maintenance_scan.html:156
 #, python-format
 msgid ""
 "It was right on %(agree)s of the %(checked)s entries a human has since "
@@ -3763,11 +3778,11 @@ msgstr ""
 "Ele acertou %(agree)s das %(checked)s entradas que uma pessoa reconferiu "
 "desde então."
 
-#: olim/templates/learning_tasks/maintenance_scan.html:146
+#: olim/templates/learning_tasks/maintenance_scan.html:159
 msgid "Nobody has re-checked its answers yet, so there is nothing to score it on."
 msgstr "Ninguém reconferiu as respostas dele ainda, então não há como avaliá-lo."
 
-#: olim/templates/learning_tasks/maintenance_scan.html:151
+#: olim/templates/learning_tasks/maintenance_scan.html:164
 #, python-format
 msgid ""
 "Next you will be asked to label %(n)s entries it answered confidently, so"
@@ -3776,7 +3791,7 @@ msgstr ""
 "A seguir você será solicitado a rotular %(n)s entradas que ele respondeu "
 "com confiança, para medirmos se ele ainda está certo."
 
-#: olim/templates/learning_tasks/maintenance_scan.html:158
+#: olim/templates/learning_tasks/maintenance_scan.html:171
 msgid ""
 "No trained model was found in this project, so there is nothing to "
 "maintain yet."
@@ -3784,42 +3799,42 @@ msgstr ""
 "Nenhum modelo treinado foi encontrado neste projeto, então ainda não há o"
 " que manter."
 
-#: olim/templates/learning_tasks/maintenance_scan.html:165
+#: olim/templates/learning_tasks/maintenance_scan.html:178
 msgid "All models"
 msgstr "Todos os modelos"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:167
+#: olim/templates/learning_tasks/maintenance_scan.html:180
 #, python-format
 msgid "· ordered by %(signal)s"
 msgstr "· ordenado por %(signal)s"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:174
+#: olim/templates/learning_tasks/maintenance_scan.html:187
 #: olim/templates/learning_tasks/ollama_auto_label.html:35
 msgid "Model"
 msgstr "Modelo"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:174
+#: olim/templates/learning_tasks/maintenance_scan.html:187
 msgid "Confidence drop"
 msgstr "Queda de confiança"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:174
+#: olim/templates/learning_tasks/maintenance_scan.html:187
 msgid "Unchecked"
 msgstr "Não conferidas"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:187
+#: olim/templates/learning_tasks/maintenance_scan.html:200
 msgid "Too few checks to rely on"
 msgstr "Conferências insuficientes para confiar"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:199
+#: olim/templates/learning_tasks/maintenance_scan.html:212
 #, python-format
 msgid "* measured on fewer than %(n)s entries — shown, but not used to rank."
 msgstr "* medido em menos de %(n)s entradas — exibido, mas não usado para ordenar."
 
-#: olim/templates/learning_tasks/maintenance_scan.html:208
+#: olim/templates/learning_tasks/maintenance_scan.html:221
 msgid "Start checking"
 msgstr "Começar a conferir"
 
-#: olim/templates/learning_tasks/maintenance_scan.html:215
+#: olim/templates/learning_tasks/maintenance_scan.html:228
 msgid "Scan again"
 msgstr "Verificar de novo"
 
@@ -4001,7 +4016,7 @@ msgid "Template for each labeling request. Use placeholders"
 msgstr "Template para cada solicitação de rotulagem. Use marcadores"
 
 #: olim/templates/learning_tasks/ollama_queue_setup.html:26
-#: olim/templates/learning_tasks/queue_setup.html:29
+#: olim/templates/learning_tasks/queue_setup.html:30
 msgid "pre-selected"
 msgstr "pré-selecionado"
 
@@ -4010,7 +4025,7 @@ msgid "Short description of what this label means (used in prompt)"
 msgstr "Breve descrição do que este rótulo significa (usada no prompt)"
 
 #: olim/templates/learning_tasks/ollama_queue_setup.html:39
-#: olim/templates/learning_tasks/queue_setup.html:46
+#: olim/templates/learning_tasks/queue_setup.html:49
 msgid "Select Labels"
 msgstr "Selecionar Rótulos"
 
@@ -4093,7 +4108,7 @@ msgstr "IDs de entrada copiados para a área de transferência!"
 msgid "Queue exported successfully!"
 msgstr "Fila exportada com sucesso!"
 
-#: olim/templates/learning_tasks/queue_setup.html:39
+#: olim/templates/learning_tasks/queue_setup.html:40
 msgid ""
 "This project has no labels. Please create labels in the project settings "
 "before setting up a labeling queue."
@@ -4101,49 +4116,49 @@ msgstr ""
 "Este projeto não possui rótulos. Crie rótulos nas configurações do "
 "projeto antes de configurar uma fila de rotulagem."
 
-#: olim/templates/learning_tasks/queue_setup.html:48
+#: olim/templates/learning_tasks/queue_setup.html:50
 msgid "Choose which labels will be available for labeling"
 msgstr "Escolha quais rótulos estarão disponíveis para rotulagem"
 
-#: olim/templates/learning_tasks/queue_setup.html:68
+#: olim/templates/learning_tasks/queue_setup.html:61
 msgid "Required Labels"
 msgstr "Rótulos Obrigatórios"
 
-#: olim/templates/learning_tasks/queue_setup.html:70
+#: olim/templates/learning_tasks/queue_setup.html:63
 msgid "Select labels that must be filled before advancing to next entry"
 msgstr ""
 "Selecione rótulos que devem ser preenchidos antes de avançar para a "
 "próxima entrada"
 
-#: olim/templates/learning_tasks/queue_setup.html:78
+#: olim/templates/learning_tasks/queue_setup.html:71
 msgid "(required)"
 msgstr "(obrigatório)"
 
-#: olim/templates/learning_tasks/queue_setup.html:82
+#: olim/templates/learning_tasks/queue_setup.html:75
 msgid "Select labels above first"
 msgstr "Selecione os rótulos acima primeiro"
 
-#: olim/templates/learning_tasks/queue_setup.html:93
+#: olim/templates/learning_tasks/queue_setup.html:86
 msgid "Completion criteria"
 msgstr "Critério de conclusão"
 
-#: olim/templates/learning_tasks/queue_setup.html:95
+#: olim/templates/learning_tasks/queue_setup.html:88
 msgid "When is an entry considered labeled?"
 msgstr "Quando uma entrada é considerada rotulada?"
 
-#: olim/templates/learning_tasks/queue_setup.html:101
+#: olim/templates/learning_tasks/queue_setup.html:94
 msgid "At least one label"
 msgstr "Pelo menos um rótulo"
 
-#: olim/templates/learning_tasks/queue_setup.html:107
+#: olim/templates/learning_tasks/queue_setup.html:100
 msgid "All labels"
 msgstr "Todos os rótulos"
 
-#: olim/templates/learning_tasks/queue_setup.html:115
+#: olim/templates/learning_tasks/queue_setup.html:108
 msgid "Labels to use"
 msgstr "Rótulos a usar"
 
-#: olim/templates/learning_tasks/queue_setup.html:143
+#: olim/templates/learning_tasks/queue_setup.html:136
 msgid "Start Labeling"
 msgstr "Iniciar Rotulagem"
 
@@ -4262,6 +4277,26 @@ msgstr "Destaques"
 #: olim/templates/macros/highlights.html:10
 msgid "Add Highlight"
 msgstr "Adicionar Destaque"
+
+#: olim/templates/macros/label_selector.html:37
+msgid "No labels yet — create one below."
+msgstr "Ainda não há rótulos — crie um abaixo."
+
+#: olim/templates/macros/label_selector.html:45
+msgid "New label"
+msgstr "Novo rótulo"
+
+#: olim/templates/macros/label_selector.html:69
+msgid "Create"
+msgstr "Criar"
+
+#: olim/templates/macros/label_selector.html:72
+msgid ""
+"Need a multiple-choice label? Create it from the project labels page "
+"instead."
+msgstr ""
+"Precisa de um rótulo de múltipla escolha? Crie-o na página de rótulos do "
+"projeto."
 
 #: olim/templates/macros/labels-menu.html:22
 msgid "Hide this label"
@@ -5509,4 +5544,7 @@ msgstr "Destaque: {highlight}"
 
 #~ msgid "Ver detalhes completos desta entrada"
 #~ msgstr "Ver detalhes completos desta entrada"
+
+#~ msgid "Label name"
+#~ msgstr "Nome do Rótulo"
 

@@ -4,6 +4,8 @@
 {%- else -%}{{ value }}{%- endif -%}
 {% endmacro %}
 
+{% import "macros/label_selector.html" as label_selector_macro %}
+
 {% macro settings_button(may_configure) %}
 {% if may_configure %}
 <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="inline">
@@ -32,6 +34,17 @@
         <!-- ── Setup ─────────────────────────────────────────────────── -->
         <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="px-6 py-6 space-y-6">
             <button type="submit" name="action" value="save_settings" class="hidden" tabindex="-1" aria-hidden="true"></button>
+
+            <div>
+                {{ label_selector_macro.label_selector(
+                    'label_ids', available_labels, settings.label_ids, project_id,
+                    mode='multi',
+                    label_text=_('Labels to check'),
+                    help_text=_('Leave everything unchecked to scan every trained model in the project.'),
+                    error=errors.get('label_ids'),
+                    accent='teal'
+                ) }}
+            </div>
 
             <div>
                 <label for="maint-rank_by" class="block text-sm font-medium text-gray-700 mb-1">{{ _('Decide "worst" by') }}</label>

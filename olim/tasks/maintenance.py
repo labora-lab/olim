@@ -22,6 +22,7 @@ def scan_models(
     user_id: int,
     project_id: int,
     measure_coverage: bool = True,
+    label_ids: list[int] | None = None,
     **__,
 ) -> dict[str, Any]:
     """Report the health of every trained model in a project.
@@ -31,6 +32,8 @@ def scan_models(
         project_id: Project whose models to scan
         measure_coverage: Re-score the unlabelled pool to compare confidence against
             training time. Accurate but the expensive part — one full pass per model.
+        label_ids: Restrict the scan to models trained for these labels. Empty or
+            omitted means every trained model in the project.
 
     Returns:
         {"success": True, "reports": [ModelHealth-shaped dicts]}
@@ -38,6 +41,9 @@ def scan_models(
     with flask_app.app_context():
         service = MLModelService(settings.WORK_PATH)
         models = service.list_models(project_id=project_id)
+        if label_ids:
+            wanted = set(label_ids)
+            models = [m for m in models if m.label_id in wanted]
         reports: list[dict[str, Any]] = []
 
         for index, model in enumerate(models):

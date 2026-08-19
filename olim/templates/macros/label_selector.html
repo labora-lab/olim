@@ -1,0 +1,77 @@
+{# Reusable label picker: single-select or checkbox multi-select, with an inline
+   "New label" affordance so a task setup screen never has to send the user away to
+   the Labels page just to create the one they need. Used by queue_setup.html,
+   al_label_select.html and maintenance_scan.html — keep behaviour identical across
+   all three; render()'s job is only to supply labels/selected_ids/project_id. #}
+{% macro label_selector(field_name, labels, selected_ids, project_id, mode='multi', label_text=None, help_text=None, required=false, component_id=None, error=None, accent='teal', checkbox_class='') %}
+{% set component_id = component_id or (field_name ~ '-selector') %}
+{% set selected_ids = selected_ids or [] %}
+<div id="{{ component_id }}">
+    {% if label_text %}
+    <label class="block text-sm font-medium text-gray-700 mb-1">
+        {{ label_text }}{% if required %} <span class="text-red-500">*</span>{% endif %}
+    </label>
+    {% endif %}
+    {% if help_text %}<p class="text-sm text-gray-500 mb-2">{{ help_text }}</p>{% endif %}
+
+    {% if mode == 'single' %}
+    <select name="{{ field_name }}" {% if required %}required{% endif %}
+        class="w-full px-3 py-2 border {% if error %}border-red-500{% else %}border-gray-300{% endif %} rounded-lg focus:ring-2 focus:ring-{{ accent }}-500 text-sm">
+        <option value="">— {{ _('Select a label') }} —</option>
+        {% for label in labels %}
+        <option value="{{ label.id }}" {% if label.id in selected_ids %}selected{% endif %}>{{ label.name }}</option>
+        {% endfor %}
+    </select>
+    {% else %}
+    <div class="space-y-1 max-h-48 overflow-y-auto border {% if error %}border-red-500{% else %}border-gray-200{% endif %} rounded-lg p-3">
+        {% for label in labels %}
+        <label class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded">
+            <input type="checkbox" name="{{ field_name }}" value="{{ label.id }}"
+                {% if label.id in selected_ids %}checked{% endif %}
+                data-label-id="{{ label.id }}" data-label-name="{{ label.name }}"
+                class="w-4 h-4 text-{{ accent }}-600 border-gray-300 rounded focus:ring-{{ accent }}-500 {{ checkbox_class }}">
+            <span class="text-sm text-gray-700">{{ label.name }}</span>
+        </label>
+        {% endfor %}
+        {% if not labels %}
+        <p class="text-sm text-gray-400 italic p-2">{{ _('No labels yet — create one below.') }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% if error %}<p class="mt-1 text-sm text-red-500">{{ error }}</p>{% endif %}
+
+    <details class="mt-2">
+        <summary class="cursor-pointer text-sm text-{{ accent }}-600 hover:text-{{ accent }}-700 select-none">
+            <i class="bi bi-plus-circle mr-1"></i>{{ _('New label') }}
+        </summary>
+        <div class="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg flex flex-wrap items-start gap-2">
+            <input type="hidden" name="_selector_field" value="{{ field_name }}">
+            <input type="hidden" name="_selector_mode" value="{{ mode }}">
+            <input type="hidden" name="_selector_id" value="{{ component_id }}">
+            <input type="hidden" name="_selector_label_text" value="{{ label_text or '' }}">
+            <input type="hidden" name="_selector_help_text" value="{{ help_text or '' }}">
+            <input type="hidden" name="_selector_required" value="{{ '1' if required else '' }}">
+            <input type="hidden" name="_selector_accent" value="{{ accent }}">
+            <input type="hidden" name="_selector_checkbox_class" value="{{ checkbox_class }}">
+            <div class="flex-1 min-w-[10rem]">
+                <input type="text" name="_new_label_name" placeholder="{{ _('Enter label name') }}"
+                    class="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm">
+            </div>
+            <select name="_new_label_type" class="px-2 py-1.5 border border-gray-300 rounded-lg text-sm">
+                {% for type_id, type_name in get_available_label_types() if type_id != 'multiple_choice' %}
+                <option value="{{ type_id }}">{{ type_name }}</option>
+                {% endfor %}
+            </select>
+            <button type="button"
+                hx-post="{{ url_for('quick_create_label', project_id=project_id) }}"
+                hx-target="#{{ component_id }}" hx-swap="outerHTML"
+                class="px-3 py-1.5 text-sm font-medium text-white bg-{{ accent }}-600 rounded-lg hover:bg-{{ accent }}-700">
+                {{ _('Create') }}
+            </button>
+            <p class="text-xs text-gray-500 basis-full">
+                {{ _('Need a multiple-choice label? Create it from the project labels page instead.') }}
+            </p>
+        </div>
+    </details>
+</div>
+{% endmacro %}

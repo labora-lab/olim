@@ -122,8 +122,8 @@ def prediction_agreement(
     }
 
 
-def unchecked_prediction_ids(label_id: int, version_id: int) -> list[int]:
-    """Entry ids this version predicted confidently that no human has ruled on.
+def _unchecked_confident_predictions(label_id: int, version_id: int) -> list[ModelPrediction]:
+    """Confident predictions this version made that no human has ruled on, most recent first.
 
     Confident means a singleton conformal prediction set — the cases where the model
     committed to an answer, which is exactly where a silent regression hides.
@@ -151,7 +151,6 @@ def unchecked_prediction_ids(label_id: int, version_id: int) -> list[int]:
 
     # prediction_set is JSON, so the singleton filter is applied in Python rather
     # than in SQL, which would not be portable across SQLite and Postgres.
-    confident: list[int] = []
     by_entry = {
         p.entry_id: p
         for p in db.session.execute(
@@ -161,16 +160,47 @@ def unchecked_prediction_ids(label_id: int, version_id: int) -> list[int]:
             )
         ).scalars()
     }
+    confident: list[ModelPrediction] = []
     for entry_id in rows:
         prediction = by_entry.get(entry_id)
         if prediction is not None and len(prediction.prediction_set or []) == 1:
-            confident.append(entry_id)
+            confident.append(prediction)
     return confident
 
 
+def unchecked_prediction_ids(label_id: int, version_id: int) -> list[int]:
+    """Entry ids this version predicted confidently that no human has ruled on."""
+    return [p.entry_id for p in _unchecked_confident_predictions(label_id, version_id)]
+
+
 def audit_sample(label_id: int, version_id: int, n: int) -> list[int]:
-    """The `n` most recent confident-but-unchecked entries, for a human to adjudicate."""
-    return unchecked_prediction_ids(label_id, version_id)[: max(0, n)]
+    """Up to `n` confident-but-unchecked entries, balanced across predicted answers.
+
+    An audit sample built by recency alone mostly reflects whatever the model
+    predicts most often — the majority class dominates the sample and the resulting
+    accuracy figure says little about the classes that matter most, usually the rare
+    ones. Round-robin across predicted values instead, taking the most recent
+    unchecked entry for each answer in turn, so a model that is confidently wrong on
+    a minority class gets caught instead of averaged away.
+    """
+    n = max(0, n)
+    if n == 0:
+        return []
+
+    buckets: dict[str | None, list[int]] = {}
+    for prediction in _unchecked_confident_predictions(label_id, version_id):
+        buckets.setdefault(prediction.value, []).append(prediction.entry_id)
+
+    values = sorted(buckets, key=str)
+    picked: list[int] = []
+    while len(picked) < n and any(buckets[value] for value in values):
+        for value in values:
+            if not buckets[value]:
+                continue
+            picked.append(buckets[value].pop(0))
+            if len(picked) == n:
+                break
+    return picked
 
 
 def rank_models(

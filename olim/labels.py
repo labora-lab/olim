@@ -2,7 +2,16 @@ import json
 import time
 
 import pandas as pd
-from flask import Response, flash, redirect, render_template, request, session, url_for
+from flask import (
+    Response,
+    flash,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
 from flask_babel import _
 
 from . import app, db, entry_types
@@ -100,6 +109,76 @@ def create_label(project_id: int) -> ...:
     )
 
     return redirect(url_for("labels", project_id=project_id))
+
+
+@app.route("/<int:project_id>/labels/quick_create", methods=["POST"])
+def quick_create_label(project_id: int) -> ...:
+    """Create a label from the inline "New label" affordance on a task setup screen.
+
+    Returns the refreshed label_selector component (not a redirect) so the setup
+    form the user was filling in stays exactly where it was, with the new label
+    already selected alongside whatever was checked before.
+    """
+    res = update_session_project(project_id)
+    if res is not None:
+        return res
+
+    field_name = request.form.get("_selector_field", "labels")
+    mode = request.form.get("_selector_mode", "multi")
+    component_id = request.form.get("_selector_id") or f"{field_name}-selector"
+    label_text = request.form.get("_selector_label_text") or None
+    help_text = request.form.get("_selector_help_text") or None
+    required = bool(request.form.get("_selector_required"))
+    accent = request.form.get("_selector_accent") or "teal"
+    checkbox_class = request.form.get("_selector_checkbox_class") or ""
+
+    name = request.form.get("_new_label_name", "").strip()
+    label_type = request.form.get("_new_label_type") or None
+    error = None
+    new_id = None
+    toast = None
+    if not name:
+        error = _("Enter a name for the new label.")
+    else:
+        label_settings = get_preset_settings(label_type) if label_type else None
+        label = new_label(
+            name,
+            session["user_id"],
+            project_id,
+            label_type=label_type,
+            label_settings=label_settings,
+        )
+        new_id = label.id
+        toast = _("Label {label_name} successfully created").format(label_name=label.name)
+
+    selected_ids = {int(value) for value in request.form.getlist(field_name) if value.strip()}
+    if new_id is not None:
+        selected_ids.add(new_id)
+
+    body = render_template(
+        "macros/_label_selector_response.html",
+        field_name=field_name,
+        labels=get_labels(project_id),
+        selected_ids=selected_ids,
+        project_id=project_id,
+        mode=mode,
+        label_text=label_text,
+        help_text=help_text,
+        required=required,
+        component_id=component_id,
+        error=error,
+        accent=accent,
+        checkbox_class=checkbox_class,
+    )
+    # This response swaps only the selector component, not the full page, so a
+    # flash() message would sit unseen in the session until the next full render —
+    # the same HX-Trigger toast the task wizard's own error path already uses.
+    resp = make_response(body)
+    if toast:
+        resp.headers["HX-Trigger"] = json.dumps(
+            {"showFlash": [{"message": toast, "category": "success"}]}
+        )
+    return resp
 
 
 @app.route("/labels/<int:label_id>/delete", methods=["GET"])

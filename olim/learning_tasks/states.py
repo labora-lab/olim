@@ -1419,6 +1419,7 @@ class ALLabelSelect(BaseState):
             title=self.params.get("title", _("Select Label")),
             labels=get_labels(self.params["_project_id"]),
             selected_id=self.data.get("al_label_id"),
+            project_id=self.params["_project_id"],
             is_last_step=self.params.get("is_last_step", False),
         )
 
@@ -2437,16 +2438,29 @@ class MaintenanceScan(BaseState):
     def _may_configure(self) -> bool:
         return get_user_role() in self.SETUP_ROLES
 
+    def _available_labels(self) -> list:
+        project_id = self.params.get("_project_id")
+        return list(get_labels(project_id)) if project_id else []
+
     def _current_settings(self) -> dict[str, Any]:
         values = {
             key: self._get_setting(key, spec.get("default"))
             for key, spec in self.SETTING_SPECS.items()
         }
         values["rank_by"] = self._get_setting("rank_by", "audit_accuracy")
+        values["label_ids"] = self._get_setting("label_ids", [])
         return values
 
     def _apply_settings(self, payload: dict[str, Any]) -> dict[str, str]:
         errors: dict[str, str] = {}
+        if hasattr(payload, "getlist"):
+            raw_label_ids = payload.getlist("label_ids")
+        else:
+            raw_label_ids = payload.get("label_ids", [])
+        if isinstance(raw_label_ids, str):
+            raw_label_ids = [raw_label_ids]
+        self.data["maint_setting_label_ids"] = [int(x) for x in raw_label_ids if x]
+
         for key, spec in self.SETTING_SPECS.items():
             if spec["cast"] is bool:
                 self.data[f"maint_setting_{key}"] = bool(payload.get(key))
@@ -2502,6 +2516,7 @@ class MaintenanceScan(BaseState):
             user_id=self.params["_user_id"],
             project_id=self.params["_project_id"],
             measure_coverage=bool(self._get_setting("measure_coverage", True)),
+            label_ids=self._get_setting("label_ids", []),
             description=_("Model health check"),
         )
         self.data["maint_task_id"] = task.id
@@ -2559,6 +2574,8 @@ class MaintenanceScan(BaseState):
                 setting_specs=self.SETTING_SPECS,
                 rank_signals=RANK_SIGNALS,
                 errors=errors,
+                available_labels=self._available_labels(),
+                project_id=self.params.get("_project_id"),
                 may_configure=self._may_configure(),
                 scanned=bool(self.data.get("maint_reports")),
                 is_last_step=self.params.get("is_last_step", False),
