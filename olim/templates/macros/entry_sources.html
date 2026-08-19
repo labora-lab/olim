@@ -1,4 +1,4 @@
-{% macro entry_sources_widget(sources, errors={}) %}
+{% macro entry_sources_widget(sources, errors={}, class_values=[]) %}
 <div>
     <div class="flex items-center justify-between mb-2">
         <label class="block text-sm font-medium text-gray-700">
@@ -12,7 +12,7 @@
     <p class="text-sm text-gray-500 mb-3">{{ _('Results from all sources are merged and deduplicated.') }}</p>
 
     <div id="sources-list" class="space-y-3">
-        {% for src in sources %}{{ _source_block(loop.index0, src) }}{% endfor %}
+        {% for src in sources %}{{ _source_block(loop.index0, src, class_values) }}{% endfor %}
     </div>
 
     <input type="hidden" id="num_sources" name="num_sources" value="{{ sources|length }}">
@@ -24,10 +24,11 @@
 {% endmacro %}
 
 
-{% macro _source_block(idx, src) %}
+{% macro _source_block(idx, src, class_values=[]) %}
 {% if src.type == 'search' %}{% set accent_classes = 'border-l-green-400' %}
 {% elif src.type == 'regex' %}{% set accent_classes = 'border-l-orange-400' %}
 {% elif src.type == 'manual' %}{% set accent_classes = 'border-l-gray-400' %}
+{% elif src.type == 'search_per_class' %}{% set accent_classes = 'border-l-violet-400' %}
 {% else %}{% set accent_classes = 'border-l-blue-400' %}{% endif %}
 <div class="source-block border border-gray-200 border-l-4 {{ accent_classes }} rounded-lg p-4 bg-white shadow-sm" data-index="{{ idx }}">
     <!-- Type selector + remove -->
@@ -38,6 +39,9 @@
             <option value="search" {% if src.type == 'search' %}selected{% endif %}>{{ _('🔍 Search') }}</option>
             <option value="regex"  {% if src.type == 'regex'  %}selected{% endif %}>{{ _('⚡ Regex') }}</option>
             <option value="manual" {% if src.type == 'manual' %}selected{% endif %}>{{ _('📋 Manual IDs') }}</option>
+            {% if class_values %}
+            <option value="search_per_class" {% if src.type == 'search_per_class' %}selected{% endif %}>{{ _('🎯 Search per class') }}</option>
+            {% endif %}
         </select>
         <button type="button" onclick="removeBlock(this)"
             class="remove-block-btn p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg border border-gray-200 transition-colors flex-shrink-0"
@@ -75,6 +79,24 @@
             class="w-32 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
         <p class="text-xs text-gray-400 mt-1">{{ _('Python regex · case-insensitive') }}</p>
     </div>
+
+    <!-- Search per class: one term per answer, each with an equal share of the budget,
+         so a rare class gets seeded instead of losing its quota to a common one. -->
+    {% if class_values %}
+    <div class="block-search_per_class {% if src.type != 'search_per_class' %}hidden{% endif %}">
+        <p class="text-xs text-gray-500 mb-2">{{ _('One search per answer. The budget below is split evenly between them.') }}</p>
+        {% for value in class_values %}
+        <label class="block text-xs font-medium text-gray-600 mb-1">{{ value }}</label>
+        <input data-f="class_{{ value }}" data-class-value="{{ value }}" type="text"
+            value="{{ (src.terms or {}).get(value, '') }}"
+            placeholder="{{ _('Keyword for “%(value)s”…', value=value) }}"
+            class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 mb-2">
+        {% endfor %}
+        <label class="block text-xs font-medium text-gray-600 mb-1">{{ _('Total entries') }}</label>
+        <input data-f="count" type="number" value="{{ src.count or 100 }}" min="1" max="1000"
+            class="w-32 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+    </div>
+    {% endif %}
 
     <!-- Manual IDs -->
     <div class="block-manual {% if src.type != 'manual' %}hidden{% endif %}">
@@ -136,7 +158,7 @@
 
 <script>
 (function () {
-    const ACCENT = { random: 'border-l-blue-400', search: 'border-l-green-400', regex: 'border-l-orange-400', manual: 'border-l-gray-400' };
+    const ACCENT = { random: 'border-l-blue-400', search: 'border-l-green-400', regex: 'border-l-orange-400', manual: 'border-l-gray-400', search_per_class: 'border-l-violet-400' };
     const ALL_ACCENTS = Object.values(ACCENT);
 
     function setAccent(block, type) {
@@ -159,6 +181,8 @@
         block.querySelector('.block-search').classList.toggle('hidden', type !== 'search');
         block.querySelector('.block-regex').classList.toggle('hidden', type !== 'regex');
         block.querySelector('.block-manual').classList.toggle('hidden', type !== 'manual');
+        // Only rendered when an earlier step fixed the label, so it may be absent.
+        block.querySelector('.block-search_per_class')?.classList.toggle('hidden', type !== 'search_per_class');
         setAccent(block, type);
     };
 
@@ -206,6 +230,11 @@
                 params[`source_${i}_count`]   = block.querySelector('.block-regex [data-f="count"]')?.value   || '10';
             } else if (type === 'manual') {
                 params[`source_${i}_ids`] = block.querySelector('.block-manual [data-f="ids"]')?.value || '';
+            } else if (type === 'search_per_class') {
+                params[`source_${i}_count`] = block.querySelector('.block-search_per_class [data-f="count"]')?.value || '100';
+                block.querySelectorAll('.block-search_per_class [data-class-value]').forEach(input => {
+                    params[`source_${i}_class_${input.dataset.classValue}`] = input.value || '';
+                });
             }
         });
         params['num_sources'] = String(document.querySelectorAll('#sources-list .source-block').length);

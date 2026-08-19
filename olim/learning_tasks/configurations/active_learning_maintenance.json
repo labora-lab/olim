@@ -1,0 +1,47 @@
+{
+  "order": 60,
+  "name": "Active Learning — Maintenance",
+  "name_pt_BR": "Aprendizado Ativo — Manutenção",
+  "description": "Check whether your trained models still agree with reality, then top up the labels of the weakest one.",
+  "description_pt_BR": "Verifique se os seus modelos treinados ainda concordam com a realidade e complete os rótulos do mais fraco.",
+  "icon": "heart-pulse",
+  "show_progress": true,
+  "sequence": [
+    {
+      "state": "MaintenanceScan",
+      "params": {
+        "title": "Model Health Check",
+        "rank_by": "audit_accuracy",
+        "audit_sample_size": 20,
+        "min_audit_samples": 10,
+        "accuracy_threshold": 0.8,
+        "coverage_drop_threshold": 0.1
+      }
+    },
+    {
+      "state": "LabelEntry",
+      "params": {}
+    },
+    {
+      "state": "MaintenanceReview",
+      "params": {
+        "title": "Health Check Results"
+      }
+    },
+    {
+      "state": "ActiveLearningLoop",
+      "params": {
+        "title": "Top Up Labels",
+        "metric_goal": {
+          "macro_f1": 0.8
+        },
+        "metric_direction": "above",
+        "max_rounds": 5,
+        "retrain_every": 10,
+        "cache_size": 50,
+        "mg_consecutive": 2,
+        "mg_min_val_samples": 10
+      }
+    }
+  ]
+}

@@ -1,0 +1,337 @@
+{# Active learning setup form.
+
+   Shared by mode="select" (first run, label still to be chosen) and
+   mode="settings" (reopened mid-loop). Keeping one copy means the two entry
+   points cannot drift apart. #}
+
+{% macro numfield(name, label, desc, spec, errors, settings, step='1', suffix='') %}
+<div>
+    <label for="al-{{ name }}" class="block text-sm font-medium text-gray-700 mb-1">{{ label }}</label>
+    <p class="text-xs text-gray-500 mb-2">{{ desc }}</p>
+    <div class="flex items-center gap-2">
+        <input type="number" id="al-{{ name }}" name="{{ name }}"
+            min="{{ spec.min }}" max="{{ spec.max }}" step="{{ step }}"
+            value="{{ settings[name] }}"
+            data-al-field
+            class="w-full px-3 py-2 border {% if errors.get(name) %}border-red-500{% else %}border-gray-300{% endif %} rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+        {% if suffix %}<span class="text-xs text-gray-500 whitespace-nowrap">{{ suffix }}</span>{% endif %}
+    </div>
+    {% if errors.get(name) %}
+    <p class="mt-1 text-sm text-red-500">{{ errors[name] }}</p>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro toggle(name, label, desc, settings) %}
+<div class="flex items-start gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+    <input type="checkbox" id="al-{{ name }}" name="{{ name }}" value="1"
+        {% if settings[name] %}checked{% endif %} data-al-field
+        class="mt-0.5 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+    <div>
+        <label for="al-{{ name }}" class="block text-sm font-medium text-gray-700 cursor-pointer">{{ label }}</label>
+        <p class="text-xs text-gray-500 mt-0.5">{{ desc }}</p>
+    </div>
+</div>
+{% endmacro %}
+
+{% macro section(icon, heading, desc) %}
+<div class="flex items-start gap-2 mb-3">
+    <i class="bi bi-{{ icon }} text-blue-600 mt-0.5"></i>
+    <div>
+        <h4 class="text-sm font-semibold text-gray-800">{{ heading }}</h4>
+        <p class="text-xs text-gray-500">{{ desc }}</p>
+    </div>
+</div>
+{% endmacro %}
+
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600">
+            <h1 class="text-2xl font-bold text-white flex items-center">
+                <i class="bi bi-bullseye mr-3"></i>{{ title }}
+            </h1>
+            <p class="text-sm text-blue-100 mt-1">
+                {% if started %}
+                {{ _('Adjust how the loop runs. Changes take effect at the next retraining.') }}
+                {% else %}
+                {{ _('The model trains on what you label, then picks the entries it is least sure about for you to label next.') }}
+                {% endif %}
+            </p>
+        </div>
+
+        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="px-6 py-6" id="al-settings-form">
+            {# Default action for Enter-key submits; must precede the other submit buttons. #}
+            <button type="submit" name="action" value="save_settings" class="hidden" tabindex="-1" aria-hidden="true"></button>
+
+            <!-- ── Label ─────────────────────────────────────────────── -->
+            <div class="mb-6">
+                <label for="al-label-select" class="block text-sm font-medium text-gray-700 mb-1">
+                    {{ _('Label') }} <span class="text-red-500">*</span>
+                </label>
+                <p class="text-sm text-gray-500 mb-2">{{ _('The question the model learns to answer.') }}</p>
+                {% if label_locked and selected_label %}
+                <div class="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">
+                    <i class="bi bi-lock text-gray-400"></i>{{ selected_label.name }}
+                </div>
+                {% else %}
+                <select id="al-label-select" name="label_id" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    <option value="">— {{ _('Select a label') }} —</option>
+                    {% for label in labels %}
+                    <option value="{{ label.id }}" {% if selected_label and selected_label.id == label.id %}selected{% endif %}>{{ label.name }}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+            </div>
+
+            <!-- ── Presets ───────────────────────────────────────────── -->
+            <div class="mb-6">
+                <p class="block text-sm font-medium text-gray-700 mb-1">{{ _('Starting point') }}</p>
+                <p class="text-sm text-gray-500 mb-2">{{ _('Pick a profile, then fine-tune below if you want.') }}</p>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="al-presets">
+                    {% for key, icon, name, blurb in [
+                        ('recommended', 'stars', _('Recommended'), _('Balanced for most projects')),
+                        ('fast', 'lightning-charge', _('Fast iteration'), _('Retrains often, lower bar')),
+                        ('confident', 'shield-check', _('High confidence'), _('More data before stopping')),
+                        ('custom', 'sliders', _('Custom'), _('Your own numbers'))
+                    ] %}
+                    <label class="cursor-pointer">
+                        <input type="radio" name="al_preset" value="{{ key }}" class="peer sr-only"
+                            {% if key == (active_preset | default('custom')) %}checked{% endif %}>
+                        <div class="h-full p-3 border-2 border-gray-200 rounded-lg text-center transition-colors hover:border-blue-300 peer-checked:border-blue-600 peer-checked:bg-blue-50">
+                            <i class="bi bi-{{ icon }} text-blue-600"></i>
+                            <p class="text-xs font-medium text-gray-800 mt-1">{{ name }}</p>
+                            <p class="text-[11px] text-gray-500 leading-tight mt-0.5">{{ blurb }}</p>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ── Advanced ──────────────────────────────────────────── -->
+            <details class="group border border-gray-200 rounded-lg" {% if errors %}open{% endif %}>
+                <summary class="cursor-pointer flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg">
+                    <span class="flex items-center gap-2"><i class="bi bi-sliders"></i>{{ _('Advanced settings') }}</span>
+                    <i class="bi bi-chevron-down group-open:rotate-180 transition-transform"></i>
+                </summary>
+
+                <div class="px-4 pb-4 pt-2 space-y-8 border-t border-gray-100">
+
+                    <!-- 1. When to stop -->
+                    <div>
+                        {{ section('flag', _('When to stop'), _('The loop ends once the model is good enough — measured over several rounds, not one lucky one.')) }}
+                        <div class="p-3 bg-gray-50 border border-gray-200 rounded-lg space-y-3">
+                            <div class="flex gap-2 items-center flex-wrap text-sm">
+                                <span class="text-gray-700">{{ _('Stop when') }}</span>
+                                <select name="mg_metric" data-al-field
+                                    class="rounded-lg border {% if errors.get('mg_metric') %}border-red-500{% else %}border-gray-300{% endif %} px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                                    <option value="" {% if not settings.mg_metric %}selected{% endif %}>{{ _('— no goal —') }}</option>
+                                    {% for m in goal_metrics %}
+                                    <option value="{{ m }}" {% if settings.mg_metric == m %}selected{% endif %}>{{ m }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select name="mg_direction" data-al-field
+                                    class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                                    <option value="above" {% if settings.mg_direction != 'below' %}selected{% endif %}>≥</option>
+                                    <option value="below" {% if settings.mg_direction == 'below' %}selected{% endif %}>≤</option>
+                                </select>
+                                <input type="number" name="mg_threshold" min="0" max="1" step="0.01" data-al-field
+                                    value="{{ settings.mg_threshold if settings.mg_threshold != '' else '' }}" placeholder="0.80"
+                                    class="w-24 rounded-lg border {% if errors.get('mg_threshold') %}border-red-500{% else %}border-gray-300{% endif %} px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                                <span class="text-gray-700">{{ _('averaged over the last') }}</span>
+                                <input type="number" name="mg_consecutive" min="1" max="20" data-al-field
+                                    value="{{ settings.mg_consecutive }}"
+                                    class="w-16 rounded-lg border {% if errors.get('mg_consecutive') %}border-red-500{% else %}border-gray-300{% endif %} px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                                <span class="text-gray-700">{{ _('rounds') }}</span>
+                            </div>
+                            {% if errors.get('mg_metric') %}<p class="text-sm text-red-500">{{ errors['mg_metric'] }}</p>{% endif %}
+                            {% if errors.get('mg_threshold') %}<p class="text-sm text-red-500">{{ errors['mg_threshold'] }}</p>{% endif %}
+                            {% if errors.get('mg_consecutive') %}<p class="text-sm text-red-500">{{ errors['mg_consecutive'] }}</p>{% endif %}
+
+                            <p id="al-goal-preview" class="text-xs text-blue-700 bg-blue-50 border border-blue-200 rounded px-2 py-1.5"></p>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                            {{ numfield('mg_min_val_samples',
+                                        _('Minimum validation examples'),
+                                        _('Ignore the goal until the score is measured on at least this many held-out entries. A score from two entries means nothing.'),
+                                        setting_specs.mg_min_val_samples, errors, settings) }}
+                            {{ numfield('max_rounds',
+                                        _('Hard stop after'),
+                                        _('Give up after this many retraining rounds even if the goal is never met. Use -1 to keep going forever.'),
+                                        setting_specs.max_rounds, errors, settings, '1', _('rounds')) }}
+                        </div>
+                    </div>
+
+                    <!-- 2. Labeling pace -->
+                    <div>
+                        {{ section('speedometer2', _('Labeling pace'), _('How often the model is refreshed, and how many entries it queues up for you.')) }}
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            {{ numfield('retrain_every',
+                                        _('Retrain after'),
+                                        _('Labels to collect before the model is trained again. Lower means fresher suggestions but more waiting.'),
+                                        setting_specs.retrain_every, errors, settings, '1', _('labels')) }}
+                            {{ numfield('cache_size',
+                                        _('Entries per round'),
+                                        _('How many entries the model queues up after each training run.'),
+                                        setting_specs.cache_size, errors, settings) }}
+                            {{ numfield('certain_rate',
+                                        _('Share of easy examples'),
+                                        _('Portion of the candidate pool drawn from entries the model is already sure about. They are clustered alongside the uncertain ones and keep a running check that easy cases stay right. 0 turns it off.'),
+                                        setting_specs.certain_rate, errors, settings, '0.05') }}
+                        </div>
+                        <p id="al-certain-readout" class="text-xs text-gray-500 mt-2"></p>
+                    </div>
+
+                    <!-- 3. Model training -->
+                    <div>
+                        {{ section('cpu', _('Model training'), _('How the labelled data is split and how the model handles rare answers.')) }}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {{ numfield('split',
+                                        _('Training share'),
+                                        _('Portion of your labels used to train. The rest is held back to score the model.'),
+                                        setting_specs.split, errors, settings, '0.05') }}
+                            {{ numfield('alpha',
+                                        _('Error rate allowed'),
+                                        _('How often the model is allowed to be wrong when it commits to a single answer.'),
+                                        setting_specs.alpha, errors, settings, '0.01') }}
+                        </div>
+                        <p id="al-split-readout" class="text-xs text-gray-500 mt-2"></p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                            {{ toggle('balance_classes',
+                                      _('Balance rare answers'),
+                                      _('Weight the training so an uncommon answer counts as much as a common one.'),
+                                      settings) }}
+                            {{ toggle('include_abstain',
+                                      _("Train on \"don't know\" answers"),
+                                      _('Off by default: those answers describe the annotator, not the text, and blur the classes that matter.'),
+                                      settings) }}
+                        </div>
+                    </div>
+
+                    <!-- 4. Candidate sampling -->
+                    <div>
+                        {{ section('diagram-3', _('Candidate sampling'), _('How the model searches your data for the entries worth labelling next.')) }}
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            {{ numfield('pool_size',
+                                        _('Candidates considered'),
+                                        _('Size of the shortlist of most-uncertain entries the queue is drawn from.'),
+                                        setting_specs.pool_size, errors, settings) }}
+                            {{ numfield('n_clusters',
+                                        _('Diversity groups'),
+                                        _('The shortlist is grouped by similarity and one entry is taken from each, so you do not label the same thing repeatedly.'),
+                                        setting_specs.n_clusters, errors, settings) }}
+                            {{ numfield('vectorizer_pool_sample',
+                                        _('Vocabulary sample'),
+                                        _('Unlabelled entries read to build the word list. Bigger helps early on, when few labels exist.'),
+                                        setting_specs.vectorizer_pool_sample, errors, settings, '100') }}
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-gray-100">
+                        <button type="submit" name="action" value="reset_settings"
+                            class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors">
+                            <i class="bi bi-arrow-counterclockwise mr-1.5"></i>{{ _('Reset to defaults') }}
+                        </button>
+                    </div>
+                </div>
+            </details>
+
+            <!-- ── Actions ───────────────────────────────────────────── -->
+            <div class="mt-6 pt-4 border-t border-gray-200 flex justify-between items-center">
+                <div>
+                    {% if started %}
+                    <button type="submit" name="action" value="cancel_settings"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="bi bi-chevron-left mr-2"></i>{{ _('Back to labeling') }}
+                    </button>
+                    {% endif %}
+                </div>
+                <button type="submit" name="action" value="save_settings"
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-colors">
+                    {% if started %}
+                    <i class="bi bi-check-lg mr-2"></i>{{ _('Save settings') }}
+                    {% else %}
+                    <i class="bi bi-play-fill mr-2"></i>{{ _('Start Active Learning') }}
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="application/json" id="al-preset-data">{{ presets | tojson }}</script>
+<script>
+// Inline on purpose: this partial is swapped in by HTMX, so a DOMContentLoaded
+// handler would never fire.
+(function () {
+    var form = document.getElementById('al-settings-form');
+    if (!form) return;
+    var presets = JSON.parse(document.getElementById('al-preset-data').textContent);
+
+    function field(name) { return form.querySelector('[name="' + name + '"]'); }
+
+    function renderPreview() {
+        var metric = field('mg_metric').value;
+        var preview = document.getElementById('al-goal-preview');
+        var maxRounds = parseInt(field('max_rounds').value, 10);
+        var hardStop = maxRounds === -1
+            ? {{ _("It runs until you stop it.")|tojson }}
+            : {{ _("It stops after ROUNDS rounds regardless.")|tojson }}.replace('ROUNDS', maxRounds);
+        if (!metric) {
+            preview.textContent = {{ _("No goal set.")|tojson }} + ' ' + hardStop;
+        } else {
+            var dir = field('mg_direction').value === 'below' ? '≤' : '≥';
+            preview.textContent = {{ _("Stops once METRIC averages DIR THRESHOLD across WINDOW rounds, each scored on at least MINVAL entries.")|tojson }}
+                .replace('METRIC', metric)
+                .replace('DIR', dir)
+                .replace('THRESHOLD', field('mg_threshold').value || '—')
+                .replace('WINDOW', field('mg_consecutive').value)
+                .replace('MINVAL', field('mg_min_val_samples').value) + ' ' + hardStop;
+        }
+
+        var split = parseFloat(field('split').value);
+        document.getElementById('al-split-readout').textContent = isNaN(split) ? '' :
+            // Placeholders rather than a literal "%": a bare percent sign in a
+            // msgid makes pybabel treat the string as a python-format template.
+            {{ _("TRAINPCT of your labels train the model, VALPCT score it.")|tojson }}
+                .replace('TRAINPCT', Math.round(split * 100) + '%')
+                .replace('VALPCT', Math.round((1 - split) * 100) + '%');
+
+        var rate = parseFloat(field('certain_rate').value);
+        document.getElementById('al-certain-readout').textContent = (!rate || isNaN(rate)) ?
+            {{ _("Every candidate is one the model is unsure about.")|tojson }} :
+            // Placeholders carry the percent sign: a bare "%" in a msgid makes
+            // Jinja's i18n treat the string as a format template and blow up at
+            // render time ("% u" parses as a %u spec).
+            {{ _("Candidate pool is HIGHPCT uncertain, LOWPCT already-confident entries.")|tojson }}
+                .replace('HIGHPCT', Math.round((1 - rate) * 100) + '%')
+                .replace('LOWPCT', Math.round(rate * 100) + '%');
+    }
+
+    form.querySelectorAll('input[name="al_preset"]').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+            var preset = presets[radio.value];
+            if (!preset) return;  // "custom" leaves the fields alone
+            Object.keys(preset).forEach(function (key) {
+                var el = field(key);
+                if (!el) return;
+                if (el.type === 'checkbox') { el.checked = !!preset[key]; }
+                else { el.value = preset[key]; }
+            });
+            renderPreview();
+        });
+    });
+
+    form.querySelectorAll('[data-al-field]').forEach(function (el) {
+        el.addEventListener('input', function () {
+            var custom = form.querySelector('input[name="al_preset"][value="custom"]');
+            if (custom) custom.checked = true;
+            renderPreview();
+        });
+        el.addEventListener('change', renderPreview);
+    });
+
+    renderPreview();
+})();
+</script>

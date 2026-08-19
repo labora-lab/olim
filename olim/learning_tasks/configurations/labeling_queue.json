@@ -1,20 +1,24 @@
 {
-    "order": 10,
-    "name": "Labeling Queue",
-    "description": "Label a batch of entries - enter IDs, select labels, then label each entry",
-    "sequence": [
-        {
-            "state": "QueueSetup",
-            "params": {
-                "title": "Setup Labeling Queue",
-                "description": "Enter the entry IDs you want to label (one per line) and select which labels to use.",
-                "allow_label_selection": true,
-                "show_prev": false
-            }
-        },
-        {
-            "state": "LabelEntry",
-            "params": {}
-        }
-    ]
+  "order": 10,
+  "name": "Labeling Queue",
+  "name_pt_BR": "Fila de Rotulagem",
+  "description": "Pick a set of entries and label them by hand. No model involved.",
+  "description_pt_BR": "Escolha um conjunto de entradas e rotule à mão. Nenhum modelo envolvido.",
+  "icon": "list-check",
+  "show_progress": true,
+  "sequence": [
+    {
+      "state": "QueueSetup",
+      "params": {
+        "title": "Setup Labeling Queue",
+        "description": "Choose which entries to label and which labels to apply.",
+        "allow_label_selection": true,
+        "show_prev": false
+      }
+    },
+    {
+      "state": "LabelEntry",
+      "params": {}
+    }
+  ]
 }

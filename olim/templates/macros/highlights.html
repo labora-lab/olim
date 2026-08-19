@@ -28,6 +28,14 @@
             return div.innerHTML;
         };
     }
+    // escapeHtml is built on textContent/innerHTML, which escapes & < > but leaves
+    // quotes alone — fine for text, wrong for an attribute value, where a quoted term
+    // produced data-highlight-term=""quoted"" and the attribute parsed as empty.
+    if (typeof escapeAttribute === 'undefined') {
+        window.escapeAttribute = function (value) {
+            return escapeHtml(String(value)).replace(/"/g, '&quot;');
+        };
+    }
     if (typeof escapeRegExp === 'undefined') {
         window.escapeRegExp = function (string) {
             return String(string).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -50,15 +58,29 @@
     window.highlightColorAssignments = window.highlightColorAssignments || {};
     window.highlightColorCounter = window.highlightColorCounter || 0;
 
+    // Matching is case-insensitive, so a term's identity has to be too: keying
+    // colors, chips and marks by the raw text made "Fever" and "fever" two separate
+    // highlights competing over the same words. The chip still displays whatever the
+    // user typed; only the identity is folded.
+    function highlightKey(term) {
+        return String(term).trim().toLowerCase();
+    }
+
+    function findChip(container, key) {
+        return [...container.querySelectorAll('[data-term-key]')]
+            .find(chip => chip.dataset.termKey === key) || null;
+    }
+
     function getHighlightColor(term) {
+        const key = highlightKey(term);
         // If term already has a color assigned, use it
-        if (window.highlightColorAssignments[term] !== undefined) {
-            return HIGHLIGHT_COLORS[window.highlightColorAssignments[term]];
+        if (window.highlightColorAssignments[key] !== undefined) {
+            return HIGHLIGHT_COLORS[window.highlightColorAssignments[key]];
         }
 
         // Assign next available color index
         const colorIndex = window.highlightColorCounter % HIGHLIGHT_COLORS.length;
-        window.highlightColorAssignments[term] = colorIndex;
+        window.highlightColorAssignments[key] = colorIndex;
         window.highlightColorCounter++;
 
         return HIGHLIGHT_COLORS[colorIndex];
@@ -69,7 +91,12 @@
         if (!areas.length || !term) return;
 
         const color = getHighlightColor(term);
-        const regex = new RegExp(`(${escapeRegExp(term)})`, 'gi');
+        const key = highlightKey(term);
+        // Two regexes on purpose. A /g/ regex is stateful: calling .test() advances
+        // lastIndex, so testing successive text nodes with one shared /g/ regex skips
+        // roughly every other match. Only .replace() gets the global flag.
+        const matches = new RegExp(escapeRegExp(term), 'i');
+        const replacer = new RegExp(`(${escapeRegExp(term)})`, 'gi');
 
         areas.forEach(function(contentArea) {
             const walker = document.createTreeWalker(
@@ -82,7 +109,7 @@
             const textNodes = [];
             let node;
             while (node = walker.nextNode()) {
-                if (regex.test(node.textContent)) {
+                if (matches.test(node.textContent)) {
                     textNodes.push(node);
                 }
             }
@@ -90,7 +117,7 @@
             textNodes.forEach(textNode => {
                 const parent = textNode.parentNode;
                 if (parent.tagName !== 'MARK') {
-                    const highlightedHTML = textNode.textContent.replace(regex, `<mark class="${color.bg} ${color.text} px-1 rounded" data-highlight-term="${escapeHtml(term)}">$1</mark>`);
+                    const highlightedHTML = textNode.textContent.replace(replacer, `<mark class="${color.bg} ${color.text} px-1 rounded" data-highlight-term="${escapeAttribute(key)}">$1</mark>`);
                     const temp = document.createElement('div');
                     temp.innerHTML = highlightedHTML;
                     while (temp.firstChild) {
@@ -103,7 +130,12 @@
     }
 
     function unhighlightText(term) {
-        document.querySelectorAll(`mark[data-highlight-term="${term}"]`).forEach(mark => {
+        // Compared in JS rather than through an attribute selector: the term is user
+        // input, and a quote in it makes the selector a SyntaxError.
+        const key = highlightKey(term);
+        const found = [...document.querySelectorAll('mark[data-highlight-term]')]
+            .filter(mark => mark.dataset.highlightTerm === key);
+        found.forEach(mark => {
             const parent = mark.parentNode;
             parent.replaceChild(document.createTextNode(mark.textContent), mark);
             parent.normalize();
@@ -182,8 +214,11 @@
         const container = document.getElementById('highlights-list');
         if (!container) return;
 
-        // Check if term already exists
-        const existingChip = container.querySelector(`[data-term="${term}"]`);
+        // Check if term already exists — by folded key, so adding "Fever" when
+        // "fever" is already highlighted is recognised as the same term instead of
+        // creating a second chip that silently marks nothing.
+        const key = highlightKey(term);
+        const existingChip = findChip(container, key);
         if (existingChip) {
             // Term already exists - highlight the existing chip and show feedback
             highlightExistingChip(existingChip, term);
@@ -209,13 +244,20 @@
 
         const chip = document.createElement('div');
         chip.className = `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${chipColor.bg} ${chipColor.text} border ${chipColor.border}`;
+        // A listener rather than an inline onclick: the term was interpolated into a
+        // JS string literal, so an apostrophe in it broke the button.
         chip.innerHTML = `
-        <span>${escapeHtml(term)}</span>
-        <button type="button" onclick="removeHighlight('${escapeHtml(term)}')" class="ml-2 ${chipColor.hover}">
+        <span></span>
+        <button type="button" class="ml-2 ${chipColor.hover}">
             <i class="bi bi-x"></i>
         </button>
     `;
+        chip.querySelector('span').textContent = term;
+        chip.querySelector('button').addEventListener('click', function () {
+            removeHighlight(term);
+        });
         chip.dataset.term = term;
+        chip.dataset.termKey = key;
         container.appendChild(chip);
         return true; // Indicate that a new chip was added
     }
@@ -237,13 +279,15 @@
 
     function removeHighlight(term) {
         const container = document.getElementById('highlights-list');
-        const chip = container.querySelector(`[data-term="${term}"]`);
+        if (!container) return;
+        const key = highlightKey(term);
+        const chip = findChip(container, key);
         if (chip) {
             chip.remove();
             unhighlightText(term);
 
             // Clean up color assignment for removed term
-            delete window.highlightColorAssignments[term];
+            delete window.highlightColorAssignments[key];
 
             updateHighlightSession();
         }

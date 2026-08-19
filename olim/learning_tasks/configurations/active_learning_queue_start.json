@@ -1,0 +1,44 @@
+{
+  "order": 40,
+  "name": "Active Learning — Queue Start",
+  "name_pt_BR": "Aprendizado Ativo — Início por Fila",
+  "description": "Build a starting set by hand (random, search, or one search per answer), label it, then hand over to active learning.",
+  "description_pt_BR": "Monte um conjunto inicial à mão (aleatório, busca ou uma busca por resposta), rotule-o e depois passe para o aprendizado ativo.",
+  "icon": "pencil-square",
+  "show_progress": true,
+  "sequence": [
+    {
+      "state": "ALLabelSelect",
+      "params": {
+        "title": "Select Label for Active Learning"
+      }
+    },
+    {
+      "state": "QueueSetup",
+      "params": {
+        "title": "Build Initial Dataset",
+        "description": "Pick the entries to label first. 'Search per class' seeds every answer, which is what rare labels need.",
+        "label_from_data": true,
+        "allow_label_selection": false
+      }
+    },
+    {
+      "state": "LabelEntry",
+      "params": {}
+    },
+    {
+      "state": "ActiveLearningLoop",
+      "params": {
+        "metric_goal": {
+          "macro_f1": 0.8
+        },
+        "metric_direction": "above",
+        "max_rounds": 10,
+        "retrain_every": 10,
+        "cache_size": 100,
+        "mg_consecutive": 3,
+        "mg_min_val_samples": 10
+      }
+    }
+  ]
+}

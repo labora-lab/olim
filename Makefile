@@ -30,6 +30,8 @@ help:
 	@echo "make lint-fix    - Run linter (ruff) and auto-fix issues"
 	@echo "make test        - Run tests"
 	@echo "make check       - Run formatting and linting"
+	@echo "make css         - Rebuild the Tailwind CSS bundle (run after adding classes)"
+	@echo "make test-js     - Run template JavaScript tests (needs npm install)"
 	@echo "make analyze     - Analyze code import dependencies with ruff"
 	@echo "make clean       - Remove temporary files"
 	@echo "make worker      - Start celery worker (requires redis to be running)"
@@ -101,6 +103,18 @@ analyze:
 	$(RUFF) analyze graph $(SRC_DIR)
 
 check: format lint
+
+# Behavioural tests for the template JS (highlight macro and friends), which no
+# Python test can reach. Needs `npm install` for linkedom.
+test-js:
+	node --test tests/js/
+
+# Rebuild the Tailwind bundle. olim/static/css/output.css is a committed artifact
+# with no build step in the Dockerfile, so a class that no template used at the last
+# rebuild simply does not exist at runtime — new utilities silently do nothing.
+# Run this after adding classes to a template.
+css:
+	node_modules/.bin/tailwindcss -i olim/static/css/input.css -o olim/static/css/output.css
 
 test:
 	$(PYTEST) $(TEST_DIR) -v

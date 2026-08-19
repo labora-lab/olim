@@ -1,7 +1,10 @@
 {
-  "order": 60,
+  "order": 50,
   "name": "Active Learning — LLM Cold Start",
-  "description": "Auto-label a sample with Ollama, then train",
+  "name_pt_BR": "Aprendizado Ativo — Início a Frio com LLM",
+  "description": "Have an LLM label a first batch so the model has something to learn from, then hand over to active learning.",
+  "description_pt_BR": "Peça a um LLM que rotule um primeiro lote para o modelo ter com o que aprender e depois passe para o aprendizado ativo.",
+  "icon": "magic",
   "show_progress": true,
   "sequence": [
     {
@@ -28,10 +31,15 @@
     {
       "state": "ActiveLearningLoop",
       "params": {
-        "metric_goal": {"auc_roc": 0.85},
-        "retrain_every": 10,
+        "metric_goal": {
+          "macro_f1": 0.8
+        },
+        "metric_direction": "above",
         "max_rounds": 10,
-        "cache_size": 100
+        "retrain_every": 10,
+        "cache_size": 100,
+        "mg_consecutive": 3,
+        "mg_min_val_samples": 10
       }
     }
   ]

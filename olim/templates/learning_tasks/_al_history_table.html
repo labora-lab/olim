@@ -1,0 +1,41 @@
+{# Per-round metrics table.
+
+   Columns are the union over all rounds, not the keys of the first row: a metric
+   can be missing early on (AUC needs both classes in the validation split), and
+   keying off row one would shift every later value into the wrong column. #}
+{% set ns = namespace(cols=[]) %}
+{% for row in history %}
+    {% for key in row if key not in ns.cols and key not in ('round',) %}
+        {% set ns.cols = ns.cols + [key] %}
+    {% endfor %}
+{% endfor %}
+<div class="overflow-x-auto">
+    <table class="min-w-full {% if compact %}text-xs{% else %}text-sm border border-gray-200 rounded-lg overflow-hidden{% endif %}">
+        <thead class="{% if not compact %}bg-gray-50{% endif %}">
+            <tr class="{% if compact %}text-gray-500{% endif %}">
+                <th class="text-left {% if compact %}py-1 pr-3{% else %}px-4 py-2 text-xs font-medium text-gray-500 uppercase{% endif %}">{{ _('Round') }}</th>
+                {% for key in ns.cols %}
+                <th class="text-left {% if compact %}py-1 pr-3{% else %}px-4 py-2 text-xs font-medium text-gray-500 uppercase{% endif %}">
+                    {{ _('val n') if key == 'n_val_samples' else key }}
+                </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in history %}
+            <tr class="border-t border-gray-100 {% if loop.last and not compact %}font-semibold bg-blue-50{% endif %}">
+                <td class="{% if compact %}py-1 pr-3 font-medium{% else %}px-4 py-2{% endif %}">{{ row.round }}</td>
+                {% for key in ns.cols %}
+                {% set val = row.get(key) %}
+                <td class="{% if compact %}py-1 pr-3{% else %}px-4 py-2{% endif %}">
+                    {% if val is none %}<span class="text-gray-300">—</span>
+                    {% elif key == 'n_val_samples' %}{{ val }}
+                    {% elif val is number %}{{ "%.4f"|format(val) }}
+                    {% else %}{{ val }}{% endif %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

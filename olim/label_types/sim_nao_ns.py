@@ -22,6 +22,10 @@ PRESET_SETTINGS = {
 
 LABEL_CONFIG = [(o["value"], o["type"], o["icon"], o["color"]) for o in PRESET_SETTINGS["options"]]
 
+#: Values that mean "the annotator could not decide". They are excluded from
+#: model training by default — see olim.label_types.get_abstain_values.
+ABSTAIN_VALUES = {"não sei"}
+
 
 def render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry, **kwargs) -> str:
     if not (label.label_settings and label.label_settings.get("options")):

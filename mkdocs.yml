@@ -76,6 +76,7 @@ nav:
   - Tutorials:
       - Data Formatting: tutorials/data_formatting.md
       - Labeling: tutorials/labeling.md
+      - REST API: tutorials/rest_api.md
   - Wiki:
       - Active Learning: wiki/active_learning.md
   - API Reference:

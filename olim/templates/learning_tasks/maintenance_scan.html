@@ -1,0 +1,223 @@
+{% macro health_cell(value, suffix='') %}
+{%- if value is none -%}<span class="text-gray-300">—</span>
+{%- elif value is number -%}{{ "%.3f"|format(value) }}{{ suffix }}
+{%- else -%}{{ value }}{%- endif -%}
+{% endmacro %}
+
+{% macro settings_button(may_configure) %}
+{% if may_configure %}
+<form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="inline">
+    <button type="submit" name="action" value="open_settings" title="{{ _('Health check settings') }}"
+        class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+        <i class="bi bi-gear mr-1.5"></i>{{ _('Settings') }}
+    </button>
+</form>
+{% endif %}
+{% endmacro %}
+
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 bg-gradient-to-r from-teal-600 to-cyan-600 flex items-start justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-white flex items-center">
+                    <i class="bi bi-heart-pulse mr-3"></i>{{ title }}
+                </h1>
+                <p class="text-sm text-teal-100 mt-1">
+                    {{ _('Checks whether your trained models still agree with what people are labelling now.') }}
+                </p>
+            </div>
+        </div>
+
+        {% if mode == "setup" %}
+        <!-- ── Setup ─────────────────────────────────────────────────── -->
+        <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="px-6 py-6 space-y-6">
+            <button type="submit" name="action" value="save_settings" class="hidden" tabindex="-1" aria-hidden="true"></button>
+
+            <div>
+                <label for="maint-rank_by" class="block text-sm font-medium text-gray-700 mb-1">{{ _('Decide "worst" by') }}</label>
+                <p class="text-xs text-gray-500 mb-2">{{ _('Which signal picks the model to work on when they disagree.') }}</p>
+                <select id="maint-rank_by" name="rank_by"
+                    class="w-full px-3 py-2 border {% if errors.get('rank_by') %}border-red-500{% else %}border-gray-300{% endif %} rounded-lg focus:ring-2 focus:ring-teal-500 text-sm">
+                    {% for signal in rank_signals %}
+                    <option value="{{ signal }}" {% if settings.rank_by == signal %}selected{% endif %}>
+                        {% if signal == 'audit_accuracy' %}{{ _('Measured accuracy — how often it was actually right') }}
+                        {% elif signal == 'coverage_drop' %}{{ _('Confidence drop — how much surer it used to be') }}
+                        {% else %}{{ _('Unchecked predictions — how much it has committed to unseen') }}{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% if errors.get('rank_by') %}<p class="mt-1 text-sm text-red-500">{{ errors['rank_by'] }}</p>{% endif %}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {% for name, label, desc, step in [
+                    ('audit_sample_size', _('Entries to check'), _('How many of the model\'s confident answers you will be asked to adjudicate.'), '1'),
+                    ('min_audit_samples', _('Minimum before believing it'), _('Accuracy measured on fewer entries than this is treated as no evidence at all.'), '1'),
+                    ('accuracy_threshold', _('Accuracy below which it needs work'), _('Measured agreement under this counts as degraded.'), '0.05'),
+                    ('coverage_drop_threshold', _('Confidence drop that counts'), _('How much of its former certainty a model can lose before it needs attention.'), '0.05')
+                ] %}
+                <div>
+                    <label for="maint-{{ name }}" class="block text-sm font-medium text-gray-700 mb-1">{{ label }}</label>
+                    <p class="text-xs text-gray-500 mb-2">{{ desc }}</p>
+                    <input type="number" id="maint-{{ name }}" name="{{ name }}"
+                        min="{{ setting_specs[name].min }}" max="{{ setting_specs[name].max }}" step="{{ step }}"
+                        value="{{ settings[name] }}"
+                        class="w-full px-3 py-2 border {% if errors.get(name) %}border-red-500{% else %}border-gray-300{% endif %} rounded-lg focus:ring-2 focus:ring-teal-500 text-sm">
+                    {% if errors.get(name) %}<p class="mt-1 text-sm text-red-500">{{ errors[name] }}</p>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="flex items-start gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <input type="checkbox" id="maint-measure_coverage" name="measure_coverage" value="1"
+                    {% if settings.measure_coverage %}checked{% endif %}
+                    class="mt-0.5 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500">
+                <div>
+                    <label for="maint-measure_coverage" class="block text-sm font-medium text-gray-700 cursor-pointer">{{ _('Re-score the data to measure confidence') }}</label>
+                    <p class="text-xs text-gray-500 mt-0.5">{{ _('Compares how sure each model is now against how sure it was when trained. The slow part of the check — one pass over your entries per model.') }}</p>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-gray-200 flex justify-between items-center">
+                <div>
+                    {% if scanned %}
+                    <button type="submit" name="action" value="cancel_settings"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="bi bi-chevron-left mr-2"></i>{{ _('Back to results') }}
+                    </button>
+                    {% endif %}
+                </div>
+                <button type="submit" name="action" value="save_settings"
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors">
+                    <i class="bi bi-search mr-2"></i>{{ _('Run health check') }}
+                </button>
+            </div>
+        </form>
+
+        {% elif mode == "scanning" %}
+        <!-- ── Scanning ──────────────────────────────────────────────── -->
+        <div class="p-6" hx-post="" hx-vals='{"action": "poll_scan"}' hx-trigger="load, every 3s"
+            hx-target="#task-content" hx-swap="innerHTML">
+            <div class="flex flex-col items-center py-10">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mb-4"></div>
+                <p class="text-sm font-medium text-gray-700">{{ message }}</p>
+                {% if progress %}
+                <div class="w-full max-w-xs mt-4">
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-teal-600 h-2 rounded-full transition-all" style="width: {{ progress }}%"></div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% elif mode == "error" %}
+        <!-- ── Error ─────────────────────────────────────────────────── -->
+        <div class="p-6">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 flex items-start gap-3">
+                <i class="bi bi-exclamation-triangle-fill text-red-500 mt-0.5"></i>
+                <div>
+                    <h4 class="text-sm font-medium text-red-800">{{ _('Health check failed') }}</h4>
+                    <p class="text-sm text-red-700 mt-1">{{ error }}</p>
+                </div>
+            </div>
+            <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="inline">
+                <button type="submit" name="action" value="rescan"
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors">
+                    <i class="bi bi-arrow-clockwise mr-2"></i>{{ _('Try again') }}
+                </button>
+            </form>
+        </div>
+
+        {% else %}
+        <!-- ── Findings ──────────────────────────────────────────────── -->
+        <div class="p-6 space-y-6">
+            {% if selected %}
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p class="text-sm font-medium text-amber-900">
+                    <i class="bi bi-bullseye mr-1.5"></i>
+                    {{ _('Working on: %(name)s', name=selected.model_name) }}
+                </p>
+                <p class="text-sm text-amber-800 mt-1">
+                    {% if selected.audit_accuracy is not none %}
+                    {{ _('It was right on %(agree)s of the %(checked)s entries a human has since re-checked.',
+                         agree=selected.n_agree, checked=selected.n_checked) }}
+                    {% else %}
+                    {{ _('Nobody has re-checked its answers yet, so there is nothing to score it on.') }}
+                    {% endif %}
+                </p>
+                {% if audit_size %}
+                <p class="text-sm text-amber-800 mt-1">
+                    {{ _('Next you will be asked to label %(n)s entries it answered confidently, so we can measure whether it is still right.', n=audit_size) }}
+                </p>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-600">
+                <i class="bi bi-info-circle mr-1.5"></i>
+                {{ _('No trained model was found in this project, so there is nothing to maintain yet.') }}
+            </div>
+            {% endif %}
+
+            {% if reports %}
+            <div>
+                <h4 class="text-sm font-medium text-gray-700 mb-3">
+                    {{ _('All models') }}
+                    <span class="font-normal text-gray-500">
+                        {{ _('· ordered by %(signal)s', signal=rank_by) }}
+                    </span>
+                </h4>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                {% for heading in [_('Model'), _('Label'), _('Measured accuracy'), _('Checked'), _('Confidence drop'), _('Unchecked')] %}
+                                <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ heading }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in reports %}
+                            <tr class="border-t border-gray-100 {% if selected and report.model_id == selected.model_id %}bg-amber-50 font-medium{% endif %}">
+                                <td class="px-4 py-2">{{ report.model_name }}</td>
+                                <td class="px-4 py-2">{{ report.label_name }}</td>
+                                <td class="px-4 py-2">
+                                    {{ health_cell(report.audit_accuracy) }}
+                                    {% if report.n_checked and report.n_checked < min_audit_samples %}
+                                    <span class="text-xs text-amber-600" title="{{ _('Too few checks to rely on') }}">*</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-2">{{ report.n_checked }}</td>
+                                <td class="px-4 py-2">{{ health_cell(report.coverage_drop) }}</td>
+                                <td class="px-4 py-2">{{ report.unchecked_predictions }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">
+                    {{ _('* measured on fewer than %(n)s entries — shown, but not used to rank.', n=min_audit_samples) }}
+                </p>
+            </div>
+            {% endif %}
+
+            <div class="flex gap-3 pt-2 border-t border-gray-200">
+                <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
+                    <button type="submit" name="action" value="start_audit"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors">
+                        {% if audit_size %}{{ _('Start checking') }}{% else %}{{ _('Continue') }}{% endif %}
+                        <i class="bi bi-chevron-right ml-2"></i>
+                    </button>
+                </form>
+                <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
+                    <button type="submit" name="action" value="rescan"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="bi bi-arrow-clockwise mr-2"></i>{{ _('Scan again') }}
+                    </button>
+                </form>
+                {{ settings_button(may_configure) }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>

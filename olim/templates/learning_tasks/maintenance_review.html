@@ -1,0 +1,116 @@
+<div class="max-w-3xl mx-auto">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 bg-gradient-to-r from-teal-600 to-cyan-600">
+            <h1 class="text-2xl font-bold text-white flex items-center">
+                <i class="bi bi-clipboard-check mr-3"></i>{{ title }}
+            </h1>
+        </div>
+
+        <div class="p-6 space-y-6">
+            <!-- Verdict -->
+            {% if not verdict.enough_evidence %}
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <p class="text-sm font-medium text-gray-800">
+                    <i class="bi bi-question-circle mr-1.5"></i>{{ _('Not enough evidence to judge') }}
+                </p>
+                <p class="text-sm text-gray-600 mt-1">
+                    {{ _('Only %(n)s entries have been adjudicated; %(need)s are needed before an accuracy figure means anything.',
+                         n=verdict.n_checked, need=verdict.min_samples) }}
+                </p>
+            </div>
+            {% elif verdict.degraded %}
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p class="text-sm font-medium text-amber-900">
+                    <i class="bi bi-exclamation-triangle-fill mr-1.5"></i>
+                    {{ _('%(name)s needs more labels', name=verdict.model_name) }}
+                </p>
+                <p class="text-sm text-amber-800 mt-1">
+                    {{ _('It got %(agree)s of %(checked)s right (%(acc)s), below the %(target)s you asked for.',
+                         agree=verdict.n_agree, checked=verdict.n_checked,
+                         acc="%.0f%%"|format(verdict.audit_accuracy * 100) if verdict.audit_accuracy is not none else '—',
+                         target="%.0f%%"|format(verdict.accuracy_threshold * 100)) }}
+                </p>
+            </div>
+            {% else %}
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p class="text-sm font-medium text-green-900">
+                    <i class="bi bi-check-circle-fill mr-1.5"></i>
+                    {{ _('%(name)s is holding up', name=verdict.model_name) }}
+                </p>
+                <p class="text-sm text-green-800 mt-1">
+                    {{ _('It got %(agree)s of %(checked)s right (%(acc)s), at or above the %(target)s you asked for.',
+                         agree=verdict.n_agree, checked=verdict.n_checked,
+                         acc="%.0f%%"|format(verdict.audit_accuracy * 100) if verdict.audit_accuracy is not none else '—',
+                         target="%.0f%%"|format(verdict.accuracy_threshold * 100)) }}
+                </p>
+            </div>
+            {% endif %}
+
+            <!-- Before / after -->
+            {% if verdict.audit_accuracy is not none %}
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div class="bg-gray-50 rounded-lg p-3 text-center">
+                    <p class="text-xs text-gray-500 mb-1">{{ _('Before this check') }}</p>
+                    <p class="text-lg font-semibold text-gray-900">
+                        {% if verdict.before is not none %}{{ "%.3f"|format(verdict.before) }}{% else %}—{% endif %}
+                    </p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 text-center">
+                    <p class="text-xs text-gray-500 mb-1">{{ _('Measured accuracy') }}</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ "%.3f"|format(verdict.audit_accuracy) }}</p>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3 text-center">
+                    <p class="text-xs text-gray-500 mb-1">{{ _('Entries checked') }}</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ verdict.n_checked }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Per-class -->
+            {% if verdict.per_class %}
+            <div>
+                <h4 class="text-sm font-medium text-gray-700 mb-3">{{ _('By answer') }}</h4>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ _('Answer') }}</th>
+                                <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ _('Right') }}</th>
+                                <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ _('Checked') }}</th>
+                                <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">{{ _('Accuracy') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for value, row in verdict.per_class.items() %}
+                            <tr class="border-t border-gray-100">
+                                <td class="px-4 py-2 font-medium">{{ value }}</td>
+                                <td class="px-4 py-2">{{ row.agree }}</td>
+                                <td class="px-4 py-2">{{ row.n }}</td>
+                                <td class="px-4 py-2 {% if row.accuracy < 0.5 %}text-amber-600{% endif %}">{{ "%.3f"|format(row.accuracy) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="flex gap-3 pt-2 border-t border-gray-200">
+                <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
+                    <button type="submit" name="action" value="fix"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-white {% if verdict.degraded %}bg-amber-600 hover:bg-amber-700{% else %}bg-teal-600 hover:bg-teal-700{% endif %} rounded-lg transition-colors">
+                        <i class="bi bi-arrow-repeat mr-2"></i>
+                        {% if verdict.degraded %}{{ _('Top up the labels') }}{% else %}{{ _('Label some more anyway') }}{% endif %}
+                    </button>
+                </form>
+                <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
+                    <button type="submit" name="action" value="finish"
+                        class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="bi bi-check-lg mr-2"></i>{{ _('Finish') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -148,7 +148,7 @@ def train_model(
         if label is not None:
             sync_label_from_version(label)
 
-        # Convert metrics for return (include conformal_threshold for early-stop)
+        # Human-readable strings for Label.metrics / legacy consumers
         metrics = []
         if version.metrics:
             for key, value in version.metrics.items():
@@ -159,9 +159,19 @@ def train_model(
         if version.conformal_threshold is not None:
             metrics.append(f"conformal_threshold: {version.conformal_threshold:.4f}")
 
+        # Structured copy for callers that need to compute on the numbers. The
+        # string form above cannot round-trip a confidence interval — "[0.4, 1.0]"
+        # is not parseable as a float — so the early-stop logic reads this instead.
+        metrics_dict: dict[str, Any] = dict(version.metrics or {})
+        if version.conformal_threshold is not None:
+            metrics_dict["conformal_threshold"] = version.conformal_threshold
+
         return {
             "success": True,
             "metrics": metrics,
+            "metrics_dict": metrics_dict,
+            "n_train_samples": version.n_train_samples,
+            "n_val_samples": version.n_val_samples,
             "version_id": version.id,
             "model_id": model.id,
         }

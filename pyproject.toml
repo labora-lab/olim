@@ -91,6 +91,10 @@ lint.ignore = [
 lint.fixable = ["ALL"]
 lint.unfixable = []
 
+# Test functions are discovered by pytest, never called by name — a `-> None` on
+# every one is noise, and a fake object's attributes are not shared class state.
+lint.per-file-ignores = { "tests/**" = ["ANN201", "ANN202", "ANN205", "ANN401", "RUF012", "SLF001"] }
+
 lint.isort.known-first-party = ["olim"]
 lint.isort.section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
 lint.isort.combine-as-imports = true

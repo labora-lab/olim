@@ -21,8 +21,8 @@ class ClassificationModel(ABC):
         pass
 
     @abstractmethod
-    def predict_proba(self, unlabelled_data: list[str]) -> list[list[float]]:
-        pass
+    def predict_proba(self, unlabelled_data: list[str]) -> np.ndarray:
+        """(n_samples, n_classes) probabilities, column i being class i."""
 
 
 class RegressionModel(ABC):

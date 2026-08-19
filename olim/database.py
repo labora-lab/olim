@@ -140,6 +140,9 @@ class ModelPrediction(db.Model):
     __table_args__ = (
         db.Index("ix_model_predictions_label", "label_id"),
         db.Index("ix_model_predictions_entry_label", "entry_id", "label_id"),
+        # The maintenance health check filters by version; the composite above
+        # covers the join keys but not this.
+        db.Index("ix_model_predictions_version", "version_id"),
     )
 
     id: Mapped[int] = db.mapped_column(primary_key=True)
@@ -1070,7 +1073,12 @@ def get_label(idt: int, by: str = "id") -> Label | None:
 
 
 def get_label_entries(label_id: int) -> list[LabelEntry]:
-    """Return all non-null LabelEntry rows for a label.
+    """Return the current non-null LabelEntry rows for a label.
+
+    add_entry_label() soft-deletes the previous row and inserts a new one, so a
+    relabelled entry has several rows. Deleted rows are filtered out and the
+    remainder is ordered oldest-first, so a caller keying by entry id ends up with
+    the newest value rather than whichever row the database happened to return last.
 
     Args:
         label_id: Target label ID
@@ -1080,7 +1088,12 @@ def get_label_entries(label_id: int) -> list[LabelEntry]:
     """
     return (
         db.session.query(LabelEntry)
-        .filter(LabelEntry.label_id == label_id, LabelEntry.value.isnot(None))
+        .filter(
+            LabelEntry.label_id == label_id,
+            LabelEntry.value.isnot(None),
+            LabelEntry.is_deleted.is_(False),
+        )
+        .order_by(LabelEntry.created, LabelEntry.id)
         .all()
     )
 
@@ -2304,6 +2317,8 @@ def get_project_entries_page(project_id: int, offset: int, limit: int) -> list["
         .join(ProjectDataset, Dataset.id == ProjectDataset.dataset_id)
         .filter(ProjectDataset.project_id == project_id)
         .filter(ProjectDataset.is_deleted.is_(False))
+        # Explicit ordering: without it LIMIT/OFFSET paging can skip or repeat rows.
+        .order_by(Entry.id)
         .limit(limit)
         .offset(offset)
         .all()

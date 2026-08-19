@@ -12,7 +12,7 @@ from flask import (
     session,
     url_for,
 )
-from flask_babel import _
+from flask_babel import _, get_locale
 
 from .. import app
 from ..auth import role_has_permission as has_permission
@@ -64,6 +64,38 @@ def clamp_position(position: int, sequence_length: int) -> int:
 # -------------------------------
 
 
+def localised(config: dict, key: str, default: str = "") -> str:
+    """Return a preset field in the viewer's language.
+
+    Preset copy lives in JSON, which babel does not extract, so a preset carries its
+    own translations rather than going through the message catalogue:
+
+        {"name": "Labeling Queue", "name_pt_BR": "Fila de Rotulagem"}
+
+    Falls back from the full locale (name_pt_BR) to the bare language (name_pt) to
+    the untagged key, so a preset that only supplies English still works — as do
+    presets uploaded by admins, which need no changes at all.
+    """
+    try:
+        locale = str(get_locale() or "")
+    except Exception:  # outside a request context there is no locale to resolve
+        locale = ""
+
+    candidates = []
+    if locale:
+        candidates.append(f"{key}_{locale}")
+        language = locale.split("_")[0]
+        if language != locale:
+            candidates.append(f"{key}_{language}")
+    candidates.append(key)
+
+    for candidate in candidates:
+        value = config.get(candidate)
+        if value:
+            return str(value)
+    return default
+
+
 def get_available_configurations() -> list[dict]:
     """Get list of available task configurations from the configurations folder."""
     configurations = []
@@ -75,16 +107,34 @@ def get_available_configurations() -> list[dict]:
                     configurations.append(
                         {
                             "filename": file_path.stem,
-                            "name": config.get("name", file_path.stem),
-                            "description": config.get("description", ""),
+                            "name": localised(config, "name", file_path.stem),
+                            "description": localised(config, "description"),
                             "steps": len(config.get("sequence", [])),
                             "order": config.get("order", 999),
+                            "icon": config.get("icon", "diagram-3"),
                         }
                     )
             except (OSError, json.JSONDecodeError):
                 continue
     configurations.sort(key=lambda c: (c["order"], c["name"].lower()))
     return configurations
+
+
+def build_initial_setup(config: dict) -> dict:
+    """Fields of a preset that a task carries with it.
+
+    `sequence` is what drives the task; the rest is provenance and presentation.
+    `show_progress` in particular is read back by learning_task_view, so dropping it
+    here is why every preset that asks for a progress bar never got one.
+    """
+    return {
+        "sequence": config.get("sequence", []),
+        "show_progress": config.get("show_progress", False),
+        # Untranslated on purpose: this is a record of which preset built the task,
+        # and it should not read differently depending on who opens it.
+        "preset_name": config.get("name", ""),
+        "preset_description": config.get("description", ""),
+    }
 
 
 def load_configuration(filename: str) -> dict | None:
@@ -190,7 +240,13 @@ def create_learning_task(project_id: int) -> ...:
         if config_name:
             config = load_configuration(config_name)
             if config:
-                initial_setup = {"sequence": config.get("sequence", [])}
+                # Shipped presets were previously trusted unvalidated, so a bad state
+                # name surfaced as a 500 partway through the task instead of here.
+                valid, error_msg = validate_configuration(config)
+                if not valid:
+                    flash(error_msg, "error")
+                    return redirect(url_for("learning_tasks_list", project_id=project_id))
+                initial_setup = build_initial_setup(config)
             else:
                 flash(_("Configuration not found"), "error")
                 return redirect(url_for("learning_tasks_list", project_id=project_id))
@@ -208,7 +264,7 @@ def create_learning_task(project_id: int) -> ...:
                 if not valid:
                     flash(error_msg, "error")
                     return redirect(url_for("learning_tasks_list", project_id=project_id))
-                initial_setup = {"sequence": config.get("sequence", [])}
+                initial_setup = build_initial_setup(config)
             except json.JSONDecodeError:
                 flash(_("Invalid JSON file"), "error")
                 return redirect(url_for("learning_tasks_list", project_id=project_id))
@@ -375,6 +431,15 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
 
         # Handle finish action
         if action == "finish":
+            # Persist before leaving: the last interaction's data (final metrics,
+            # the recorded stop reason) is otherwise dropped and the task comes back
+            # in the list looking resumable.
+            update_learning_task(
+                task_id,
+                state=state_name,
+                position=len(sequence) - 1,
+                data=data,
+            )
             flash(_("Task completed!"), "success")
             if is_htmx:
                 resp = make_response("")
@@ -410,6 +475,12 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
 
         # Check if task is complete (moved past the last step)
         if raw_new_position >= len(sequence):
+            update_learning_task(
+                task_id,
+                state=state_name,
+                position=len(sequence) - 1,
+                data=data,
+            )
             flash(_("Task completed!"), "success")
             if is_htmx:
                 resp = make_response("")

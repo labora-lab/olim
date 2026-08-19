@@ -171,7 +171,6 @@ server_credentials.json
 *.crt
 *.csv
 *.pdf
-test*
 *.sqlite
 
 .vscode/

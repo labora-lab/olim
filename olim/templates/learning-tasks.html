@@ -209,19 +209,53 @@
                             placeholder="{{ _('Enter task name') }}">
                     </div>
                     <div>
-                        <label class="block mb-1 text-sm font-medium text-gray-900">{{ _('Configuration') }}</label>
-                        <select id="configuration" name="configuration" required
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
-                            {% if configurations %}
-                                {% for config in configurations %}
-                                <option value="{{ config.filename }}">{{ config.name }} ({{ config.steps }} {{ _('steps') }})</option>
-                                {% endfor %}
-                            {% else %}
-                                <option value="" disabled selected>{{ _('No configurations available') }}</option>
-                            {% endif %}
-                        </select>
+                        <label id="config-label" class="block mb-1 text-sm font-medium text-gray-900">{{ _('Configuration') }}</label>
                         {% if configurations %}
-                        <p class="mt-1 text-xs text-gray-500" id="config-description">{{ configurations[0].description if configurations else '' }}</p>
+                        {% set first = configurations[0] %}
+                        {# Custom listbox: a native <select> cannot carry an icon or a
+                           per-option description. The real value rides on the hidden
+                           input, so the form posts exactly as before. #}
+                        <div class="relative" id="config-picker">
+                            <input type="hidden" id="configuration" name="configuration" value="{{ first.filename }}">
+                            <button type="button" id="config-trigger"
+                                aria-haspopup="listbox" aria-expanded="false" aria-labelledby="config-label"
+                                class="flex items-center justify-between w-full gap-2 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 text-left hover:bg-gray-100 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors">
+                                <span class="flex items-center gap-2 min-w-0">
+                                    <i id="config-trigger-icon" class="bi bi-{{ first.icon }} text-cyan-600 shrink-0"></i>
+                                    <span id="config-trigger-name" class="truncate font-medium">{{ first.name }}</span>
+                                    <span id="config-trigger-steps" class="text-xs text-gray-400 shrink-0">{{ first.steps }} {{ _('steps') }}</span>
+                                </span>
+                                <i id="config-chevron" class="bi bi-chevron-down text-gray-400 shrink-0 transition-transform"></i>
+                            </button>
+
+                            <ul id="config-list" role="listbox" tabindex="-1" aria-labelledby="config-label"
+                                class="hidden absolute z-20 mt-1 w-full max-h-80 overflow-auto bg-white border border-gray-200 rounded-lg shadow-lg py-1">
+                                {% for config in configurations %}
+                                <li role="option" class="config-option flex items-start gap-2 px-3 py-2 cursor-pointer hover:bg-cyan-50 focus:bg-cyan-50 outline-none"
+                                    tabindex="-1"
+                                    title="{{ config.description }}"
+                                    aria-selected="{{ 'true' if loop.first else 'false' }}"
+                                    data-value="{{ config.filename }}"
+                                    data-icon="{{ config.icon }}"
+                                    data-name="{{ config.name }}"
+                                    data-steps="{{ config.steps }}"
+                                    data-description="{{ config.description }}">
+                                    <i class="bi bi-{{ config.icon }} text-cyan-600 mt-0.5 shrink-0"></i>
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block text-sm font-medium text-gray-900">
+                                            {{ config.name }}
+                                            <span class="font-normal text-xs text-gray-400">· {{ config.steps }} {{ _('steps') }}</span>
+                                        </span>
+                                        <span class="block text-xs text-gray-500 leading-tight mt-0.5">{{ config.description }}</span>
+                                    </span>
+                                    <i class="bi bi-check-lg text-cyan-600 shrink-0 config-check{% if not loop.first %} invisible{% endif %}"></i>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500" id="config-description">{{ first.description }}</p>
+                        {% else %}
+                        <p class="mt-1 text-sm text-gray-500">{{ _('No configurations available') }}</p>
                         {% endif %}
                     </div>
                     <div>
@@ -338,17 +372,83 @@
 
     initProjectsPage();
 
-    const configDescriptions = {
-        {% for config in configurations %}
-        '{{ config.filename }}': '{{ config.description }}',
-        {% endfor %}
-    };
-    const configSelect = document.getElementById('configuration');
-    const configDescription = document.getElementById('config-description');
-    if (configSelect && configDescription) {
-        configSelect.addEventListener('change', function() {
-            configDescription.textContent = configDescriptions[this.value] || '';
+    // Custom configuration listbox. All copy comes from data attributes rather than
+    // being interpolated into JS literals, which broke the old picker for any
+    // description containing an apostrophe.
+    (function () {
+        const picker = document.getElementById('config-picker');
+        if (!picker) return;
+
+        const input = document.getElementById('configuration');
+        const trigger = document.getElementById('config-trigger');
+        const list = document.getElementById('config-list');
+        const chevron = document.getElementById('config-chevron');
+        const description = document.getElementById('config-description');
+        const options = Array.from(list.querySelectorAll('.config-option'));
+
+        function isOpen() { return !list.classList.contains('hidden'); }
+
+        function open() {
+            list.classList.remove('hidden');
+            trigger.setAttribute('aria-expanded', 'true');
+            chevron.classList.add('rotate-180');
+            const current = options.find(o => o.dataset.value === input.value) || options[0];
+            if (current) current.focus();
+        }
+
+        function close(refocus) {
+            list.classList.add('hidden');
+            trigger.setAttribute('aria-expanded', 'false');
+            chevron.classList.remove('rotate-180');
+            if (refocus) trigger.focus();
+        }
+
+        function select(option) {
+            input.value = option.dataset.value;
+            document.getElementById('config-trigger-icon').className =
+                'bi bi-' + option.dataset.icon + ' text-cyan-600 shrink-0';
+            document.getElementById('config-trigger-name').textContent = option.dataset.name;
+            document.getElementById('config-trigger-steps').textContent =
+                option.dataset.steps + ' ' + {{ _('steps')|tojson }};
+            if (description) description.textContent = option.dataset.description || '';
+            options.forEach(o => {
+                const chosen = o === option;
+                o.setAttribute('aria-selected', chosen ? 'true' : 'false');
+                o.querySelector('.config-check').classList.toggle('invisible', !chosen);
+            });
+        }
+
+        trigger.addEventListener('click', function () { isOpen() ? close(false) : open(); });
+
+        trigger.addEventListener('keydown', function (event) {
+            if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) {
+                event.preventDefault();
+                open();
+            }
         });
-    }
+
+        options.forEach(function (option, index) {
+            option.addEventListener('click', function () { select(option); close(true); });
+            option.addEventListener('keydown', function (event) {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    select(option);
+                    close(true);
+                } else if (event.key === 'ArrowDown') {
+                    event.preventDefault();
+                    (options[index + 1] || options[0]).focus();
+                } else if (event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    (options[index - 1] || options[options.length - 1]).focus();
+                } else if (event.key === 'Escape' || event.key === 'Tab') {
+                    close(event.key === 'Escape');
+                }
+            });
+        });
+
+        document.addEventListener('click', function (event) {
+            if (isOpen() && !picker.contains(event.target)) close(false);
+        });
+    })();
 </script>
 {% endblock %}

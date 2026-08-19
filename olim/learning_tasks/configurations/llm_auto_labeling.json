@@ -1,0 +1,33 @@
+{
+  "order": 20,
+  "name": "LLM Auto-Labeling",
+  "name_pt_BR": "Rotulagem Automática por LLM",
+  "description": "Let an Ollama model label a set of entries for you, then review the results.",
+  "description_pt_BR": "Deixe um modelo Ollama rotular um conjunto de entradas para você e depois revise os resultados.",
+  "icon": "robot",
+  "show_progress": true,
+  "sequence": [
+    {
+      "state": "OllamaQueueSetup",
+      "params": {
+        "title": "Select Entries and API Endpoint",
+        "description": "Choose entries to label and point at your Ollama server.",
+        "show_prev": false
+      }
+    },
+    {
+      "state": "OllamaModelConfig",
+      "params": {
+        "title": "Configure LLM Model",
+        "description": "Select the model and customise the prompts."
+      }
+    },
+    {
+      "state": "OllamaAutoLabel",
+      "params": {
+        "title": "Auto-Labeling",
+        "description": "Start LLM-powered labeling of your entries."
+      }
+    }
+  ]
+}
