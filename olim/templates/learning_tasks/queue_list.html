@@ -79,9 +79,9 @@
 
             <!-- Queue Entries Grid -->
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" id="queue-grid">
-                {% for entry_id in queue %}
+                {% for item in queue %}
                 {% set is_current = loop.index0 == current_position %}
-                {% set is_completed = entry_id in completed_entries %}
+                {% set is_completed = loop.index0 in completed_positions %}
                 <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="queue-entry-form">
                     <input type="hidden" name="action" value="goto">
                     <input type="hidden" name="position" value="{{ loop.index0 }}">
@@ -94,7 +94,8 @@
                             {% else %}
                             border-gray-200 hover:border-purple-300 hover:bg-purple-50
                             {% endif %}"
-                        data-entry-id="{{ entry_id }}" data-index="{{ loop.index0 }}">
+                        data-entry-id="{{ item.ref }}" data-index="{{ loop.index0 }}"
+                        {% if item.dataset_name %}title="{{ item.dataset_name }} ({{ item.dataset_id }})"{% endif %}>
                         <div class="flex items-center space-x-2">
                             <div class="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-medium flex-shrink-0
                                 {% if is_current %}
@@ -111,7 +112,12 @@
                                 {% endif %}
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="text-sm font-medium text-gray-900 truncate">{{ entry_id }}</p>
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ item.entry_id }}</p>
+                                {% if item.dataset_name %}
+                                <p class="text-xs text-gray-500 truncate">
+                                    <i class="bi bi-database mr-1"></i>{{ item.dataset_name }}
+                                </p>
+                                {% endif %}
                                 {% if is_current %}
                                 <p class="text-xs text-purple-600">{{ _('Current') }}</p>
                                 {% elif is_completed %}

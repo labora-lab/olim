@@ -73,6 +73,10 @@ def label_queue_with_llm(
         if not learning_task:
             return {"success": False, "error": f"Learning task {learning_task_id} not found"}
         queue_ids: list[str] = (learning_task.data or {}).get("queue_ids", [])
+        # Dataset of each queued entry, when the setup recorded it (same order as queue_ids)
+        queue_dataset_ids: list[int] = (learning_task.data or {}).get("queue_dataset_ids") or []
+        if len(queue_dataset_ids) != len(queue_ids):
+            queue_dataset_ids = []
 
         # Setup Ollama model using OllamaProvider
         # This is the correct way to use Ollama with PydanticAI
@@ -92,11 +96,11 @@ def label_queue_with_llm(
 
         for idx, entry_id in enumerate(queue_ids):
             try:
-                # 1. Find entry across datasets
+                # 1. Find entry in its recorded dataset, else across datasets
                 entry_obj = None
                 dataset_id = None
 
-                for ds_id in datasets:
+                for ds_id in [queue_dataset_ids[idx]] if queue_dataset_ids else datasets:
                     # Try to get entry from this dataset
                     entry_obj = get_entry((ds_id, entry_id), by="composite")
                     if entry_obj:

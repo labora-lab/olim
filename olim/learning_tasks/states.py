@@ -39,7 +39,39 @@ from ..tasks.learning_tasks import label_queue_with_llm
 from ..tasks.maintenance import scan_models
 from . import register_state
 from .base import BaseState
-from .entry_selector import resolve_sources
+from .entry_selector import QueueItem, resolve_sources
+
+
+def _store_queue(data: dict[str, Any], items: list[QueueItem]) -> None:
+    """Write a queue as parallel queue_ids / queue_dataset_ids lists.
+
+    queue_ids stays a plain list of entry IDs for the states and tasks that only need
+    those; queue_dataset_ids pins each one to its dataset, since an entry ID can exist
+    in more than one of the project's datasets.
+    """
+    data["queue_ids"] = [entry_id for entry_id, _dataset_id in items]
+    data["queue_dataset_ids"] = [dataset_id for _entry_id, dataset_id in items]
+
+
+def _queue_items(data: dict[str, Any], datasets: list) -> list[tuple[str, int | None]]:
+    """Read the queue back as (entry_id, dataset_id) pairs.
+
+    Queues saved before queue_dataset_ids existed are resolved by taking the first
+    dataset that has the entry; None means no dataset has it.
+    """
+    queue_ids: list[str] = data.get("queue_ids", [])
+    dataset_ids = data.get("queue_dataset_ids") or []
+    if len(dataset_ids) == len(queue_ids):
+        return list(zip(queue_ids, dataset_ids, strict=True))
+
+    items: list[tuple[str, int | None]] = []
+    for entry_id in queue_ids:
+        owner = next(
+            (ds.id for ds in datasets if get_entry((ds.id, entry_id), "composite") is not None),
+            None,
+        )
+        items.append((entry_id, owner))
+    return items
 
 
 @register_state
@@ -467,8 +499,11 @@ class QueueSetup(BaseState):
                 sources_state.append(source)
             self.data["_sources"] = sources_state
 
-            entry_ids = resolve_sources(sources_state, project_id, datasets)
-            if not entry_ids:
+            queue_items, problems = resolve_sources(sources_state, project_id, datasets)
+            if problems:
+                self.errors["sources"] = " ".join(problems)
+                return 0
+            if not queue_items:
                 self.errors["sources"] = _("No entries found from the configured sources")
                 return 0
 
@@ -516,7 +551,7 @@ class QueueSetup(BaseState):
                 completion_mode = "any"
 
             # Store queue data
-            self.data["queue_ids"] = entry_ids
+            _store_queue(self.data, queue_items)
             self.data["queue_labels"] = selected_labels
             self.data["queue_required_labels"] = required_labels
             self.data["queue_completion_mode"] = completion_mode
@@ -537,6 +572,7 @@ class LabelEntry(BaseState):
 
     Reads from data:
         queue_ids: List of entry IDs to label
+        queue_dataset_ids: Dataset of each entry in queue_ids (same order)
         queue_labels: List of available labels
         queue_required_labels: List of required labels
         queue_completion_mode: "any" or "all" (default: "any")
@@ -581,56 +617,69 @@ class LabelEntry(BaseState):
 
         return labels, label_ids, required_label_ids, completion_mode
 
-    def _compute_completed_entries(
+    def _compute_completed_positions(
         self,
-        queue_ids: list[str],
+        queue_items: list[tuple[str, int | None]],
         label_ids: list[int],
         required_label_ids: list[int],
         completion_mode: str,
-    ) -> list[str]:
-        """Recompute, from the database, which queue entries meet the completion criteria."""
-        datasets = self.params.get("_datasets", [])
-        completed: list[str] = []
-        for entry_id in queue_ids:
-            entry = None
-            for dataset in datasets:
-                entry = get_entry((dataset.id, entry_id), "composite")
-                if entry is not None:
-                    break
+    ) -> set[int]:
+        """Recompute, from the database, which queue positions meet the completion criteria."""
+        completed: set[int] = set()
+        for position, (entry_id, dataset_id) in enumerate(queue_items):
+            if dataset_id is None:
+                continue
+            entry = get_entry((dataset_id, entry_id), "composite")
             if entry is None:
                 continue
             labels_values = _build_labels_values(entry.labels)
             if self._check_entry_complete(
                 labels_values, label_ids, required_label_ids, completion_mode
             ):
-                completed.append(entry_id)
+                completed.add(position)
         return completed
 
     def render(self) -> str:
-        queue_ids = self.data.get("queue_ids", [])
+        datasets = self.params.get("_datasets", [])
+        queue_items = _queue_items(self.data, datasets)
         queue_position = self.data.get("queue_position", 0)
         view_mode = self.data.get("queue_view_mode", "label")
 
-        total = len(queue_ids)
+        total = len(queue_items)
         position = queue_position + 1  # 1-indexed for display
 
         labels, label_ids, required_label_ids, completion_mode = self._get_labels_context()
 
         # recompute completed entries for the whole queue
-        queue_completed = self._compute_completed_entries(
-            queue_ids, label_ids, required_label_ids, completion_mode
+        queue_completed = self._compute_completed_positions(
+            queue_items, label_ids, required_label_ids, completion_mode
         )
 
         # List view mode
         if view_mode == "list":
+            # Only name the source dataset when the queue actually spans several.
+            dataset_names = {ds.id: ds.name for ds in datasets}
+            multi_dataset = len({ds_id for _eid, ds_id in queue_items}) > 1
+            queue = [
+                {
+                    "entry_id": entry_id,
+                    "dataset_id": dataset_id,
+                    "dataset_name": dataset_names.get(dataset_id) if multi_dataset else None,
+                    # The form the manual source accepts, so copied IDs paste back in.
+                    "ref": f"{dataset_id}:{entry_id}"
+                    if multi_dataset and dataset_id is not None
+                    else entry_id,
+                }
+                for entry_id, dataset_id in queue_items
+            ]
             return render_template(
                 "learning_tasks/queue_list.html",
                 title=_("Queue Overview"),
-                queue=queue_ids,
+                queue=queue,
                 labels=labels,
                 required_label_ids=required_label_ids,
                 current_position=queue_position,
-                completed_entries=set(queue_completed),
+                completed_positions=queue_completed,
                 completed_count=len(queue_completed),
                 completion_mode=completion_mode,
                 is_last_step=self.params.get("is_last_step", False),
@@ -646,16 +695,14 @@ class LabelEntry(BaseState):
                 is_last_step=self.params.get("is_last_step", False),
             )
 
-        # Get current entry using render_entry helper
-        current_id = queue_ids[queue_position]
-        datasets = self.params.get("_datasets", [])
-
-        # Try to find the entry in any of the project's datasets
-        entry_data = {"valid_entry": False}
-        for dataset in datasets:
-            entry_data = render_entry(current_id, dataset.id)
-            if entry_data.get("valid_entry"):
-                break
+        # Render straight from the entry's own dataset: probing the others would
+        # flash a "not found" error for each one that lacks it.
+        current_id, current_dataset_id = queue_items[queue_position]
+        if current_dataset_id is None:
+            flash(_("Entry {entry_id} not found").format(entry_id=current_id), category="error")
+            entry_data: dict = {"valid_entry": False}
+        else:
+            entry_data = render_entry(current_id, current_dataset_id)
 
         labels_values = entry_data.get("labels_values", {})
 
@@ -920,9 +967,11 @@ class OllamaQueueSetup(BaseState):
                 )
 
             self.data["_sources"] = sources_state
-            entry_ids = resolve_sources(sources_state, project_id, datasets)
-
-            if not entry_ids:
+            queue_items, problems = resolve_sources(sources_state, project_id, datasets)
+            if problems:
+                self.errors["sources"] = " ".join(problems)
+                return 0
+            if not queue_items:
                 self.errors["sources"] = _("No entries found from the configured sources")
                 return 0
 
@@ -977,7 +1026,7 @@ class OllamaQueueSetup(BaseState):
                 )
                 return 0
 
-            self.data["queue_ids"] = entry_ids
+            _store_queue(self.data, queue_items)
             self.data["queue_labels"] = selected_labels
             self.data["_label_descriptions"] = label_descriptions
             self.data["ollama_url"] = ollama_url
@@ -1343,26 +1392,15 @@ class OllamaAutoLabel(BaseState):
             if status["state"] != "completed":
                 return 0
 
-            # Calculate labeled entry IDs (all entries minus errors)
-            all_entry_ids = self.data.get("queue_ids", [])
+            # Labeled entries are the whole queue minus the ones that errored
             error_entry_ids = {str(err["entry_id"]) for err in status["result"].get("errors", [])}
-            labeled_entry_ids = [eid for eid in all_entry_ids if eid not in error_entry_ids]
-
-            if not labeled_entry_ids:
-                return 0
-
-            # Build queue_data by looking up dataset_id for each entry
-            queue_data = []
-            datasets = self.params.get("_datasets", [])
-            dataset_ids = [d.id for d in datasets]
-
-            for entry_id in labeled_entry_ids:
-                # Try to find entry in available datasets
-                for ds_id in dataset_ids:
-                    entry_obj = get_entry((ds_id, entry_id), by="composite")
-                    if entry_obj:
-                        queue_data.append((ds_id, entry_id))
-                        break
+            queue_data = [
+                (dataset_id, entry_id)
+                for entry_id, dataset_id in _queue_items(
+                    self.data, self.params.get("_datasets", [])
+                )
+                if dataset_id is not None and entry_id not in error_entry_ids
+            ]
 
             if not queue_data:
                 return 0
@@ -1513,8 +1551,8 @@ class ColdStartSearchSetup(BaseState):
             datasets = self.params.get("_datasets", [])
             cache_size = self.params.get("cache_size", 100)
 
-            found_ids: list[str] = []
-            seen: set[str] = set()
+            found: list[QueueItem] = []
+            seen: set[QueueItem] = set()
             if class_values and datasets:
                 per_class = max(1, cache_size // max(len(class_values), 1))
                 for class_val in class_values:
@@ -1535,17 +1573,17 @@ class ColdStartSearchSetup(BaseState):
                                     dataset_id=ds.id,
                                 )
                                 for r in results:
-                                    eid = r["entry_id"]
-                                    if eid not in seen:
-                                        seen.add(eid)
-                                        found_ids.append(eid)
+                                    item = (r["entry_id"], ds.id)
+                                    if item not in seen:
+                                        seen.add(item)
+                                        found.append(item)
                             except Exception:
                                 pass
 
-            if not found_ids:
+            if not found:
                 retrain_every = self.params.get("retrain_every", 10)
-                fallback = list(random_entries(retrain_every * 2, self.params.get("_project_id")))
-                found_ids = [e.entry_id for e in fallback]
+                fallback = random_entries(retrain_every * 2, self.params.get("_project_id"))
+                found = [(e.entry_id, e.dataset_id) for e in fallback]
 
             # Build queue_labels from the selected label
             all_labels = get_labels(self.params["_project_id"])
@@ -1554,7 +1592,7 @@ class ColdStartSearchSetup(BaseState):
                 {"id": label_id, "name": label_obj.name if label_obj else str(label_id)}
             ]
 
-            self.data["queue_ids"] = found_ids
+            _store_queue(self.data, found)
             self.data["queue_labels"] = queue_labels
             self.data["queue_position"] = 0
             self.data["queue_required_labels"] = []
@@ -2555,7 +2593,7 @@ class MaintenanceScan(BaseState):
         )
         entries = get_entries_by_ids(entry_ids) if entry_ids else []
         # LabelEntry addresses entries by their dataset-local id, not the DB key.
-        self.data["queue_ids"] = [e.entry_id for e in entries]
+        _store_queue(self.data, [(e.entry_id, e.dataset_id) for e in entries])
         self.data["queue_labels"] = [{"id": worst.label_id, "name": worst.label_name}]
         self.data["queue_position"] = 0
         self.data["queue_required_labels"] = []

@@ -5041,6 +5041,26 @@ msgstr "Entradas: {queue_length}"
 msgid "Highlight: {highlight}"
 msgstr "Destaque: {highlight}"
 
+#: olim/learning_tasks/entry_selector.py
+msgid ""
+"Entry {entry_id} exists in more than one dataset: {datasets}. Write it as "
+"{example} to pick one."
+msgstr ""
+"A entrada {entry_id} existe em mais de um conjunto de dados: {datasets}. "
+"Escreva {example} para escolher um."
+
+#: olim/learning_tasks/entry_selector.py
+msgid "Entries not found in this project's datasets: {ids}"
+msgstr "Entradas não encontradas nos conjuntos de dados deste projeto: {ids}"
+
+#: olim/templates/macros/entry_sources.html
+msgid ""
+"If an ID exists in more than one dataset, write it as dataset_id:entry_id "
+"(e.g. 10:113)."
+msgstr ""
+"Se um ID existir em mais de um conjunto de dados, escreva "
+"id_do_conjunto:id_da_entrada (ex.: 10:113)."
+
 #~ msgid "This is permanent! Are you sure that you want to delete label"
 #~ msgstr "Isto é permanente! Tem certeza que deseja excluir o rótulo"
 

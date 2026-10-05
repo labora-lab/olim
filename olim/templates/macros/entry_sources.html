@@ -104,6 +104,7 @@
         <textarea data-f="ids" rows="4"
             placeholder="{{ _('Enter entry IDs, one per line…') }}"
             class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono">{{ src.ids_text or '' }}</textarea>
+        <p class="mt-1 text-xs text-gray-500">{{ _('If an ID exists in more than one dataset, write it as dataset_id:entry_id (e.g. 10:113).') }}</p>
     </div>
 </div>
 {% endmacro %}
@@ -152,6 +153,7 @@
         <label class="block text-xs font-medium text-gray-600 mb-1">Entry IDs (one per line)</label>
         <textarea data-f="ids" rows="4" placeholder="Enter entry IDs, one per line…"
             class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono"></textarea>
+        <p class="mt-1 text-xs text-gray-500">{{ _('If an ID exists in more than one dataset, write it as dataset_id:entry_id (e.g. 10:113).') }}</p>
     </div>
 </div>
 </template>
