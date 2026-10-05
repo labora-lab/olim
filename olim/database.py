@@ -810,7 +810,7 @@ def get_datasets(project_id: int | None = None, non_empty: bool = False) -> list
     if non_empty:
         query = query.where(db.exists().where(Entry.dataset_id == Dataset.id))
 
-    return db.session.execute(query.order_by(Dataset.name)).scalars()
+    return list(db.session.execute(query.order_by(Dataset.name)).scalars())
 
 
 def get_dataset(idt: int | str, by: str = "id") -> Dataset | None:
