@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2026-10-06 16:21-0300\n"
+"POT-Creation-Date: 2026-10-06 18:10-0300\n"
 "PO-Revision-Date: 2025-03-20 20:21+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: en_US\n"
@@ -454,95 +454,118 @@ msgstr ""
 msgid "Ticket sent. Thank you very much."
 msgstr ""
 
-#: olim/labels.py:107 olim/labels.py:152
+#: olim/labels.py:113 olim/labels.py:158
 #, python-brace-format
 msgid "Label {label_name} successfully created"
 msgstr ""
 
-#: olim/labels.py:141
+#: olim/labels.py:147
 msgid "Enter a name for the new label."
 msgstr ""
 
-#: olim/labels.py:189 olim/labels.py:212 olim/labels.py:262 olim/labels.py:292
-#: olim/labels.py:322
+#: olim/labels.py:195 olim/labels.py:218 olim/labels.py:268 olim/labels.py:298
+#: olim/labels.py:328
 #, python-brace-format
 msgid "Label id: {label_id} not found!"
 msgstr ""
 
-#: olim/labels.py:201
+#: olim/labels.py:207
 #, python-brace-format
 msgid "Label {label_name} sucessfully deleted"
 msgstr ""
 
-#: olim/labels.py:223 olim/labels.py:273 olim/labels.py:303 olim/labels.py:335
-#: olim/labels.py:350 olim/labels.py:428 olim/labels.py:492
+#: olim/labels.py:229 olim/labels.py:279 olim/labels.py:309 olim/labels.py:341
+#: olim/labels.py:356 olim/labels.py:434 olim/labels.py:498
 msgid "Label not found"
 msgstr ""
 
-#: olim/labels.py:311
+#: olim/labels.py:317
 #, python-brace-format
 msgid "Label: {label_name}"
 msgstr ""
 
-#: olim/labels.py:345 olim/labels.py:423 olim/labels.py:487
+#: olim/labels.py:351 olim/labels.py:429 olim/labels.py:493
 msgid "Admin access required"
 msgstr ""
 
-#: olim/labels.py:402
+#: olim/labels.py:408
 msgid "Learner parameters updated successfully"
 msgstr ""
 
-#: olim/labels.py:406
+#: olim/labels.py:412
 #, python-brace-format
 msgid "Error converting parameter values: {error}"
 msgstr ""
 
-#: olim/labels.py:411
+#: olim/labels.py:417
 #, python-brace-format
 msgid "Error updating parameters: {error}"
 msgstr ""
 
-#: olim/labels.py:432 olim/labels.py:437
+#: olim/labels.py:438 olim/labels.py:443
 msgid "No file selected"
 msgstr ""
 
-#: olim/labels.py:449
+#: olim/labels.py:455
 #, python-brace-format
 msgid "Missing required columns: {columns}"
 msgstr ""
 
-#: olim/labels.py:473
+#: olim/labels.py:479
 #, python-brace-format
 msgid "Successfully uploaded {count} auto-labels"
 msgstr ""
 
-#: olim/labels.py:478
+#: olim/labels.py:484
 #, python-brace-format
 msgid "Error processing file: {error}"
 msgstr ""
 
-#: olim/labels.py:500
+#: olim/labels.py:506
 msgid "Label settings updated successfully"
 msgstr ""
 
-#: olim/labels.py:502
+#: olim/labels.py:508
 msgid "Invalid settings format"
 msgstr ""
 
-#: olim/labels.py:504
+#: olim/labels.py:510
 msgid "No settings provided"
 msgstr ""
 
-#: olim/labels.py:519
+#: olim/labels.py:525
 msgid "No datasets available for this project"
 msgstr ""
 
-#: olim/labels.py:530
+#: olim/labels.py:536
 msgid "Dataset selection required"
 msgstr ""
 
-#: olim/labels.py:538 olim/labels.py:541
+#: olim/labels.py:544 olim/labels.py:547
 msgid "Invalid dataset selection"
+msgstr ""
+
+#: olim/labels.py:554
+#, python-brace-format
+msgid "Could not read the labelling file: {error}"
+msgstr ""
+
+#: olim/labels.py:635
+msgid "This label upload has expired. Please upload the file again."
+msgstr ""
+
+#: olim/labels.py:651
+msgid "Label upload cancelled"
+msgstr ""
+
+#: olim/labels.py:670
+#, python-brace-format
+msgid "Add at least one option to the label {name}."
+msgstr ""
+
+#: olim/labels.py:687
+#, python-brace-format
+msgid "Rows of these labels were not uploaded: {names}"
 msgstr ""
 
 #: olim/ml_ui.py:71
@@ -2070,6 +2093,7 @@ msgstr ""
 #: olim/templates/components/setting-modal.html:145
 #: olim/templates/datasets/_delete_modal.html:33 olim/templates/hidden.html:180
 #: olim/templates/label-settings.html:296
+#: olim/templates/label-upload-configure.html:71
 #: olim/templates/label_types/free_text.html:33
 #: olim/templates/label_types/long_text.html:30
 #: olim/templates/learning-tasks.html:341
@@ -2279,6 +2303,40 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
+#: olim/templates/label-upload-configure.html:2
+#: olim/templates/label-upload-configure.html:9
+msgid "New labels in the file"
+msgstr ""
+
+#: olim/templates/label-upload-configure.html:12
+msgid ""
+"The file uses labels that don't exist in this project yet. Choose the "
+"type of each one; for Multiple Choice, the options are pre-filled with "
+"the values found in the file. Labels set to \"Don't create\" are left out"
+" of the upload."
+msgstr ""
+
+#: olim/templates/label-upload-configure.html:30
+#, python-format
+msgid "%(rows)s rows, %(values)s distinct values"
+msgstr ""
+
+#: olim/templates/label-upload-configure.html:36 olim/templates/labels.html:192
+msgid "Label Type"
+msgstr ""
+
+#: olim/templates/label-upload-configure.html:38
+msgid "Don't create (skip its rows)"
+msgstr ""
+
+#: olim/templates/label-upload-configure.html:45
+msgid "Some entries have several values, so Multi-select is pre-selected."
+msgstr ""
+
+#: olim/templates/label-upload-configure.html:67
+msgid "Create labels and upload"
+msgstr ""
+
 #: olim/templates/labels.html:23
 #: olim/templates/learning_tasks/_al_settings.html:69
 #: olim/templates/learning_tasks/al_label_select.html:16
@@ -2325,10 +2383,6 @@ msgstr ""
 
 #: olim/templates/labels.html:182
 msgid "Label Name"
-msgstr ""
-
-#: olim/templates/labels.html:192
-msgid "Label Type"
 msgstr ""
 
 #: olim/templates/labels.html:196
@@ -3203,7 +3257,7 @@ msgid "Height of the text area (2–20 rows)"
 msgstr ""
 
 #: olim/templates/label_types/long_text_config.html:19
-#: olim/templates/label_types/multiple_choice_config.html:99
+#: olim/templates/label_types/multiple_choice_config.html:100
 #: olim/templates/label_types/short_text_config.html:35
 #: olim/templates/learning_tasks/_al_settings.html:253
 msgid "Save settings"
@@ -3213,49 +3267,49 @@ msgstr ""
 msgid "Clear"
 msgstr ""
 
-#: olim/templates/label_types/multiple_choice_config.html:11
+#: olim/templates/label_types/multiple_choice_config.html:12
 #: olim/templates/label_types/preset_config.html:12
 msgid "Options"
 msgstr ""
 
-#: olim/templates/label_types/multiple_choice_config.html:14
+#: olim/templates/label_types/multiple_choice_config.html:15
 msgid "Add option"
 msgstr ""
 
-#: olim/templates/label_types/multiple_choice_config.html:24
-#: olim/templates/label_types/multiple_choice_config.html:151
+#: olim/templates/label_types/multiple_choice_config.html:25
+#: olim/templates/label_types/multiple_choice_config.html:152
 msgid "Label text"
 msgstr ""
 
-#: olim/templates/label_types/multiple_choice_config.html:29
-#: olim/templates/label_types/multiple_choice_config.html:154
+#: olim/templates/label_types/multiple_choice_config.html:30
+#: olim/templates/label_types/multiple_choice_config.html:155
 msgid "Icon (optional)"
 msgstr ""
 
-#: olim/templates/label_types/multiple_choice_config.html:32
-#: olim/templates/label_types/multiple_choice_config.html:156
+#: olim/templates/label_types/multiple_choice_config.html:33
+#: olim/templates/label_types/multiple_choice_config.html:157
 msgid "Bootstrap icon name (e.g. check-circle-fill) or a single character"
 msgstr ""
 
-#: olim/templates/label_types/multiple_choice_config.html:60
-#: olim/templates/label_types/multiple_choice_config.html:171
+#: olim/templates/label_types/multiple_choice_config.html:61
+#: olim/templates/label_types/multiple_choice_config.html:172
 msgid "Tooltip shown to annotators (optional)"
 msgstr ""
 
-#: olim/templates/label_types/multiple_choice_config.html:70
+#: olim/templates/label_types/multiple_choice_config.html:71
 msgid "Buttons per row"
 msgstr ""
 
-#: olim/templates/label_types/multiple_choice_config.html:77
+#: olim/templates/label_types/multiple_choice_config.html:78
 msgid "Selection mode"
 msgstr ""
 
-#: olim/templates/label_types/multiple_choice_config.html:83
+#: olim/templates/label_types/multiple_choice_config.html:84
 #: olim/templates/label_types/preset_config.html:32
 msgid "Single select"
 msgstr ""
 
-#: olim/templates/label_types/multiple_choice_config.html:89
+#: olim/templates/label_types/multiple_choice_config.html:90
 #: olim/templates/label_types/preset_config.html:32
 msgid "Multi-select"
 msgstr ""
@@ -5151,14 +5205,44 @@ msgstr ""
 msgid "View Model Details"
 msgstr ""
 
-#: olim/utils/label.py:53
+#: olim/utils/label.py:135
+#, python-brace-format
+msgid ""
+"Skipped {count} rows with values that are not options of the label (for "
+"example {examples}). Check the options in the label settings."
+msgstr ""
+
+#: olim/utils/label.py:139
+#, python-brace-format
+msgid ""
+"Skipped {count} rows with several options for a single-select label (for "
+"example {examples}). Switch the label to multi-select in its settings to "
+"upload several options per entry."
+msgstr ""
+
+#: olim/utils/label.py:143
+#, python-brace-format
+msgid "Skipped {count} rows without any option (for example {examples})."
+msgstr ""
+
+#: olim/utils/label.py:184
+#, python-brace-format
+msgid "The labelling file is missing the columns: {columns}"
+msgstr ""
+
+#: olim/utils/label.py:220
 #, python-brace-format
 msgid "Entry check: {existing}/{total} entries found, {missing} missing"
 msgstr ""
 
-#: olim/utils/label.py:60
+#: olim/utils/label.py:227
 #, python-brace-format
 msgid "Entry check: {existing}/{total} entries found"
+msgstr ""
+
+#: olim/utils/label.py:275
+#, python-brace-format
+msgid "Uploaded {count} label values"
 msgstr ""
 
 #: olim/utils/queues.py:46

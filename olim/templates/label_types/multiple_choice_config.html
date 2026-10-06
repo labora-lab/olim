@@ -1,7 +1,8 @@
 {% set options = settings.get('options', []) %}
 {% set single_select = settings.get('single_select', True) %}
 {% set items_per_line = settings.get('items_per_line', 2) %}
-{% set config_id = 'mc_cfg_' ~ (label.id if label else 'new') %}
+{# cfg_id / settings_field let a page hold several editors (e.g. new labels of an upload) #}
+{% set config_id = cfg_id if cfg_id is defined and cfg_id else 'mc_cfg_' ~ (label.id if label else 'new') %}
 
 <div id="{{ config_id }}" class="space-y-5">
 
@@ -100,7 +101,7 @@
         </button>
     </form>
     {% else %}
-    <input type="hidden" name="label_settings" id="{{ config_id }}_hidden">
+    <input type="hidden" name="{{ settings_field if settings_field is defined and settings_field else 'label_settings' }}" id="{{ config_id }}_hidden">
     {% endif %}
 </div>
 

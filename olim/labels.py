@@ -1,4 +1,7 @@
+import io
 import json
+import re
+import secrets
 import time
 
 import pandas as pd
@@ -27,8 +30,11 @@ from .database import (
 )
 from .label_types import get_preset_settings
 from .project import update_session_project
-from .utils.label import label_upload
+from .settings import UPLOAD_PATH
+from .utils.label import label_upload, new_label_names, suggest_label_config
 from .utils.queues import store_queue
+
+LABEL_UPLOAD_PATH = UPLOAD_PATH / "label-uploads"
 
 
 @app.route("/<int:project_id>", methods=["GET"])
@@ -543,13 +549,145 @@ def label_up(project_id: int) -> ...:
 
     # Create a df from csv passed by POST; read as text so IDs like "007" stay intact
     try:
-        df = pd.read_csv(request.files["file"].stream, dtype=str)
-    except (KeyError, ValueError, UnicodeDecodeError) as e:
+        df = read_label_file(request.files["file"].read())
+    except (KeyError, ValueError) as e:
         flash(_("Could not read the labelling file: {error}").format(error=str(e)), "error")
         return redirect(url_for("labels", project_id=project_id))
+
+    # Labels the file introduces are configured by the user before uploading
+    if new_label_names(df, project_id):
+        token = secrets.token_hex(12)
+        LABEL_UPLOAD_PATH.mkdir(parents=True, exist_ok=True)
+        df.to_csv(LABEL_UPLOAD_PATH / f"{token}.csv", index=False)
+        (LABEL_UPLOAD_PATH / f"{token}.json").write_text(
+            json.dumps({"project_id": project_id, "dataset_id": dataset.id})
+        )
+        return redirect(url_for("label_upload_configure", project_id=project_id, token=token))
 
     label_upload(df, session["user_id"], project_id, dataset.id)
 
     # Wait 1 seconds for write operations to finish and redirect back to labels page
     time.sleep(1)
+    return redirect(url_for("labels", project_id=project_id))
+
+    label_upload(df, session["user_id"], project_id, dataset.id)
+
+    # Wait 1 seconds for write operations to finish and redirect back to labels page
+    time.sleep(1)
+    return redirect(url_for("labels", project_id=project_id))
+
+
+def read_label_file(content: bytes) -> pd.DataFrame:
+    """Read a labelling CSV as text, accepting UTF-8 (with or without BOM) or CP1252."""
+    try:
+        text = content.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = content.decode("cp1252")
+    return pd.read_csv(io.StringIO(text), dtype=str)
+
+
+def _pending_label_upload(project_id: int, token: str) -> tuple[pd.DataFrame, dict] | None:
+    """Load a labelling file waiting for its new labels to be configured."""
+    if not re.fullmatch(r"[0-9a-f]{24}", token):
+        return None
+    csv_path = LABEL_UPLOAD_PATH / f"{token}.csv"
+    meta_path = LABEL_UPLOAD_PATH / f"{token}.json"
+    if not csv_path.exists() or not meta_path.exists():
+        return None
+    meta = json.loads(meta_path.read_text())
+    if meta.get("project_id") != project_id:
+        return None
+    return pd.read_csv(csv_path, dtype=str, keep_default_na=False, na_values=[""]), meta
+
+
+def _discard_label_upload(token: str) -> None:
+    for suffix in (".csv", ".json"):
+        (LABEL_UPLOAD_PATH / f"{token}{suffix}").unlink(missing_ok=True)
+
+
+def _new_label_form(index: int, name: str, df: pd.DataFrame) -> dict:
+    """Form data for one new label, with options pre-filled from the file."""
+    suggestion = suggest_label_config(df, name)
+    return {
+        "index": index,
+        "name": name,
+        **suggestion,
+        "settings": {
+            "options": [
+                {"value": v, "color": "blue", "type": "text", "icon": "", "helper": ""}
+                for v in suggestion["options"]
+            ],
+            "single_select": not suggestion["multi_select"],
+            "items_per_line": 2,
+        },
+    }
+
+
+@app.route("/<int:project_id>/label-upload/<token>", methods=["GET", "POST"])
+def label_upload_configure(project_id: int, token: str) -> ...:
+    """Let the user choose type and settings for labels a labelling file introduces."""
+    res = update_session_project(project_id)
+    if res is not None:
+        return res
+
+    pending = _pending_label_upload(project_id, token)
+    if pending is None:
+        flash(_("This label upload has expired. Please upload the file again."), "warning")
+        return redirect(url_for("labels", project_id=project_id))
+    df, meta = pending
+    names = new_label_names(df, project_id)
+
+    if request.method == "GET":
+        return render_template(
+            "label-upload-configure.html",
+            project_id=project_id,
+            token=token,
+            new_labels=[_new_label_form(i, name, df) for i, name in enumerate(names)],
+            dataset=get_dataset(meta["dataset_id"]),
+        )
+
+    if request.form.get("action") == "cancel":
+        _discard_label_upload(token)
+        flash(_("Label upload cancelled"), "info")
+        return redirect(url_for("labels", project_id=project_id))
+
+    skipped = []
+    for i in range(int(request.form.get("count", 0))):
+        name = request.form.get(f"name_{i}", "")
+        if name not in names:
+            continue  # Created meanwhile, or not part of this file
+        label_type = request.form.get(f"type_{i}") or None
+        if label_type is None:
+            skipped.append(name)
+            continue
+        label_settings = None
+        if label_type == "multiple_choice":
+            try:
+                label_settings = json.loads(request.form.get(f"settings_{i}") or "null")
+            except json.JSONDecodeError:
+                label_settings = None
+            if not label_settings or not label_settings.get("options"):
+                flash(_("Add at least one option to the label {name}.").format(name=name), "error")
+                return redirect(
+                    url_for("label_upload_configure", project_id=project_id, token=token)
+                )
+        else:
+            label_settings = get_preset_settings(label_type)
+        new_label(
+            name,
+            session["user_id"],
+            project_id,
+            label_type=label_type,
+            label_settings=label_settings,
+        )
+
+    if skipped:
+        df = df.loc[~df["label"].astype(str).str.strip().isin(skipped)]
+        flash(
+            _("Rows of these labels were not uploaded: {names}").format(names=", ".join(skipped)),
+            "info",
+        )
+
+    label_upload(df, session["user_id"], project_id, meta["dataset_id"])
+    _discard_label_upload(token)
     return redirect(url_for("labels", project_id=project_id))

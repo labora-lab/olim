@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}{{ _('New labels in the file') }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl space-y-6">
+    <div>
+        <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+            <i class="bi bi-tags-fill text-green-600 mr-2"></i>
+            {{ _('New labels in the file') }}
+        </h2>
+        <p class="mt-1 text-sm text-gray-600">
+            {{ _('The file uses labels that don\'t exist in this project yet. Choose the type of each one; for Multiple Choice, the options are pre-filled with the values found in the file. Labels set to "Don\'t create" are left out of the upload.') }}
+        </p>
+        {% if dataset %}
+        <p class="mt-1 text-xs text-gray-500"><i class="bi bi-database mr-1"></i>{{ dataset.name }}</p>
+        {% endif %}
+    </div>
+
+    <form id="label-upload-configure-form" method="post"
+        action="{{ url_for('label_upload_configure', project_id=project_id, token=token) }}" class="space-y-6">
+        <input type="hidden" name="count" value="{{ new_labels|length }}">
+
+        {% for nl in new_labels %}
+        {% set i = nl.index %}
+        {% set suggested = 'multiple_choice' if nl.options else 'free_text' %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 new-label-card" data-index="{{ i }}">
+            <div class="px-6 py-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2">
+                <h3 class="text-lg font-semibold text-gray-900">{{ nl.name }}</h3>
+                <span class="text-sm text-gray-500">
+                    {{ _('%(rows)s rows, %(values)s distinct values', rows=nl.rows, values=nl.options|length) }}
+                </span>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" name="name_{{ i }}" value="{{ nl.name }}">
+                <div>
+                    <label for="type_{{ i }}" class="block mb-2 text-sm font-medium text-gray-900">{{ _('Label Type') }}</label>
+                    <select id="type_{{ i }}" name="type_{{ i }}" class="new-label-type bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5">
+                        <option value="">{{ _('Don\'t create (skip its rows)') }}</option>
+                        {% for type_id, type_name in get_available_label_types() %}
+                        <option value="{{ type_id }}" {% if type_id == suggested %}selected{% endif %}>{{ type_name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if nl.multi_select %}
+                    <p class="mt-1 text-xs text-gray-500">
+                        <i class="bi bi-info-circle mr-1"></i>{{ _('Some entries have several values, so Multi-select is pre-selected.') }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <div class="mc-panel border border-gray-200 rounded-lg p-4 bg-gray-50" data-cfg-id="mc_cfg_up_{{ i }}">
+                    {% with label=None,
+                            settings=nl.settings,
+                            cfg_id='mc_cfg_up_' ~ i,
+                            settings_field='settings_' ~ i,
+                            is_edit=False,
+                            save_url=None %}
+                    {% include "label_types/multiple_choice_config.html" %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="flex flex-wrap gap-3">
+            <button type="submit" name="action" value="upload"
+                class="inline-flex items-center px-5 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 transition-colors">
+                <i class="bi bi-cloud-upload mr-2"></i>{{ _('Create labels and upload') }}
+            </button>
+            <button type="submit" name="action" value="cancel" formnovalidate
+                class="inline-flex items-center px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                {{ _('Cancel') }}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('label-upload-configure-form');
+        const cards = form.querySelectorAll('.new-label-card');
+
+        function syncPanel(card) {
+            const type = card.querySelector('.new-label-type').value;
+            card.querySelector('.mc-panel').classList.toggle('hidden', type !== 'multiple_choice');
+        }
+
+        cards.forEach(card => {
+            card.querySelector('.new-label-type').addEventListener('change', () => syncPanel(card));
+            syncPanel(card);
+        });
+
+        form.addEventListener('submit', function () {
+            cards.forEach(card => {
+                if (card.querySelector('.new-label-type').value === 'multiple_choice') {
+                    mcSerializeToHidden(card.querySelector('.mc-panel').dataset.cfgId);
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

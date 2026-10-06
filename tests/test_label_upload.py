@@ -203,3 +203,110 @@ class TestListValues:
         with app.test_request_context("/"):
             label_upload(df, user_id=1, project_id=1, dataset_id=1)
         assert stored == [json.dumps(["Red", "Blue"])]
+
+
+class TestMatching:
+    """Options typed on another system must still match the file's values."""
+
+    def test_option_key_ignores_spacing_case_and_accent_encoding(self):
+        import unicodedata
+
+        from olim.utils.label import option_key
+
+        typed = unicodedata.normalize("NFD", "Paulo       Verdasca  Codeço")
+        assert option_key(typed) == option_key(" paulo verdasca CODEÇO ")
+
+    def test_upload_stores_the_option_as_configured(self, monkeypatch, upload):
+        odd = make_label(
+            "People",
+            "multiple_choice",
+            {"options": [{"value": "Paulo       Verdasca Amorim"}, {"value": "Flávio"}]},
+            5,
+        )
+        monkeypatch.setattr(label_utils, "get_labels", lambda project_id: [odd])
+        _count, stored, _flashes = upload([("e1", "People", '["Paulo Verdasca Amorim", "flávio"]')])
+        assert stored == [(5, 11, json.dumps(["Paulo       Verdasca Amorim", "Flávio"]))]
+
+    def test_entry_id_with_trailing_space_matches_as_written(self, upload):
+        """Dataset IDs are stored verbatim, so "007 " must not be trimmed away."""
+        _count, stored, _flashes = upload([("007 ", "Ok", "no")])
+        assert stored == [(3, 13, "no")]
+
+    def test_reasons_are_reported_separately(self, upload):
+        _count, _stored, flashes = upload([("e1", "Size", '["S", "L"]'), ("e2", "Color", "Green")])
+        warnings = [m for c, m in flashes if c == "warning"]
+        assert any("single-select" in m and "Size" in m for m in warnings)
+        assert any("not options" in m and "Color: Green" in m for m in warnings)
+
+
+class TestNewLabels:
+    def test_new_label_names(self, monkeypatch):
+        monkeypatch.setattr(label_utils, "get_labels", lambda project_id: [COLOR])
+        df = pd.DataFrame(
+            [("e1", "Color", "Red"), ("e1", " Reviewers ", "A"), ("e2", "Reviewers", "B")],
+            columns=["entry_id", "label", "value"],
+        )
+        assert label_utils.new_label_names(df, 1) == ["Reviewers"]
+
+    def test_suggestion_collects_options_and_detects_multi_select(self):
+        df = pd.DataFrame(
+            [
+                ("e1", "Reviewers", '["Ana", "Bruno"]'),
+                ("e2", "Reviewers", "ana"),
+                ("e3", "Reviewers", "Carla  Dias"),
+                ("e1", "Other", "x"),
+            ],
+            columns=["entry_id", "label", "value"],
+        )
+        suggestion = label_utils.suggest_label_config(df, "Reviewers")
+        assert suggestion == {
+            "options": ["Ana", "Bruno", "Carla Dias"],
+            "multi_select": True,
+            "rows": 3,
+        }
+
+    def test_one_value_per_entry_suggests_single_select(self):
+        df = pd.DataFrame(
+            [("e1", "Ok", "yes"), ("e2", "Ok", "no")], columns=["entry_id", "label", "value"]
+        )
+        assert label_utils.suggest_label_config(df, "Ok")["multi_select"] is False
+
+
+class TestReadFile:
+    def test_utf8_with_bom_and_cp1252(self):
+        from olim.labels import read_label_file
+
+        bom = "﻿entry_id,label,value\n007,Ok,Codeço\n".encode()
+        df = read_label_file(bom)
+        assert list(df.columns) == ["entry_id", "label", "value"]
+        assert df.loc[0, "entry_id"] == "007"
+
+        cp = "entry_id,label,value\n1,Ok,Codeço\n".encode("cp1252")
+        assert read_label_file(cp).loc[0, "value"] == "Codeço"
+
+
+class TestConfigurePage:
+    def test_two_new_labels_get_separate_prefilled_editors(self):
+        from flask import render_template, session
+
+        from olim.labels import _new_label_form
+
+        df = pd.DataFrame(
+            [("e1", "Reviewers", '["Ana", "Bruno"]'), ("e2", "Notes", "free words")],
+            columns=["entry_id", "label", "value"],
+        )
+        with app.test_request_context("/"):
+            session["language"] = "en_US"
+            html = render_template(
+                "label-upload-configure.html",
+                project_id=1,
+                token="a" * 24,
+                new_labels=[_new_label_form(0, "Reviewers", df), _new_label_form(1, "Notes", df)],
+                dataset=None,
+            )
+        # Each label posts its own type and settings
+        assert 'name="type_0"' in html and 'name="type_1"' in html
+        assert 'name="settings_0" id="mc_cfg_up_0_hidden"' in html
+        assert 'name="settings_1" id="mc_cfg_up_1_hidden"' in html
+        assert 'value="Ana"' in html and 'value="Bruno"' in html
+        assert 'value="multiple_choice" selected' in html
