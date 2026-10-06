@@ -541,16 +541,14 @@ def label_up(project_id: int) -> ...:
         flash(_("Invalid dataset selection"), category="warning")
         return redirect(url_for("labels", project_id=project_id))
 
-    # Check if user wants to use validation (active learning pipeline)
-    use_for_validation = request.form.get("use_for_validation") == "on"
+    # Create a df from csv passed by POST; read as text so IDs like "007" stay intact
+    try:
+        df = pd.read_csv(request.files["file"].stream, dtype=str)
+    except (KeyError, ValueError, UnicodeDecodeError) as e:
+        flash(_("Could not read the labelling file: {error}").format(error=str(e)), "error")
+        return redirect(url_for("labels", project_id=project_id))
 
-    # Create a df from csv passed by POST
-    df = pd.read_csv(request.files["file"].stream)
-
-    # Use the label_upload function with the use_active_learning parameter
-    label_upload(
-        df, session["user_id"], project_id, dataset.id, use_active_learning=use_for_validation
-    )
+    label_upload(df, session["user_id"], project_id, dataset.id)
 
     # Wait 1 seconds for write operations to finish and redirect back to labels page
     time.sleep(1)
