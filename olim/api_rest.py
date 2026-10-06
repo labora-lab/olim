@@ -117,10 +117,12 @@ def _do_ingest(entries: list[dict[str, Any]], dataset_id: int) -> tuple[Response
     warnings: list[str] = []
 
     for i, entry in enumerate(entries):
-        if not isinstance(entry.get("id"), str) or not entry["id"]:
+        # IDs are trimmed: a trailing space would make a different, unreachable entry
+        if not isinstance(entry.get("id"), str) or not entry["id"].strip():
             return error_response(f"Entry at index {i} missing valid 'id' field", 400)
         if not isinstance(entry.get("text"), str):
             return error_response(f"Entry at index {i} missing valid 'text' field", 400)
+        entry = {**entry, "id": entry["id"].strip()}
         eid = entry["id"]
         if eid in seen_in_request:
             warnings.append(f"Duplicate entry ID '{eid}' in request — skipped")

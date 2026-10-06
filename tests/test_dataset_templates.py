@@ -1,5 +1,6 @@
 """Dataset management pages render for every state the routes can hand them."""
 
+import re
 from datetime import datetime
 from types import SimpleNamespace
 
@@ -149,7 +150,11 @@ class TestEdit:
 
     def test_linked_projects_are_checked(self):
         html = self.render()
-        assert html.count("checked") == 1
+        checkboxes = re.findall(
+            r'<input type="checkbox" name="projects" value="(\d+)"[^>]*?(checked)?>', html
+        )
+        assert sorted(v for v, checked in checkboxes if checked) == ["2"]
+        assert len(checkboxes) == 2
 
     def test_legacy_shows_column_pickers(self):
         html = self.render(is_legacy=True, dataset=make_dataset(columns=None))

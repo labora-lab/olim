@@ -9,7 +9,7 @@ from tqdm import tqdm
 from olim.settings import ES_INDEX
 from olim.utils.es import es_search
 
-from .base import EntryTypeBase
+from .base import EntryTypeBase, prepare_id_column
 from .registry import register_entry_type
 
 ENTRY_TYPE = "flexible_text"
@@ -184,7 +184,8 @@ class FlexibleTextEntry(EntryTypeBase):
             read_kwargs["engine"] = "python"
 
         for chunk in tqdm(pd.read_csv(filename, **read_kwargs)):
-            chunk = chunk.drop_duplicates(subset=[id_column])
+            # Trim IDs and stop on empty or repeated ones; never drop rows silently
+            rows = prepare_id_column(chunk, id_column)
             chunk = chunk.fillna(-1)
 
             try:
@@ -195,14 +196,9 @@ class FlexibleTextEntry(EntryTypeBase):
 
             records = chunk.to_dict("records")
             batch_entries = []
-            seen_ids = set()
 
-            for record in records:
+            for row, record in zip(rows, records, strict=True):
                 record_id = record.get(id_column)
-                if not record_id or record_id in seen_ids:
-                    print(f"Duplicated data on dataset id: {record_id}")
-                    continue
-                seen_ids.add(record_id)
 
                 text_content = record.get(text_column, "")
 
@@ -217,7 +213,12 @@ class FlexibleTextEntry(EntryTypeBase):
                     metadata[key] = value
 
                 batch_entries.append(
-                    {"id": str(record_id), "text": str(text_content), "metadata": metadata}
+                    {
+                        "id": str(record_id),
+                        "text": str(text_content),
+                        "metadata": metadata,
+                        "row": row,
+                    }
                 )
 
             yield batch_entries

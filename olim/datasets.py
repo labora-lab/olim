@@ -24,14 +24,13 @@ from .database import (
     update_dataset,
 )
 from .settings import CHUNK_SIZE, ES_INDEX, UPLOAD_PATH
-from .tasks.upload_data import update_entries, upload_dataset, validate_append
+from .tasks.upload_data import check_append_columns, update_entries, upload_dataset
 from .upload_data import _validate_csv_options, read_csv_header
 from .utils.es import es_list_fields, es_search
 
 PAGE_SIZES = (10, 25, 50, 100)
 APPENDABLE_TYPES = ("single_text", "flexible_text")
 MAX_SAVE_ENTRIES = 1000
-VALIDATION_TIMEOUT = 600
 
 
 def _get_dataset_or_404(dataset_id: int) -> Dataset:
@@ -130,7 +129,7 @@ def _uploaded_file(payload: dict) -> tuple[str, str, str]:
 
 
 def _run_append_validation(dataset: Dataset, payload: dict) -> tuple[dict, dict]:
-    """Validate a file against a dataset.
+    """Check a file's columns against a dataset.
 
     Returns:
         (report, context) where context holds what the append task needs
@@ -150,21 +149,9 @@ def _run_append_validation(dataset: Dataset, payload: dict) -> tuple[dict, dict]
         else {"id_column": id_column, "text_column": text_column, "columns": columns}
     )
 
-    res = launch_task_with_tracking(
-        validate_append,
-        dataset_id=dataset.id,
-        filename=path,
-        columns=columns,
-        expected_columns=expected,
-        id_column=id_column,
-        sep=sep,
-        encoding=encoding,
-        user_id=session["user_id"],
-        track_progress=False,
-    )
-    report = res.get(timeout=VALIDATION_TIMEOUT)
-    report["columns"] = columns
-    report["expected_columns"] = expected
+    # Only the header is checked here; IDs are checked batch by batch while the data
+    # is added, and the upload is undone on the first conflict
+    report = check_append_columns(columns, expected)
 
     context = {
         "path": path,
@@ -385,9 +372,7 @@ def dataset_append(dataset_id: int) -> ...:
     try:
         launch_task_with_tracking(
             upload_dataset,
-            description=_("Adding {count} entries to dataset {name}").format(
-                count=report["new_entries"], name=dataset.name
-            ),
+            description=_("Adding data to dataset {name}").format(name=dataset.name),
             upload_type=entry_type,
             upload_params={
                 "filename": context["path"],

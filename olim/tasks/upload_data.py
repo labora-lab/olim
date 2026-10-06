@@ -2,7 +2,7 @@ import csv
 import json
 import os
 import re
-from collections.abc import Callable, Generator
+from collections.abc import Generator
 from datetime import datetime
 from pathlib import Path
 from time import sleep, time
@@ -23,6 +23,7 @@ from ..database import (
     register_entries,
     update_dataset,
 )
+from ..entry_types.base import EntryIdError
 from ..settings import ES_INDEX, ES_SERVER, UPLOAD_BATCH_SIZE, UPLOAD_PATH, WORK_PATH
 from ..utils.es import create_index, get_es_conn
 
@@ -378,9 +379,17 @@ def upload_dataset(
                 },
             )
 
-            # Process current batch
-            if append:
-                appended_ids.extend(entry["id"] for entry in batch)
+            # Stop before writing anything if an ID is already stored: either it
+            # appeared in an earlier batch of this file or (append) in the dataset.
+            # Checking per batch keeps memory flat for files of any size.
+            with flask_app.app_context():
+                stored = set(check_entries_exist([e["id"] for e in batch], dataset_id)[0])
+            if stored:
+                first = next(e for e in batch if e["id"] in stored)
+                raise EntryIdError("exists", first.get("row", 0), first["id"])
+
+            # From here on these IDs belong to this upload and are undone on failure
+            appended_ids.extend(entry["id"] for entry in batch)
             result = process_batch.s(batch, dataset_id, upload_type, index_name)()
 
             processed_batches.append({"batch": batch_count, "result": result, "size": len(batch)})
@@ -414,6 +423,8 @@ def upload_dataset(
         }
 
     except Exception as e:
+        if isinstance(e, EntryIdError):
+            e = Exception(entry_id_error_message(e, append))
         if append:
             self.update_state(
                 state="PROGRESS", meta={"status": _("Upload failed. Removing added entries...")}
@@ -461,6 +472,28 @@ def upload_dataset(
             )
 
         raise Exception(final_message) from e
+
+
+def entry_id_error_message(error: EntryIdError, append: bool) -> str:
+    """User-facing explanation of an ID problem found while uploading."""
+    if error.kind == "empty":
+        return _(
+            "Row %(row)s has no ID. Every row needs a unique ID; fix the file and upload it again",
+            row=error.row,
+        )
+    if error.kind == "exists" and append:
+        return _(
+            "The ID '%(id)s' at row %(row)s already exists in the dataset or appears earlier in "
+            "the file. IDs must be unique; fix the file and upload it again",
+            id=error.entry_id,
+            row=error.row,
+        )
+    return _(
+        "The ID '%(id)s' at row %(row)s appears earlier in the file. IDs must be unique; "
+        "fix the file and upload it again",
+        id=error.entry_id,
+        row=error.row,
+    )
 
 
 def _remove_file(filename: str | None) -> None:
@@ -520,110 +553,21 @@ def rollback_append(
     return ok
 
 
-def read_csv_ids(
-    filename: str, id_column: str, sep: str, encoding: str, batch_size: int = UPLOAD_BATCH_SIZE
-) -> tuple[list[str], int]:
-    """Read the ID column of a CSV the same way ``generate_upload_batches`` does.
-
-    Reading in chunks of the same size keeps pandas' dtype inference (and so the
-    ``str()`` form of numeric IDs) identical to what the upload will store.
+def check_append_columns(columns: list[str], expected_columns: list[str]) -> dict:
+    """Compare the header of a file to be appended with the dataset's columns.
 
     Returns:
-        (ids, empty_count) where ids keeps file order, duplicates included
-    """
-    read_kwargs: dict = {"chunksize": batch_size, "sep": sep, "encoding": encoding}
-    if len(sep) > 1:
-        read_kwargs["engine"] = "python"
-
-    ids: list[str] = []
-    empty = 0
-    for chunk in pd.read_csv(filename, **read_kwargs):
-        chunk = chunk.fillna(-1)
-        for value in chunk[id_column].tolist():
-            if not value or value == -1 or str(value).strip() == "":
-                empty += 1
-                continue
-            ids.append(str(value))
-    return ids, empty
-
-
-def check_append_file(
-    columns: list[str],
-    expected_columns: list[str],
-    ids: list[str],
-    empty_ids: int,
-    existing_ids: Callable[[list[str]], list[str]],
-    sample_size: int = 20,
-) -> dict:
-    """Check a file to be appended against a dataset.
-
-    Args:
-        columns: Header of the new file
-        expected_columns: Header the dataset was created with
-        ids: IDs read from the new file (file order, duplicates included)
-        empty_ids: Number of rows without an ID
-        existing_ids: Callback returning which of the given IDs already exist
-
-    Returns:
-        Validation report; ``ok`` is True only if every check passed
+        {"ok", "missing_columns", "unexpected_columns", "columns", "expected_columns"}
     """
     missing_columns = [c for c in expected_columns if c not in columns]
     unexpected_columns = [c for c in columns if c not in expected_columns]
-
-    seen: set[str] = set()
-    duplicates: dict[str, None] = {}
-    for entry_id in ids:
-        if entry_id in seen:
-            duplicates[entry_id] = None
-        seen.add(entry_id)
-
-    unique_ids = list(dict.fromkeys(ids))
-    existing: list[str] = []
-    for start in range(0, len(unique_ids), UPLOAD_BATCH_SIZE):
-        existing.extend(existing_ids(unique_ids[start : start + UPLOAD_BATCH_SIZE]))
-    existing_set = set(existing)
-    existing = [entry_id for entry_id in unique_ids if entry_id in existing_set]
-
-    report = {
+    return {
+        "ok": not (missing_columns or unexpected_columns),
         "missing_columns": missing_columns,
         "unexpected_columns": unexpected_columns,
-        "duplicate_ids": {"count": len(duplicates), "sample": list(duplicates)[:sample_size]},
-        "existing_ids": {"count": len(existing), "sample": existing[:sample_size]},
-        "empty_ids": empty_ids,
-        "new_entries": len(unique_ids) - len(existing),
+        "columns": columns,
+        "expected_columns": expected_columns,
     }
-    report["ok"] = not (
-        missing_columns or unexpected_columns or duplicates or existing or empty_ids
-    ) and bool(unique_ids)
-    return report
-
-
-@app.task(bind=True, name="upload.validate_append")
-def validate_append(
-    self,
-    dataset_id: int,
-    filename: str,
-    columns: list[str],
-    expected_columns: list[str],
-    id_column: str,
-    sep: str,
-    encoding: str,
-    **kwargs,
-) -> dict:
-    """Check a CSV against an existing dataset before appending it."""
-    if id_column not in columns:
-        ids, empty = [], 0
-    else:
-        try:
-            ids, empty = read_csv_ids(filename, id_column, sep, encoding)
-        except FileNotFoundError as e:
-            raise Exception(_("Uploaded file not found. Please try uploading again.")) from e
-
-    def existing_ids(chunk: list[str]) -> list[str]:
-        with flask_app.app_context():
-            return check_entries_exist(chunk, dataset_id)[0]
-
-    return check_append_file(columns, expected_columns, ids, empty, existing_ids)
 
 
 def update_entries(dataset_id: int, changes: dict[str, dict[str, Any]]) -> list[dict[str, str]]:

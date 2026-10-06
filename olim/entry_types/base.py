@@ -12,6 +12,63 @@ from typing import Any, ClassVar
 import pandas as pd
 
 
+def strip_entry_id[T](value: T) -> T:
+    """Trim surrounding whitespace from a text entry ID; other values pass through.
+
+    An ID like "ABC " is invisible-different from "ABC" and breaks every later
+    lookup (labels, queues, links), so IDs are trimmed when they enter OLIM.
+    """
+    return value.strip() if isinstance(value, str) else value  # type: ignore[return-value]
+
+
+class EntryIdError(ValueError):
+    """A row of an uploaded file has a missing or repeated entry ID.
+
+    Attributes:
+        kind: "empty" (row without ID) or "duplicate" (ID seen before)
+        row: Line number in the file (the header is line 1)
+        entry_id: The offending ID ("" for empty)
+    """
+
+    def __init__(self, kind: str, row: int, entry_id: str = "") -> None:
+        super().__init__(f"{kind} entry id {entry_id!r} at row {row}")
+        self.kind = kind
+        self.row = row
+        self.entry_id = entry_id
+
+
+def prepare_id_column(chunk: pd.DataFrame, id_column: str) -> list[int]:
+    """Trim the IDs of a chunk read from a CSV and reject empty or repeated ones.
+
+    Only the chunk is inspected, so files of any size stream through; IDs repeated
+    across chunks are caught when each batch is checked against the database.
+
+    Args:
+        chunk: Chunk from ``pd.read_csv(..., chunksize=...)``, modified in place
+        id_column: Name of the ID column
+
+    Returns:
+        File line number of each row of the chunk
+
+    Raises:
+        EntryIdError: for the first row without an ID or with a repeated ID
+    """
+    chunk[id_column] = chunk[id_column].map(strip_entry_id)
+    # pandas keeps counting the index across chunks; +2 for the header and 1-based lines
+    rows = [int(i) + 2 for i in chunk.index]
+    ids = chunk[id_column]
+
+    empty = ids.isna() | (ids.astype(str) == "")
+    if empty.any():
+        raise EntryIdError("empty", rows[int(empty.to_numpy().argmax())])
+
+    repeated = ids.duplicated()
+    if repeated.any():
+        position = int(repeated.to_numpy().argmax())
+        raise EntryIdError("duplicate", rows[position], str(ids.iloc[position]))
+    return rows
+
+
 class EntryTypeBase(ABC):
     """Abstract base class for OLIM entry types.
 

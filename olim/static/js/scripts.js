@@ -1043,7 +1043,7 @@ function initDatasetAppend(config, t) {
         importBtn.disabled = true;
     }
 
-    function addError(title, items, count) {
+    function addError(title, items) {
         const li = document.createElement('li');
         const strong = document.createElement('span');
         strong.className = 'font-medium';
@@ -1058,15 +1058,7 @@ function initDatasetAppend(config, t) {
                 code.textContent = item;
                 wrap.appendChild(code);
             });
-            if (count > items.length) {
-                const more = document.createElement('span');
-                more.className = 'text-xs self-center';
-                more.textContent = fillPlaceholders(t.andMore, { count: count - items.length });
-                wrap.appendChild(more);
-            }
             li.appendChild(wrap);
-        } else if (count) {
-            li.appendChild(document.createTextNode(' ' + count));
         }
         errorList.appendChild(li);
     }
@@ -1080,17 +1072,13 @@ function initDatasetAppend(config, t) {
     function showReport(report) {
         resetResult();
         if (report.ok) {
-            okMsg.textContent = fillPlaceholders(t.readyToAdd, { count: report.new_entries });
+            okMsg.textContent = t.readyToAdd;
             okBox.classList.remove('hidden');
             importBtn.disabled = false;
             return;
         }
         if (report.missing_columns?.length) addError(t.missingColumns, report.missing_columns);
         if (report.unexpected_columns?.length) addError(t.unexpectedColumns, report.unexpected_columns);
-        if (report.duplicate_ids?.count) addError(t.duplicateIds, report.duplicate_ids.sample, report.duplicate_ids.count);
-        if (report.existing_ids?.count) addError(t.existingIds, report.existing_ids.sample, report.existing_ids.count);
-        if (report.empty_ids) addError(t.emptyIds, null, report.empty_ids);
-        if (!errorList.children.length) addError(t.noRows);
         errorsBox.classList.remove('hidden');
     }
 
