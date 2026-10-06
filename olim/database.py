@@ -3,7 +3,6 @@ import json
 import random
 import re
 import string
-from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, TypedDict
 
@@ -64,6 +63,10 @@ class Dataset(db.Model, CreationControl):
     sep: Mapped[str] = db.mapped_column(nullable=False, default=",")
     encoding: Mapped[str] = db.mapped_column(nullable=False, default="utf-8")
     column_config: Mapped[dict | None] = db.mapped_column(db.JSON, nullable=True)
+    # Original CSV layout, used to validate appended files
+    id_column: Mapped[str | None] = db.mapped_column(nullable=True)
+    text_column: Mapped[str | None] = db.mapped_column(nullable=True)
+    columns: Mapped[list[str] | None] = db.mapped_column(db.JSON, nullable=True)
 
     # Relationships
     project_datasets: Mapped[list["ProjectDataset"]] = db.relationship(back_populates="dataset")
@@ -757,7 +760,15 @@ def get_project(idt: int | str, by: str = "id") -> Project | None:
 # region Dataset Management
 # ------------------------
 def new_dataset(
-    dataset_name, user_id, learner_key=None, sep=",", encoding="utf-8", column_config=None
+    dataset_name,
+    user_id,
+    learner_key=None,
+    sep=",",
+    encoding="utf-8",
+    column_config=None,
+    id_column=None,
+    text_column=None,
+    columns=None,
 ) -> Dataset:
     """Create new dataset.
 
@@ -767,6 +778,9 @@ def new_dataset(
         learner_key: Optional learner key
         sep: CSV column separator (default ",")
         encoding: File encoding (default "utf-8")
+        id_column: Name of the CSV column holding entry IDs
+        text_column: Name of the CSV column holding the main text
+        columns: Full CSV header, in order
 
     Returns:
         New Dataset object
@@ -780,6 +794,9 @@ def new_dataset(
         sep=sep,
         encoding=encoding,
         column_config=column_config,
+        id_column=id_column,
+        text_column=text_column,
+        columns=columns,
     )
     db.session.add(dataset)
     db.session.commit()
@@ -837,38 +854,82 @@ def get_dataset_stats() -> dict[int, dict]:
             }
         }
     """
-    # Get base dataset query
-    base_query = (
-        db.select(
-            Dataset.id,
-            Dataset.name,
-            func.count(Entry.id).label("entry_count"),
-            Project.id.label("project_id"),
-            Project.name.label("project_name"),
-        )
+    stats: dict[int, dict] = {}
+
+    counts = db.session.execute(
+        db.select(Dataset.id, func.count(Entry.id))
         .outerjoin(Entry, Dataset.id == Entry.dataset_id)
-        .outerjoin(ProjectDataset, Dataset.id == ProjectDataset.dataset_id)
-        .outerjoin(Project, ProjectDataset.project_id == Project.id)
-        .filter(
-            Dataset.is_deleted == False,  # noqa
-            ProjectDataset.is_deleted == False,  # noqa
-        )
-        .group_by(Dataset.id, Project.id)
-    )
+        .filter(Dataset.is_deleted == False)  # noqa
+        .group_by(Dataset.id)
+    ).all()
+    for dataset_id, entry_count in counts:
+        stats[dataset_id] = {"entry_count": entry_count, "projects": []}
 
-    results = db.session.execute(base_query).all()
+    # Keep the active-link filter in the join so unlinked datasets still show up
+    links = db.session.execute(
+        db.select(ProjectDataset.dataset_id, Project.name)
+        .join(Project, ProjectDataset.project_id == Project.id)
+        .filter(ProjectDataset.is_deleted == False)  # noqa
+        .order_by(Project.name)
+    ).all()
+    for dataset_id, project_name in links:
+        if dataset_id in stats:
+            stats[dataset_id]["projects"].append(project_name)
 
-    # Organize results
-    stats = defaultdict(lambda: {"entry_count": 0, "projects": []})
+    return stats
 
-    for row in results:
-        dataset_id = row.id
-        stats[dataset_id]["entry_count"] = row.entry_count
 
-        if row.project_id:  # Only add projects with valid associations
-            stats[dataset_id]["projects"].append(row.project_name)
+def update_dataset(dataset_id: int, **fields: str | list[str] | None) -> Dataset | None:
+    """Update editable attributes of a dataset.
 
-    return dict(stats)
+    Args:
+        dataset_id: ID of dataset to update
+        **fields: Attributes to set (name, id_column, text_column, columns)
+
+    Returns:
+        Updated Dataset or None if not found
+    """
+    allowed = {"name", "id_column", "text_column", "columns"}
+    dataset = get_dataset(dataset_id)
+    if dataset is None:
+        return None
+    for key, value in fields.items():
+        if key not in allowed:
+            raise ValueError(f"Field {key} can't be updated")
+        setattr(dataset, key, value)
+    db.session.commit()
+    return dataset
+
+
+def set_dataset_projects(dataset_id: int, project_ids: list[int], user_id: int) -> None:
+    """Make the active project links of a dataset match the given project IDs."""
+    current = {p.id for p in get_projects_for_dataset(dataset_id)}
+    wanted = set(project_ids)
+    for project_id in wanted - current:
+        link_dataset_to_project(dataset_id, project_id, user_id)
+    for project_id in current - wanted:
+        unlink_dataset_from_project(dataset_id, project_id, user_id)
+
+
+def soft_delete_dataset(dataset_id: int, user_id: int) -> bool:
+    """Soft-delete a dataset and its project links.
+
+    Entries, labels, the search index and the ML text file are kept so the
+    dataset can be recovered.
+
+    Returns:
+        True if the dataset was found and deleted
+    """
+    dataset = get_dataset(dataset_id)
+    if dataset is None:
+        return False
+    links = db.session.execute(
+        db.select(ProjectDataset).filter_by(dataset_id=dataset_id, is_deleted=False)
+    ).scalars()
+    for link in links:
+        del_controled(link, user_id)
+    del_controled(dataset, user_id)
+    return True
 
 
 # endregion
@@ -2307,6 +2368,41 @@ def get_dataset_entry_type(dataset_id: int) -> str | None:
     return db.session.execute(
         db.select(Entry.type).filter_by(dataset_id=dataset_id).limit(1)
     ).scalar_one_or_none()
+
+
+def get_dataset_entries_page(dataset_id: int, offset: int, limit: int) -> tuple[list["Entry"], int]:
+    """Return a page of Entry records of a dataset and the dataset's total entry count."""
+    total = db.session.execute(
+        db.select(func.count(Entry.id)).filter_by(dataset_id=dataset_id)
+    ).scalar_one()
+    entries = list(
+        db.session.execute(
+            db.select(Entry)
+            .filter_by(dataset_id=dataset_id)
+            .order_by(Entry.id)
+            .limit(limit)
+            .offset(offset)
+        ).scalars()
+    )
+    return entries, total
+
+
+def delete_new_entries(entry_ids: list[str], dataset_id: int) -> int:
+    """Hard-delete unlabeled Entry rows, used to roll back a failed append.
+
+    Returns:
+        Number of deleted rows
+    """
+    labeled = db.select(LabelEntry.entry_id)
+    result = db.session.execute(
+        db.delete(Entry).where(
+            Entry.dataset_id == dataset_id,
+            Entry.entry_id.in_(entry_ids),
+            Entry.id.not_in(labeled),
+        )
+    )
+    db.session.commit()
+    return result.rowcount  # type: ignore[attr-defined]
 
 
 def get_project_entries_page(project_id: int, offset: int, limit: int) -> list["Entry"]:

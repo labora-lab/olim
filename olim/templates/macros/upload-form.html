@@ -45,9 +45,8 @@
                     <div class="flex">
                         <i class="bi bi-exclamation-triangle text-amber-600 mr-2 mt-0.5"></i>
                         <p class="text-sm text-amber-800">
-                            <strong>{{ _('Warning:') }}</strong>
-                            {{ _('Datasets can only be linked to projects during upload. Make sure to select the desired
-                            projects.') }}
+                            <strong>{{ _('Note:') }}</strong>
+                            {{ _('Linked projects can be changed later in Manage Datasets.') }}
                         </p>
                     </div>
                 </div>
@@ -196,6 +195,7 @@
                 <!-- Hidden Fields -->
                 <input type="hidden" name="filename" id="filename" value="">
                 <input type="hidden" name="file_id" id="file_id" value="">
+                <input type="hidden" name="columns" id="columns" value="">
                 <input type="hidden" name="upload_type" id="upload_type" value="single_text">
                 <input type="hidden" name="extra_columns_config" id="extra_columns_config" value="[]">
 
@@ -688,6 +688,7 @@
                 window._uploadState.columns = result.columns;
                 document.getElementById('filename').value = filename;
                 document.getElementById('file_id').value = fileId;
+                document.getElementById('columns').value = JSON.stringify(result.columns);
 
                 if (parseErrorArea) parseErrorArea.classList.add('hidden');
                 if (status) status.textContent = '';
@@ -785,6 +786,7 @@
             window._uploadState = { file: null, fileId: null, totalChunks: null, finalized: false, columns: [] };
             document.getElementById('filename').value = '';
             document.getElementById('file_id').value = '';
+            document.getElementById('columns').value = '';
             document.getElementById('extra_columns_config').value = '[]';
             window._extraColumns = [];
             addFields.classList.add('hidden');

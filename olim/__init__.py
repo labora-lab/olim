@@ -96,6 +96,7 @@ from . import ml_ui  # noqa
 from . import project  # noqa
 from . import settings_routes  # noqa
 from . import upload_data  # noqa
+from . import datasets  # noqa
 from .ml import models as ml_models  # noqa
 from . import learning_tasks  # noqa
 from .utils.entry import have_hidden  # noqa

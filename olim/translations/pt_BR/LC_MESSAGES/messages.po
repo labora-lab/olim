@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2026-08-19 11:28-0300\n"
+"POT-Creation-Date: 2026-10-06 16:21-0300\n"
 "PO-Revision-Date: 2025-05-16 01:02+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: pt_BR\n"
@@ -241,6 +241,105 @@ msgstr "Nenhum comando fornecido"
 msgid "Command {command} not found"
 msgstr "Comando {command} não encontrado"
 
+#: olim/datasets.py:104
+msgid "Select the ID and text columns of the file."
+msgstr "Selecione as colunas de ID e de texto do arquivo."
+
+#: olim/datasets.py:106
+msgid "The ID and text columns must be different."
+msgstr "As colunas de ID e de texto devem ser diferentes."
+
+#: olim/datasets.py:124 olim/upload_data.py:269
+msgid "File upload incomplete"
+msgstr "Upload de arquivo incompleto"
+
+#: olim/datasets.py:128 olim/tasks/upload_data.py:620
+#: olim/tasks/upload_data.py:821
+msgid "Uploaded file not found. Please try uploading again."
+msgstr "Arquivo enviado não encontrado. Por favor, tente fazer upload novamente."
+
+#: olim/datasets.py:141
+msgid "Could not read the file's columns. Check the separator and encoding."
+msgstr ""
+"Não foi possível ler as colunas do arquivo. Verifique o separador e a "
+"codificação."
+
+#: olim/datasets.py:210 olim/upload_data.py:189
+msgid "Dataset name is required"
+msgstr "Nome do conjunto de dados é necessário"
+
+#: olim/datasets.py:217
+#, python-brace-format
+msgid "Error updating dataset: {error}"
+msgstr "Erro ao atualizar o conjunto de dados: {error}"
+
+#: olim/datasets.py:219
+msgid "Dataset updated successfully"
+msgstr "Conjunto de dados atualizado com sucesso"
+
+#: olim/datasets.py:248
+#, python-brace-format
+msgid "Dataset '{name}' deleted"
+msgstr "Conjunto de dados '{name}' excluído"
+
+#: olim/datasets.py:282
+#, python-brace-format
+msgid "Could not load entries from the search engine: {error}"
+msgstr "Não foi possível carregar as entradas do mecanismo de busca: {error}"
+
+#: olim/datasets.py:308
+msgid "No changes to save."
+msgstr "Não há alterações para salvar."
+
+#: olim/datasets.py:311
+#, python-brace-format
+msgid "Too many entries changed at once (maximum {max})."
+msgstr "Muitas entradas alteradas de uma vez (máximo {max})."
+
+#: olim/datasets.py:320
+msgid "Invalid change format."
+msgstr "Formato de alteração inválido."
+
+#: olim/datasets.py:324
+#, python-brace-format
+msgid "These fields can't be edited: {fields}"
+msgstr "Estes campos não podem ser editados: {fields}"
+
+#: olim/datasets.py:337
+#, python-brace-format
+msgid "These entries don't belong to this dataset: {ids}"
+msgstr "Estas entradas não pertencem a este conjunto de dados: {ids}"
+
+#: olim/datasets.py:345
+#, python-brace-format
+msgid "Could not save changes: {error}"
+msgstr "Não foi possível salvar as alterações: {error}"
+
+#: olim/datasets.py:363 olim/datasets.py:380
+#, python-brace-format
+msgid "Validation failed: {error}"
+msgstr "Falha na validação: {error}"
+
+#: olim/datasets.py:373 olim/templates/datasets/edit.html:86
+msgid "Adding data is not supported for this data format."
+msgstr "Adicionar dados não é suportado para este formato de dados."
+
+#: olim/datasets.py:388
+#, python-brace-format
+msgid "Adding {count} entries to dataset {name}"
+msgstr "Adicionando {count} entradas ao conjunto de dados {name}"
+
+#: olim/datasets.py:406 olim/upload_data.py:300
+#, python-brace-format
+msgid "Error starting upload: {error}"
+msgstr "Erro ao iniciar upload: {error}"
+
+#: olim/datasets.py:409
+msgid "Adding data started. The new entries will appear when processing finishes."
+msgstr ""
+"A adição de dados foi iniciada. As novas entradas aparecerão quando o "
+"processamento terminar."
+
 #: olim/error_handlers.py:39
 msgid "Bad Request"
 msgstr "Requisição Inválida"
@@ -352,7 +451,7 @@ msgstr "Ocorreu um erro inesperado."
 msgid "Error rendering entry {entry_id}!"
 msgstr "Erro ao renderizar entrada {entry_id}!"
 
-#: olim/functions.py:132
+#: olim/functions.py:132 olim/learning_tasks/states.py:702
 #, python-brace-format
 msgid "Entry {entry_id} not found"
 msgstr "Entrada {entry_id} não encontrada"
@@ -623,7 +722,7 @@ msgstr ""
 msgid "No valid entries found"
 msgstr "Nenhuma entrada válida encontrada"
 
-#: olim/learning_tasks/states.py:1384 olim/project.py:588
+#: olim/learning_tasks/states.py:1422 olim/project.py:588
 #, python-brace-format
 msgid "Queue created successfully with {count} entries"
 msgstr "Fila criada com sucesso com {count} entradas"
@@ -726,56 +825,43 @@ msgstr "Falha ao salvar configuração"
 msgid "Invalid JSON file"
 msgstr "Arquivo JSON inválido"
 
-#: olim/upload_data.py:32
+#: olim/upload_data.py:31
 msgid "Invalid encoding. Use utf-8, latin-1, or cp1252."
 msgstr "Encoding inválido. Use utf-8, latin-1, ou cp1252."
 
-#: olim/upload_data.py:37
+#: olim/upload_data.py:36
 msgid "Separator cannot be empty."
 msgstr "Separador não pode ser vazio."
 
-#: olim/upload_data.py:42
+#: olim/upload_data.py:41
 msgid "Separator too long."
 msgstr "Separador muito longo."
 
-#: olim/upload_data.py:95
+#: olim/upload_data.py:94
 msgid "filename and total_chunks are required"
 msgstr "filename e total_chunks são obrigatórios"
 
-#: olim/upload_data.py:180
+#: olim/upload_data.py:182
 msgid "Upload type is required"
 msgstr "Tipo de upload é necessário"
 
-#: olim/upload_data.py:187
-msgid "Dataset name is required"
-msgstr "Nome do conjunto de dados é necessário"
-
-#: olim/upload_data.py:225
+#: olim/upload_data.py:244
 #, python-brace-format
 msgid "Error creating dataset: {error}"
 msgstr "Erro ao criar conjunto de dados: {error}"
 
-#: olim/upload_data.py:250
-msgid "File upload incomplete"
-msgstr "Upload de arquivo incompleto"
-
-#: olim/upload_data.py:259
+#: olim/upload_data.py:278
 msgid "ID and Text columns are required"
 msgstr "Colunas ID e Texto são necessárias"
 
-#: olim/upload_data.py:267
+#: olim/upload_data.py:286
 #, python-brace-format
 msgid "Uploading and processing file {filename}"
 msgstr "Fazendo upload e processando arquivo {filename}"
 
-#: olim/upload_data.py:275
+#: olim/upload_data.py:294
 msgid "Document processing started successfully"
 msgstr "Processamento de documento iniciado com sucesso"
-
-#: olim/upload_data.py:279
-#, python-brace-format
-msgid "Error starting upload: {error}"
-msgstr "Erro ao iniciar upload: {error}"
 
 #: olim/entry_types/patient/commands.py:54
 #: olim/entry_types/patient/commands.py:82
@@ -895,11 +981,25 @@ msgstr "Ocorreu um erro ao processar sua solicitação. Tente novamente."
 msgid "An error occurred while loading the content. Please refresh the page."
 msgstr "Ocorreu um erro ao carregar o conteúdo. Atualize a página."
 
-#: olim/learning_tasks/states.py:164
+#: olim/learning_tasks/entry_selector.py:183
+#, python-brace-format
+msgid ""
+"Entry {entry_id} exists in more than one dataset: {datasets}. Write it as"
+" {example} to pick one."
+msgstr ""
+"A entrada {entry_id} existe em mais de um conjunto de dados: {datasets}. "
+"Escreva {example} para escolher um."
+
+#: olim/learning_tasks/entry_selector.py:194
+#, python-brace-format
+msgid "Entries not found in this project's datasets: {ids}"
+msgstr "Entradas não encontradas nos conjuntos de dados deste projeto: {ids}"
+
+#: olim/learning_tasks/states.py:196
 msgid "Input"
 msgstr "Entrada"
 
-#: olim/learning_tasks/states.py:168
+#: olim/learning_tasks/states.py:200
 #: olim/templates/learning_tasks/al_label_select.html:37
 #: olim/templates/learning_tasks/maintenance_scan.html:221
 #: olim/templates/learning_tasks/queue_complete.html:30
@@ -908,144 +1008,144 @@ msgstr "Entrada"
 msgid "Continue"
 msgstr "Continuar"
 
-#: olim/learning_tasks/states.py:182
+#: olim/learning_tasks/states.py:214
 #, python-brace-format
 msgid "{label} is required"
 msgstr "{label} é obrigatório"
 
-#: olim/learning_tasks/states.py:193
+#: olim/learning_tasks/states.py:225
 #, python-brace-format
 msgid "{label} must be at least {min}"
 msgstr "{label} deve ser no mínimo {min}"
 
-#: olim/learning_tasks/states.py:195
+#: olim/learning_tasks/states.py:227
 #, python-brace-format
 msgid "{label} must be at most {max}"
 msgstr "{label} deve ser no máximo {max}"
 
-#: olim/learning_tasks/states.py:197
+#: olim/learning_tasks/states.py:229
 #, python-brace-format
 msgid "{label} must be a valid number"
 msgstr "{label} deve ser um número válido"
 
-#: olim/learning_tasks/states.py:201
+#: olim/learning_tasks/states.py:233
 #, python-brace-format
 msgid "{label} must be a valid email address"
 msgstr "{label} deve ser um endereço de e-mail válido"
 
-#: olim/learning_tasks/states.py:206
+#: olim/learning_tasks/states.py:238
 #, python-brace-format
 msgid "{label} must be at least {min} characters"
 msgstr "{label} deve ter pelo menos {min} caracteres"
 
-#: olim/learning_tasks/states.py:210
+#: olim/learning_tasks/states.py:242
 #, python-brace-format
 msgid "{label} must be at most {max} characters"
 msgstr "{label} deve ter no máximo {max} caracteres"
 
-#: olim/learning_tasks/states.py:215
+#: olim/learning_tasks/states.py:247
 msgid "Invalid format"
 msgstr "Formato inválido"
 
-#: olim/learning_tasks/states.py:293
+#: olim/learning_tasks/states.py:325
 msgid "Debug Data"
 msgstr "Dados de Depuração"
 
-#: olim/learning_tasks/states.py:411
+#: olim/learning_tasks/states.py:443
 msgid "Queue Setup"
 msgstr "Configuração da Fila"
 
-#: olim/learning_tasks/states.py:443 olim/learning_tasks/states.py:899
+#: olim/learning_tasks/states.py:475 olim/learning_tasks/states.py:946
 msgid "Please add at least one entry source"
 msgstr "Por favor, adicione pelo menos uma fonte de entradas"
 
-#: olim/learning_tasks/states.py:472 olim/learning_tasks/states.py:926
+#: olim/learning_tasks/states.py:507 olim/learning_tasks/states.py:975
 msgid "No entries found from the configured sources"
 msgstr "Nenhuma entrada encontrada nas fontes configuradas"
 
-#: olim/learning_tasks/states.py:491 olim/learning_tasks/states.py:950
+#: olim/learning_tasks/states.py:526 olim/learning_tasks/states.py:999
 msgid "Please select at least one label"
 msgstr "Por favor, selecione pelo menos um rótulo"
 
-#: olim/learning_tasks/states.py:499
+#: olim/learning_tasks/states.py:534
 #: olim/templates/learning_tasks/queue_setup.html:38
 msgid "No labels available"
 msgstr "Nenhum rótulo disponível"
 
-#: olim/learning_tasks/states.py:628
+#: olim/learning_tasks/states.py:677
 msgid "Queue Overview"
 msgstr "Visão Geral da Fila"
 
-#: olim/learning_tasks/states.py:643
+#: olim/learning_tasks/states.py:692
 msgid "Queue Complete"
 msgstr "Fila Concluída"
 
-#: olim/learning_tasks/states.py:867
+#: olim/learning_tasks/states.py:914
 msgid "Setup Auto-Labeling Queue"
 msgstr "Configurar Fila de Rotulagem Automática"
 
-#: olim/learning_tasks/states.py:958
+#: olim/learning_tasks/states.py:1007
 msgid "Ollama URL is required"
 msgstr "URL do Ollama é obrigatória"
 
-#: olim/learning_tasks/states.py:961
+#: olim/learning_tasks/states.py:1010
 msgid "URL must start with http:// or https://"
 msgstr "A URL deve começar com http:// ou https://"
 
-#: olim/learning_tasks/states.py:976
+#: olim/learning_tasks/states.py:1025
 #, python-format
 msgid "Description is required for: %(names)s"
 msgstr "Descrição é obrigatória para: %(names)s"
 
-#: olim/learning_tasks/states.py:1094
+#: olim/learning_tasks/states.py:1143
 msgid "Configure LLM"
 msgstr "Configurar LLM"
 
-#: olim/learning_tasks/states.py:1122
+#: olim/learning_tasks/states.py:1171
 msgid "Please select a model"
 msgstr "Por favor, selecione um modelo"
 
-#: olim/learning_tasks/states.py:1135
+#: olim/learning_tasks/states.py:1184
 msgid "Prompt template is required"
 msgstr "Template de prompt é obrigatório"
 
-#: olim/learning_tasks/states.py:1141
+#: olim/learning_tasks/states.py:1190
 #, python-brace-format
 msgid "Prompt template must contain {text} placeholder"
 msgstr "O template de prompt deve conter o marcador {text}"
 
-#: olim/learning_tasks/states.py:1224
+#: olim/learning_tasks/states.py:1273
 #: olim/templates/learning_tasks/ollama_auto_label.html:19
 msgid "Ready to Start Auto-Labeling"
 msgstr "Pronto para Iniciar a Rotulagem Automática"
 
-#: olim/learning_tasks/states.py:1236 olim/learning_tasks/states.py:1274
+#: olim/learning_tasks/states.py:1285 olim/learning_tasks/states.py:1323
 msgid "Auto-Labeling Error"
 msgstr "Erro na Rotulagem Automática"
 
-#: olim/learning_tasks/states.py:1259
+#: olim/learning_tasks/states.py:1308
 #: olim/templates/learning_tasks/ollama_auto_label.html:142
 msgid "Auto-Labeling Stopped Early"
 msgstr "Rotulagem Automática Interrompida"
 
-#: olim/learning_tasks/states.py:1259
+#: olim/learning_tasks/states.py:1308
 msgid "Auto-Labeling Complete"
 msgstr "Rotulagem Automática Concluída"
 
-#: olim/learning_tasks/states.py:1283
+#: olim/learning_tasks/states.py:1332
 #: olim/templates/learning_tasks/ollama_auto_label.html:66
 msgid "Auto-Labeling in Progress"
 msgstr "Rotulagem Automática em Andamento"
 
-#: olim/learning_tasks/states.py:1419 olim/templates/models/detail.html:351
+#: olim/learning_tasks/states.py:1457 olim/templates/models/detail.html:351
 msgid "Select Label"
 msgstr "Selecionar Rótulo"
 
-#: olim/learning_tasks/states.py:1498
+#: olim/learning_tasks/states.py:1536
 msgid "Search per Class"
 msgstr "Buscar por Classe"
 
-#: olim/learning_tasks/states.py:1803
+#: olim/learning_tasks/states.py:1841
 #, python-format
 msgid ""
 "The last training never reported back after %(mins)s minute(s) and was "
@@ -1054,100 +1154,100 @@ msgstr ""
 "O último treinamento não deu retorno após %(mins)s minuto(s) e foi "
 "abandonado. Um novo será iniciado."
 
-#: olim/learning_tasks/states.py:1948
+#: olim/learning_tasks/states.py:1986
 #, python-format
 msgid "%(n)s more round(s) needed before the goal can be evaluated"
 msgstr "faltam %(n)s rodada(s) para a meta poder ser avaliada"
 
-#: olim/learning_tasks/states.py:1953
+#: olim/learning_tasks/states.py:1991
 #, python-format
 msgid "%(m)s was not reported this round"
 msgstr "%(m)s não foi reportada nesta rodada"
 
-#: olim/learning_tasks/states.py:1957
+#: olim/learning_tasks/states.py:1995
 #, python-format
 msgid "needs %(need)s validation examples, smallest recent round had %(have)s"
 msgstr ""
 "precisa de %(need)s exemplos de validação; a menor rodada recente teve "
 "%(have)s"
 
-#: olim/learning_tasks/states.py:2034 olim/learning_tasks/states.py:2065
-#: olim/learning_tasks/states.py:2474
+#: olim/learning_tasks/states.py:2072 olim/learning_tasks/states.py:2103
+#: olim/learning_tasks/states.py:2512
 msgid "Enter a number."
 msgstr "Digite um número."
 
-#: olim/learning_tasks/states.py:2043
+#: olim/learning_tasks/states.py:2081
 #, python-format
 msgid "Must be between %(lo)s and %(hi)s (or %(extra)s)."
 msgstr "Deve estar entre %(lo)s e %(hi)s (ou %(extra)s)."
 
-#: olim/learning_tasks/states.py:2049 olim/learning_tasks/states.py:2478
+#: olim/learning_tasks/states.py:2087 olim/learning_tasks/states.py:2516
 #, python-format
 msgid "Must be between %(lo)s and %(hi)s."
 msgstr "Deve estar entre %(lo)s e %(hi)s."
 
-#: olim/learning_tasks/states.py:2060
+#: olim/learning_tasks/states.py:2098
 msgid "Unknown metric."
 msgstr "Métrica desconhecida."
 
-#: olim/learning_tasks/states.py:2068
+#: olim/learning_tasks/states.py:2106
 msgid "Must be between 0 and 1."
 msgstr "Deve estar entre 0 e 1."
 
-#: olim/learning_tasks/states.py:2076
+#: olim/learning_tasks/states.py:2114
 msgid "Set a threshold, or clear the metric to run without a goal."
 msgstr "Defina um limiar ou limpe a métrica para rodar sem meta."
 
-#: olim/learning_tasks/states.py:2122
+#: olim/learning_tasks/states.py:2160
 msgid "Active Learning"
 msgstr "Aprendizado Ativo"
 
-#: olim/learning_tasks/states.py:2154 olim/learning_tasks/states.py:2267
-#: olim/learning_tasks/states.py:2336 olim/learning_tasks/states.py:2633
+#: olim/learning_tasks/states.py:2192 olim/learning_tasks/states.py:2305
+#: olim/learning_tasks/states.py:2374 olim/learning_tasks/states.py:2671
 msgid "Unknown error"
 msgstr "Erro desconhecido"
 
-#: olim/learning_tasks/states.py:2166
+#: olim/learning_tasks/states.py:2204
 msgid "Processing..."
 msgstr "Processando..."
 
-#: olim/learning_tasks/states.py:2178
+#: olim/learning_tasks/states.py:2216
 msgid "Starting training..."
 msgstr "Iniciando treinamento..."
 
-#: olim/learning_tasks/states.py:2486
+#: olim/learning_tasks/states.py:2524
 msgid "Unknown signal."
 msgstr "Sinal desconhecido."
 
-#: olim/learning_tasks/states.py:2499
+#: olim/learning_tasks/states.py:2537
 msgid "Scan pending…"
 msgstr "Verificação pendente…"
 
-#: olim/learning_tasks/states.py:2505 olim/learning_tasks/states.py:2605
+#: olim/learning_tasks/states.py:2543 olim/learning_tasks/states.py:2643
 msgid "Scanning…"
 msgstr "Verificando…"
 
-#: olim/learning_tasks/states.py:2520
+#: olim/learning_tasks/states.py:2558
 msgid "Model health check"
 msgstr "Verificação de saúde dos modelos"
 
-#: olim/learning_tasks/states.py:2565
+#: olim/learning_tasks/states.py:2603
 msgid "Model Health Check"
 msgstr "Verificação de Saúde dos Modelos"
 
-#: olim/learning_tasks/states.py:2589
+#: olim/learning_tasks/states.py:2627
 msgid "Starting scan…"
 msgstr "Iniciando verificação…"
 
-#: olim/learning_tasks/states.py:2697
+#: olim/learning_tasks/states.py:2735
 msgid "No trained model was selected."
 msgstr "Nenhum modelo treinado foi selecionado."
 
-#: olim/learning_tasks/states.py:2737
+#: olim/learning_tasks/states.py:2775
 msgid "Health Check Results"
 msgstr "Resultados da Verificação"
 
-#: olim/tasks/upload_data.py:61
+#: olim/tasks/upload_data.py:68
 #, python-format
 msgid ""
 "Duplicate text IDs found in batch: %(duplicates)s. Each text must have a "
@@ -1156,21 +1256,21 @@ msgstr ""
 "IDs de texto duplicados encontrados no lote: %(duplicates)s. Cada texto "
 "deve ter um ID único."
 
-#: olim/tasks/upload_data.py:74
+#: olim/tasks/upload_data.py:81
 #, python-format
 msgid "Failed to upload data to search engine: %(error)s"
 msgstr "Falha ao enviar dados para o mecanismo de busca: %(error)s"
 
-#: olim/tasks/upload_data.py:81
+#: olim/tasks/upload_data.py:88
 msgid "Unknown database error"
 msgstr "Erro de banco de dados desconhecido"
 
-#: olim/tasks/upload_data.py:91
+#: olim/tasks/upload_data.py:98
 #, python-format
 msgid "Failed to store texts for machine learning: %(error)s"
 msgstr "Falha ao armazenar textos para aprendizado de máquina: %(error)s"
 
-#: olim/tasks/upload_data.py:110
+#: olim/tasks/upload_data.py:117
 #, python-format
 msgid ""
 "Duplicate text ID '%(id)s' found. Each text must have a unique ID within "
@@ -1179,7 +1279,7 @@ msgstr ""
 "ID de texto duplicado '%(id)s' encontrado. Cada texto deve ter um ID "
 "único dentro do conjunto de dados."
 
-#: olim/tasks/upload_data.py:118
+#: olim/tasks/upload_data.py:125
 msgid ""
 "Duplicate text IDs found. Each text must have a unique ID within the "
 "dataset."
@@ -1187,17 +1287,17 @@ msgstr ""
 "IDs de texto duplicados encontrados. Cada texto deve ter um ID único "
 "dentro do conjunto de dados."
 
-#: olim/tasks/upload_data.py:129
+#: olim/tasks/upload_data.py:136
 #, python-format
 msgid "Processing failed: %(error)s"
 msgstr "Processamento falhou: %(error)s"
 
-#: olim/tasks/upload_data.py:187
+#: olim/tasks/upload_data.py:194
 #, python-format
 msgid "Failed to save data to search engine. Error details: %(errors)s"
 msgstr "Falha ao salvar dados no mecanismo de busca. Detalhes do erro: %(errors)s"
 
-#: olim/tasks/upload_data.py:197
+#: olim/tasks/upload_data.py:204
 msgid ""
 "Cannot connect to search engine. Please check your connection and try "
 "again."
@@ -1205,16 +1305,16 @@ msgstr ""
 "Não é possível conectar ao mecanismo de busca. Por favor, verifique sua "
 "conexão e tente novamente."
 
-#: olim/tasks/upload_data.py:200
+#: olim/tasks/upload_data.py:207
 msgid "Search engine index not found. Please contact support."
 msgstr "Índice do mecanismo de busca não encontrado. Por favor, contate o suporte."
 
-#: olim/tasks/upload_data.py:202
+#: olim/tasks/upload_data.py:209
 #, python-format
 msgid "Search engine error: %(error)s"
 msgstr "Erro do mecanismo de busca: %(error)s"
 
-#: olim/tasks/upload_data.py:224
+#: olim/tasks/upload_data.py:231
 msgid ""
 "Some text IDs already exist in the database. Please ensure all IDs are "
 "unique."
@@ -1222,84 +1322,102 @@ msgstr ""
 "Alguns IDs de texto já existem no banco de dados. Por favor, certifique-"
 "se de que todos os IDs sejam únicos."
 
-#: olim/tasks/upload_data.py:230
+#: olim/tasks/upload_data.py:237
 msgid "Dataset not found. Please refresh the page and try again."
 msgstr ""
 "Conjunto de dados não encontrado. Por favor, atualize a página e tente "
 "novamente."
 
-#: olim/tasks/upload_data.py:235
+#: olim/tasks/upload_data.py:242
 msgid "Database connection error. Please try again in a moment."
 msgstr ""
 "Erro de conexão com o banco de dados. Por favor, tente novamente em um "
 "momento."
 
-#: olim/tasks/upload_data.py:238
+#: olim/tasks/upload_data.py:245
 #, python-format
 msgid "Database error: %(error)s"
 msgstr "Erro de banco de dados: %(error)s"
 
-#: olim/tasks/upload_data.py:268
+#: olim/tasks/upload_data.py:275
 msgid "Permission denied while saving texts. Please check file permissions."
 msgstr ""
 "Permissão negada ao salvar textos. Por favor, verifique as permissões do "
 "arquivo."
 
-#: olim/tasks/upload_data.py:273
+#: olim/tasks/upload_data.py:280
 msgid "Not enough disk space to save texts. Please free up space and try again."
 msgstr ""
 "Espaço em disco insuficiente para salvar textos. Por favor, libere espaço"
 " e tente novamente."
 
-#: olim/tasks/upload_data.py:277
+#: olim/tasks/upload_data.py:284
 #, python-format
 msgid "File system error while saving texts: %(error)s"
 msgstr "Erro do sistema de arquivos ao salvar textos: %(error)s"
 
-#: olim/tasks/upload_data.py:281
+#: olim/tasks/upload_data.py:288
 #, python-format
 msgid "Failed to save texts for machine learning: %(error)s"
 msgstr "Falha ao salvar textos para aprendizado de máquina: %(error)s"
 
-#: olim/tasks/upload_data.py:330
+#: olim/tasks/upload_data.py:347
 msgid "Invalid data format selected. Please refresh the page and try again."
 msgstr ""
 "Formato de dados inválido selecionado. Por favor, atualize a página e "
 "tente novamente."
 
-#: olim/tasks/upload_data.py:336
+#: olim/tasks/upload_data.py:353
 #, python-format
 msgid "Data format '%(format)s' is not supported for upload."
 msgstr "Formato de dados '%(format)s' não é suportado para upload."
 
-#: olim/tasks/upload_data.py:371 olim/templates/components/scripts.html:57
+#: olim/tasks/upload_data.py:390 olim/templates/components/scripts.html:57
 msgid "Unknown error occurred"
 msgstr "Ocorreu um erro desconhecido"
 
-#: olim/tasks/upload_data.py:378
+#: olim/tasks/upload_data.py:397
 #, python-format
 msgid "Processing failed at batch %(batch)d: %(error)s"
 msgstr "Processamento falhou no lote %(batch)d: %(error)s"
 
-#: olim/tasks/upload_data.py:394
+#: olim/tasks/upload_data.py:419
+msgid "Upload failed. Removing added entries..."
+msgstr "Falha no envio. Removendo as entradas adicionadas..."
+
+#: olim/tasks/upload_data.py:426
+#, python-format
+msgid "%(error)s. No entries were added; the existing data was kept."
+msgstr ""
+"%(error)s. Nenhuma entrada foi adicionada; os dados existentes foram "
+"mantidos."
+
+#: olim/tasks/upload_data.py:432
+#, python-format
+msgid "%(error)s. Warning: some of the new entries may not have been removed."
+msgstr ""
+"%(error)s. Atenção: algumas das novas entradas podem não ter sido "
+"removidas."
+
+#: olim/tasks/upload_data.py:439
 msgid "Upload failed. Cleaning up dataset..."
 msgstr "Upload falhou. Limpando conjunto de dados..."
 
-#: olim/tasks/upload_data.py:427
-msgid "Upload processing failed"
-msgstr "Processamento de upload falhou"
-
-#: olim/tasks/upload_data.py:432
+#: olim/tasks/upload_data.py:456
 #, python-format
 msgid "%(error)s. Dataset and associated data have been cleaned up."
 msgstr "%(error)s. Conjunto de dados e dados associados foram limpos."
 
-#: olim/tasks/upload_data.py:436
+#: olim/tasks/upload_data.py:460
 #, python-format
 msgid "%(error)s. Warning: Dataset cleanup may have been incomplete."
 msgstr "%(error)s. Aviso: A limpeza do conjunto de dados pode ter sido incompleta."
 
-#: olim/tasks/upload_data.py:505
+#: olim/tasks/upload_data.py:487
+msgid "Upload processing failed"
+msgstr "Processamento de upload falhou"
+
+#: olim/tasks/upload_data.py:757
 #, python-format
 msgid ""
 "File upload incomplete. Only %(received)d of %(total)d parts received. "
@@ -1308,15 +1426,15 @@ msgstr ""
 "Upload de arquivo incompleto. Apenas %(received)d de %(total)d partes "
 "recebidas. Por favor, tente fazer upload novamente."
 
-#: olim/tasks/upload_data.py:538
+#: olim/tasks/upload_data.py:790
 msgid "CSV file appears to be empty or has no columns."
 msgstr "Arquivo CSV parece estar vazio ou não tem colunas."
 
-#: olim/tasks/upload_data.py:548
+#: olim/tasks/upload_data.py:800
 msgid "CSV file is empty. Please upload a file with data."
 msgstr "Arquivo CSV está vazio. Por favor, faça upload de um arquivo com dados."
 
-#: olim/tasks/upload_data.py:553
+#: olim/tasks/upload_data.py:805
 #, python-format
 msgid ""
 "Could not read the CSV with separator '%(sep)s'. Try a different "
@@ -1325,7 +1443,7 @@ msgstr ""
 "Não foi possível ler o CSV com o separador '%(sep)s'. Tente um separador "
 "diferente."
 
-#: olim/tasks/upload_data.py:562
+#: olim/tasks/upload_data.py:814
 #, python-format
 msgid ""
 "Encoding error reading the file with '%(encoding)s'. Try a different "
@@ -1333,10 +1451,6 @@ msgid ""
 msgstr ""
 "Erro de encoding ao ler o arquivo com '%(encoding)s'. Tente um encoding "
 "diferente."
-
-#: olim/tasks/upload_data.py:569
-msgid "Uploaded file not found. Please try uploading again."
-msgstr "Arquivo enviado não encontrado. Por favor, tente fazer upload novamente."
 
 #: olim/templates/account-settings.html:2
 msgid "Account Settings"
@@ -1476,11 +1590,11 @@ msgstr "Valor Atual"
 msgid "Default Value"
 msgstr "Valor Padrão"
 
-#: olim/templates/admin-settings.html:74 olim/templates/label-settings.html:80
-#: olim/templates/labels.html:54 olim/templates/learning-tasks.html:23
-#: olim/templates/learning-tasks.html:87 olim/templates/models/detail.html:166
-#: olim/templates/models/list.html:61 olim/templates/projects.html:41
-#: olim/templates/users.html:46
+#: olim/templates/admin-settings.html:74 olim/templates/datasets/list.html:28
+#: olim/templates/label-settings.html:80 olim/templates/labels.html:54
+#: olim/templates/learning-tasks.html:23 olim/templates/learning-tasks.html:87
+#: olim/templates/models/detail.html:166 olim/templates/models/list.html:61
+#: olim/templates/projects.html:41 olim/templates/users.html:46
 msgid "Actions"
 msgstr "Ações"
 
@@ -1785,7 +1899,7 @@ msgstr "Acesso à Entrada"
 msgid "Text Search"
 msgstr "Busca de Texto"
 
-#: olim/templates/data-navigation.html:37
+#: olim/templates/data-navigation.html:37 olim/templates/datasets/edit.html:206
 msgid "Loading..."
 msgstr "Carregando..."
 
@@ -2033,7 +2147,8 @@ msgid "Remove"
 msgstr "Remover"
 
 #: olim/templates/components/setting-modal.html:145
-#: olim/templates/hidden.html:180 olim/templates/label-settings.html:296
+#: olim/templates/datasets/_delete_modal.html:33 olim/templates/hidden.html:180
+#: olim/templates/label-settings.html:296
 #: olim/templates/label_types/free_text.html:33
 #: olim/templates/label_types/long_text.html:30
 #: olim/templates/learning-tasks.html:341
@@ -2157,8 +2272,9 @@ msgstr "ID do Rótulo"
 msgid "Label Information"
 msgstr "Informações do Rótulo"
 
-#: olim/templates/label-settings.html:48 olim/templates/labels.html:46
-#: olim/templates/learning-tasks.html:86 olim/templates/projects.html:35
+#: olim/templates/datasets/list.html:26 olim/templates/label-settings.html:48
+#: olim/templates/labels.html:46 olim/templates/learning-tasks.html:86
+#: olim/templates/projects.html:35
 msgid "Creator"
 msgstr "Criador"
 
@@ -2212,7 +2328,8 @@ msgstr "Informações de Depuração"
 msgid "Exported Predictions"
 msgstr "Previsões Exportadas"
 
-#: olim/templates/label-settings.html:215 olim/templates/models/detail.html:308
+#: olim/templates/datasets/list.html:27 olim/templates/label-settings.html:215
+#: olim/templates/models/detail.html:308
 msgid "Created"
 msgstr "Criado"
 
@@ -2235,7 +2352,8 @@ msgstr "Não disponível"
 msgid "Delete Label"
 msgstr "Excluir Rótulo"
 
-#: olim/templates/label-settings.html:292
+#: olim/templates/datasets/_delete_modal.html:29
+#: olim/templates/datasets/list.html:90 olim/templates/label-settings.html:292
 #: olim/templates/learning-tasks.html:160
 #: olim/templates/learning-tasks.html:337 olim/templates/projects.html:89
 #: olim/templates/projects.html:172
@@ -2461,7 +2579,8 @@ msgstr "Digite sua senha"
 msgid "Sign In"
 msgstr "Entrar"
 
-#: olim/templates/projects.html:2 olim/templates/projects.html:12
+#: olim/templates/datasets/list.html:25 olim/templates/projects.html:2
+#: olim/templates/projects.html:12
 msgid "Projects"
 msgstr "Projetos"
 
@@ -2525,27 +2644,6 @@ msgstr "Nenhuma tarefa."
 msgid "Learning Task"
 msgstr "Tarefa de Aprendizado"
 
-#: olim/templates/components/sidebar.html:251 olim/templates/upload-data.html:2
-msgid "Upload Data"
-msgstr "Enviar Dados"
-
-#: olim/templates/upload-data.html:19
-msgid "Existing Datasets"
-msgstr "Conjuntos de Dados Existentes"
-
-#: olim/templates/learning_tasks/queue_list.html:13
-#: olim/templates/upload-data.html:37
-msgid "entries"
-msgstr "entradas"
-
-#: olim/templates/upload-data.html:64
-msgid "No datasets found"
-msgstr "Nenhum conjunto de dados encontrado"
-
-#: olim/templates/upload-data.html:65
-msgid "Upload your first dataset to get started."
-msgstr "Envie seu primeiro conjunto de dados para começar."
-
 #: olim/templates/users.html:2 olim/templates/users.html:15
 msgid "User Management"
 msgstr "Gerenciamento de Usuários"
@@ -2554,6 +2652,7 @@ msgstr "Gerenciamento de Usuários"
 msgid "Role"
 msgstr "Função"
 
+#: olim/templates/datasets/list.html:81
 #: olim/templates/label_types/free_text.html:44
 #: olim/templates/label_types/long_text.html:39
 #: olim/templates/label_types/short_text.html:48 olim/templates/users.html:93
@@ -2744,6 +2843,10 @@ msgstr "Usuários"
 msgid "account_settings_1"
 msgstr "Configurações da conta"
 
+#: olim/templates/components/sidebar.html:251
+msgid "Manage Datasets"
+msgstr "Gerenciar Conjuntos de Dados"
+
 #: olim/templates/components/sidebar.html:274
 msgid "Logout"
 msgstr "Sair"
@@ -2773,6 +2876,314 @@ msgstr "Número de Entradas"
 #: olim/templates/components/text-search.html:61
 msgid "Search"
 msgstr "Buscar"
+
+#: olim/templates/datasets/_delete_modal.html:18
+#: olim/templates/datasets/edit.html:29 olim/templates/datasets/list.html:88
+msgid "Delete Dataset"
+msgstr "Excluir Conjunto de Dados"
+
+#: olim/templates/datasets/_entries_table.html:12
+msgid "This dataset has no entries yet."
+msgstr "Este conjunto de dados ainda não tem entradas."
+
+#: olim/templates/datasets/_entries_table.html:19
+msgid "ID"
+msgstr "ID"
+
+#: olim/templates/datasets/_entries_table.html:34
+msgid "Not found in the search engine"
+msgstr "Não encontrado no mecanismo de busca"
+
+#: olim/templates/datasets/_entries_table.html:62
+msgid "Rows per page"
+msgstr "Linhas por página"
+
+#: olim/templates/datasets/_entries_table.html:70
+#, python-format
+msgid "%(total)s entries"
+msgstr "%(total)s entradas"
+
+#: olim/templates/datasets/_entries_table.html:72
+msgid "Pagination"
+msgstr "Paginação"
+
+#: olim/templates/datasets/_entries_table.html:81
+msgid "First page"
+msgstr "Primeira página"
+
+#: olim/templates/datasets/_entries_table.html:82
+msgid "Previous page"
+msgstr "Página anterior"
+
+#: olim/templates/datasets/_entries_table.html:83
+#, python-format
+msgid "Page %(page)s of %(pages)s"
+msgstr "Página %(page)s de %(pages)s"
+
+#: olim/templates/datasets/_entries_table.html:84
+msgid "Next page"
+msgstr "Próxima página"
+
+#: olim/templates/datasets/_entries_table.html:85
+msgid "Last page"
+msgstr "Última página"
+
+#: olim/templates/datasets/edit.html:2 olim/templates/datasets/list.html:2
+#: olim/templates/datasets/list.html:9
+msgid "Datasets"
+msgstr "Conjuntos de Dados"
+
+#: olim/templates/datasets/edit.html:7 olim/templates/datasets/new.html:10
+msgid "Back to datasets"
+msgstr "Voltar aos conjuntos de dados"
+
+#: olim/templates/datasets/edit.html:19
+#: olim/templates/learning_tasks/queue_list.html:13
+msgid "entries"
+msgstr "entradas"
+
+#: olim/templates/datasets/edit.html:39
+msgid "Details"
+msgstr "Detalhes"
+
+#: olim/templates/datasets/edit.html:44 olim/templates/datasets/list.html:22
+#: olim/templates/macros/upload-form.html:17
+msgid "Dataset name"
+msgstr "Nome do conjunto de dados"
+
+#: olim/templates/datasets/edit.html:49
+#: olim/templates/macros/upload-form.html:28
+msgid "Link to Projects"
+msgstr "Vincular a Projetos"
+
+#: olim/templates/datasets/edit.html:63 olim/templates/datasets/edit.html:139
+msgid "ID column"
+msgstr "Coluna de ID"
+
+#: olim/templates/datasets/edit.html:65 olim/templates/datasets/edit.html:144
+#: olim/templates/macros/upload-form.html:602
+msgid "Text column"
+msgstr "Coluna de Texto"
+
+#: olim/templates/datasets/edit.html:71
+msgid "Save details"
+msgstr "Salvar detalhes"
+
+#: olim/templates/datasets/edit.html:81
+msgid "Upload more data"
+msgstr "Enviar mais dados"
+
+#: olim/templates/datasets/edit.html:90
+msgid ""
+"The file must have exactly these columns, and none of its IDs may already"
+" exist in the dataset:"
+msgstr ""
+"O arquivo deve ter exatamente estas colunas, e nenhum de seus IDs pode já"
+" existir no conjunto de dados:"
+
+#: olim/templates/datasets/edit.html:99
+msgid ""
+"This dataset was created before column names were recorded. After "
+"choosing the file, select its ID and text columns; the remaining columns "
+"are compared with the fields found in the dataset. Columns that were "
+"empty in every row of the original file are not known and will be "
+"reported as unexpected."
+msgstr ""
+"Este conjunto de dados foi criado antes de os nomes das colunas serem "
+"registrados. Depois de escolher o arquivo, selecione as colunas de ID e "
+"de texto; as demais colunas são comparadas com os campos encontrados no "
+"conjunto de dados. Colunas que estavam vazias em todas as linhas do "
+"arquivo original não são conhecidas e serão apontadas como inesperadas."
+
+#: olim/templates/datasets/edit.html:108
+#: olim/templates/macros/upload-form.html:133
+msgid "Click to upload or drag your file"
+msgstr "Clique para enviar ou arraste seu arquivo"
+
+#: olim/templates/datasets/edit.html:121
+#: olim/templates/macros/upload-form.html:164
+msgid "Column separator"
+msgstr "Separador de coluna"
+
+#: olim/templates/datasets/edit.html:126
+#: olim/templates/macros/upload-form.html:173
+msgid "File encoding"
+msgstr "Codificação do arquivo"
+
+#: olim/templates/datasets/edit.html:153
+msgid "The file can't be added:"
+msgstr "O arquivo não pode ser adicionado:"
+
+#: olim/templates/datasets/edit.html:165
+msgid "Check file"
+msgstr "Verificar arquivo"
+
+#: olim/templates/datasets/edit.html:170
+msgid "Add to dataset"
+msgstr "Adicionar ao conjunto de dados"
+
+#: olim/templates/datasets/edit.html:183
+msgid "Data"
+msgstr "Dados"
+
+#: olim/templates/datasets/edit.html:190
+msgid "Discard"
+msgstr "Descartar"
+
+#: olim/templates/datasets/edit.html:195
+msgid "Save changes"
+msgstr "Salvar alterações"
+
+#: olim/templates/datasets/edit.html:200
+msgid ""
+"Edits are only stored when you click \"Save changes\". Existing model "
+"predictions are not recalculated automatically."
+msgstr ""
+"As edições só são gravadas ao clicar em \"Salvar alterações\". As "
+"predições de modelos existentes não são recalculadas automaticamente."
+
+#: olim/templates/datasets/edit.html:217 olim/templates/datasets/list.html:115
+msgid "Are you sure you want to delete dataset"
+msgstr "Tem certeza de que deseja excluir o conjunto de dados"
+
+#: olim/templates/datasets/edit.html:218 olim/templates/datasets/list.html:116
+msgid ""
+"It will be hidden from all projects. Its data is kept and can be restored"
+" by an administrator."
+msgstr ""
+"Ele ficará oculto em todos os projetos. Os dados são mantidos e podem ser"
+" restaurados por um administrador."
+
+#: olim/templates/datasets/edit.html:234
+#: olim/templates/macros/upload-form.html:728
+msgid "Preparing upload..."
+msgstr "Preparando upload..."
+
+#: olim/templates/datasets/edit.html:235
+#: olim/templates/macros/upload-form.html:741
+msgid "Uploading..."
+msgstr "Enviando..."
+
+#: olim/templates/datasets/edit.html:236
+#: olim/templates/macros/upload-form.html:648
+msgid "Processing file..."
+msgstr "Processando arquivo..."
+
+#: olim/templates/datasets/edit.html:237
+#: olim/templates/macros/upload-form.html:712
+#: olim/templates/macros/upload-form.html:770
+msgid "Upload failed:"
+msgstr "Upload falhou:"
+
+#: olim/templates/datasets/edit.html:238
+msgid "File ready. Click \"Check file\" to validate it."
+msgstr "Arquivo pronto. Clique em \"Verificar arquivo\" para validá-lo."
+
+#: olim/templates/datasets/edit.html:239
+msgid "Checking file..."
+msgstr "Verificando arquivo..."
+
+#: olim/templates/datasets/edit.html:240
+msgid "Select a column"
+msgstr "Selecione uma coluna"
+
+#: olim/templates/datasets/edit.html:241
+msgid "Missing columns (present in the dataset, absent from the file):"
+msgstr "Colunas faltando (presentes no conjunto de dados, ausentes no arquivo):"
+
+#: olim/templates/datasets/edit.html:242
+msgid "Unexpected columns (present in the file, absent from the dataset):"
+msgstr "Colunas inesperadas (presentes no arquivo, ausentes no conjunto de dados):"
+
+#: olim/templates/datasets/edit.html:243
+msgid "IDs repeated inside the file:"
+msgstr "IDs repetidos dentro do arquivo:"
+
+#: olim/templates/datasets/edit.html:244
+msgid "IDs that already exist in this dataset:"
+msgstr "IDs que já existem neste conjunto de dados:"
+
+#: olim/templates/datasets/edit.html:245
+msgid "Rows without an ID:"
+msgstr "Linhas sem ID:"
+
+#: olim/templates/datasets/edit.html:246
+msgid "The file has no rows to add."
+msgstr "O arquivo não tem linhas para adicionar."
+
+#: olim/templates/datasets/edit.html:247
+#, python-format
+msgid "and %(count)s more"
+msgstr "e mais %(count)s"
+
+#: olim/templates/datasets/edit.html:248
+#, python-format
+msgid "No conflicts found. %(count)s new entries are ready to be added."
+msgstr ""
+"Nenhum conflito encontrado. %(count)s novas entradas estão prontas para "
+"serem adicionadas."
+
+#: olim/templates/datasets/edit.html:249
+msgid "Starting import..."
+msgstr "Iniciando importação..."
+
+#: olim/templates/datasets/edit.html:250
+#, python-format
+msgid "%(count)s unsaved changes"
+msgstr "%(count)s alterações não salvas"
+
+#: olim/templates/datasets/edit.html:251
+msgid "You have unsaved changes. Leave this page and discard them?"
+msgstr "Você tem alterações não salvas. Sair desta página e descartá-las?"
+
+#: olim/templates/datasets/edit.html:252
+msgid "You have unsaved changes on this page. Discard them and continue?"
+msgstr "Você tem alterações não salvas nesta página. Descartá-las e continuar?"
+
+#: olim/templates/datasets/edit.html:253
+msgid "Saving..."
+msgstr "Salvando..."
+
+#: olim/templates/datasets/edit.html:254
+msgid "Changes saved."
+msgstr "Alterações salvas."
+
+#: olim/templates/datasets/edit.html:255
+msgid "Some changes could not be saved. Check the highlighted rows."
+msgstr "Algumas alterações não puderam ser salvas. Verifique as linhas destacadas."
+
+#: olim/templates/datasets/edit.html:256
+msgid "Could not save changes:"
+msgstr "Não foi possível salvar as alterações:"
+
+#: olim/templates/datasets/list.html:14 olim/templates/datasets/new.html:2
+msgid "New Dataset"
+msgstr "Novo Conjunto de Dados"
+
+#: olim/templates/datasets/list.html:23
+#: olim/templates/macros/upload-form.html:59
+msgid "Data Format"
+msgstr "Formato de Dados"
+
+#: olim/templates/datasets/list.html:24
+msgid "Entries"
+msgstr "Entradas"
+
+#: olim/templates/datasets/list.html:65
+msgid "Not linked"
+msgstr "Não vinculado"
+
+#: olim/templates/datasets/list.html:79
+msgid "Edit Dataset"
+msgstr "Editar Conjunto de Dados"
+
+#: olim/templates/datasets/list.html:99
+msgid "No datasets found"
+msgstr "Nenhum conjunto de dados encontrado"
+
+#: olim/templates/datasets/list.html:100
+msgid "Upload your first dataset to get started."
+msgstr "Envie seu primeiro conjunto de dados para começar."
 
 #: olim/templates/entry_types/flexible_text.html:15
 msgid "No valid link available for this document."
@@ -3501,7 +3912,7 @@ msgstr "Ajustar configurações"
 #: olim/templates/learning_tasks/active_learning_loop.html:393
 #: olim/templates/learning_tasks/label_entry.html:41
 #: olim/templates/learning_tasks/queue_complete.html:24
-#: olim/templates/learning_tasks/queue_list.html:143
+#: olim/templates/learning_tasks/queue_list.html:149
 #: olim/templates/learning_tasks/read_data.html:93
 #: olim/templates/learning_tasks/show_data.html:57
 #: olim/templates/learning_tasks/static_content.html:30
@@ -4079,15 +4490,15 @@ msgstr "Exportar Fila"
 msgid "labeled"
 msgstr "rotulada"
 
-#: olim/templates/learning_tasks/queue_list.html:116
+#: olim/templates/learning_tasks/queue_list.html:122
 msgid "Current"
 msgstr "Atual"
 
-#: olim/templates/learning_tasks/queue_list.html:118
+#: olim/templates/learning_tasks/queue_list.html:124
 msgid "Done"
 msgstr "Concluído"
 
-#: olim/templates/learning_tasks/queue_list.html:132
+#: olim/templates/learning_tasks/queue_list.html:138
 msgid ""
 "Going back to setup will reset this task's entry queue and its labeling "
 "progress. Are you sure you want to continue?"
@@ -4095,16 +4506,16 @@ msgstr ""
 "Voltar para a configuração vai reiniciar a fila de entradas desta tarefa "
 "e seu progresso de rotulagem. Tem certeza de que deseja continuar?"
 
-#: olim/templates/learning_tasks/queue_list.html:136
+#: olim/templates/learning_tasks/queue_list.html:142
 msgid "Back to Setup"
 msgstr "Voltar à Configuração"
 
-#: olim/templates/learning_tasks/queue_list.html:157
-#: olim/templates/learning_tasks/queue_list.html:166
+#: olim/templates/learning_tasks/queue_list.html:163
+#: olim/templates/learning_tasks/queue_list.html:172
 msgid "Entry IDs copied to clipboard!"
 msgstr "IDs de entrada copiados para a área de transferência!"
 
-#: olim/templates/learning_tasks/queue_list.html:189
+#: olim/templates/learning_tasks/queue_list.html:195
 msgid "Queue exported successfully!"
 msgstr "Fila exportada com sucesso!"
 
@@ -4270,6 +4681,15 @@ msgstr "IDs de entradas (um por linha)"
 msgid "Enter entry IDs, one per line…"
 msgstr "Digite IDs de entradas, um por linha…"
 
+#: olim/templates/macros/entry_sources.html:107
+#: olim/templates/macros/entry_sources.html:156
+msgid ""
+"If an ID exists in more than one dataset, write it as dataset_id:entry_id"
+" (e.g. 10:113)."
+msgstr ""
+"Se um ID existir em mais de um conjunto de dados, escreva "
+"id_do_conjunto:id_da_entrada (ex.: 10:113)."
+
 #: olim/templates/macros/highlights.html:7
 msgid "Highlights"
 msgstr "Destaques"
@@ -4379,40 +4799,25 @@ msgstr "Senhas coincidem"
 msgid "Upload Dataset"
 msgstr "Enviar Conjunto de Dados"
 
-#: olim/templates/macros/upload-form.html:17
-msgid "Dataset name"
-msgstr "Nome do conjunto de dados"
-
 #: olim/templates/macros/upload-form.html:21
 msgid "Enter dataset name"
 msgstr "Digite o nome do conjunto de dados"
 
-#: olim/templates/macros/upload-form.html:28
-msgid "Link to Projects"
-msgstr "Vincular a Projetos"
-
 #: olim/templates/macros/upload-form.html:48
-msgid "Warning:"
-msgstr "Aviso:"
+msgid "Note:"
+msgstr "Observação:"
 
 #: olim/templates/macros/upload-form.html:49
-msgid ""
-"Datasets can only be linked to projects during upload. Make sure to "
-"select the desired\n"
-"                            projects."
+msgid "Linked projects can be changed later in Manage Datasets."
 msgstr ""
-"Conjuntos de dados só podem ser vinculados a projetos durante o upload. "
-"Certifique-se de selecionar os projetos desejados."
+"Os projetos vinculados podem ser alterados depois em Gerenciar Conjuntos "
+"de Dados."
 
-#: olim/templates/macros/upload-form.html:60
-msgid "Data Format"
-msgstr "Formato de Dados"
-
-#: olim/templates/macros/upload-form.html:72
+#: olim/templates/macros/upload-form.html:71
 msgid "Text Format"
 msgstr "Formato de Texto"
 
-#: olim/templates/macros/upload-form.html:75
+#: olim/templates/macros/upload-form.html:74
 msgid ""
 "Use this option if your CSV is composed of independent texts. You need to"
 "\n"
@@ -4422,15 +4827,15 @@ msgstr ""
 "Use esta opção se seu CSV for composto por textos independentes. Você "
 "precisa especificar quais colunas são equivalentes a"
 
-#: olim/templates/macros/upload-form.html:77
+#: olim/templates/macros/upload-form.html:76
 msgid "and"
 msgstr "e"
 
-#: olim/templates/macros/upload-form.html:92
+#: olim/templates/macros/upload-form.html:91
 msgid "Flexible Text"
 msgstr "Texto Flexível"
 
-#: olim/templates/macros/upload-form.html:95
+#: olim/templates/macros/upload-form.html:94
 msgid ""
 "Configurable columns — render extra columns as text, HTML, PDF, image, or"
 " JSON metadata. Supports tabs."
@@ -4438,48 +4843,36 @@ msgstr ""
 "Colunas configuráveis — exiba colunas extras como texto, HTML, PDF, "
 "imagem ou metadados JSON. Suporta abas."
 
-#: olim/templates/macros/upload-form.html:110
+#: olim/templates/macros/upload-form.html:109
 msgid "Sample Data"
 msgstr "Dados de Exemplo"
 
-#: olim/templates/macros/upload-form.html:113
+#: olim/templates/macros/upload-form.html:112
 msgid "Upload built-in sample data in Text format."
 msgstr "Enviar dados de exemplo integrados no formato Texto."
 
-#: olim/templates/macros/upload-form.html:126
+#: olim/templates/macros/upload-form.html:125
 #: olim/templates/macros/upload-form.html:453
 msgid "Select File"
 msgstr "Selecionar Arquivo"
 
-#: olim/templates/macros/upload-form.html:134
-msgid "Click to upload or drag your file"
-msgstr "Clique para enviar ou arraste seu arquivo"
-
-#: olim/templates/macros/upload-form.html:160
+#: olim/templates/macros/upload-form.html:159
 #: olim/templates/macros/upload-form.html:670
-#: olim/templates/macros/upload-form.html:804
-#: olim/templates/macros/upload-form.html:828
-#: olim/templates/macros/upload-form.html:829
+#: olim/templates/macros/upload-form.html:806
+#: olim/templates/macros/upload-form.html:830
+#: olim/templates/macros/upload-form.html:831
 msgid "Advanced options"
 msgstr "Opções avançadas"
 
-#: olim/templates/macros/upload-form.html:165
-msgid "Column separator"
-msgstr "Separador de coluna"
-
-#: olim/templates/macros/upload-form.html:170
+#: olim/templates/macros/upload-form.html:169
 msgid "Default: comma (,). Use \\t for tab-separated files."
 msgstr "Padrão: vírgula (,). Use \\t para arquivos separados por tabulação."
 
-#: olim/templates/macros/upload-form.html:174
-msgid "File encoding"
-msgstr "Codificação do arquivo"
-
-#: olim/templates/macros/upload-form.html:178
+#: olim/templates/macros/upload-form.html:177
 msgid "(default)"
 msgstr "(padrão)"
 
-#: olim/templates/macros/upload-form.html:192
+#: olim/templates/macros/upload-form.html:191
 msgid "Retry with new settings"
 msgstr "Tentar novamente com novas configurações"
 
@@ -4592,17 +4985,9 @@ msgstr "Coluna ID do Texto"
 msgid "Select Text ID column"
 msgstr "Selecionar coluna ID do Texto"
 
-#: olim/templates/macros/upload-form.html:602
-msgid "Text column"
-msgstr "Coluna de Texto"
-
 #: olim/templates/macros/upload-form.html:609
 msgid "Select Text column"
 msgstr "Selecionar coluna de Texto"
-
-#: olim/templates/macros/upload-form.html:648
-msgid "Processing file..."
-msgstr "Processando arquivo..."
 
 #: olim/templates/macros/upload-form.html:662
 msgid "Could not parse the file."
@@ -4617,24 +5002,11 @@ msgstr "Erro:"
 msgid "Finalization failed"
 msgstr "Finalização falhou"
 
-#: olim/templates/macros/upload-form.html:711
-#: olim/templates/macros/upload-form.html:769
-msgid "Upload failed:"
-msgstr "Upload falhou:"
-
-#: olim/templates/macros/upload-form.html:727
-msgid "Preparing upload..."
-msgstr "Preparando upload..."
-
-#: olim/templates/macros/upload-form.html:740
-msgid "Uploading..."
-msgstr "Enviando..."
-
-#: olim/templates/macros/upload-form.html:755
+#: olim/templates/macros/upload-form.html:756
 msgid "Upload failed"
 msgstr "Upload falhou"
 
-#: olim/templates/macros/upload-form.html:759
+#: olim/templates/macros/upload-form.html:760
 msgid "Upload complete! Processing file..."
 msgstr "Upload concluído! Processando arquivo..."
 
@@ -5040,26 +5412,6 @@ msgstr "Entradas: {queue_length}"
 #, python-brace-format
 msgid "Highlight: {highlight}"
 msgstr "Destaque: {highlight}"
-
-#: olim/learning_tasks/entry_selector.py
-msgid ""
-"Entry {entry_id} exists in more than one dataset: {datasets}. Write it as "
-"{example} to pick one."
-msgstr ""
-"A entrada {entry_id} existe em mais de um conjunto de dados: {datasets}. "
-"Escreva {example} para escolher um."
-
-#: olim/learning_tasks/entry_selector.py
-msgid "Entries not found in this project's datasets: {ids}"
-msgstr "Entradas não encontradas nos conjuntos de dados deste projeto: {ids}"
-
-#: olim/templates/macros/entry_sources.html
-msgid ""
-"If an ID exists in more than one dataset, write it as dataset_id:entry_id "
-"(e.g. 10:113)."
-msgstr ""
-"Se um ID existir em mais de um conjunto de dados, escreva "
-"id_do_conjunto:id_da_entrada (ex.: 10:113)."
 
 #~ msgid "This is permanent! Are you sure that you want to delete label"
 #~ msgstr "Isto é permanente! Tem certeza que deseja excluir o rótulo"
@@ -5567,4 +5919,24 @@ msgstr ""
 
 #~ msgid "Label name"
 #~ msgstr "Nome do Rótulo"
+
+#~ msgid "Upload Data"
+#~ msgstr "Enviar Dados"
+
+#~ msgid "Existing Datasets"
+#~ msgstr "Conjuntos de Dados Existentes"
+
+#~ msgid "Warning:"
+#~ msgstr "Aviso:"
+
+#~ msgid ""
+#~ "Datasets can only be linked to "
+#~ "projects during upload. Make sure to "
+#~ "select the desired\n"
+#~ "                            projects."
+#~ msgstr ""
+#~ "Conjuntos de dados só podem ser "
+#~ "vinculados a projetos durante o upload."
+#~ " Certifique-se de selecionar os "
+#~ "projetos desejados."
 

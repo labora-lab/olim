@@ -1,5 +1,6 @@
 import json
 
+import pandas as pd
 from flask import flash, jsonify, redirect, render_template, request, session, url_for
 from flask_babel import _
 
@@ -7,9 +8,6 @@ from . import app
 from .celery_app import launch_task_with_tracking
 from .database import (
     get_celery_tasks,
-    get_dataset_stats,
-    get_datasets,
-    get_projects,
     link_dataset_to_project,
     new_dataset,
 )
@@ -19,6 +17,7 @@ from .settings import ALLOWED_EXTENSIONS, CHUNK_SIZE, MAX_FILE_SIZE, UPLOAD_PATH
 from .tasks.upload_data import finalize_chunks_upload, upload_dataset
 
 ALLOWED_ENCODINGS = {"utf-8", "latin-1", "cp1252"}
+SAMPLE_DATA_PATH = "./data/sample_data.csv"
 
 
 def _validate_csv_options(sep: str | None, encoding: str | None) -> tuple[str, str]:
@@ -137,15 +136,14 @@ def finalize_upload(file_id) -> ...:
 @app.route("/upload-data/<int:project_id>", methods=["GET", "POST"])
 def upload_data(project_id: int | None = None) -> ...:
     """
-    Handle file uploads and dataset creation using Celery tasks
+    Create a dataset from an uploaded file using Celery tasks
 
     Methods:
-        GET: Render upload form with dataset statistics
+        GET: Redirect to the dataset creation page
         POST: Process form data and start upload task chain
 
     Returns:
-        GET: Rendered upload-data.html template
-        POST: Redirect to same page with flash messages or error handling
+        Redirect to the dataset list (or init-config during setup) with flash messages
     """
     # If not setup and GET we need to go back to init-config
     if request.method == "GET" and not check_is_setup():
@@ -156,6 +154,10 @@ def upload_data(project_id: int | None = None) -> ...:
         res = update_session_project(project_id)
         if res is not None:
             return res
+
+    # Dataset creation now lives in the dataset management area
+    if request.method == "GET":
+        return redirect(url_for("dataset_new"))
 
     if request.method == "POST":
         # Extract form data
@@ -207,6 +209,20 @@ def upload_data(project_id: int | None = None) -> ...:
                 "show_remaining_as_metadata": show_remaining,
             }
 
+        # Remember the CSV layout so later appends can be checked against it
+        if upload_type == "sample_data":
+            id_column, text_column = "text_id", "text"
+            columns = read_csv_header(SAMPLE_DATA_PATH, ",", "utf-8")
+        else:
+            id_column = request.form.get("id_column") or None
+            text_column = request.form.get("text_column") or None
+            try:
+                columns = json.loads(request.form.get("columns") or "null")
+            except (ValueError, TypeError):
+                columns = None
+            if not isinstance(columns, list):
+                columns = None
+
         # Create new dataset
         try:
             dataset = new_dataset(
@@ -215,6 +231,9 @@ def upload_data(project_id: int | None = None) -> ...:
                 sep=sep,
                 encoding=encoding,
                 column_config=column_config,
+                id_column=id_column,
+                text_column=text_column,
+                columns=columns,
             )
 
             # Link to selected projects
@@ -239,7 +258,7 @@ def upload_data(project_id: int | None = None) -> ...:
             upload_type = "flexible_text"
             upload_params.update(
                 {
-                    "filename": "./data/sample_data.csv",
+                    "filename": SAMPLE_DATA_PATH,
                     "id_column": "text_id",
                     "text_column": "text",
                 }
@@ -273,17 +292,23 @@ def upload_data(project_id: int | None = None) -> ...:
             )
 
             flash(_("Document processing started successfully"), "success")
-            return redirect(request.url)
+            if not check_is_setup():
+                return redirect(url_for("init_config"))
+            return redirect(url_for("datasets"))
 
         except Exception as e:
             flash(_("Error starting upload: {error}").format(error=str(e)), "error")
             return redirect(request.url)
 
-    # GET request - render form
-    return render_template(
-        "upload-data.html",
-        CHUNK_SIZE=CHUNK_SIZE,
-        datasets=get_datasets(non_empty=True),
-        stats=get_dataset_stats(),
-        projects=list(get_projects()),
-    )
+    return redirect(url_for("dataset_new"))
+
+
+def read_csv_header(filename: str, sep: str, encoding: str) -> list[str] | None:
+    """Return the column names of a CSV file, or None if it can't be read."""
+    try:
+        read_kwargs: dict = {"nrows": 0, "sep": sep, "encoding": encoding}
+        if len(sep) > 1:
+            read_kwargs["engine"] = "python"
+        return [str(c) for c in pd.read_csv(filename, **read_kwargs).columns]
+    except Exception:
+        return None

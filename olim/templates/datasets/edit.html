@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+{% block title %}{{ dataset.name }} - {{ _('Datasets') }}{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('datasets') }}" class="inline-flex items-center mb-4 text-sm text-gray-600 hover:text-gray-900">
+    <i class="bi bi-arrow-left mr-1"></i>
+    {{ _('Back to datasets') }}
+</a>
+
+<div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+    <div class="flex items-center">
+        <div
+            class="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-medium mr-3">
+            {{ dataset.name[0]|upper }}
+        </div>
+        <div>
+            <h2 class="text-xl font-semibold text-gray-900">{{ dataset.name }}</h2>
+            <p class="text-sm text-gray-500">
+                <i class="bi bi-file-text mr-1"></i>{{ stats.entry_count }} {{ _('entries') }}
+                <span class="mx-2">&middot;</span>
+                <i class="bi bi-file-earmark-text mr-1"></i>{{ entry_type }}
+            </p>
+        </div>
+    </div>
+    <button type="button" data-dataset-name="{{ dataset.name }}"
+        data-delete-url="{{ url_for('dataset_delete', dataset_id=dataset.id) }}" onclick="confirmDatasetDelete(this)"
+        class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 transition-colors">
+        <i class="bi bi-trash mr-1"></i>
+        {{ _('Delete Dataset') }}
+    </button>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+    <!-- Details -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-info-circle-fill text-purple-600 mr-2"></i>
+                {{ _('Details') }}
+            </h3>
+        </div>
+        <form method="post" action="{{ url_for('dataset_edit', dataset_id=dataset.id) }}" class="p-6 space-y-4">
+            <div>
+                <label for="name" class="block mb-2 text-sm font-medium text-gray-900">{{ _('Dataset name') }}</label>
+                <input type="text" id="name" name="name" required value="{{ dataset.name }}"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 block w-full p-2.5">
+            </div>
+            <div>
+                <span class="block mb-2 text-sm font-medium text-gray-900">{{ _('Link to Projects') }}</span>
+                <div class="space-y-2 max-h-40 overflow-y-auto">
+                    {% for project in projects %}
+                    <label class="flex items-center p-2 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="checkbox" name="projects" value="{{ project.id }}"
+                            class="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500"
+                            {% if project.id in linked_project_ids %}checked{% endif %}>
+                        <span class="ml-2 text-sm font-medium text-gray-900">{{ project.name }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% if dataset.columns %}
+            <div class="text-xs text-gray-500">
+                <span class="font-medium">{{ _('ID column') }}:</span> {{ dataset.id_column }}
+                <span class="mx-1">&middot;</span>
+                <span class="font-medium">{{ _('Text column') }}:</span> {{ dataset.text_column }}
+            </div>
+            {% endif %}
+            <button type="submit"
+                class="w-full text-white bg-purple-600 hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                <i class="bi bi-check2-circle mr-2"></i>
+                {{ _('Save details') }}
+            </button>
+        </form>
+    </div>
+
+    <!-- Add data -->
+    <div class="xl:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-cloud-plus-fill text-blue-600 mr-2"></i>
+                {{ _('Upload more data') }}
+            </h3>
+        </div>
+        <div class="p-6 space-y-4">
+            {% if not can_append %}
+            <p class="text-sm text-gray-600">{{ _('Adding data is not supported for this data format.') }}</p>
+            {% else %}
+            <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900">
+                <p class="mb-1">
+                    {{ _('The file must have exactly these columns, and none of its IDs may already exist in the dataset:') }}
+                </p>
+                <div class="flex flex-wrap gap-1">
+                    {% for column in expected_columns %}
+                    <code class="px-1.5 py-0.5 rounded bg-white border border-blue-200 text-xs">{{ column }}</code>
+                    {% endfor %}
+                </div>
+                {% if is_legacy %}
+                <p class="mt-2 text-xs text-blue-800">
+                    {{ _('This dataset was created before column names were recorded. After choosing the file, select its ID and text columns; the remaining columns are compared with the fields found in the dataset. Columns that were empty in every row of the original file are not known and will be reported as unexpected.') }}
+                </p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="append-file-input" id="append-drop-area"
+                    class="flex flex-col items-center justify-center w-full h-28 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <i class="bi bi-cloud-upload text-2xl text-gray-400 mb-1"></i>
+                    <span class="text-sm text-gray-500 font-semibold" id="append-file-label">{{ _('Click to upload or drag your file') }}</span>
+                    <input id="append-file-input" type="file" class="hidden" accept=".csv,.tsv">
+                </label>
+                <div id="append-progress" class="hidden px-1 py-2">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="append-progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div id="append-status" class="text-sm text-gray-600 px-1 mt-1"></div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label for="append-sep" class="block mb-1 text-sm font-medium text-gray-700">{{ _('Column separator') }}</label>
+                    <input type="text" id="append-sep" value="{{ '\\t' if dataset.sep == '\t' else dataset.sep }}"
+                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                </div>
+                <div>
+                    <label for="append-encoding" class="block mb-1 text-sm font-medium text-gray-700">{{ _('File encoding') }}</label>
+                    <select id="append-encoding"
+                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                        {% for value, label in [('utf-8', 'UTF-8'), ('latin-1', 'Latin-1 / ISO-8859-1'), ('cp1252', 'Windows-1252 (CP1252)')] %}
+                        <option value="{{ value }}" {% if dataset.encoding == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            {% if is_legacy %}
+            <div id="append-legacy-columns" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label for="append-id-column" class="block mb-1 text-sm font-medium text-gray-700">{{ _('ID column') }}</label>
+                    <select id="append-id-column"
+                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"></select>
+                </div>
+                <div>
+                    <label for="append-text-column" class="block mb-1 text-sm font-medium text-gray-700">{{ _('Text column') }}</label>
+                    <select id="append-text-column"
+                        class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"></select>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Validation result -->
+            <div id="append-errors" class="hidden p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800" role="alert">
+                <p class="font-semibold mb-2"><i class="bi bi-x-octagon-fill mr-1"></i>{{ _('The file can\'t be added:') }}</p>
+                <ul id="append-error-list" class="list-disc pl-5 space-y-1"></ul>
+            </div>
+            <div id="append-ok" class="hidden p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
+                <i class="bi bi-check-circle-fill mr-1"></i>
+                <span id="append-ok-msg"></span>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                <button type="button" id="append-validate-btn" disabled
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-700 bg-blue-100 border border-blue-300 rounded-lg hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <i class="bi bi-shield-check mr-2"></i>
+                    {{ _('Check file') }}
+                </button>
+                <button type="button" id="append-import-btn" disabled
+                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <i class="bi bi-cloud-arrow-up mr-2"></i>
+                    {{ _('Add to dataset') }}
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Data -->
+<div class="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3">
+        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+            <i class="bi bi-table text-purple-600 mr-2"></i>
+            {{ _('Data') }}
+        </h3>
+        <div class="flex items-center gap-2">
+            <span id="dirty-counter" class="hidden text-sm font-medium text-amber-700"></span>
+            <button type="button" id="discard-changes-btn" disabled
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                <i class="bi bi-arrow-counterclockwise mr-1"></i>
+                {{ _('Discard') }}
+            </button>
+            <button type="button" id="save-changes-btn" disabled
+                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                <i class="bi bi-save mr-1"></i>
+                {{ _('Save changes') }}
+            </button>
+        </div>
+    </div>
+    <p class="px-6 pt-3 text-xs text-gray-500">
+        {{ _('Edits are only stored when you click "Save changes". Existing model predictions are not recalculated automatically.') }}
+    </p>
+    <div id="entries-table"
+        hx-get="{{ url_for('dataset_entries', dataset_id=dataset.id, page=1, per_page=25) }}"
+        hx-trigger="load" hx-swap="innerHTML">
+        <div class="px-6 py-12 text-center text-gray-500">
+            <i class="bi bi-hourglass-split mr-1"></i>{{ _('Loading...') }}
+        </div>
+    </div>
+</div>
+
+{% include "datasets/_delete_modal.html" %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    window.translations = {
+        confirmDeleteDataset: {{ _("Are you sure you want to delete dataset")|tojson }},
+        datasetDeleteNote: {{ _("It will be hidden from all projects. Its data is kept and can be restored by an administrator.")|tojson }}
+    };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initDatasetsPage();
+        initDatasetEditPage({
+            chunkSize: {{ CHUNK_SIZE }},
+            isLegacy: {{ is_legacy|tojson }},
+            urls: {
+                chunk: {{ url_for('handle_large_upload')|tojson }},
+                finalize: {{ url_for('finalize_upload', file_id='__FILE_ID__')|tojson }},
+                validate: {{ url_for('dataset_append_validate', dataset_id=dataset.id)|tojson }},
+                append: {{ url_for('dataset_append', dataset_id=dataset.id)|tojson }},
+                save: {{ url_for('dataset_entries_save', dataset_id=dataset.id)|tojson }}
+            },
+            t: {
+                preparing: {{ _("Preparing upload...")|tojson }},
+                uploading: {{ _("Uploading...")|tojson }},
+                processing: {{ _("Processing file...")|tojson }},
+                uploadFailed: {{ _("Upload failed:")|tojson }},
+                fileReady: {{ _("File ready. Click \"Check file\" to validate it.")|tojson }},
+                checking: {{ _("Checking file...")|tojson }},
+                selectColumn: {{ _("Select a column")|tojson }},
+                missingColumns: {{ _("Missing columns (present in the dataset, absent from the file):")|tojson }},
+                unexpectedColumns: {{ _("Unexpected columns (present in the file, absent from the dataset):")|tojson }},
+                duplicateIds: {{ _("IDs repeated inside the file:")|tojson }},
+                existingIds: {{ _("IDs that already exist in this dataset:")|tojson }},
+                emptyIds: {{ _("Rows without an ID:")|tojson }},
+                noRows: {{ _("The file has no rows to add.")|tojson }},
+                andMore: {{ _("and %(count)s more", count="{count}")|tojson }},
+                readyToAdd: {{ _("No conflicts found. %(count)s new entries are ready to be added.", count="{count}")|tojson }},
+                adding: {{ _("Starting import...")|tojson }},
+                unsaved: {{ _("%(count)s unsaved changes", count="{count}")|tojson }},
+                confirmLeave: {{ _("You have unsaved changes. Leave this page and discard them?")|tojson }},
+                confirmPage: {{ _("You have unsaved changes on this page. Discard them and continue?")|tojson }},
+                saving: {{ _("Saving...")|tojson }},
+                saved: {{ _("Changes saved.")|tojson }},
+                savePartial: {{ _("Some changes could not be saved. Check the highlighted rows.")|tojson }},
+                saveFailed: {{ _("Could not save changes:")|tojson }}
+            }
+        });
+    });
+</script>
+{% endblock %}

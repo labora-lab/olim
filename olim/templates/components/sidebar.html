@@ -218,7 +218,7 @@
             <!-- Settings Dropdown -->
             <div class="relative">
                 <button id="settings-dropdown-btn"
-                    class="w-10 h-10 {% if request.endpoint in ['users', 'user_settings', 'projects', 'upload_data'] %}bg-cyan-600 text-white{% else %}bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white{% endif %} rounded-lg flex items-center justify-center transition-colors">
+                    class="w-10 h-10 {% if request.endpoint in ['users', 'user_settings', 'projects', 'datasets', 'dataset_new', 'dataset_edit'] %}bg-cyan-600 text-white{% else %}bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white{% endif %} rounded-lg flex items-center justify-center transition-colors">
                     <i class="bi bi-gear text-lg"></i>
                 </button>
                 <div id="settings-dropdown"
@@ -244,11 +244,11 @@
                         {{ _('Manage Projects') }}
                     </a>
                     {% endif %}
-                    {% if has_permission('upload_data') %}
-                    <a href="{{ url_for('upload_data') }}"
+                    {% if has_permission('datasets') %}
+                    <a href="{{ url_for('datasets') }}"
                         class="flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:text-white">
-                        <i class="bi bi-cloud-upload mr-2"></i>
-                        {{ _('Upload Data') }}
+                        <i class="bi bi-database mr-2"></i>
+                        {{ _('Manage Datasets') }}
                     </a>
                     {% endif %}
                     {% if has_permission('admin_settings') %}

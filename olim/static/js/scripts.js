@@ -939,6 +939,381 @@ function closeDeleteModal() {
 }
 
 // =============================================================================
+// DATASET MANAGEMENT
+// =============================================================================
+
+function initDatasetsPage() {
+    const modal = document.getElementById('datasetDeleteModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === this) closeDatasetDeleteModal();
+        });
+    }
+}
+
+function confirmDatasetDelete(button) {
+    const modal = document.getElementById('datasetDeleteModal');
+    const form = document.getElementById('datasetDeleteForm');
+    const message = document.getElementById('datasetDeleteMessage');
+    if (!modal || !form) return;
+
+    form.action = button.dataset.deleteUrl;
+    if (message) {
+        message.textContent = (window.translations?.confirmDeleteDataset || 'Are you sure you want to delete dataset') +
+            ' "' + button.dataset.datasetName + '"? ' +
+            (window.translations?.datasetDeleteNote || '');
+    }
+    modal.classList.remove('hidden');
+}
+
+function closeDatasetDeleteModal() {
+    const modal = document.getElementById('datasetDeleteModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+// Replace {count}-style placeholders in translated strings
+function fillPlaceholders(text, values) {
+    return text.replace(/\{(\w+)\}/g, (match, key) => (key in values ? values[key] : match));
+}
+
+// Upload a file through the chunked upload endpoints and return the finalize result
+async function uploadFileInChunks(file, { chunkSize, chunkUrl, finalizeUrl, sep, encoding, onProgress }) {
+    const totalChunks = Math.max(Math.ceil(file.size / chunkSize), 1);
+    const fileId = Math.random().toString(36).substring(2, 15);
+
+    for (let chunkNumber = 0; chunkNumber < totalChunks; chunkNumber++) {
+        onProgress?.(Math.round((chunkNumber / totalChunks) * 100));
+        const formData = new FormData();
+        formData.append('file', file.slice(chunkNumber * chunkSize, (chunkNumber + 1) * chunkSize));
+        formData.append('chunkNumber', chunkNumber);
+        formData.append('totalChunks', totalChunks);
+        formData.append('fileId', fileId);
+        formData.append('fileName', file.name);
+
+        const response = await fetch(chunkUrl, { method: 'POST', body: formData });
+        if (!response.ok) {
+            const body = await response.json().catch(() => ({}));
+            throw new Error(body.error || response.statusText);
+        }
+    }
+    onProgress?.(100);
+
+    const params = new URLSearchParams({ filename: file.name, total_chunks: totalChunks, sep, encoding });
+    const response = await fetch(`${finalizeUrl.replace('__FILE_ID__', fileId)}?${params}`);
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+        throw new Error(result.error || response.statusText);
+    }
+    return { fileId, filename: file.name, ...result };
+}
+
+function initDatasetEditPage(config) {
+    const t = config.t;
+    initDatasetAppend(config, t);
+    initDatasetTableEditing(config, t);
+}
+
+function initDatasetAppend(config, t) {
+    const fileInput = document.getElementById('append-file-input');
+    if (!fileInput) return;
+
+    const dropArea = document.getElementById('append-drop-area');
+    const fileLabel = document.getElementById('append-file-label');
+    const progress = document.getElementById('append-progress');
+    const progressBar = document.getElementById('append-progress-bar');
+    const status = document.getElementById('append-status');
+    const sepInput = document.getElementById('append-sep');
+    const encodingInput = document.getElementById('append-encoding');
+    const legacyColumns = document.getElementById('append-legacy-columns');
+    const idSelect = document.getElementById('append-id-column');
+    const textSelect = document.getElementById('append-text-column');
+    const errorsBox = document.getElementById('append-errors');
+    const errorList = document.getElementById('append-error-list');
+    const okBox = document.getElementById('append-ok');
+    const okMsg = document.getElementById('append-ok-msg');
+    const validateBtn = document.getElementById('append-validate-btn');
+    const importBtn = document.getElementById('append-import-btn');
+
+    let uploaded = null;
+
+    function resetResult() {
+        errorsBox.classList.add('hidden');
+        okBox.classList.add('hidden');
+        errorList.innerHTML = '';
+        importBtn.disabled = true;
+    }
+
+    function addError(title, items, count) {
+        const li = document.createElement('li');
+        const strong = document.createElement('span');
+        strong.className = 'font-medium';
+        strong.textContent = title;
+        li.appendChild(strong);
+        if (items && items.length) {
+            const wrap = document.createElement('div');
+            wrap.className = 'mt-1 flex flex-wrap gap-1';
+            items.forEach(item => {
+                const code = document.createElement('code');
+                code.className = 'px-1.5 py-0.5 rounded bg-white border border-red-200 text-xs';
+                code.textContent = item;
+                wrap.appendChild(code);
+            });
+            if (count > items.length) {
+                const more = document.createElement('span');
+                more.className = 'text-xs self-center';
+                more.textContent = fillPlaceholders(t.andMore, { count: count - items.length });
+                wrap.appendChild(more);
+            }
+            li.appendChild(wrap);
+        } else if (count) {
+            li.appendChild(document.createTextNode(' ' + count));
+        }
+        errorList.appendChild(li);
+    }
+
+    function showMessage(text) {
+        resetResult();
+        addError(text);
+        errorsBox.classList.remove('hidden');
+    }
+
+    function showReport(report) {
+        resetResult();
+        if (report.ok) {
+            okMsg.textContent = fillPlaceholders(t.readyToAdd, { count: report.new_entries });
+            okBox.classList.remove('hidden');
+            importBtn.disabled = false;
+            return;
+        }
+        if (report.missing_columns?.length) addError(t.missingColumns, report.missing_columns);
+        if (report.unexpected_columns?.length) addError(t.unexpectedColumns, report.unexpected_columns);
+        if (report.duplicate_ids?.count) addError(t.duplicateIds, report.duplicate_ids.sample, report.duplicate_ids.count);
+        if (report.existing_ids?.count) addError(t.existingIds, report.existing_ids.sample, report.existing_ids.count);
+        if (report.empty_ids) addError(t.emptyIds, null, report.empty_ids);
+        if (!errorList.children.length) addError(t.noRows);
+        errorsBox.classList.remove('hidden');
+    }
+
+    function fillSelect(select, columns) {
+        select.innerHTML = '';
+        const placeholder = new Option(t.selectColumn, '');
+        select.appendChild(placeholder);
+        columns.forEach(col => select.appendChild(new Option(col, col)));
+    }
+
+    function payload() {
+        return {
+            file_id: uploaded.fileId,
+            filename: uploaded.filename,
+            sep: sepInput.value,
+            encoding: encodingInput.value,
+            id_column: idSelect?.value || null,
+            text_column: textSelect?.value || null,
+        };
+    }
+
+    async function postJson(url) {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload()),
+        });
+        const body = await response.json().catch(() => ({}));
+        return { response, body };
+    }
+
+    async function handleFile(file) {
+        if (!file) return;
+        uploaded = null;
+        resetResult();
+        validateBtn.disabled = true;
+        fileLabel.textContent = file.name;
+        progress.classList.remove('hidden');
+        progressBar.style.width = '0%';
+        status.textContent = t.preparing;
+
+        try {
+            uploaded = await uploadFileInChunks(file, {
+                chunkSize: config.chunkSize,
+                chunkUrl: config.urls.chunk,
+                finalizeUrl: config.urls.finalize,
+                sep: sepInput.value || ',',
+                encoding: encodingInput.value,
+                onProgress: percent => {
+                    progressBar.style.width = `${percent}%`;
+                    status.textContent = percent < 100 ? `${t.uploading} ${percent}%` : t.processing;
+                },
+            });
+            if (uploaded.sep !== undefined) sepInput.value = uploaded.sep === '\t' ? '\\t' : uploaded.sep;
+            if (uploaded.encoding !== undefined) encodingInput.value = uploaded.encoding;
+            if (config.isLegacy && legacyColumns) {
+                fillSelect(idSelect, uploaded.columns);
+                fillSelect(textSelect, uploaded.columns);
+                legacyColumns.classList.remove('hidden');
+            }
+            status.textContent = t.fileReady;
+            validateBtn.disabled = false;
+        } catch (error) {
+            status.textContent = `${t.uploadFailed} ${error.message}`;
+        } finally {
+            setTimeout(() => progress.classList.add('hidden'), 1500);
+        }
+    }
+
+    fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+    ['dragenter', 'dragover'].forEach(name => dropArea.addEventListener(name, e => {
+        e.preventDefault();
+        dropArea.classList.add('border-blue-500', 'bg-blue-50');
+    }));
+    ['dragleave', 'drop'].forEach(name => dropArea.addEventListener(name, e => {
+        e.preventDefault();
+        dropArea.classList.remove('border-blue-500', 'bg-blue-50');
+    }));
+    dropArea.addEventListener('drop', e => handleFile(e.dataTransfer.files[0]));
+
+    // Changing the CSV options or columns invalidates a previous check
+    [sepInput, encodingInput, idSelect, textSelect].forEach(el => el?.addEventListener('change', resetResult));
+
+    validateBtn.addEventListener('click', async () => {
+        if (!uploaded) return;
+        resetResult();
+        validateBtn.disabled = true;
+        status.textContent = t.checking;
+        try {
+            const { response, body } = await postJson(config.urls.validate);
+            if (!response.ok) showMessage(body.error || response.statusText);
+            else showReport(body);
+        } catch (error) {
+            showMessage(error.message);
+        } finally {
+            status.textContent = '';
+            validateBtn.disabled = false;
+        }
+    });
+
+    importBtn.addEventListener('click', async () => {
+        if (!uploaded) return;
+        importBtn.disabled = true;
+        validateBtn.disabled = true;
+        status.textContent = t.adding;
+        try {
+            const { response, body } = await postJson(config.urls.append);
+            if (response.ok) {
+                window.location.reload();
+                return;
+            }
+            if (response.status === 409) showReport(body);
+            else showMessage(body.error || response.statusText);
+        } catch (error) {
+            showMessage(error.message);
+        }
+        status.textContent = '';
+        validateBtn.disabled = false;
+    });
+}
+
+function initDatasetTableEditing(config, t) {
+    const container = document.getElementById('entries-table');
+    const saveBtn = document.getElementById('save-changes-btn');
+    const discardBtn = document.getElementById('discard-changes-btn');
+    const counter = document.getElementById('dirty-counter');
+    if (!container || !saveBtn) return;
+
+    const normalize = value => (value || '').replace(/\r\n?/g, '\n');
+    const dirtyCells = () => container.querySelectorAll('.entry-cell.is-dirty');
+    const dirtyClasses = ['is-dirty', 'bg-amber-50', 'border-amber-400'];
+
+    function refreshState() {
+        const count = dirtyCells().length;
+        saveBtn.disabled = count === 0;
+        discardBtn.disabled = count === 0;
+        counter.textContent = fillPlaceholders(t.unsaved, { count });
+        counter.classList.toggle('hidden', count === 0);
+    }
+
+    function markCell(cell) {
+        const dirty = normalize(cell.value) !== normalize(cell.dataset.original);
+        cell.classList.toggle('border-transparent', !dirty);
+        dirtyClasses.forEach(cls => cell.classList.toggle(cls, dirty));
+        cell.classList.remove('border-red-500');
+        cell.removeAttribute('title');
+    }
+
+    container.addEventListener('input', e => {
+        if (!e.target.classList.contains('entry-cell')) return;
+        markCell(e.target);
+        refreshState();
+    });
+
+    discardBtn.addEventListener('click', () => {
+        dirtyCells().forEach(cell => {
+            cell.value = cell.dataset.original;
+            markCell(cell);
+        });
+        refreshState();
+    });
+
+    saveBtn.addEventListener('click', async () => {
+        const changes = {};
+        dirtyCells().forEach(cell => {
+            (changes[cell.dataset.entryId] ||= {})[cell.dataset.field] = cell.value;
+        });
+        if (!Object.keys(changes).length) return;
+
+        saveBtn.disabled = true;
+        discardBtn.disabled = true;
+        const label = saveBtn.innerHTML;
+        saveBtn.textContent = t.saving;
+        try {
+            const response = await fetch(config.urls.save, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ changes }),
+            });
+            const body = await response.json().catch(() => ({}));
+            if (!response.ok && response.status !== 207) {
+                showToast(`${t.saveFailed} ${body.error || response.statusText}`, 'error', 10000);
+                return;
+            }
+
+            const failed = new Map((body.failed || []).map(f => [f.entry_id, f.error]));
+            dirtyCells().forEach(cell => {
+                const error = failed.get(cell.dataset.entryId);
+                if (error) {
+                    cell.classList.add('border-red-500');
+                    cell.title = error;
+                } else {
+                    cell.dataset.original = cell.value;
+                    markCell(cell);
+                }
+            });
+            if (failed.size) showToast(t.savePartial, 'warning', 10000);
+            else showToast(t.saved, 'success');
+        } catch (error) {
+            showToast(`${t.saveFailed} ${error.message}`, 'error', 10000);
+        } finally {
+            saveBtn.innerHTML = label;
+            refreshState();
+        }
+    });
+
+    // Changing page or page size replaces the table, so ask before dropping edits
+    container.addEventListener('htmx:confirm', e => {
+        if (dirtyCells().length && !window.confirm(t.confirmPage)) {
+            e.preventDefault();
+        }
+    });
+    container.addEventListener('htmx:afterSwap', refreshState);
+
+    window.addEventListener('beforeunload', e => {
+        if (dirtyCells().length) {
+            e.preventDefault();
+            e.returnValue = t.confirmLeave;
+        }
+    });
+}
+
+// =============================================================================
 // BASE LAYOUT FUNCTIONALITY (moved from scripts.html)
 // =============================================================================
 

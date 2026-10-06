@@ -2,7 +2,7 @@ import csv
 import json
 import os
 import re
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from datetime import datetime
 from pathlib import Path
 from time import sleep, time
@@ -15,7 +15,14 @@ from flask_babel import gettext as _
 
 from .. import app as flask_app, entry_types
 from ..celery_app import app
-from ..database import cleanup_dataset, get_dataset, register_entries
+from ..database import (
+    check_entries_exist,
+    cleanup_dataset,
+    delete_new_entries,
+    get_dataset,
+    register_entries,
+    update_dataset,
+)
 from ..settings import ES_INDEX, ES_SERVER, UPLOAD_BATCH_SIZE, UPLOAD_PATH, WORK_PATH
 from ..utils.es import create_index, get_es_conn
 
@@ -288,6 +295,8 @@ def upload_dataset(
     upload_type: str,
     upload_params: dict[str, Any],
     dataset_id: int,
+    append: bool = False,
+    dataset_layout: dict[str, Any] | None = None,
     **kwargs,
 ) -> dict:
     """Orchestrate dataset upload in batches without full memory load
@@ -297,26 +306,34 @@ def upload_dataset(
             - filename: Path to CSV file
             - id_column: Name of ID column
             - text_column: Name of text column
-            - entry_type: Type of entries ('text' or 'patient')
+            - sep / encoding: Optional CSV options (default: dataset's)
         dataset_id: ID of dataset to associate with
+        append: Add entries to an existing dataset. On failure only the
+            entries added by this run are removed.
+        dataset_layout: Optional id_column/text_column/columns to store on the
+            dataset after a successful append (legacy datasets).
     """
     # Create Elasticsearch index
     index_name = ES_INDEX.format(dataset_id=dataset_id)
     create_index(index_name)
 
-    # Load CSV options from dataset record
+    # Load CSV options from dataset record unless the caller set them for this file
     with flask_app.app_context():
         dataset_record = get_dataset(dataset_id)
         if dataset_record:
-            upload_params["sep"] = dataset_record.sep
-            upload_params["encoding"] = dataset_record.encoding
+            upload_params.setdefault("sep", dataset_record.sep)
+            upload_params.setdefault("encoding", dataset_record.encoding)
 
     # Check if JSONL file already exists and backup if needed
     dataset_dir = WORK_PATH / "datasets"
     dataset_dir.mkdir(parents=True, exist_ok=True)
     jsonl_file = dataset_dir / f"{dataset_id}.jsonl"
 
-    if jsonl_file.exists():
+    # Appending keeps existing texts; remember where the new ones start for rollback
+    jsonl_start_size = jsonl_file.stat().st_size if jsonl_file.exists() else 0
+    appended_ids: list[str] = []
+
+    if jsonl_file.exists() and not append:
         backup_name = f"{dataset_id}.jsonl.backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         backup_path = dataset_dir / backup_name
         jsonl_file.rename(backup_path)
@@ -362,6 +379,8 @@ def upload_dataset(
             )
 
             # Process current batch
+            if append:
+                appended_ids.extend(entry["id"] for entry in batch)
             result = process_batch.s(batch, dataset_id, upload_type, index_name)()
 
             processed_batches.append({"batch": batch_count, "result": result, "size": len(batch)})
@@ -381,6 +400,12 @@ def upload_dataset(
                         )
                     )
 
+        if append:
+            if dataset_layout:
+                with flask_app.app_context():
+                    update_dataset(dataset_id, **dataset_layout)
+            _remove_file(upload_params.get("filename"))
+
         return {
             "success": True,
             "total_records": total_records,
@@ -389,6 +414,26 @@ def upload_dataset(
         }
 
     except Exception as e:
+        if append:
+            self.update_state(
+                state="PROGRESS", meta={"status": _("Upload failed. Removing added entries...")}
+            )
+            rollback_ok = rollback_append(dataset_id, appended_ids, index_name, jsonl_start_size)
+            _remove_file(upload_params.get("filename"))
+            if rollback_ok:
+                raise Exception(
+                    _(
+                        "%(error)s. No entries were added; the existing data was kept.",
+                        error=_user_message(e),
+                    )
+                ) from e
+            raise Exception(
+                _(
+                    "%(error)s. Warning: some of the new entries may not have been removed.",
+                    error=_user_message(e),
+                )
+            ) from e
+
         # Upload failed - clean up the dataset and associated data
         self.update_state(
             state="PROGRESS", meta={"status": _("Upload failed. Cleaning up dataset...")}
@@ -401,30 +446,9 @@ def upload_dataset(
         cleanup_elasticsearch_index(index_name)
 
         # Clean up uploaded file if it exists
-        try:
-            filename = upload_params.get("filename")
-            if filename and os.path.exists(filename):
-                os.remove(filename)
-        except:  # noqa
-            pass  # File cleanup is not critical
+        _remove_file(upload_params.get("filename"))
 
-        # Extract user-friendly error message
-        original_error = str(e)
-
-        # If it's already a clean user message, use it directly
-        if not (
-            "Traceback" in original_error or 'File "' in original_error or ".py" in original_error
-        ):
-            user_message = original_error
-        else:
-            # Extract just the final exception message
-            lines = original_error.split("\n")
-            for line in reversed(lines):
-                if line.strip() and not line.startswith(" ") and ":" in line:
-                    user_message = line.split(":", 1)[-1].strip()
-                    break
-            else:
-                user_message = _("Upload processing failed")
+        user_message = _user_message(e)
 
         # Add cleanup information to the clean message
         if cleanup_result.get("success", False):
@@ -437,6 +461,234 @@ def upload_dataset(
             )
 
         raise Exception(final_message) from e
+
+
+def _remove_file(filename: str | None) -> None:
+    """Remove an uploaded file, ignoring errors (cleanup is not critical)."""
+    try:
+        if filename and os.path.exists(filename) and Path(filename).is_relative_to(UPLOAD_PATH):
+            os.remove(filename)
+    except Exception:
+        pass
+
+
+def _user_message(e: Exception) -> str:
+    """Extract a user-friendly message from an exception."""
+    original_error = str(e)
+
+    # If it's already a clean user message, use it directly
+    if not ("Traceback" in original_error or 'File "' in original_error or ".py" in original_error):
+        return original_error
+
+    # Extract just the final exception message
+    for line in reversed(original_error.split("\n")):
+        if line.strip() and not line.startswith(" ") and ":" in line:
+            return line.split(":", 1)[-1].strip()
+    return _("Upload processing failed")
+
+
+def rollback_append(
+    dataset_id: int, entry_ids: list[str], index_name: str, jsonl_size: int
+) -> bool:
+    """Undo a failed append: remove the new entries from the DB, ES and JSONL file."""
+    ok = True
+    if entry_ids:
+        try:
+            with flask_app.app_context():
+                delete_new_entries(entry_ids, dataset_id)
+        except Exception:
+            ok = False
+        try:
+            es = get_es_conn(hosts=ES_SERVER, request_timeout=120)
+            for start in range(0, len(entry_ids), UPLOAD_BATCH_SIZE):
+                es.delete_by_query(
+                    index=index_name,
+                    query={"ids": {"values": entry_ids[start : start + UPLOAD_BATCH_SIZE]}},
+                    refresh=True,
+                    conflicts="proceed",
+                )
+        except Exception:
+            ok = False
+
+    jsonl_file = WORK_PATH / "datasets" / f"{dataset_id}.jsonl"
+    try:
+        if jsonl_file.exists() and jsonl_file.stat().st_size > jsonl_size:
+            with jsonl_file.open("r+b") as f:
+                f.truncate(jsonl_size)
+    except Exception:
+        ok = False
+    return ok
+
+
+def read_csv_ids(
+    filename: str, id_column: str, sep: str, encoding: str, batch_size: int = UPLOAD_BATCH_SIZE
+) -> tuple[list[str], int]:
+    """Read the ID column of a CSV the same way ``generate_upload_batches`` does.
+
+    Reading in chunks of the same size keeps pandas' dtype inference (and so the
+    ``str()`` form of numeric IDs) identical to what the upload will store.
+
+    Returns:
+        (ids, empty_count) where ids keeps file order, duplicates included
+    """
+    read_kwargs: dict = {"chunksize": batch_size, "sep": sep, "encoding": encoding}
+    if len(sep) > 1:
+        read_kwargs["engine"] = "python"
+
+    ids: list[str] = []
+    empty = 0
+    for chunk in pd.read_csv(filename, **read_kwargs):
+        chunk = chunk.fillna(-1)
+        for value in chunk[id_column].tolist():
+            if not value or value == -1 or str(value).strip() == "":
+                empty += 1
+                continue
+            ids.append(str(value))
+    return ids, empty
+
+
+def check_append_file(
+    columns: list[str],
+    expected_columns: list[str],
+    ids: list[str],
+    empty_ids: int,
+    existing_ids: Callable[[list[str]], list[str]],
+    sample_size: int = 20,
+) -> dict:
+    """Check a file to be appended against a dataset.
+
+    Args:
+        columns: Header of the new file
+        expected_columns: Header the dataset was created with
+        ids: IDs read from the new file (file order, duplicates included)
+        empty_ids: Number of rows without an ID
+        existing_ids: Callback returning which of the given IDs already exist
+
+    Returns:
+        Validation report; ``ok`` is True only if every check passed
+    """
+    missing_columns = [c for c in expected_columns if c not in columns]
+    unexpected_columns = [c for c in columns if c not in expected_columns]
+
+    seen: set[str] = set()
+    duplicates: dict[str, None] = {}
+    for entry_id in ids:
+        if entry_id in seen:
+            duplicates[entry_id] = None
+        seen.add(entry_id)
+
+    unique_ids = list(dict.fromkeys(ids))
+    existing: list[str] = []
+    for start in range(0, len(unique_ids), UPLOAD_BATCH_SIZE):
+        existing.extend(existing_ids(unique_ids[start : start + UPLOAD_BATCH_SIZE]))
+    existing_set = set(existing)
+    existing = [entry_id for entry_id in unique_ids if entry_id in existing_set]
+
+    report = {
+        "missing_columns": missing_columns,
+        "unexpected_columns": unexpected_columns,
+        "duplicate_ids": {"count": len(duplicates), "sample": list(duplicates)[:sample_size]},
+        "existing_ids": {"count": len(existing), "sample": existing[:sample_size]},
+        "empty_ids": empty_ids,
+        "new_entries": len(unique_ids) - len(existing),
+    }
+    report["ok"] = not (
+        missing_columns or unexpected_columns or duplicates or existing or empty_ids
+    ) and bool(unique_ids)
+    return report
+
+
+@app.task(bind=True, name="upload.validate_append")
+def validate_append(
+    self,
+    dataset_id: int,
+    filename: str,
+    columns: list[str],
+    expected_columns: list[str],
+    id_column: str,
+    sep: str,
+    encoding: str,
+    **kwargs,
+) -> dict:
+    """Check a CSV against an existing dataset before appending it."""
+    if id_column not in columns:
+        ids, empty = [], 0
+    else:
+        try:
+            ids, empty = read_csv_ids(filename, id_column, sep, encoding)
+        except FileNotFoundError as e:
+            raise Exception(_("Uploaded file not found. Please try uploading again.")) from e
+
+    def existing_ids(chunk: list[str]) -> list[str]:
+        with flask_app.app_context():
+            return check_entries_exist(chunk, dataset_id)[0]
+
+    return check_append_file(columns, expected_columns, ids, empty, existing_ids)
+
+
+def update_entries(dataset_id: int, changes: dict[str, dict[str, Any]]) -> list[dict[str, str]]:
+    """Partially update entry documents in ES and keep the ML text file in sync.
+
+    Args:
+        dataset_id: Dataset the entries belong to
+        changes: {entry_id: {field: value}}
+
+    Returns:
+        List of {entry_id, error} for documents that failed to update
+    """
+    index_name = ES_INDEX.format(dataset_id=dataset_id)
+    es = get_es_conn(hosts=ES_SERVER, request_timeout=120)
+    actions = [
+        {"_op_type": "update", "_index": index_name, "_id": entry_id, "doc": fields}
+        for entry_id, fields in changes.items()
+    ]
+    _, errors = helpers.bulk(es, actions, raise_on_error=False, refresh="wait_for")
+
+    failed: list[dict[str, str]] = []
+    for error in errors if isinstance(errors, list) else []:
+        info = error.get("update", {})
+        reason = info.get("error", {})
+        if isinstance(reason, dict):
+            reason = reason.get("reason", str(reason))
+        failed.append({"entry_id": str(info.get("_id")), "error": str(reason)})
+
+    failed_ids = {f["entry_id"] for f in failed}
+    texts = {
+        entry_id: str(fields["text"])
+        for entry_id, fields in changes.items()
+        if "text" in fields and entry_id not in failed_ids
+    }
+    if texts:
+        rewrite_texts_al(texts, dataset_id)
+    return failed
+
+
+def rewrite_texts_al(texts_dict: dict[str, str], dataset_id: int) -> int:
+    """Replace the text of existing entries in the dataset's JSON Lines file.
+
+    Streams into a temporary file and atomically swaps it in.
+
+    Returns:
+        Number of lines rewritten
+    """
+    file_path = WORK_PATH / "datasets" / f"{dataset_id}.jsonl"
+    if not file_path.exists():
+        return 0
+
+    tmp_path = file_path.with_suffix(".jsonl.tmp")
+    rewritten = 0
+    with file_path.open() as src, tmp_path.open("w") as dst:
+        for line in src:
+            stripped = line.strip()
+            if stripped:
+                record = json.loads(stripped)
+                if record.get("id") in texts_dict:
+                    record["text"] = texts_dict[record["id"]]
+                    line = json.dumps(record) + "\n"
+                    rewritten += 1
+            dst.write(line)
+    os.replace(tmp_path, file_path)
+    return rewritten
 
 
 _ENCODING_ALIASES: dict[str, str] = {
