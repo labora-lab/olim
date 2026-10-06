@@ -41,7 +41,7 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 text-center">
-                            <a href="{{ url_for('learning_task_view', project_id=project_id, task_id=task.id) }}"
+                            <a href="{{ url_for('learning_task_view', project_id=task.project_id, task_id=task.id) }}"
                                 class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 focus:ring-4 focus:outline-none focus:ring-cyan-300 transition-colors">
                                 <i class="bi bi-play-fill mr-1"></i>{{ _('Open') }}
                             </a>

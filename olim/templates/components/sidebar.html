@@ -10,8 +10,12 @@
                 <span class="text-xl font-semibold text-white sidebar-item-text">OLIM</span>
             </div>
 
+            {# Annotators only see their own tasks, without the project split #}
+            {% set is_annotator = session.get('role') == 'annotator' %}
+
             <!-- Project Selector -->
             {% if has_permission('redirect_to_project') %}
+            {% if not is_annotator %}
             <div class="mb-4">
                 <div class="relative">
                     <button id="project-dropdown-btn"
@@ -49,6 +53,7 @@
                     </h6>
                 </div>
             </div>
+            {% endif %}
 
             <!-- Project Navigation -->
             <ul class="space-y-1 font-medium">

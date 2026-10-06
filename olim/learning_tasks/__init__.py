@@ -203,7 +203,9 @@ def learning_tasks_list(project_id: int) -> ...:
     user_id: int = session["user_id"]
     is_admin = has_permission("admin")
 
-    my_tasks = get_learning_tasks(project_id, assigned_to=user_id)
+    # Annotators don't see the project split: their tasks from every project
+    is_annotator = session.get("role") == "annotator"
+    my_tasks = get_learning_tasks(None if is_annotator else project_id, assigned_to=user_id)
     all_tasks = get_learning_tasks(project_id) if is_admin else []
     users = get_users() if is_admin else []
     configurations = get_available_configurations()

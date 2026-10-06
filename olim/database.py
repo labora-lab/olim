@@ -1787,27 +1787,34 @@ def get_learning_task(task_id: int) -> LearningTask | None:
 
 
 def get_learning_tasks(
-    project_id: int,
+    project_id: int | None,
     state: str | None = None,
     assigned_to: int | None = None,
 ) -> list[LearningTask]:
     """Retrieve all active learning tasks for a project with optional filtering.
 
     Args:
-        project_id: Project ID to filter by
+        project_id: Project ID to filter by, or None for every (non-deleted) project
         state: Optional state to filter by
         assigned_to: Optional user ID to filter by assignee
 
     Returns:
         List of LearningTask objects ordered by creation date (newest first)
     """
-    query = db.select(LearningTask).filter_by(is_deleted=False, project_id=project_id)
+    query = db.select(LearningTask).filter_by(is_deleted=False)
+    if project_id is None:
+        query = query.join(Project, LearningTask.project_id == Project.id).filter(
+            Project.is_deleted == False  # noqa
+        )
+    else:
+        query = query.filter_by(project_id=project_id)
 
+    # Explicit columns: after the join, filter_by would target Project
     if state is not None:
-        query = query.filter_by(state=state)
+        query = query.filter(LearningTask.state == state)
 
     if assigned_to is not None:
-        query = query.filter_by(assigned_to=assigned_to)
+        query = query.filter(LearningTask.assigned_to == assigned_to)
 
     return list(db.session.execute(query.order_by(LearningTask.created.desc())).scalars())
 
