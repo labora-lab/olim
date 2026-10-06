@@ -1409,16 +1409,19 @@ def add_entry_label(
     value: str,
     created: datetime | None = None,
     metadata: dict | None = None,
+    acting_user_id: int | None = None,
 ) -> LabelEntry | None:
     """Apply label to data entry.
 
     Args:
         label_id: Target label ID
         entry_uid: Entry to label
-        user_id: ID of labeling user
+        user_id: ID of labeling user (owner of the value)
         value: Label value/text
         created: Optional timestamp override
         metadata: Optional provenance metadata (e.g. LLM model/prompt settings)
+        acting_user_id: User making the change when it isn't the owner (an admin
+            editing another user's value); recorded as who deleted the old value
 
     Returns:
         Created LabelEntry object or None
@@ -1433,7 +1436,7 @@ def add_entry_label(
     if is_label_isolation_enabled():
         query = query.filter(LabelEntry.created_by == user_id)
     for le in db.session.execute(query).scalars():
-        del_controled(le, user_id)
+        del_controled(le, acting_user_id or user_id)
 
     if value != "":
         label_entry = LabelEntry(
@@ -2443,6 +2446,54 @@ def get_label_values(entry_pks: list[int], label_ids: list[int]) -> dict[tuple[i
     ).all()
     # Ordered by creation, so later values overwrite earlier ones
     return {(entry_pk, label_id): value for entry_pk, label_id, value in rows}
+
+
+def get_label_users(dataset_ids: list[int], label_ids: list[int]) -> dict[int, list["User"]]:
+    """Users who have values for each label on the entries of some datasets.
+
+    Returns:
+        {label_id: [User, ...]} with users sorted by username
+    """
+    if not dataset_ids or not label_ids:
+        return {}
+    rows = db.session.execute(
+        db.select(LabelEntry.label_id, User)
+        .join(Entry, LabelEntry.entry_id == Entry.id)
+        .join(User, LabelEntry.created_by == User.id)
+        .filter(
+            Entry.dataset_id.in_(dataset_ids),
+            LabelEntry.label_id.in_(label_ids),
+            LabelEntry.is_deleted == False,  # noqa
+        )
+        .distinct()
+        .order_by(User.username)
+    ).all()
+    users: dict[int, list[User]] = {}
+    for label_id, user in rows:
+        users.setdefault(label_id, []).append(user)
+    return users
+
+
+def get_label_values_by_user(
+    entry_pks: list[int], label_ids: list[int]
+) -> dict[tuple[int, int, int], str]:
+    """Each user's current value of each (entry, label) pair.
+
+    Returns:
+        {(entry_pk, label_id, user_id): value}
+    """
+    if not entry_pks or not label_ids:
+        return {}
+    rows = db.session.execute(
+        db.select(LabelEntry.entry_id, LabelEntry.label_id, LabelEntry.created_by, LabelEntry.value)
+        .filter(
+            LabelEntry.entry_id.in_(entry_pks),
+            LabelEntry.label_id.in_(label_ids),
+            LabelEntry.is_deleted == False,  # noqa
+        )
+        .order_by(LabelEntry.created)
+    ).all()
+    return {(entry_pk, label_id, user_id): value for entry_pk, label_id, user_id, value in rows}
 
 
 def delete_new_entries(entry_ids: list[str], dataset_id: int) -> int:

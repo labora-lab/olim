@@ -4,7 +4,7 @@ from flask import request, session
 from flask_babel import _
 
 from . import app, entry_types
-from .database import add_entry_label, get_label
+from .database import add_entry_label, get_label, is_label_isolation_enabled
 from .functions import manage_label_in_session
 
 
@@ -30,8 +30,28 @@ def add_label(**args) -> dict[str, str]:
 
     label = label_obj.name
 
+    # Admins can change another user's value when label values are isolated per user
+    user_id = session["user_id"]
+    metadata = None
+    for_user = args.get("for_user")
+    if for_user and str(for_user) != str(user_id):
+        if session.get("role") != "admin" or not is_label_isolation_enabled():
+            return {
+                "type": "error",
+                "text": _("Only administrators can change another user's label values"),
+            }
+        metadata = {"edited_by": user_id}
+        user_id = int(for_user)
+
     try:
-        add_entry_label(label_id, entry_id, session["user_id"], value)
+        add_entry_label(
+            label_id,
+            entry_id,
+            user_id,
+            value,
+            metadata=metadata,
+            acting_user_id=session["user_id"],
+        )
     except Exception as e:
         print(e)
         return {

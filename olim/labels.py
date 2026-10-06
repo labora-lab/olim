@@ -28,6 +28,7 @@ from .database import (
     get_labeled,
     get_labels,
     get_project,
+    is_label_isolation_enabled,
     new_label,
 )
 from .label_types import get_preset_settings
@@ -149,7 +150,13 @@ def export_all_labels(project_id: int) -> ...:
     project = get_project(project_id)
     filename = re.sub(r"[^\w.-]+", "_", f"{project.name if project else 'labels'}-{suffix}")
     return Response(
-        stream_with_context(export_csv(selected, list(get_labels(project_id)))),
+        stream_with_context(
+            export_csv(
+                selected,
+                list(get_labels(project_id)),
+                per_user=is_label_isolation_enabled(),
+            )
+        ),
         mimetype="text/csv",
         headers={"Content-Disposition": f"attachment; filename={filename}.csv"},
     )
@@ -285,12 +292,18 @@ def extract_labels(label_id: int) -> ...:
     df["created_by"] = df.apply(_resolve_creator, axis=1)
     df = df.drop(columns=["label_metadata"])
 
+    # One row per value (every user's when values are isolated); fetch each entry's
+    # texts once, or entries labelled by several users would be repeated in the merge
     dfs_entries = []
+    seen_entries = set()
     for le in label.entries:
-        if not le.is_deleted:
-            module = getattr(entry_types, le.entry.type)
-            dfs_entries.append(module.extract_texts(le.entry.entry_id, le.entry.dataset.id))
-    df = df.merge(pd.concat(dfs_entries, ignore_index=True), how="left", on="entry_id")
+        if le.is_deleted or le.entry.id in seen_entries:
+            continue
+        seen_entries.add(le.entry.id)
+        module = getattr(entry_types, le.entry.type)
+        dfs_entries.append(module.extract_texts(le.entry.entry_id, le.entry.dataset.id))
+    if dfs_entries:
+        df = df.merge(pd.concat(dfs_entries, ignore_index=True), how="left", on="entry_id")
     return Response(
         df.to_csv(index=False),
         mimetype="text/csv",

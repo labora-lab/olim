@@ -1,3 +1,55 @@
+{# Buttons/inputs of one label for one value owner; scope is "12" (own) or "12-u5" (user 5) #}
+{% macro label_controls(label, entry, labels_values, scope, hidden_labels, show_hidden, valid_entry) %}
+    {% if label.label_type %}
+        <!-- Render label type specific template -->
+        {% set label_type_module = get_label_type_module(label.label_type) %}
+        {{ label_type_module.render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry, label_scope=scope) | safe }}
+    {% else %}
+        <!-- Fallback to default sim/não buttons if no label type is configured -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-2">
+            {% set fallback_config = [("sim", "icon", "check-circle-fill", "green"), ("não", "icon", "x-circle-fill", "red")] %}
+            {% for label_str, type, icon, color in fallback_config %}
+            <!-- Selected State Button -->
+            <button type="button" onclick="addEntryLabel({{ entry.id }}, '{{ scope }}', '')"
+                id="{{ label_str | replace(' ', '_') }}_unsel_{{ scope }}"
+                data-tooltip-target="tooltip-unsel-{{ scope }}-{{ loop.index }}" data-tooltip-placement="top"
+                class="relative inline-flex items-center justify-center px-3 py-2.5 text-sm font-medium text-white bg-{{ color }}-600 border-2 border-{{ color }}-600 rounded-lg hover:bg-{{ color }}-700 hover:border-{{ color }}-700 focus:outline-none focus:ring-2 focus:ring-{{ color }}-200 transition-all duration-200 shadow-sm{% if labels_values.get(label.id) != label_str %} hidden{% endif %}">
+                {% if type == 'text' %}
+                <span class="font-bold mr-2">{{ icon }}</span>
+                {% else %}
+                <i class="bi bi-{{ icon }} mr-2"></i>
+                {% endif %}
+                <span>{{ label_str }}</span>
+            </button>
+            <div id="tooltip-unsel-{{ scope }}-{{ loop.index }}" role="tooltip"
+                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                {{ _('Click to unmark as "{label_str}"').format(label_str=label_str) }}
+                <div class="tooltip-arrow" data-popper-arrow></div>
+            </div>
+
+            <!-- Unselected State Button -->
+            <button type="button" onclick="addEntryLabel({{ entry.id }}, '{{ scope }}', '{{ label_str }}')"
+                id="{{ label_str | replace(' ', '_') }}_sel_{{ scope }}"
+                data-tooltip-target="tooltip-sel-{{ scope }}-{{ loop.index }}" data-tooltip-placement="top"
+                class="inline-flex items-center justify-center px-3 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-{{ color }}-50 hover:border-{{ color }}-300 hover:text-{{ color }}-700 focus:outline-none focus:ring-2 focus:ring-{{ color }}-200 transition-all duration-200 shadow-sm{% if labels_values.get(label.id) == label_str %} hidden{% endif %}">
+                {% if type == 'text' %}
+                <span class="font-bold mr-2 opacity-60">{{ icon }}</span>
+                {% else %}
+                <i class="bi bi-{{ icon }} mr-2 opacity-60"></i>
+                {% endif %}
+                <span>{{ label_str }}</span>
+                <i class="bi bi-circle ml-2 text-gray-400"></i>
+            </button>
+            <div id="tooltip-sel-{{ scope }}-{{ loop.index }}" role="tooltip"
+                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
+                {{ _('Click to mark as "{label_str}"').format(label_str=label_str) }}
+                <div class="tooltip-arrow" data-popper-arrow></div>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endmacro %}
+
 {% macro labels_menu(label, entry, labels_rev, labels_values, hidden_labels, show_hidden, valid_entry) %}
 <div id="label_{{ label.id }}"
     data-filled="{{ 'true' if labels_values.get(label.id) else 'false' }}"
@@ -39,54 +91,24 @@
         </div>
     </div>
     {% if valid_entry %}
-    {% if label.label_type %}
-        <!-- Render label type specific template -->
-        {% set label_type_module = get_label_type_module(label.label_type) %}
-        {{ label_type_module.render(label, entry, labels_values, hidden_labels, show_hidden, valid_entry) | safe }}
-    {% else %}
-        <!-- Fallback to default sim/não buttons if no label type is configured -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-2">
-            {% set fallback_config = [("sim", "icon", "check-circle-fill", "green"), ("não", "icon", "x-circle-fill", "red")] %}
-            {% for label_str, type, icon, color in fallback_config %}
-            <!-- Selected State Button -->
-            <button type="button" onclick="addEntryLabel({{ entry.id }}, {{ label.id }}, '')"
-                id="{{ label_str | replace(' ', '_') }}_unsel_{{ label.id }}"
-                data-tooltip-target="tooltip-unsel-{{ label.id }}-{{ loop.index }}" data-tooltip-placement="top"
-                class="relative inline-flex items-center justify-center px-3 py-2.5 text-sm font-medium text-white bg-{{ color }}-600 border-2 border-{{ color }}-600 rounded-lg hover:bg-{{ color }}-700 hover:border-{{ color }}-700 focus:outline-none focus:ring-2 focus:ring-{{ color }}-200 transition-all duration-200 shadow-sm{% if labels_values.get(label.id) != label_str %} hidden{% endif %}">
-                {% if type == 'text' %}
-                <span class="font-bold mr-2">{{ icon }}</span>
-                {% else %}
-                <i class="bi bi-{{ icon }} mr-2"></i>
-                {% endif %}
-                <span>{{ label_str }}</span>
-            </button>
-            <div id="tooltip-unsel-{{ label.id }}-{{ loop.index }}" role="tooltip"
-                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
-                {{ _('Click to unmark as "{label_str}"').format(label_str=label_str) }}
-                <div class="tooltip-arrow" data-popper-arrow></div>
-            </div>
+    {{ label_controls(label, entry, labels_values, label.id|string, hidden_labels, show_hidden, valid_entry) }}
 
-            <!-- Unselected State Button -->
-            <button type="button" onclick="addEntryLabel({{ entry.id }}, {{ label.id }}, '{{ label_str }}')"
-                id="{{ label_str | replace(' ', '_') }}_sel_{{ label.id }}"
-                data-tooltip-target="tooltip-sel-{{ label.id }}-{{ loop.index }}" data-tooltip-placement="top"
-                class="inline-flex items-center justify-center px-3 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-{{ color }}-50 hover:border-{{ color }}-300 hover:text-{{ color }}-700 focus:outline-none focus:ring-2 focus:ring-{{ color }}-200 transition-all duration-200 shadow-sm{% if labels_values.get(label.id) == label_str %} hidden{% endif %}">
-                {% if type == 'text' %}
-                <span class="font-bold mr-2 opacity-60">{{ icon }}</span>
-                {% else %}
-                <i class="bi bi-{{ icon }} mr-2 opacity-60"></i>
-                {% endif %}
-                <span>{{ label_str }}</span>
-                <i class="bi bi-circle ml-2 text-gray-400"></i>
+    {# Admins see every other user's value when label values are isolated per user #}
+    {% for other in other_users_label_values(entry, label.id) %}
+    {% set scope = label.id ~ '-u' ~ other.user.id %}
+    <div id="label_{{ scope }}" data-filled="true" class="mt-4 pt-3 border-t border-dashed border-gray-300">
+        <div class="flex items-center justify-between mb-2">
+            <span class="inline-flex items-center text-xs font-medium text-gray-600">
+                <i class="bi bi-person-circle mr-1"></i>{{ other.user.name or other.user.username }}
+            </span>
+            <button type="button" onclick="clearUserLabel({{ entry.id }}, '{{ scope }}')"
+                class="inline-flex items-center text-xs text-gray-500 hover:text-red-600 transition-colors">
+                <i class="bi bi-person-x mr-1"></i>{{ _('Clear this user') }}
             </button>
-            <div id="tooltip-sel-{{ label.id }}-{{ loop.index }}" role="tooltip"
-                class="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-xs opacity-0 tooltip">
-                {{ _('Click to mark as "{label_str}"').format(label_str=label_str) }}
-                <div class="tooltip-arrow" data-popper-arrow></div>
-            </div>
-            {% endfor %}
         </div>
-    {% endif %}
+        {{ label_controls(label, entry, {label.id: other.value}, scope, hidden_labels, show_hidden, valid_entry) }}
+    </div>
+    {% endfor %}
     {% endif %}
 </div>
 {% endmacro %}

@@ -92,6 +92,24 @@ def _build_labels_values(label_entries) -> dict:
     return {le.label_id: le.value for le in label_entries if not le.is_deleted}
 
 
+def other_users_label_values(entry, label_id: int) -> list[dict]:
+    """Other users' values of a label on an entry, for admins when values are isolated.
+
+    Returns:
+        [{"user": User, "value": str}] sorted by user name, one per user (their
+        current value); empty when isolation is off or the viewer isn't an admin.
+    """
+    if session.get("role") != "admin" or not is_label_isolation_enabled():
+        return []
+    user_id = session.get("user_id")
+    latest = {}
+    for le in sorted(entry.labels, key=lambda le: le.created):
+        if le.is_deleted or le.label_id != label_id or le.created_by == user_id:
+            continue
+        latest[le.created_by] = {"user": le.creator, "value": le.value}
+    return sorted(latest.values(), key=lambda v: (v["user"].name or v["user"].username).lower())
+
+
 def render_entry(entry_id: str | None, dataset_id: int | None, data: dict | None = None) -> dict:
     if data is None:
         data = {}

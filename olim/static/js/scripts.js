@@ -254,12 +254,32 @@ function retractAll() {
 }
 
 // Entry-specific label management functions
-function addEntryLabel(entryId, labelId, value) {
+// A label "scope" identifies one set of label buttons on the page: "12" is the
+// current user's value of label 12, "12-u5" is user 5's value (shown to admins
+// when label values are isolated per user).
+function labelCommandArgs(scope) {
+    const [labelId, forUser] = String(scope).split('-u');
+    const args = ['label_id=' + labelId];
+    if (forUser) args.push('for_user=' + forUser);
+    return args;
+}
+
+function addEntryLabel(entryId, scope, value) {
     run_command('add-label', [
         'entry_id=' + entryId,
-        'label_id=' + labelId,
-        'value=' + value,
-        'callback=markLabel("' + labelId + '", "' + value + '");'
+        ...labelCommandArgs(scope),
+        'value=' + encodeURIComponent(value),
+        'callback=' + encodeURIComponent('markLabel(' + JSON.stringify(String(scope)) + ', ' + JSON.stringify(value) + ');')
+    ]);
+}
+
+// Remove another user's value and its buttons (admin view)
+function clearUserLabel(entryId, scope) {
+    run_command('add-label', [
+        'entry_id=' + entryId,
+        ...labelCommandArgs(scope),
+        'value=',
+        'callback=' + encodeURIComponent('document.getElementById(' + JSON.stringify('label_' + scope) + ')?.remove();')
     ]);
 }
 

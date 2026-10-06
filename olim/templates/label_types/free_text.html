@@ -1,14 +1,17 @@
+{# label_scope: "12" for the viewer's own value, "12-u5" for user 5's (admin view) #}
+{% set scope = (label_scope if label_scope is defined and label_scope else label.id)|string %}
+{% set scope_js = scope|replace('-', '_') %}
 <!-- Open Text label template with self-contained JavaScript -->
 <div class="grid grid-cols-1 gap-2">
     <!-- Current text value display (if exists) -->
     {% set current_value = labels_values.get(label.id, '') %}
 
     <!-- Show current value if it exists -->
-    <div id="current_value_{{ label.id }}" {% if not current_value %}style="display: none;"{% endif %}>
+    <div id="current_value_{{ scope }}" {% if not current_value %}style="display: none;"{% endif %}>
         <div class="inline-flex items-center justify-center px-3 py-2.5 text-sm font-medium text-white bg-blue-600 border-2 border-blue-600 rounded-lg shadow-sm">
             <i class="bi bi-chat-text mr-2"></i>
-            <span id="current_text_{{ label.id }}">{{ current_value }}</span>
-            <button type="button" onclick="clearOpenTextLabel({{ entry.id }}, {{ label.id }})"
+            <span id="current_text_{{ scope }}">{{ current_value }}</span>
+            <button type="button" onclick="clearOpenTextLabel({{ entry.id }}, '{{ scope }}')"
                 class="ml-2 text-blue-200 hover:text-white">
                 <i class="bi bi-x-circle"></i>
             </button>
@@ -16,18 +19,18 @@
     </div>
 
     <!-- Input form (show when no value or when editing) -->
-    <div id="input_form_{{ label.id }}" {% if current_value %}style="display: none;"{% endif %}>
+    <div id="input_form_{{ scope }}" {% if current_value %}style="display: none;"{% endif %}>
         <div class="flex space-x-2">
-            <input type="text" id="text_input_{{ label.id }}"
+            <input type="text" id="text_input_{{ scope }}"
                 class="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
                 placeholder="{{ _('Enter text...') }}" value="{{ current_value }}">
-            <button type="button" onclick="submitOpenTextLabel({{ entry.id }}, {{ label.id }})"
+            <button type="button" onclick="submitOpenTextLabel({{ entry.id }}, '{{ scope }}')"
                 class="px-4 py-2.5 text-sm font-medium text-white bg-green-600 border border-green-600 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-200 transition-colors">
                 <i class="bi bi-check-circle mr-1"></i>
                 {{ _('Save') }}
             </button>
             {% if current_value %}
-            <button type="button" onclick="cancelEditOpenText({{ label.id }})"
+            <button type="button" onclick="cancelEditOpenText('{{ scope }}')"
                 class="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 transition-colors">
                 <i class="bi bi-x mr-1"></i>
                 {{ _('Cancel') }}
@@ -37,8 +40,8 @@
     </div>
 
     <!-- Edit button (show when value exists) -->
-    <div id="edit_button_{{ label.id }}" {% if not current_value %}style="display: none;"{% endif %}>
-        <button type="button" onclick="editOpenTextLabel({{ label.id }})"
+    <div id="edit_button_{{ scope }}" {% if not current_value %}style="display: none;"{% endif %}>
+        <button type="button" onclick="editOpenTextLabel('{{ scope }}')"
             class="inline-flex items-center justify-center px-3 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-200 transition-all duration-200 shadow-sm">
             <i class="bi bi-pencil mr-2"></i>
             {{ _('Edit') }}

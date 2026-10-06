@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2026-10-06 19:20-0300\n"
+"POT-Creation-Date: 2026-10-06 19:48-0300\n"
 "PO-Revision-Date: 2025-03-20 20:21+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: en_US\n"
@@ -184,53 +184,57 @@ msgstr ""
 msgid "No label passed"
 msgstr ""
 
-#: olim/commands.py:39 olim/entry_types/patient/commands.py:48
+#: olim/commands.py:41
+msgid "Only administrators can change another user's label values"
+msgstr ""
+
+#: olim/commands.py:59 olim/entry_types/patient/commands.py:48
 #: olim/entry_types/patient/commands.py:76
 #: olim/entry_types/patient/commands.py:101
 #: olim/entry_types/patient/commands.py:126
 msgid "Failed writing to database"
 msgstr ""
 
-#: olim/commands.py:43
+#: olim/commands.py:63
 #, python-brace-format
 msgid "Removed the label {label} for the entry {entry_id}"
 msgstr ""
 
-#: olim/commands.py:63
+#: olim/commands.py:83
 msgid "Missing data: label"
 msgstr ""
 
-#: olim/commands.py:72
+#: olim/commands.py:92
 msgid "Error hidding label."
 msgstr ""
 
-#: olim/commands.py:78
+#: olim/commands.py:98
 #, python-brace-format
 msgid "Label {label} hidden"
 msgstr ""
 
-#: olim/commands.py:84
+#: olim/commands.py:104
 #, python-brace-format
 msgid "Label {label} unhidden"
 msgstr ""
 
-#: olim/commands.py:94
+#: olim/commands.py:114
 msgid "Missing data"
 msgstr ""
 
-#: olim/commands.py:102
+#: olim/commands.py:122
 msgid "Invalid data"
 msgstr ""
 
-#: olim/commands.py:108
+#: olim/commands.py:128
 msgid "Invalid highlight data format"
 msgstr ""
 
-#: olim/commands.py:128
+#: olim/commands.py:148
 msgid "No command passed"
 msgstr ""
 
-#: olim/commands.py:130
+#: olim/commands.py:150
 #, python-brace-format
 msgid "Command {command} not found"
 msgstr ""
@@ -433,12 +437,12 @@ msgstr ""
 msgid "An unexpected error occurred."
 msgstr ""
 
-#: olim/functions.py:126
+#: olim/functions.py:144
 #, python-brace-format
 msgid "Error rendering entry {entry_id}!"
 msgstr ""
 
-#: olim/functions.py:132 olim/learning_tasks/states.py:702
+#: olim/functions.py:150 olim/learning_tasks/states.py:702
 #, python-brace-format
 msgid "Entry {entry_id} not found"
 msgstr ""
@@ -453,116 +457,116 @@ msgstr ""
 msgid "Ticket sent. Thank you very much."
 msgstr ""
 
-#: olim/labels.py:116 olim/labels.py:196
+#: olim/labels.py:117 olim/labels.py:203
 #, python-brace-format
 msgid "Label {label_name} successfully created"
 msgstr ""
 
-#: olim/labels.py:142 olim/labels.py:582 olim/labels.py:585
+#: olim/labels.py:143 olim/labels.py:595 olim/labels.py:598
 msgid "Invalid dataset selection"
 msgstr ""
 
-#: olim/labels.py:146 olim/labels.py:563
+#: olim/labels.py:147 olim/labels.py:576
 msgid "No datasets available for this project"
 msgstr ""
 
-#: olim/labels.py:185
+#: olim/labels.py:192
 msgid "Enter a name for the new label."
 msgstr ""
 
-#: olim/labels.py:233 olim/labels.py:256 olim/labels.py:306 olim/labels.py:336
-#: olim/labels.py:366
+#: olim/labels.py:240 olim/labels.py:263 olim/labels.py:319 olim/labels.py:349
+#: olim/labels.py:379
 #, python-brace-format
 msgid "Label id: {label_id} not found!"
 msgstr ""
 
-#: olim/labels.py:245
+#: olim/labels.py:252
 #, python-brace-format
 msgid "Label {label_name} sucessfully deleted"
 msgstr ""
 
-#: olim/labels.py:267 olim/labels.py:317 olim/labels.py:347 olim/labels.py:379
-#: olim/labels.py:394 olim/labels.py:472 olim/labels.py:536
+#: olim/labels.py:274 olim/labels.py:330 olim/labels.py:360 olim/labels.py:392
+#: olim/labels.py:407 olim/labels.py:485 olim/labels.py:549
 msgid "Label not found"
 msgstr ""
 
-#: olim/labels.py:355
+#: olim/labels.py:368
 #, python-brace-format
 msgid "Label: {label_name}"
 msgstr ""
 
-#: olim/labels.py:389 olim/labels.py:467 olim/labels.py:531
+#: olim/labels.py:402 olim/labels.py:480 olim/labels.py:544
 msgid "Admin access required"
 msgstr ""
 
-#: olim/labels.py:446
+#: olim/labels.py:459
 msgid "Learner parameters updated successfully"
 msgstr ""
 
-#: olim/labels.py:450
+#: olim/labels.py:463
 #, python-brace-format
 msgid "Error converting parameter values: {error}"
 msgstr ""
 
-#: olim/labels.py:455
+#: olim/labels.py:468
 #, python-brace-format
 msgid "Error updating parameters: {error}"
 msgstr ""
 
-#: olim/labels.py:476 olim/labels.py:481
+#: olim/labels.py:489 olim/labels.py:494
 msgid "No file selected"
 msgstr ""
 
-#: olim/labels.py:493
+#: olim/labels.py:506
 #, python-brace-format
 msgid "Missing required columns: {columns}"
 msgstr ""
 
-#: olim/labels.py:517
+#: olim/labels.py:530
 #, python-brace-format
 msgid "Successfully uploaded {count} auto-labels"
 msgstr ""
 
-#: olim/labels.py:522
+#: olim/labels.py:535
 #, python-brace-format
 msgid "Error processing file: {error}"
 msgstr ""
 
-#: olim/labels.py:544
+#: olim/labels.py:557
 msgid "Label settings updated successfully"
 msgstr ""
 
-#: olim/labels.py:546
+#: olim/labels.py:559
 msgid "Invalid settings format"
 msgstr ""
 
-#: olim/labels.py:548
+#: olim/labels.py:561
 msgid "No settings provided"
 msgstr ""
 
-#: olim/labels.py:574
+#: olim/labels.py:587
 msgid "Dataset selection required"
 msgstr ""
 
-#: olim/labels.py:592
+#: olim/labels.py:605
 #, python-brace-format
 msgid "Could not read the labelling file: {error}"
 msgstr ""
 
-#: olim/labels.py:673
+#: olim/labels.py:686
 msgid "This label upload has expired. Please upload the file again."
 msgstr ""
 
-#: olim/labels.py:689
+#: olim/labels.py:702
 msgid "Label upload cancelled"
 msgstr ""
 
-#: olim/labels.py:708
+#: olim/labels.py:721
 #, python-brace-format
 msgid "Add at least one option to the label {name}."
 msgstr ""
 
-#: olim/labels.py:725
+#: olim/labels.py:738
 #, python-brace-format
 msgid "Rows of these labels were not uploaded: {names}"
 msgstr ""
@@ -2114,8 +2118,8 @@ msgstr ""
 #: olim/templates/datasets/_delete_modal.html:33 olim/templates/hidden.html:180
 #: olim/templates/label-settings.html:296
 #: olim/templates/label-upload-configure.html:71
-#: olim/templates/label_types/free_text.html:33
-#: olim/templates/label_types/long_text.html:30
+#: olim/templates/label_types/free_text.html:36
+#: olim/templates/label_types/long_text.html:33
 #: olim/templates/learning-tasks.html:341
 #: olim/templates/macros/upload-form.html:281
 #: olim/templates/models/create.html:76 olim/templates/projects.html:176
@@ -2664,9 +2668,9 @@ msgid "Role"
 msgstr ""
 
 #: olim/templates/datasets/list.html:81
-#: olim/templates/label_types/free_text.html:44
-#: olim/templates/label_types/long_text.html:39
-#: olim/templates/label_types/short_text.html:48 olim/templates/users.html:93
+#: olim/templates/label_types/free_text.html:47
+#: olim/templates/label_types/long_text.html:42
+#: olim/templates/label_types/short_text.html:51 olim/templates/users.html:93
 msgid "Edit"
 msgstr ""
 
@@ -3273,7 +3277,7 @@ msgstr ""
 #: olim/templates/label_types/yes_no.html:18
 #: olim/templates/label_types/yes_no_idk.html:18
 #: olim/templates/label_types/yes_no_unknown.html:18
-#: olim/templates/macros/labels-menu.html:65
+#: olim/templates/macros/labels-menu.html:26
 #, python-brace-format
 msgid "Click to unmark as \"{label_str}\""
 msgstr ""
@@ -3284,20 +3288,20 @@ msgstr ""
 #: olim/templates/label_types/yes_no.html:37
 #: olim/templates/label_types/yes_no_idk.html:37
 #: olim/templates/label_types/yes_no_unknown.html:37
-#: olim/templates/macros/labels-menu.html:84
+#: olim/templates/macros/labels-menu.html:45
 #, python-brace-format
 msgid "Click to mark as \"{label_str}\""
 msgstr ""
 
-#: olim/templates/label_types/free_text.html:23
-#: olim/templates/label_types/long_text.html:21
-#: olim/templates/label_types/short_text.html:19
+#: olim/templates/label_types/free_text.html:26
+#: olim/templates/label_types/long_text.html:24
+#: olim/templates/label_types/short_text.html:22
 msgid "Enter text..."
 msgstr ""
 
-#: olim/templates/label_types/free_text.html:27
-#: olim/templates/label_types/long_text.html:25
-#: olim/templates/label_types/short_text.html:24
+#: olim/templates/label_types/free_text.html:30
+#: olim/templates/label_types/long_text.html:28
+#: olim/templates/label_types/short_text.html:27
 #: olim/templates/models/detail.html:395
 msgid "Save"
 msgstr ""
@@ -3317,7 +3321,7 @@ msgstr ""
 msgid "Save settings"
 msgstr ""
 
-#: olim/templates/label_types/multiple_choice.html:34
+#: olim/templates/label_types/multiple_choice.html:37
 msgid "Clear"
 msgstr ""
 
@@ -3377,7 +3381,7 @@ msgstr ""
 msgid "{n} per row"
 msgstr ""
 
-#: olim/templates/label_types/short_text.html:40
+#: olim/templates/label_types/short_text.html:43
 msgid "Value does not match the required format."
 msgstr ""
 
@@ -4625,12 +4629,16 @@ msgid ""
 "instead."
 msgstr ""
 
-#: olim/templates/macros/labels-menu.html:22
+#: olim/templates/macros/labels-menu.html:74
 msgid "Hide this label"
 msgstr ""
 
-#: olim/templates/macros/labels-menu.html:34
+#: olim/templates/macros/labels-menu.html:86
 msgid "Show this label"
+msgstr ""
+
+#: olim/templates/macros/labels-menu.html:106
+msgid "Clear this user"
 msgstr ""
 
 #: olim/templates/macros/new-user-form.html:14

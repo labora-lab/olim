@@ -1,3 +1,5 @@
+{# label_scope: "12" for the viewer's own value, "12-u5" for user 5's (admin view) #}
+{% set scope = (label_scope if label_scope is defined and label_scope else label.id)|string %}
 {% set cols = items_per_line | default(2) %}
 <div class="grid gap-2" style="grid-template-columns: repeat({{ cols }}, minmax(0, 1fr));">
     {% for option_value, type, icon, color in label_config %}
@@ -5,8 +7,9 @@
     {% set helper = helper_map.get(option_value, '') if helper_map is defined else '' %}
 
     <button type="button"
-        onclick="toggleMultipleChoice({{ entry.id }}, {{ label.id }}, '{{ option_value }}', {{ 'true' if (single_select is defined and single_select) else 'false' }})"
-        id="{{ option_value | replace(' ', '_') | replace("'", '_') }}_{{ label.id }}"
+        onclick="toggleMultipleChoice({{ entry.id }}, '{{ scope }}', '{{ option_value }}', {{ 'true' if (single_select is defined and single_select) else 'false' }})"
+        id="{{ option_value | replace(' ', '_') | replace("'", '_') }}_{{ scope }}"
+        data-scope="{{ scope }}"
         data-option-value="{{ option_value }}"
         data-color="{{ color }}"
         data-selected="{{ 'true' if is_selected else 'false' }}"
@@ -28,7 +31,7 @@
 
 <div class="mt-3">
     <button type="button"
-        onclick="clearMultipleChoice({{ entry.id }}, {{ label.id }})"
+        onclick="clearMultipleChoice({{ entry.id }}, '{{ scope }}')"
         class="text-xs text-gray-500 hover:text-red-600 transition-colors duration-200">
         <i class="bi bi-x-circle mr-1"></i>
         {{ _('Clear') }}
@@ -36,11 +39,16 @@
 </div>
 
 <script>
-function toggleMultipleChoice(entryId, labelId, optionValue, singleSelect) {
+// labelId is the label scope: "12" (own value) or "12-u5" (user 5's value, admin view)
+function scopedOptionButtons(labelId) {
     const labelContainer = document.getElementById('label_' + labelId);
-    if (!labelContainer) return;
+    if (!labelContainer) return null;
+    return labelContainer.querySelectorAll('[data-option-value][data-scope="' + String(labelId) + '"]');
+}
 
-    const allButtons = labelContainer.querySelectorAll('[data-option-value]');
+function toggleMultipleChoice(entryId, labelId, optionValue, singleSelect) {
+    const allButtons = scopedOptionButtons(labelId);
+    if (!allButtons) return;
     let selectedValues = [];
 
     if (singleSelect) {
@@ -68,26 +76,25 @@ function toggleMultipleChoice(entryId, labelId, optionValue, singleSelect) {
     const valueJson = JSON.stringify(selectedValues);
     run_command('add-label', [
         'entry_id=' + entryId,
-        'label_id=' + labelId,
+        ...labelCommandArgs(labelId),
         'value=' + encodeURIComponent(valueJson),
-        'callback=updateMultipleChoiceUI(' + labelId + ', ' + JSON.stringify(selectedValues) + ');'
+        'callback=' + encodeURIComponent('updateMultipleChoiceUI(' + JSON.stringify(String(labelId)) + ', ' + JSON.stringify(selectedValues) + ');')
     ]);
 }
 
 function clearMultipleChoice(entryId, labelId) {
     run_command('add-label', [
         'entry_id=' + entryId,
-        'label_id=' + labelId,
+        ...labelCommandArgs(labelId),
         'value=',
-        'callback=updateMultipleChoiceUI(' + labelId + ', []);'
+        'callback=' + encodeURIComponent('updateMultipleChoiceUI(' + JSON.stringify(String(labelId)) + ', []);')
     ]);
 }
 
 function updateMultipleChoiceUI(labelId, selectedValues) {
     const labelContainer = document.getElementById('label_' + labelId);
-    if (!labelContainer) return;
-
-    const allButtons = labelContainer.querySelectorAll('[data-option-value]');
+    const allButtons = scopedOptionButtons(labelId);
+    if (!allButtons) return;
     allButtons.forEach(btn => {
         const value = btn.getAttribute('data-option-value');
         const color = btn.getAttribute('data-color') || 'blue';

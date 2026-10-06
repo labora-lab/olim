@@ -5,7 +5,14 @@ import io
 import json
 from collections.abc import Generator
 
-from ..database import Dataset, Label, get_label_values, iter_dataset_entries
+from ..database import (
+    Dataset,
+    Label,
+    get_label_users,
+    get_label_values,
+    get_label_values_by_user,
+    iter_dataset_entries,
+)
 from ..settings import ES_INDEX
 from .es import es_list_fields, es_search
 
@@ -54,12 +61,11 @@ def export_columns(dataset: Dataset, es_fields: list[str] | None = None) -> list
     return columns
 
 
-def label_headers(labels: list[Label], taken: list[str]) -> list[str]:
-    """One column name per label, made unique against the data columns."""
+def label_headers(names: list[str], taken: list[str]) -> list[str]:
+    """Label column names, made unique against the data columns and each other."""
     used = set(taken)
     headers = []
-    for label in labels:
-        name = label.name
+    for name in names:
         while name in used:
             name = f"{name} (label)"
         used.add(name)
@@ -67,15 +73,43 @@ def label_headers(labels: list[Label], taken: list[str]) -> list[str]:
     return headers
 
 
-def export_csv(datasets: list[Dataset], labels: list[Label]) -> Generator[str]:
+def label_columns(
+    labels: list[Label], users: dict[int, list] | None
+) -> list[tuple[str, int, int | None]]:
+    """The label columns of an export.
+
+    Args:
+        labels: Labels to export
+        users: {label_id: [User]} for one column per label and user (values
+            isolated per user), or None for one column per label
+
+    Returns:
+        [(column name, label_id, user_id or None)]; a label nobody has answered
+        still gets one (empty) column
+    """
+    columns = []
+    for label in labels:
+        label_users = (users or {}).get(label.id, [])
+        if users is None or not label_users:
+            columns.append((label.name, label.id, None))
+            continue
+        for user in label_users:
+            columns.append((f"{label.name} ({user.username})", label.id, user.id))
+    return columns
+
+
+def export_csv(
+    datasets: list[Dataset], labels: list[Label], per_user: bool = False
+) -> Generator[str]:
     """Stream a CSV with every entry of the datasets and the value of each label.
 
     The data columns are those of the original file(s), in file order; with
     several datasets a leading "dataset" column says where each row comes from
     and the columns are the union of all files. Label values are written as
     stored, so multi-select answers keep the ["A", "B"] format the label upload
-    accepts. Entries are read in batches, so memory use doesn't grow with the
-    dataset size.
+    accepts. With per_user (label values isolated per user) each label gets one
+    column per user who answered it, named "Label (username)". Entries are read
+    in batches, so memory use doesn't grow with the dataset size.
     """
     layouts = {d.id: export_columns(d) for d in datasets}
     with_dataset = len(datasets) > 1
@@ -87,8 +121,10 @@ def export_csv(datasets: list[Dataset], labels: list[Label]) -> Generator[str]:
                 data_headers.append(header)
     if with_dataset:
         data_headers.insert(0, "dataset")
-    headers = data_headers + label_headers(labels, data_headers)
     label_ids = [label.id for label in labels]
+    users = get_label_users([d.id for d in datasets], label_ids) if per_user else None
+    columns = label_columns(labels, users)
+    headers = data_headers + label_headers([name for name, _lid, _uid in columns], data_headers)
 
     buffer = io.StringIO()
     writer = csv.writer(buffer)
@@ -110,7 +146,9 @@ def export_csv(datasets: list[Dataset], labels: list[Label]) -> Generator[str]:
             ids = [e.entry_id for e in entries]
             hits = es_search(index=index, query={"ids": {"values": ids}}, size=len(ids))
             docs = {hit["_id"]: hit["_source"] for hit in hits["hits"]["hits"]}
-            values = get_label_values([e.id for e in entries], label_ids)
+            entry_pks = [e.id for e in entries]
+            by_user = get_label_values_by_user(entry_pks, label_ids) if per_user else {}
+            latest = {} if per_user else get_label_values(entry_pks, label_ids)
 
             for entry in entries:
                 doc = docs.get(entry.entry_id, {})
@@ -119,6 +157,14 @@ def export_csv(datasets: list[Dataset], labels: list[Label]) -> Generator[str]:
                     row["dataset"] = dataset.name
                 for header, source in layout:
                     row[header] = entry.entry_id if source == "_id" else cell_text(doc.get(source))
-                labels_part = [cell_text(values.get((entry.id, lid))) for lid in label_ids]
+                if per_user:
+                    labels_part = [
+                        cell_text(by_user.get((entry.id, lid, uid))) if uid else ""
+                        for _name, lid, uid in columns
+                    ]
+                else:
+                    labels_part = [
+                        cell_text(latest.get((entry.id, lid))) for _n, lid, _u in columns
+                    ]
                 writer.writerow([row[h] for h in data_headers] + labels_part)
             yield flush()
