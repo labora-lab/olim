@@ -1,5 +1,6 @@
 """Dataset management: list, edit, delete, append data and edit entries."""
 
+import json
 import re
 from pathlib import Path
 from typing import Any
@@ -224,6 +225,7 @@ def dataset_edit(dataset_id: int) -> ...:
         ),
         CHUNK_SIZE=CHUNK_SIZE,
         page_sizes=PAGE_SIZES,
+        grid_fields=display_fields(dataset, es_fields),
     )
 
 
@@ -236,25 +238,51 @@ def dataset_delete(dataset_id: int) -> ...:
     return redirect(url_for("datasets"))
 
 
+def cell_text(value: object) -> str:
+    """Show a stored value as the text a cell is edited as."""
+    if value is None:
+        return ""
+    if isinstance(value, dict | list):
+        return json.dumps(value, ensure_ascii=False)
+    return str(value)
+
+
+def build_grid_rows(
+    entries: list, docs: dict[str, dict], fields: list[dict[str, str]]
+) -> list[dict[str, Any]]:
+    """Rows for the entries grid: the entry ID plus each field as text.
+
+    Entries missing from the search index are flagged so the grid keeps them
+    read-only instead of showing editable blanks.
+    """
+    rows = []
+    for entry in entries:
+        doc = docs.get(entry.entry_id)
+        row: dict[str, Any] = {"_id": entry.entry_id, "_missing": doc is None}
+        for f in fields:
+            row[f["field"]] = cell_text(doc.get(f["field"])) if doc else ""
+        rows.append(row)
+    return rows
+
+
 @app.route("/datasets/<int:dataset_id>/entries")
 def dataset_entries(dataset_id: int) -> ...:
-    """HTMX partial: one page of the dataset's entries as an editable table."""
+    """One page of the dataset's entries for the editing grid (Tabulator remote pagination).
+
+    Query: page (1-based), size (rows per page). Returns {"last_page", "last_row", "data"}.
+    """
     dataset = _get_dataset_or_404(dataset_id)
 
-    per_page = request.args.get("per_page", 25, type=int)
-    if per_page not in PAGE_SIZES:
-        per_page = 25
+    size = request.args.get("size", 25, type=int)
+    if size not in PAGE_SIZES:
+        size = 25
     page = max(request.args.get("page", 1, type=int), 1)
 
-    entries, total = get_dataset_entries_page(dataset_id, (page - 1) * per_page, per_page)
-    pages = max((total + per_page - 1) // per_page, 1)
-    if page > pages:
-        # Requested page is past the end (e.g. stale link): show the last one
-        page = pages
-        entries, total = get_dataset_entries_page(dataset_id, (page - 1) * per_page, per_page)
+    entries, total = get_dataset_entries_page(dataset_id, (page - 1) * size, size)
+    last_page = max((total + size - 1) // size, 1)
 
-    error = None
     docs: dict[str, dict] = {}
+    error = None
     es_fields = None
     if entries:
         ids = [e.entry_id for e in entries]
@@ -270,17 +298,10 @@ def dataset_entries(dataset_id: int) -> ...:
         if not dataset.columns:
             es_fields = _es_fields(dataset_id)
 
-    return render_template(
-        "datasets/_entries_table.html",
-        dataset=dataset,
-        entries=entries,
-        docs=docs,
-        fields=display_fields(dataset, es_fields or []),
-        page=page,
-        pages=pages,
-        per_page=per_page,
-        total=total,
-        page_sizes=PAGE_SIZES,
+    return jsonify(
+        last_page=last_page,
+        last_row=total,
+        data=build_grid_rows(entries, docs, display_fields(dataset, es_fields or [])),
         error=error,
     )
 

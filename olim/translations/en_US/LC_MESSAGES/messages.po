@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2026-10-06 18:58-0300\n"
+"POT-Creation-Date: 2026-10-06 19:09-0300\n"
 "PO-Revision-Date: 2025-03-20 20:21+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: en_US\n"
@@ -235,97 +235,97 @@ msgstr ""
 msgid "Command {command} not found"
 msgstr ""
 
-#: olim/datasets.py:103
+#: olim/datasets.py:104
 msgid "Select the ID and text columns of the file."
 msgstr ""
 
-#: olim/datasets.py:105
+#: olim/datasets.py:106
 msgid "The ID and text columns must be different."
 msgstr ""
 
-#: olim/datasets.py:123 olim/upload_data.py:269
+#: olim/datasets.py:124 olim/upload_data.py:269
 msgid "File upload incomplete"
 msgstr ""
 
-#: olim/datasets.py:127 olim/tasks/upload_data.py:765
+#: olim/datasets.py:128 olim/tasks/upload_data.py:765
 msgid "Uploaded file not found. Please try uploading again."
 msgstr ""
 
-#: olim/datasets.py:140
+#: olim/datasets.py:141
 msgid "Could not read the file's columns. Check the separator and encoding."
 msgstr ""
 
-#: olim/datasets.py:197 olim/upload_data.py:189
+#: olim/datasets.py:198 olim/upload_data.py:189
 msgid "Dataset name is required"
 msgstr ""
 
-#: olim/datasets.py:204
+#: olim/datasets.py:205
 #, python-brace-format
 msgid "Error updating dataset: {error}"
 msgstr ""
 
-#: olim/datasets.py:206
+#: olim/datasets.py:207
 msgid "Dataset updated successfully"
 msgstr ""
 
-#: olim/datasets.py:235
+#: olim/datasets.py:237
 #, python-brace-format
 msgid "Dataset '{name}' deleted"
 msgstr ""
 
-#: olim/datasets.py:269
+#: olim/datasets.py:297
 #, python-brace-format
 msgid "Could not load entries from the search engine: {error}"
 msgstr ""
 
-#: olim/datasets.py:295
+#: olim/datasets.py:316
 msgid "No changes to save."
 msgstr ""
 
-#: olim/datasets.py:298
+#: olim/datasets.py:319
 #, python-brace-format
 msgid "Too many entries changed at once (maximum {max})."
 msgstr ""
 
-#: olim/datasets.py:307
+#: olim/datasets.py:328
 msgid "Invalid change format."
-msgstr ""
-
-#: olim/datasets.py:311
-#, python-brace-format
-msgid "These fields can't be edited: {fields}"
-msgstr ""
-
-#: olim/datasets.py:324
-#, python-brace-format
-msgid "These entries don't belong to this dataset: {ids}"
 msgstr ""
 
 #: olim/datasets.py:332
 #, python-brace-format
+msgid "These fields can't be edited: {fields}"
+msgstr ""
+
+#: olim/datasets.py:345
+#, python-brace-format
+msgid "These entries don't belong to this dataset: {ids}"
+msgstr ""
+
+#: olim/datasets.py:353
+#, python-brace-format
 msgid "Could not save changes: {error}"
 msgstr ""
 
-#: olim/datasets.py:350 olim/datasets.py:367
+#: olim/datasets.py:371 olim/datasets.py:388
 #, python-brace-format
 msgid "Validation failed: {error}"
 msgstr ""
 
-#: olim/datasets.py:360 olim/templates/datasets/edit.html:86
+#: olim/datasets.py:381 olim/templates/datasets/edit.html:86
 msgid "Adding data is not supported for this data format."
 msgstr ""
 
-#: olim/datasets.py:375
+#: olim/datasets.py:396
 #, python-brace-format
 msgid "Adding data to dataset {name}"
 msgstr ""
 
-#: olim/datasets.py:391 olim/upload_data.py:300
+#: olim/datasets.py:412 olim/upload_data.py:300
 #, python-brace-format
 msgid "Error starting upload: {error}"
 msgstr ""
 
-#: olim/datasets.py:394
+#: olim/datasets.py:415
 msgid "Adding data started. The new entries will appear when processing finishes."
 msgstr ""
 
@@ -1869,7 +1869,7 @@ msgstr ""
 msgid "Text Search"
 msgstr ""
 
-#: olim/templates/data-navigation.html:37 olim/templates/datasets/edit.html:206
+#: olim/templates/data-navigation.html:37
 msgid "Loading..."
 msgstr ""
 
@@ -1877,7 +1877,7 @@ msgstr ""
 msgid "Entry "
 msgstr ""
 
-#: olim/templates/entry.html:22
+#: olim/templates/datasets/edit.html:270 olim/templates/entry.html:22
 #: olim/templates/learning_tasks/active_learning_loop.html:105
 #: olim/templates/learning_tasks/al_label_select.html:31
 #: olim/templates/learning_tasks/cold_start_search_setup.html:55
@@ -1891,7 +1891,7 @@ msgstr ""
 msgid "Previous"
 msgstr ""
 
-#: olim/templates/entry.html:34
+#: olim/templates/datasets/edit.html:272 olim/templates/entry.html:34
 #: olim/templates/learning_tasks/label_entry.html:50
 #: olim/templates/learning_tasks/ollama_auto_label.html:328
 #: olim/templates/learning_tasks/ollama_queue_setup.html:93
@@ -2869,52 +2869,6 @@ msgstr ""
 msgid "Delete Dataset"
 msgstr ""
 
-#: olim/templates/datasets/_entries_table.html:12
-msgid "This dataset has no entries yet."
-msgstr ""
-
-#: olim/templates/datasets/_entries_table.html:19
-msgid "ID"
-msgstr ""
-
-#: olim/templates/datasets/_entries_table.html:34
-msgid "Not found in the search engine"
-msgstr ""
-
-#: olim/templates/datasets/_entries_table.html:62
-msgid "Rows per page"
-msgstr ""
-
-#: olim/templates/datasets/_entries_table.html:70
-#, python-format
-msgid "%(total)s entries"
-msgstr ""
-
-#: olim/templates/datasets/_entries_table.html:72
-msgid "Pagination"
-msgstr ""
-
-#: olim/templates/datasets/_entries_table.html:81
-msgid "First page"
-msgstr ""
-
-#: olim/templates/datasets/_entries_table.html:82
-msgid "Previous page"
-msgstr ""
-
-#: olim/templates/datasets/_entries_table.html:83
-#, python-format
-msgid "Page %(page)s of %(pages)s"
-msgstr ""
-
-#: olim/templates/datasets/_entries_table.html:84
-msgid "Next page"
-msgstr ""
-
-#: olim/templates/datasets/_entries_table.html:85
-msgid "Last page"
-msgstr ""
-
 #: olim/templates/datasets/edit.html:2 olim/templates/datasets/list.html:2
 #: olim/templates/datasets/list.html:9
 msgid "Datasets"
@@ -3006,108 +2960,185 @@ msgstr ""
 msgid "Data"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:190
+#: olim/templates/datasets/edit.html:187
+msgid "Undo"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:191
+msgid "Redo"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:198
 msgid "Discard"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:195
+#: olim/templates/datasets/edit.html:203
 msgid "Save changes"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:200
+#: olim/templates/datasets/edit.html:208
 msgid ""
-"Edits are only stored when you click \"Save changes\". Existing model "
-"predictions are not recalculated automatically."
+"Click a cell to edit it. Edits are kept while you change pages and are "
+"only stored when you click \"Save changes\". Existing model predictions "
+"are not recalculated automatically."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:217 olim/templates/datasets/list.html:115
+#: olim/templates/datasets/edit.html:223 olim/templates/datasets/list.html:115
 msgid "Are you sure you want to delete dataset"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:218 olim/templates/datasets/list.html:116
+#: olim/templates/datasets/edit.html:224 olim/templates/datasets/list.html:116
 msgid ""
 "It will be hidden from all projects. Its data is kept and can be restored"
 " by an administrator."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:234
+#: olim/templates/datasets/edit.html:232
+msgid "ID"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:246
 #: olim/templates/macros/upload-form.html:728
 msgid "Preparing upload..."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:235
+#: olim/templates/datasets/edit.html:247
 #: olim/templates/macros/upload-form.html:741
 msgid "Uploading..."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:236
+#: olim/templates/datasets/edit.html:248
 #: olim/templates/macros/upload-form.html:648
 msgid "Processing file..."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:237
+#: olim/templates/datasets/edit.html:249
 #: olim/templates/macros/upload-form.html:712
 #: olim/templates/macros/upload-form.html:770
 msgid "Upload failed:"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:238
+#: olim/templates/datasets/edit.html:250
 msgid "File ready. Click \"Check file\" to validate it."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:239
+#: olim/templates/datasets/edit.html:251
 msgid "Checking file..."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:240
+#: olim/templates/datasets/edit.html:252
 msgid "Select a column"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:241
+#: olim/templates/datasets/edit.html:253
 msgid "Missing columns (present in the dataset, absent from the file):"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:242
+#: olim/templates/datasets/edit.html:254
 msgid "Unexpected columns (present in the file, absent from the dataset):"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:243
+#: olim/templates/datasets/edit.html:255
 msgid ""
 "The columns match. IDs are checked while the data is added: if an ID is "
 "missing or repeated, the import stops, everything added so far is removed"
 " and the task shows which row to fix."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:244
+#: olim/templates/datasets/edit.html:256
 msgid "Starting import..."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:245
+#: olim/templates/datasets/edit.html:257
 #, python-format
 msgid "%(count)s unsaved changes"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:246
+#: olim/templates/datasets/edit.html:258
 msgid "You have unsaved changes. Leave this page and discard them?"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:247
-msgid "You have unsaved changes on this page. Discard them and continue?"
+#: olim/templates/datasets/edit.html:259
+msgid "Discard all unsaved changes?"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:248
+#: olim/templates/datasets/edit.html:260
+msgid "This dataset has no entries yet."
+msgstr ""
+
+#: olim/templates/datasets/edit.html:261
+msgid "Could not load entries:"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:262
+msgid "Not found in the search engine"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:264
+msgid "Rows per page"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:265
+msgid "Show page"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:266
+msgid "First"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:267
+msgid "First page"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:268
+msgid "Last"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:269
+msgid "Last page"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:271
+msgid "Previous page"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:273
+msgid "Next page"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:274
+msgid "All"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:276
+msgid "Showing"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:277
+msgid "of"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:278
+msgid "rows"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:279
+msgid "pages"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:282
 msgid "Saving..."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:249
+#: olim/templates/datasets/edit.html:283
 msgid "Changes saved."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:250
+#: olim/templates/datasets/edit.html:284
 msgid "Some changes could not be saved. Check the highlighted rows."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:251
+#: olim/templates/datasets/edit.html:285
 msgid "Could not save changes:"
 msgstr ""
 
@@ -5753,5 +5784,24 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "No conflicts found. %(count)s new entries are ready to be added."
+#~ msgstr ""
+
+#~ msgid "%(total)s entries"
+#~ msgstr ""
+
+#~ msgid "Pagination"
+#~ msgstr ""
+
+#~ msgid "Page %(page)s of %(pages)s"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Edits are only stored when you "
+#~ "click \"Save changes\". Existing model "
+#~ "predictions are not recalculated "
+#~ "automatically."
+#~ msgstr ""
+
+#~ msgid "You have unsaved changes on this page. Discard them and continue?"
 #~ msgstr ""
 

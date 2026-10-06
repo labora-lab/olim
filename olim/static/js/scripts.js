@@ -1200,52 +1200,143 @@ function initDatasetAppend(config, t) {
     });
 }
 
+// Editable entries grid (Tabulator). Edits are kept in `pending` while the user
+// changes pages, re-applied to each loaded page, and only stored on "Save changes".
 function initDatasetTableEditing(config, t) {
-    const container = document.getElementById('entries-table');
+    const element = document.getElementById('entries-grid');
+    if (!element || typeof Tabulator === 'undefined') return;
+
     const saveBtn = document.getElementById('save-changes-btn');
     const discardBtn = document.getElementById('discard-changes-btn');
     const counter = document.getElementById('dirty-counter');
-    if (!container || !saveBtn) return;
 
-    const normalize = value => (value || '').replace(/\r\n?/g, '\n');
-    const dirtyCells = () => container.querySelectorAll('.entry-cell.is-dirty');
-    const dirtyClasses = ['is-dirty', 'bg-amber-50', 'border-amber-400'];
+    const pending = new Map();    // entry id -> {field: new value}
+    const originals = new Map();  // "id\u0000field" -> value before the first edit
+    const errors = new Map();     // entry id -> save error message
+    const key = (id, field) => `${id}\u0000${field}`;
+
+    function countEdits() {
+        let count = 0;
+        pending.forEach(fields => { count += Object.keys(fields).length; });
+        return count;
+    }
 
     function refreshState() {
-        const count = dirtyCells().length;
+        const count = countEdits();
         saveBtn.disabled = count === 0;
         discardBtn.disabled = count === 0;
         counter.textContent = fillPlaceholders(t.unsaved, { count });
         counter.classList.toggle('hidden', count === 0);
     }
 
-    function markCell(cell) {
-        const dirty = normalize(cell.value) !== normalize(cell.dataset.original);
-        cell.classList.toggle('border-transparent', !dirty);
-        dirtyClasses.forEach(cls => cell.classList.toggle(cls, dirty));
-        cell.classList.remove('border-red-500');
-        cell.removeAttribute('title');
+    // Record a cell's current value as pending, or drop it when back to the original
+    function trackCell(cell) {
+        const id = cell.getData()._id;
+        const field = cell.getField();
+        const k = key(id, field);
+        const value = cell.getValue() ?? '';
+        if (!originals.has(k)) originals.set(k, cell.getOldValue() ?? '');
+
+        const fields = pending.get(id) || {};
+        if (value === originals.get(k)) {
+            delete fields[field];
+            originals.delete(k);
+        } else {
+            fields[field] = value;
+        }
+        if (Object.keys(fields).length) pending.set(id, fields);
+        else pending.delete(id);
+
+        // Update classes in place: row.reformat() rebuilds the cells and wipes their undo history
+        errors.delete(id);
+        cell.getElement().classList.toggle('olim-cell-dirty', field in fields);
+        const rowElement = cell.getRow().getElement();
+        rowElement.classList.remove('olim-row-error');
+        rowElement.title = '';
+        refreshState();
     }
 
-    container.addEventListener('input', e => {
-        if (!e.target.classList.contains('entry-cell')) return;
-        markCell(e.target);
-        refreshState();
+    const columns = [
+        {
+            title: config.grid.idLabel,
+            field: '_id',
+            frozen: true,
+            headerSort: false,
+            minWidth: 120,
+            cssClass: 'font-mono text-xs',
+        },
+        ...config.grid.fields.map(f => ({
+            title: f.label,
+            field: f.field,
+            headerSort: false,
+            editor: f.field === 'text' ? 'textarea' : 'input',
+            formatter: f.field === 'text' ? 'textarea' : 'plaintext',
+            editable: cell => !cell.getData()._missing,
+            minWidth: f.field === 'text' ? 360 : 140,
+            widthGrow: f.field === 'text' ? 4 : 1,
+        })),
+    ];
+
+    const table = new Tabulator(element, {
+        ajaxURL: config.urls.entries,
+        pagination: true,
+        paginationMode: 'remote',
+        paginationSize: 25,
+        paginationSizeSelector: config.grid.pageSizes,
+        paginationCounter: 'rows',
+        index: '_id',
+        nestedFieldSeparator: false,  // column names may contain dots
+        layout: 'fitColumns',
+        maxHeight: '70vh',
+        history: true,
+        placeholder: t.empty,
+        locale: 'olim',
+        langs: { olim: { pagination: t.pagination } },
+        columns,
+        ajaxResponse(url, params, response) {
+            if (response.error) showToast(`${t.loadFailed} ${response.error}`, 'error', 10000);
+            // Show unsaved edits on whichever page they belong to
+            response.data.forEach(row => Object.assign(row, pending.get(row._id) || {}));
+            return response;
+        },
+        rowFormatter(row) {
+            const data = row.getData();
+            const rowElement = row.getElement();
+            const edited = pending.get(data._id) || {};
+            row.getCells().forEach(cell => {
+                cell.getElement().classList.toggle('olim-cell-dirty', cell.getField() in edited);
+            });
+            rowElement.classList.toggle('olim-row-error', errors.has(data._id));
+            rowElement.classList.toggle('olim-row-missing', data._missing);
+            rowElement.title = errors.get(data._id) || (data._missing ? t.missing : '');
+        },
     });
 
+    table.on('cellEdited', trackCell);
+    ['historyUndo', 'historyRedo'].forEach(name => table.on(name, (action, component) => {
+        if (action === 'cellEdit') trackCell(component);
+    }));
+    table.on('dataLoadError', error => showToast(`${t.loadFailed} ${error?.message || error}`, 'error', 10000));
+
+    document.getElementById('undo-btn')?.addEventListener('click', () => table.undo());
+    document.getElementById('redo-btn')?.addEventListener('click', () => table.redo());
+
+    function reloadPage() {
+        table.setPage(table.getPage() || 1);
+    }
+
     discardBtn.addEventListener('click', () => {
-        dirtyCells().forEach(cell => {
-            cell.value = cell.dataset.original;
-            markCell(cell);
-        });
+        if (!countEdits() || !window.confirm(t.confirmDiscard)) return;
+        pending.clear();
+        originals.clear();
+        errors.clear();
+        table.clearHistory();
         refreshState();
+        reloadPage();
     });
 
     saveBtn.addEventListener('click', async () => {
-        const changes = {};
-        dirtyCells().forEach(cell => {
-            (changes[cell.dataset.entryId] ||= {})[cell.dataset.field] = cell.value;
-        });
+        const changes = Object.fromEntries(pending);
         if (!Object.keys(changes).length) return;
 
         saveBtn.disabled = true;
@@ -1265,18 +1356,18 @@ function initDatasetTableEditing(config, t) {
             }
 
             const failed = new Map((body.failed || []).map(f => [f.entry_id, f.error]));
-            dirtyCells().forEach(cell => {
-                const error = failed.get(cell.dataset.entryId);
-                if (error) {
-                    cell.classList.add('border-red-500');
-                    cell.title = error;
-                } else {
-                    cell.dataset.original = cell.value;
-                    markCell(cell);
+            Object.keys(changes).forEach(id => {
+                if (failed.has(id)) {
+                    errors.set(id, failed.get(id));
+                    return;
                 }
+                Object.keys(changes[id]).forEach(field => originals.delete(key(id, field)));
+                pending.delete(id);
             });
+            table.clearHistory();
             if (failed.size) showToast(t.savePartial, 'warning', 10000);
             else showToast(t.saved, 'success');
+            reloadPage();
         } catch (error) {
             showToast(`${t.saveFailed} ${error.message}`, 'error', 10000);
         } finally {
@@ -1285,16 +1376,8 @@ function initDatasetTableEditing(config, t) {
         }
     });
 
-    // Changing page or page size replaces the table, so ask before dropping edits
-    container.addEventListener('htmx:confirm', e => {
-        if (dirtyCells().length && !window.confirm(t.confirmPage)) {
-            e.preventDefault();
-        }
-    });
-    container.addEventListener('htmx:afterSwap', refreshState);
-
     window.addEventListener('beforeunload', e => {
-        if (dirtyCells().length) {
+        if (countEdits()) {
             e.preventDefault();
             e.returnValue = t.confirmLeave;
         }

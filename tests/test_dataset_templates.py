@@ -8,7 +8,7 @@ import pytest
 from flask import render_template, session
 
 from olim import app
-from olim.datasets import PAGE_SIZES, display_fields
+from olim.datasets import PAGE_SIZES, build_grid_rows, cell_text, display_fields
 
 
 @pytest.fixture(autouse=True)
@@ -35,22 +35,6 @@ def make_dataset(**overrides):
     return SimpleNamespace(**values)
 
 
-def render_table(dataset, entries, docs, page=1, pages=1, total=None, error=None):
-    return render_template(
-        "datasets/_entries_table.html",
-        dataset=dataset,
-        entries=entries,
-        docs=docs,
-        fields=display_fields(dataset, []),
-        page=page,
-        pages=pages,
-        per_page=25,
-        total=len(entries) if total is None else total,
-        page_sizes=PAGE_SIZES,
-        error=error,
-    )
-
-
 class TestList:
     def test_unlinked_dataset_without_stats_renders(self):
         """get_dataset_stats used to drop datasets with no project link."""
@@ -67,59 +51,38 @@ class TestList:
         assert "No datasets found" in html
 
 
-class TestEntriesTable:
-    def test_cells_carry_entry_field_and_original_value(self):
+class TestGridRows:
+    """Rows the entries grid loads for a page."""
+
+    def test_rows_hold_the_id_and_each_field_as_text(self):
         dataset = make_dataset()
         entries = [SimpleNamespace(entry_id="e1")]
         docs = {"e1": {"text": 'He said "hi"\nbye', "source": 12}}
-        html = render_table(dataset, entries, docs)
-        assert 'data-entry-id="e1" data-field="text"' in html
-        assert 'data-original="He said &#34;hi&#34;\nbye"' in html
-        assert 'data-field="source"' in html
-        assert 'data-original="12"' in html
-        # The id column is shown but never editable
-        assert 'data-field="id"' not in html
+        rows = build_grid_rows(entries, docs, display_fields(dataset, []))
+        assert rows == [
+            {"_id": "e1", "_missing": False, "text": 'He said "hi"\nbye', "source": "12"}
+        ]
 
-    def test_entry_missing_from_index_is_disabled(self):
-        html = render_table(make_dataset(), [SimpleNamespace(entry_id="gone")], {})
-        assert "disabled" in html
-        assert "Not found in the search engine" in html
-
-    def test_pager_edges(self):
-        entries = [SimpleNamespace(entry_id="e1")]
-        first = render_table(
-            make_dataset(), entries, {"e1": {"text": "x"}}, page=1, pages=3, total=60
+    def test_entry_missing_from_index_is_flagged(self):
+        rows = build_grid_rows(
+            [SimpleNamespace(entry_id="gone")], {}, display_fields(make_dataset(), [])
         )
-        assert "?page=2&amp;per_page=25" in first
-        assert "?page=0" not in first
-        assert "Page 1 of 3" in first
+        assert rows[0]["_missing"] is True
+        assert rows[0]["text"] == ""
 
-        last = render_table(
-            make_dataset(), entries, {"e1": {"text": "x"}}, page=3, pages=3, total=60
-        )
-        assert "?page=4" not in last
-        assert "?page=2&amp;per_page=25" in last
-
-    def test_empty_dataset(self):
-        html = render_table(make_dataset(), [], {}, total=0)
-        assert "This dataset has no entries yet." in html
+    def test_absent_and_structured_values(self):
+        assert cell_text(None) == ""
+        assert cell_text({"a": "ç"}) == '{"a": "ç"}'
+        assert cell_text([1, 2]) == "[1, 2]"
 
     def test_legacy_dataset_uses_index_fields(self):
         dataset = make_dataset(columns=None, id_column=None, text_column=None)
-        html = render_template(
-            "datasets/_entries_table.html",
-            dataset=dataset,
-            entries=[SimpleNamespace(entry_id="e1")],
-            docs={"e1": {"text": "x", "extra": "y"}},
-            fields=display_fields(dataset, ["text", "extra"]),
-            page=1,
-            pages=1,
-            per_page=25,
-            total=1,
-            page_sizes=PAGE_SIZES,
-            error=None,
+        rows = build_grid_rows(
+            [SimpleNamespace(entry_id="e1")],
+            {"e1": {"text": "x", "extra": "y"}},
+            display_fields(dataset, ["text", "extra"]),
         )
-        assert 'data-field="extra"' in html
+        assert rows[0]["extra"] == "y"
 
 
 class TestEdit:
@@ -135,6 +98,7 @@ class TestEdit:
             "expected_columns": ["id", "body", "source"],
             "CHUNK_SIZE": 1024,
             "page_sizes": PAGE_SIZES,
+            "grid_fields": display_fields(make_dataset(), []),
         }
         values.update(overrides)
         return render_template("datasets/edit.html", **values)
@@ -142,7 +106,11 @@ class TestEdit:
     def test_renders_with_append_and_table(self):
         html = self.render()
         assert 'id="append-file-input"' in html
-        assert 'hx-get="/datasets/3/entries?page=1&amp;per_page=25"' in html
+        # The grid loads pages from the JSON endpoint, with the dataset's columns
+        assert '"/datasets/3/entries"' in html
+        assert 'id="entries-grid"' in html
+        assert '{"field": "source", "label": "source"}' in html
+        assert "tabulator-tables@" in html
         # Tab separator is shown as \t so it can be typed back
         assert 'id="append-sep" value="\\t"' in html
         # JS placeholders survive Jinja's %-formatting

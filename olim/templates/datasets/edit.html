@@ -182,8 +182,16 @@
             <i class="bi bi-table text-purple-600 mr-2"></i>
             {{ _('Data') }}
         </h3>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
             <span id="dirty-counter" class="hidden text-sm font-medium text-amber-700"></span>
+            <button type="button" id="undo-btn" title="{{ _('Undo') }} (Ctrl+Z)" aria-label="{{ _('Undo') }}"
+                class="inline-flex items-center px-2.5 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="bi bi-arrow-90deg-left"></i>
+            </button>
+            <button type="button" id="redo-btn" title="{{ _('Redo') }} (Ctrl+Y)" aria-label="{{ _('Redo') }}"
+                class="inline-flex items-center px-2.5 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="bi bi-arrow-90deg-right"></i>
+            </button>
             <button type="button" id="discard-changes-btn" disabled
                 class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                 <i class="bi bi-arrow-counterclockwise mr-1"></i>
@@ -197,14 +205,10 @@
         </div>
     </div>
     <p class="px-6 pt-3 text-xs text-gray-500">
-        {{ _('Edits are only stored when you click "Save changes". Existing model predictions are not recalculated automatically.') }}
+        {{ _('Click a cell to edit it. Edits are kept while you change pages and are only stored when you click "Save changes". Existing model predictions are not recalculated automatically.') }}
     </p>
-    <div id="entries-table"
-        hx-get="{{ url_for('dataset_entries', dataset_id=dataset.id, page=1, per_page=25) }}"
-        hx-trigger="load" hx-swap="innerHTML">
-        <div class="px-6 py-12 text-center text-gray-500">
-            <i class="bi bi-hourglass-split mr-1"></i>{{ _('Loading...') }}
-        </div>
+    <div class="p-4">
+        <div id="entries-grid"></div>
     </div>
 </div>
 
@@ -212,6 +216,8 @@
 {% endblock %}
 
 {% block scripts %}
+<link rel="stylesheet" href="https://unpkg.com/tabulator-tables@6.6.1/dist/css/tabulator_simple.min.css">
+<script src="https://unpkg.com/tabulator-tables@6.6.1/dist/js/tabulator.min.js"></script>
 <script>
     window.translations = {
         confirmDeleteDataset: {{ _("Are you sure you want to delete dataset")|tojson }},
@@ -222,13 +228,19 @@
         initDatasetsPage();
         initDatasetEditPage({
             chunkSize: {{ CHUNK_SIZE }},
+            grid: {
+                idLabel: {{ (dataset.id_column or _('ID'))|tojson }},
+                fields: {{ grid_fields|tojson }},
+                pageSizes: {{ page_sizes|list|tojson }}
+            },
             isLegacy: {{ is_legacy|tojson }},
             urls: {
                 chunk: {{ url_for('handle_large_upload')|tojson }},
                 finalize: {{ url_for('finalize_upload', file_id='__FILE_ID__')|tojson }},
                 validate: {{ url_for('dataset_append_validate', dataset_id=dataset.id)|tojson }},
                 append: {{ url_for('dataset_append', dataset_id=dataset.id)|tojson }},
-                save: {{ url_for('dataset_entries_save', dataset_id=dataset.id)|tojson }}
+                save: {{ url_for('dataset_entries_save', dataset_id=dataset.id)|tojson }},
+                entries: {{ url_for('dataset_entries', dataset_id=dataset.id)|tojson }}
             },
             t: {
                 preparing: {{ _("Preparing upload...")|tojson }},
@@ -244,7 +256,29 @@
                 adding: {{ _("Starting import...")|tojson }},
                 unsaved: {{ _("%(count)s unsaved changes", count="{count}")|tojson }},
                 confirmLeave: {{ _("You have unsaved changes. Leave this page and discard them?")|tojson }},
-                confirmPage: {{ _("You have unsaved changes on this page. Discard them and continue?")|tojson }},
+                confirmDiscard: {{ _("Discard all unsaved changes?")|tojson }},
+                empty: {{ _("This dataset has no entries yet.")|tojson }},
+                loadFailed: {{ _("Could not load entries:")|tojson }},
+                missing: {{ _("Not found in the search engine")|tojson }},
+                pagination: {
+                    page_size: {{ _("Rows per page")|tojson }},
+                    page_title: {{ _("Show page")|tojson }},
+                    first: {{ _("First")|tojson }},
+                    first_title: {{ _("First page")|tojson }},
+                    last: {{ _("Last")|tojson }},
+                    last_title: {{ _("Last page")|tojson }},
+                    prev: {{ _("Previous")|tojson }},
+                    prev_title: {{ _("Previous page")|tojson }},
+                    next: {{ _("Next")|tojson }},
+                    next_title: {{ _("Next page")|tojson }},
+                    all: {{ _("All")|tojson }},
+                    counter: {
+                        showing: {{ _("Showing")|tojson }},
+                        of: {{ _("of")|tojson }},
+                        rows: {{ _("rows")|tojson }},
+                        pages: {{ _("pages")|tojson }}
+                    }
+                },
                 saving: {{ _("Saving...")|tojson }},
                 saved: {{ _("Changes saved.")|tojson }},
                 savePartial: {{ _("Some changes could not be saved. Check the highlighted rows.")|tojson }},

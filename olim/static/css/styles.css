@@ -291,3 +291,22 @@
         margin-left: 0 !important;
     }
 }
+/* Dataset entries grid (Tabulator) */
+#entries-grid .tabulator-cell.olim-cell-dirty {
+    background-color: #fffbeb;
+    box-shadow: inset 0 0 0 2px #f59e0b;
+}
+
+#entries-grid .tabulator-row.olim-row-error .tabulator-cell {
+    background-color: #fef2f2;
+}
+
+#entries-grid .tabulator-row.olim-row-missing {
+    opacity: 0.6;
+}
+
+/* Long texts stay readable without making rows huge; the editor still shows everything */
+#entries-grid .tabulator-cell[tabulator-field="text"]:not(.tabulator-editing) {
+    max-height: 9rem;
+    overflow-y: auto;
+}
