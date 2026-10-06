@@ -14,7 +14,7 @@ from ..database import (
     get_labels,
     new_label,
 )
-from ..label_types import get_class_values, is_free_text_label
+from ..label_types import get_class_values, is_free_text_label, parse_label_value
 
 REQUIRED_COLUMNS = ("entry_id", "label", "value")
 MAX_EXAMPLES = 5
@@ -41,6 +41,31 @@ def label_value_policy(label: Label | None) -> tuple[dict[str, str] | None, bool
     return allowed, multi_select
 
 
+def check_label_value(label: Label | None, raw_value: str) -> tuple[list[str], bool]:
+    """Turn an uploaded value into the option values it selects.
+
+    Option-based labels accept a single option (``Red``) or the JSON list the
+    labelling screen stores and the export writes (``["Red", "Blue"]``). Free
+    text and untyped labels keep the value exactly as written.
+
+    Returns:
+        (values, error) where values are the declared option values and error
+        tells whether the row has to be skipped
+    """
+    if label is None or not label.label_type or is_free_text_label(label.label_type):
+        return [raw_value], False
+
+    allowed, multi_select = label_value_policy(label)
+    values = [v.strip() for v in parse_label_value(raw_value) if v.strip()]
+    if not values or (len(values) > 1 and not multi_select):
+        return [], True
+    if allowed is None:
+        return values, False
+    if any(v.lower() not in allowed for v in values):
+        return [], True
+    return [allowed[v.lower()] for v in values], False
+
+
 def label_upload(
     df: pd.DataFrame,
     user_id: int | None = None,
@@ -49,10 +74,12 @@ def label_upload(
 ) -> int:
     """Upload label data from a dataframe
 
-    Values are matched case-insensitively against the options a label declares
-    and stored as the declared option; rows with any other value are skipped and
-    reported. For multi-select labels, the rows of one entry are combined into the
-    JSON list the labelling screen stores; for other labels the latest row wins.
+    A value is one option or a JSON list of options (``["A", "B"]``, the format
+    the export writes). Values are matched case-insensitively against the options
+    a label declares and stored as the declared option; rows with any other value
+    are skipped and reported. For multi-select labels, the rows of one entry are
+    combined into the JSON list the labelling screen stores; for other labels the
+    latest row wins.
 
     Args:
         df: DataFrame with entry_id, label and value columns (created optional)
@@ -116,35 +143,34 @@ def label_upload(
     existing_ids_set = set(existing_ids)
 
     # Collect the values of each (entry, label), checked against the label's options
-    collected: dict[tuple[str, str], list[tuple[str, datetime]]] = {}
+    collected: dict[tuple[str, str], list[tuple[list[str], datetime]]] = {}
     invalid_count = 0
     invalid_examples: dict[str, None] = {}
-    for entry_id, label_name, value, created in df[
+    for entry_id, label_name, raw_value, created in df[
         ["entry_id", "label", "value", "created"]
     ].itertuples(index=False):
         if entry_id not in existing_ids_set:
             continue
-        allowed = label_value_policy(labels.get(label_name))[0]
-        if allowed is not None:
-            if value.lower() not in allowed:
-                invalid_count += 1
-                if len(invalid_examples) < MAX_EXAMPLES:
-                    invalid_examples[f"{label_name}: {value}"] = None
-                continue
-            value = allowed[value.lower()]
-        collected.setdefault((entry_id, label_name), []).append((value, created))
+        values, error = check_label_value(labels.get(label_name), raw_value)
+        if error:
+            invalid_count += 1
+            if len(invalid_examples) < MAX_EXAMPLES:
+                invalid_examples[f"{label_name}: {raw_value}"] = None
+            continue
+        collected.setdefault((entry_id, label_name), []).append((values, created))
 
     if invalid_count:
         flash(
             _(
-                "Skipped {count} rows whose value is not an option of the label "
-                "(for example {examples}). Check the options in the label settings."
+                "Skipped {count} rows whose value is not an option of the label, or "
+                "has several options for a single-choice label (for example {examples}). "
+                "Check the options in the label settings."
             ).format(count=invalid_count, examples="; ".join(invalid_examples)),
             category="warning",
         )
 
     stored = 0
-    for (entry_id, label_name), values in tqdm(collected.items()):
+    for (entry_id, label_name), rows in tqdm(collected.items()):
         # Get entry within selected dataset
         entry = get_entry((dataset_id, entry_id))
         if entry is None:
@@ -155,11 +181,12 @@ def label_upload(
             labels[label_name] = new_label(label_name, user_id, project_id)
         label = labels[label_name]
 
-        created = values[-1][1]
+        created = rows[-1][1]
         if label_value_policy(label)[1]:
-            value = json.dumps(list(dict.fromkeys(v[0] for v in values)))
+            # Same format the labelling screen stores: a JSON list of the options
+            value = json.dumps(list(dict.fromkeys(v for row in rows for v in row[0])))
         else:
-            value = values[-1][0]
+            value = rows[-1][0][0]
 
         # Add the label to the entry
         add_entry_label(label.id, entry.id, user_id, value, created=created)

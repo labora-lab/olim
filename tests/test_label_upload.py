@@ -149,3 +149,57 @@ class TestUpload:
             assert label_upload(df, user_id=1, project_id=1, dataset_id=1) == 0
         assert flashes[0][0] == "error"
         assert "entry_id, label, value" in flashes[0][1]
+
+
+class TestListValues:
+    """The export writes the stored value, a JSON list; uploading it must round-trip."""
+
+    def test_multi_select_list_in_one_cell(self, upload):
+        _count, stored, _flashes = upload([("e1", "Color", '["Red", "blue"]')])
+        assert stored == [(1, 11, json.dumps(["Red", "Blue"]))]
+
+    def test_list_and_single_rows_combine(self, upload):
+        _count, stored, _flashes = upload(
+            [("e1", "Color", '["Red"]'), ("e1", "Color", "Blue"), ("e1", "Color", '["Red"]')]
+        )
+        assert stored == [(1, 11, json.dumps(["Red", "Blue"]))]
+
+    def test_single_choice_accepts_a_one_item_list(self, upload):
+        """The labelling screen stores ["yes"] even for yes/no labels."""
+        _count, stored, _flashes = upload([("e1", "Ok", '["yes"]'), ("e2", "Size", '["S"]')])
+        assert (3, 11, "yes") in stored
+        assert (2, 12, "S") in stored
+
+    def test_single_choice_rejects_several_options(self, upload):
+        count, stored, flashes = upload([("e1", "Size", '["S", "L"]')])
+        assert count == 0
+        assert stored == []
+        assert any(c == "warning" and "Size" in m for c, m in flashes)
+
+    def test_one_bad_option_skips_the_row(self, upload):
+        count, stored, _flashes = upload([("e1", "Color", '["Red", "Green"]')])
+        assert count == 0
+        assert stored == []
+
+    def test_empty_list_is_skipped(self, upload):
+        assert upload([("e1", "Color", "[]")])[0] == 0
+
+    def test_free_text_keeps_the_value_as_written(self, upload):
+        _count, stored, _flashes = upload([("e1", "Note", '["not", "a list"]')])
+        assert stored == [(4, 11, '["not", "a list"]')]
+
+    def test_exported_csv_uploads_unchanged(self, upload, tmp_path, monkeypatch):
+        exported = pd.DataFrame(
+            [("2026-10-01 09:00", "e1", "Color", json.dumps(["Red", "Blue"]), "ana")],
+            columns=["created", "entry_id", "label", "value", "created_by"],
+        )
+        path = tmp_path / "Color.csv"
+        exported.to_csv(path, index=False)
+        assert '"[""Red"", ""Blue""]"' in path.read_text()
+
+        df = pd.read_csv(path, dtype=str)
+        stored = []
+        monkeypatch.setattr(label_utils, "add_entry_label", lambda *a, **k: stored.append(a[3]))
+        with app.test_request_context("/"):
+            label_upload(df, user_id=1, project_id=1, dataset_id=1)
+        assert stored == [json.dumps(["Red", "Blue"])]
