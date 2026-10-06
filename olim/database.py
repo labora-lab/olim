@@ -3,6 +3,7 @@ import json
 import random
 import re
 import string
+from collections.abc import Generator
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any, TypedDict
 
@@ -2392,6 +2393,56 @@ def get_dataset_entries_page(dataset_id: int, offset: int, limit: int) -> tuple[
         ).scalars()
     )
     return entries, total
+
+
+def iter_dataset_entries(dataset_id: int, batch_size: int = 1000) -> Generator[list["Entry"]]:
+    """Yield a dataset's entries in batches, ordered by Entry.id.
+
+    Uses keyset pagination (id > last seen) so very large datasets don't pay the
+    growing cost of OFFSET.
+    """
+    last_id = 0
+    while True:
+        batch = list(
+            db.session.execute(
+                db.select(Entry)
+                .filter(Entry.dataset_id == dataset_id, Entry.id > last_id)
+                .order_by(Entry.id)
+                .limit(batch_size)
+            ).scalars()
+        )
+        if not batch:
+            return
+        yield batch
+        last_id = batch[-1].id
+
+
+def get_label_values(entry_pks: list[int], label_ids: list[int]) -> dict[tuple[int, int], str]:
+    """Current value of each (entry, label) pair.
+
+    When several values exist (label isolation keeps one per user), the most
+    recent one is returned.
+
+    Args:
+        entry_pks: Entry primary keys
+        label_ids: Label IDs
+
+    Returns:
+        {(entry_pk, label_id): value}
+    """
+    if not entry_pks or not label_ids:
+        return {}
+    rows = db.session.execute(
+        db.select(LabelEntry.entry_id, LabelEntry.label_id, LabelEntry.value)
+        .filter(
+            LabelEntry.entry_id.in_(entry_pks),
+            LabelEntry.label_id.in_(label_ids),
+            LabelEntry.is_deleted == False,  # noqa
+        )
+        .order_by(LabelEntry.created)
+    ).all()
+    # Ordered by creation, so later values overwrite earlier ones
+    return {(entry_pk, label_id): value for entry_pk, label_id, value in rows}
 
 
 def delete_new_entries(entry_ids: list[str], dataset_id: int) -> int:

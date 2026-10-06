@@ -1,6 +1,5 @@
 """Dataset management: list, edit, delete, append data and edit entries."""
 
-import json
 import re
 from pathlib import Path
 from typing import Any
@@ -28,6 +27,7 @@ from .settings import CHUNK_SIZE, ES_INDEX, UPLOAD_PATH
 from .tasks.upload_data import check_append_columns, update_entries, upload_dataset
 from .upload_data import _validate_csv_options, read_csv_header
 from .utils.es import es_list_fields, es_search
+from .utils.export import cell_text
 
 PAGE_SIZES = (10, 25, 50, 100)
 APPENDABLE_TYPES = ("single_text", "flexible_text")
@@ -236,15 +236,6 @@ def dataset_delete(dataset_id: int) -> ...:
     soft_delete_dataset(dataset_id, session["user_id"])
     flash(_("Dataset '{name}' deleted").format(name=dataset.name), "success")
     return redirect(url_for("datasets"))
-
-
-def cell_text(value: object) -> str:
-    """Show a stored value as the text a cell is edited as."""
-    if value is None:
-        return ""
-    if isinstance(value, dict | list):
-        return json.dumps(value, ensure_ascii=False)
-    return str(value)
 
 
 def build_grid_rows(

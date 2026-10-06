@@ -13,6 +13,7 @@ from flask import (
     render_template,
     request,
     session,
+    stream_with_context,
     url_for,
 )
 from flask_babel import _
@@ -26,11 +27,13 @@ from .database import (
     get_label,
     get_labeled,
     get_labels,
+    get_project,
     new_label,
 )
 from .label_types import get_preset_settings
 from .project import update_session_project
 from .settings import UPLOAD_PATH
+from .utils.export import export_csv
 from .utils.label import label_upload, new_label_names, suggest_label_config
 from .utils.queues import store_queue
 
@@ -115,6 +118,41 @@ def create_label(project_id: int) -> ...:
     )
 
     return redirect(url_for("labels", project_id=project_id))
+
+
+@app.route("/<int:project_id>/labels/export-all", methods=["GET"])
+def export_all_labels(project_id: int) -> ...:
+    """Download every entry with its original columns plus one column per label.
+
+    Query: dataset_id=<id> for one dataset, or "all" (default) for every dataset of
+    the project.
+    """
+    res = update_session_project(project_id)
+    if res is not None:
+        return res
+
+    project_datasets = list(get_datasets(project_id))
+    choice = request.args.get("dataset_id", "all")
+    if choice == "all":
+        selected = project_datasets
+        suffix = "all"
+    else:
+        selected = [d for d in project_datasets if str(d.id) == choice]
+        if not selected:
+            flash(_("Invalid dataset selection"), category="warning")
+            return redirect(url_for("labels", project_id=project_id))
+        suffix = selected[0].name
+    if not selected:
+        flash(_("No datasets available for this project"), category="warning")
+        return redirect(url_for("labels", project_id=project_id))
+
+    project = get_project(project_id)
+    filename = re.sub(r"[^\w.-]+", "_", f"{project.name if project else 'labels'}-{suffix}")
+    return Response(
+        stream_with_context(export_csv(selected, list(get_labels(project_id)))),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}.csv"},
+    )
 
 
 @app.route("/<int:project_id>/labels/quick_create", methods=["POST"])
