@@ -5577,6 +5577,14 @@ msgstr "Entradas: {queue_length}"
 msgid "Highlight: {highlight}"
 msgstr "Destaque: {highlight}"
 
+#: olim/templates/labels.html:29
+msgid "Values"
+msgstr "Valores"
+
+#: olim/templates/labels.html:79
+msgid "Free text"
+msgstr "Texto livre"
+
 #~ msgid "This is permanent! Are you sure that you want to delete label"
 #~ msgstr "Isto é permanente! Tem certeza que deseja excluir o rótulo"
 

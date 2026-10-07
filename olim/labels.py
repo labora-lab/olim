@@ -31,7 +31,13 @@ from .database import (
     is_label_isolation_enabled,
     new_label,
 )
-from .label_types import get_preset_settings
+from .label_types import (
+    get_label_type_module,
+    get_preset_settings,
+    is_free_text_label,
+    is_open_label,
+    parse_label_value,
+)
 from .project import update_session_project
 from .settings import UPLOAD_PATH
 from .utils.export import export_csv
@@ -46,6 +52,36 @@ def project_home(project_id: int) -> ...:
     return redirect(url_for("learning_tasks_list", project_id=project_id))
 
 
+def _value_counts(label) -> dict:
+    """Count a label's annotated entries, per option for choice labels.
+
+    A multi-select entry counts once toward each option it selected, so the
+    option counts can add up to more than the total of annotated entries.
+    """
+    entries = [e for e in label.entries if not e.is_deleted]
+    if is_free_text_label(label.label_type):
+        total = sum(1 for e in entries if e.value and str(e.value).strip())
+        return {"total": total, "options": None}
+
+    # Seed with the declared options so an option nobody picked yet still shows
+    # a zero. An unconfigured multiple_choice label only reports placeholders.
+    options: dict[str, int] = {}
+    settings = label.label_settings or {}
+    if not is_open_label(label.label_type) or settings.get("options"):
+        for opt in get_label_type_module(label.label_type).get_label_options(label):
+            options[str(opt[0])] = 0
+
+    total = 0
+    for entry in entries:
+        selected = parse_label_value(entry.value)
+        if not selected:
+            continue
+        total += 1
+        for value in selected:
+            options[value] = options.get(value, 0) + 1
+    return {"total": total, "options": options}
+
+
 @app.route("/<int:project_id>/labels", methods=["GET"])
 def labels(project_id: int) -> ...:
     # Check project_id and require data
@@ -53,34 +89,13 @@ def labels(project_id: int) -> ...:
     if res is not None:
         return res
 
-    labels_values = {label.id: {} for label in get_labels(project_id)}
-    possible_values = []
-    for label in get_labels(project_id):
-        # Check if this label is free text type
-        from olim.label_types import is_free_text_label
-
-        is_free_text = is_free_text_label(label.label_type)
-
-        for entry in label.entries:
-            if not entry.is_deleted:
-                if entry.value in labels_values[label.id]:
-                    labels_values[label.id][entry.value] += 1
-                else:
-                    labels_values[label.id][entry.value] = 1
-
-                # Only add to possible_values if it's NOT from a free text label
-                if not is_free_text and entry.value not in possible_values:
-                    possible_values.append(entry.value)
-    possible_values.append("Total")
-    for label_id in labels_values:
-        labels_values[label_id]["Total"] = sum(labels_values[label_id].values())
     labels = get_labels(project_id)
+    labels_values = {label.id: _value_counts(label) for label in labels}
     datasets = list(get_datasets(project_id, non_empty=True))
     return render_template(
         "labels.html",
         labels=labels,
         values=labels_values,
-        possible_values=possible_values,
         datasets=datasets,
     )
 
