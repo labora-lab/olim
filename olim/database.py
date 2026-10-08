@@ -2456,21 +2456,27 @@ def get_label_users(dataset_ids: list[int], label_ids: list[int]) -> dict[int, l
     """
     if not dataset_ids or not label_ids:
         return {}
-    rows = db.session.execute(
-        db.select(LabelEntry.label_id, User)
+    # DISTINCT over IDs only: users has a JSON column, which PostgreSQL can't compare
+    pairs = db.session.execute(
+        db.select(LabelEntry.label_id, LabelEntry.created_by)
         .join(Entry, LabelEntry.entry_id == Entry.id)
-        .join(User, LabelEntry.created_by == User.id)
         .filter(
             Entry.dataset_id.in_(dataset_ids),
             LabelEntry.label_id.in_(label_ids),
             LabelEntry.is_deleted == False,  # noqa
         )
         .distinct()
-        .order_by(User.username)
     ).all()
+    user_ids = {user_id for _label_id, user_id in pairs}
+    by_id = {
+        u.id: u for u in db.session.execute(db.select(User).filter(User.id.in_(user_ids))).scalars()
+    }
     users: dict[int, list[User]] = {}
-    for label_id, user in rows:
-        users.setdefault(label_id, []).append(user)
+    for label_id, user_id in pairs:
+        if user_id in by_id:
+            users.setdefault(label_id, []).append(by_id[user_id])
+    for label_users in users.values():
+        label_users.sort(key=lambda u: u.username)
     return users
 
 

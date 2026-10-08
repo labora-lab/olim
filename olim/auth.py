@@ -238,6 +238,13 @@ def rollback_on_error(response: Response) -> Response:
 @app.teardown_request
 def save_database_session(exc=None) -> None:
     """Persist Flask session changes to database."""
+    if exc is not None:
+        # A failed query leaves the transaction aborted (PostgreSQL); the save below
+        # would fail too and hide the original error. This also covers streamed
+        # responses, which fail after rollback_on_error has already run.
+        from . import db
+
+        db.session.rollback()
     if "user_id" in session:
         if type(session["user_id"]) is int:
             # Only save if session was modified
