@@ -112,3 +112,32 @@
     {% endif %}
 </div>
 {% endmacro %}
+{# Which of the labels on this page the user has hidden, with a way to show them again.
+   Kept in sync by hideById/unhideById in scripts.js. #}
+{% macro hidden_labels_notice(labels, hidden_labels) %}
+{% if settings.show_hidden_options %}
+{% set hidden_here = labels | selectattr('id', 'in', hidden_labels) | list %}
+<div id="hidden-labels-notice" data-title="{{ _('Hidden labels (%(count)s)', count='{count}') }}"
+    class="{% if not hidden_here %}hidden {% endif %}p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900">
+    <div class="flex items-center justify-between gap-2 mb-2">
+        <span class="font-medium">
+            <i class="bi bi-eye-slash mr-1"></i>
+            <span data-role="title">{{ _('Hidden labels (%(count)s)', count=hidden_here | length) }}</span>
+        </span>
+        <button type="button" onclick="unhideAllLabels()"
+            class="text-xs font-medium text-amber-800 hover:text-amber-950 hover:underline">
+            {{ _('Show all') }}
+        </button>
+    </div>
+    <div class="flex flex-wrap gap-1">
+        {% for label in labels %}
+        <button type="button" data-hidden-label="{{ label.id }}" data-name="{{ label.name }}"
+            onclick="unhideLabel(this.dataset.name, this.dataset.hiddenLabel)" title="{{ _('Show this label') }}"
+            class="{% if label.id not in hidden_labels %}hidden {% endif %}inline-flex items-center px-2 py-0.5 text-xs text-amber-900 bg-white border border-amber-300 rounded hover:bg-amber-100 transition-colors">
+            <i class="bi bi-eye mr-1"></i>{{ label.name }}
+        </button>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endmacro %}

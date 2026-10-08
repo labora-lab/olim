@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2026-10-08 13:57-0300\n"
+"POT-Creation-Date: 2026-10-08 14:40-0300\n"
 "PO-Revision-Date: 2025-05-16 01:02+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: pt_BR\n"
@@ -212,37 +212,47 @@ msgstr "Rótulo {label} removido para a entrada {entry_id}"
 msgid "Missing data: label"
 msgstr "Dados faltantes: rótulo"
 
-#: olim/commands.py:92
+#: olim/commands.py:94
 msgid "Error hidding label."
 msgstr "Erro ao ocultar rótulo."
 
-#: olim/commands.py:98
+#: olim/commands.py:100
+#, python-brace-format
+msgid "{count} labels shown"
+msgstr "{count} rótulos exibidos"
+
+#: olim/commands.py:102
+#, python-brace-format
+msgid "{count} labels hidden"
+msgstr "{count} rótulos ocultados"
+
+#: olim/commands.py:108
 #, python-brace-format
 msgid "Label {label} hidden"
 msgstr "Rótulo {label} ocultado"
 
-#: olim/commands.py:104
+#: olim/commands.py:114
 #, python-brace-format
 msgid "Label {label} unhidden"
 msgstr "Rótulo {label} desocultado"
 
-#: olim/commands.py:114
+#: olim/commands.py:124
 msgid "Missing data"
 msgstr "Dados faltantes"
 
-#: olim/commands.py:122
+#: olim/commands.py:132
 msgid "Invalid data"
 msgstr "Dados inválidos"
 
-#: olim/commands.py:128
+#: olim/commands.py:138
 msgid "Invalid highlight data format"
 msgstr "Formato de dados de destaque inválido"
 
-#: olim/commands.py:148
+#: olim/commands.py:158
 msgid "No command passed"
 msgstr "Nenhum comando fornecido"
 
-#: olim/commands.py:150
+#: olim/commands.py:160
 #, python-brace-format
 msgid "Command {command} not found"
 msgstr "Comando {command} não encontrado"
@@ -2128,49 +2138,49 @@ msgstr "Aplicar \"{label_str}\" a todos os rótulos visíveis"
 msgid "Remove \"{label_str}\" from all visible labels"
 msgstr "Remover \"{label_str}\" de todos os rótulos visíveis"
 
-#: olim/templates/entry.html:129
+#: olim/templates/entry.html:131
 msgid "Show hidden labels"
 msgstr "Mostrar rótulos ocultos"
 
-#: olim/templates/entry.html:133
+#: olim/templates/entry.html:135
 msgid "Show labels that were marked as hidden"
 msgstr "Mostrar rótulos que foram marcados como ocultos"
 
-#: olim/templates/entry.html:141
+#: olim/templates/entry.html:143
 msgid "Hide hidden labels"
 msgstr "Ocultar rótulos ocultos"
 
-#: olim/templates/entry.html:145
+#: olim/templates/entry.html:147
 msgid "Hide labels that were marked as hidden"
 msgstr "Ocultar rótulos que foram marcados como ocultos"
 
-#: olim/templates/entry.html:158
+#: olim/templates/entry.html:160
 msgid "Expand all"
 msgstr "Expandir tudo"
 
-#: olim/templates/entry.html:162
+#: olim/templates/entry.html:164
 msgid "Expandir todas as seções retraídas do conteúdo"
 msgstr "Expandir todas as seções recolhidas do conteúdo"
 
-#: olim/templates/entry.html:170
+#: olim/templates/entry.html:172
 msgid "Retract all"
 msgstr "Recolher tudo"
 
-#: olim/templates/entry.html:174
+#: olim/templates/entry.html:176
 msgid "Retrair todas as seções expandidas do conteúdo"
 msgstr "Recolher todas as seções expandidas do conteúdo"
 
-#: olim/templates/entry.html:191
+#: olim/templates/entry.html:193
 msgid "No entry loaded"
 msgstr "Nenhuma entrada carregada"
 
-#: olim/templates/entry.html:192
+#: olim/templates/entry.html:194
 msgid "Please enter an entry ID and dataset to view content."
 msgstr ""
 "Por favor, digite um ID de entrada e conjunto de dados para visualizar o "
 "conteúdo."
 
-#: olim/templates/entry.html:230
+#: olim/templates/entry.html:232
 msgid "Please enter an entry ID"
 msgstr "Por favor, digite um ID de entrada"
 
@@ -4163,12 +4173,12 @@ msgid "high uncertainty"
 msgstr "alta incerteza"
 
 #: olim/templates/learning_tasks/active_learning_loop.html:242
-#: olim/templates/learning_tasks/label_entry.html:144
+#: olim/templates/learning_tasks/label_entry.html:146
 msgid "Entry not found"
 msgstr "Entrada não encontrada"
 
 #: olim/templates/learning_tasks/active_learning_loop.html:243
-#: olim/templates/learning_tasks/label_entry.html:145
+#: olim/templates/learning_tasks/label_entry.html:147
 msgid "Could not load entry. It may have been deleted or the ID is invalid."
 msgstr ""
 "Não foi possível carregar a entrada. Ela pode ter sido excluída ou o ID é"
@@ -4331,19 +4341,19 @@ msgstr "Usar Entradas Aleatórias"
 msgid "Complete Queue"
 msgstr "Concluir Fila"
 
-#: olim/templates/learning_tasks/label_entry.html:91
+#: olim/templates/learning_tasks/label_entry.html:93
 msgid "Required"
 msgstr "Obrigatório"
 
-#: olim/templates/learning_tasks/label_entry.html:125
+#: olim/templates/learning_tasks/label_entry.html:127
 msgid "The following labels are not filled:"
 msgstr "Os seguintes rótulos não foram preenchidos:"
 
-#: olim/templates/learning_tasks/label_entry.html:127
+#: olim/templates/learning_tasks/label_entry.html:129
 msgid "No labels have been filled for this entry."
 msgstr "Nenhum rótulo foi preenchido para esta entrada."
 
-#: olim/templates/learning_tasks/label_entry.html:132
+#: olim/templates/learning_tasks/label_entry.html:134
 msgid "Continue anyway?"
 msgstr "Continuar mesmo assim?"
 
@@ -5151,12 +5161,23 @@ msgid "Hide this label"
 msgstr "Ocultar este rótulo"
 
 #: olim/templates/macros/labels-menu.html:86
+#: olim/templates/macros/labels-menu.html:135
 msgid "Show this label"
 msgstr "Mostrar este rótulo"
 
 #: olim/templates/macros/labels-menu.html:106
 msgid "Clear this user"
 msgstr "Limpar este usuário"
+
+#: olim/templates/macros/labels-menu.html:120
+#: olim/templates/macros/labels-menu.html:125
+#, python-format
+msgid "Hidden labels (%(count)s)"
+msgstr "Rótulos ocultos (%(count)s)"
+
+#: olim/templates/macros/labels-menu.html:129
+msgid "Show all"
+msgstr "Mostrar todos"
 
 #: olim/templates/macros/new-user-form.html:14
 msgid "Current Password"

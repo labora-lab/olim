@@ -84,12 +84,22 @@ def manage_label(**args) -> dict[str, str] | None:
         }
 
     try:
-        manage_label_in_session(label_id, mode)
+        # Several comma-separated IDs show or hide them in one session update
+        label_ids = [int(i) for i in str(label_id).split(",") if i.strip()]
+        manage_label_in_session(label_ids, mode)
     except Exception as e:
         print(e)
         return {
             "type": "error",
             "text": _("Error hidding label."),
+        }
+
+    if len(label_ids) > 1:
+        return {
+            "type": "OK",
+            "text": _("{count} labels shown").format(count=len(label_ids))
+            if mode == "remove"
+            else _("{count} labels hidden").format(count=len(label_ids)),
         }
 
     if mode == "add":

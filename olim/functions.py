@@ -165,23 +165,19 @@ def get_def_nentries() -> int:
     return session["number_of_entries"]
 
 
-def manage_label_in_session(label: str, mode: Literal["add", "remove"] = "add") -> None:
-    """Hide a label in a session
+def manage_label_in_session(labels: list[int], mode: Literal["add", "remove"] = "add") -> None:
+    """Hide or show labels for the current user.
 
     Args:
-        label (str): Label to hide
-        session (flask.session): Flask session
+        labels: IDs of the labels to hide or show
+        mode: "add" hides them, "remove" shows them again
     """
-    if "hidden_labels" not in session:
-        session["hidden_labels"] = []
-
+    hidden = [h for h in session.get("hidden_labels", []) if h not in labels]
     if mode == "add":
-        session["hidden_labels"].append(int(label))
-    elif mode == "remove":
-        try:
-            session["hidden_labels"].remove(int(label))
-        except ValueError:
-            pass
+        hidden.extend(labels)
+    # Assign a new list: changing it in place doesn't mark the session as modified,
+    # so the change was not saved with the user's session
+    session["hidden_labels"] = hidden
 
 
 class ESManager:

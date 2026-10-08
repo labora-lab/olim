@@ -285,7 +285,7 @@ function clearUserLabel(entryId, scope) {
 
 function hideLabel(label, labelId) {
     run_command('manage-label', [
-        'label=' + label,
+        'label=' + encodeURIComponent(label),
         'label_id=' + labelId,
         'mode=add',
         'callback=hideById("' + labelId + '");'
@@ -294,7 +294,7 @@ function hideLabel(label, labelId) {
 
 function unhideLabel(label, labelId) {
     run_command('manage-label', [
-        'label=' + label,
+        'label=' + encodeURIComponent(label),
         'label_id=' + labelId,
         'mode=remove',
         'callback=unhideById("' + labelId + '");'
@@ -321,12 +321,14 @@ function hideById(id) {
     if (hideElement) {
         hideElement.classList.add('hidden');
     }
+    updateHiddenLabelsNotice(id, true);
 }
 
 function unhideById(id) {
     const labelElement = document.getElementById('label_' + id);
     if (labelElement) {
-        labelElement.classList.remove('hidden-entry');
+        labelElement.classList.remove('hidden-entry', 'hidden');
+        labelElement.style.display = '';
     }
     const unhideElement = document.getElementById('unhide_btn_' + id);
     if (unhideElement) {
@@ -336,6 +338,30 @@ function unhideById(id) {
     if (hideElement) {
         hideElement.classList.remove('hidden');
     }
+    updateHiddenLabelsNotice(id, false);
+}
+
+// Hidden-labels helper (macros/labels-menu.html): one button per hidden label on the page
+function updateHiddenLabelsNotice(id, hidden) {
+    const notice = document.getElementById('hidden-labels-notice');
+    if (!notice) return;
+    notice.querySelector(`[data-hidden-label="${id}"]`)?.classList.toggle('hidden', !hidden);
+    const count = notice.querySelectorAll('[data-hidden-label]:not(.hidden)').length;
+    notice.querySelector('[data-role="title"]').textContent = fillPlaceholders(notice.dataset.title, { count });
+    notice.classList.toggle('hidden', count === 0);
+}
+
+// One request for all of them: parallel requests would each rewrite the session's list
+function unhideAllLabels() {
+    const ids = [...document.querySelectorAll('#hidden-labels-notice [data-hidden-label]:not(.hidden)')]
+        .map(button => button.dataset.hiddenLabel);
+    if (!ids.length) return;
+    run_command('manage-label', [
+        'label=all',
+        'label_id=' + ids.join(','),
+        'mode=remove',
+        'callback=' + encodeURIComponent(ids.map(id => 'unhideById("' + id + '");').join('')),
+    ]);
 }
 
 function markLabel(labelId, value) {

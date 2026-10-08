@@ -79,6 +79,8 @@
             </div>
 
             <div class="p-6 space-y-2">
+                {{ labels_macro.hidden_labels_notice(labels, hidden_labels) }}
+
                 <!-- Individual Labels -->
                 <div id="labels" class="space-y-3">
                     {% for label in labels %}
