@@ -134,6 +134,7 @@
 
     <!-- Navigation -->
     <div class="flex justify-between items-center">
+        {% if can_go_back_steps() %}
         <form hx-post="" hx-target="#task-content" hx-swap="innerHTML"
             hx-confirm="{{ _('Going back to setup will reset this task\'s entry queue and its labeling progress. Are you sure you want to continue?') }}">
             <button type="submit" name="action" value="back_to_setup"
@@ -142,6 +143,9 @@
                 {{ _('Back to Setup') }}
             </button>
         </form>
+        {% else %}
+        <div></div>
+        {% endif %}
         {% if is_last_step and completed_count == queue|length %}
         <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
             <button type="submit" name="action" value="finish"

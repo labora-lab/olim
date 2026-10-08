@@ -1,3 +1,4 @@
+import copy
 import json
 from pathlib import Path
 
@@ -47,6 +48,15 @@ def register_state(cls: type[BaseState]) -> type[BaseState]:
 def get_state_class(state_name: str) -> type[BaseState] | None:
     """Get a state class by name."""
     return STATE_REGISTRY.get(state_name)
+
+
+def can_go_back_steps() -> bool:
+    """Annotators only move forward: going back (e.g. to a queue's setup) would let
+    them change what the task's author set up for them."""
+    return session.get("role") != "annotator"
+
+
+app.jinja_env.globals.update(can_go_back_steps=can_go_back_steps)
 
 
 def get_current_step(initial_setup: dict, position: int) -> dict | None:
@@ -550,6 +560,7 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
             return redirect(url_for("learning_tasks_list", project_id=project_id))
 
         # Process interaction and get relative position change
+        data_before = copy.deepcopy(data)
         try:
             delta = state.handle(action, payload)
         except Exception as e:
@@ -571,6 +582,13 @@ def learning_task_view(project_id: int, task_id: int) -> ...:
                 return resp
             flash(err_msg, "error")
             return redirect(request.url)
+
+        if delta < 0 and not can_go_back_steps():
+            # Undo whatever the state cleared on its way back (a queue, LLM results)
+            data.clear()
+            data.update(data_before)
+            delta = 0
+            flash(_("You can't go back to a previous step of this task."), "error")
 
         # Calculate new position
         raw_new_position = position + delta

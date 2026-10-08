@@ -40,6 +40,7 @@
 
                     <!-- Navigation -->
                     <div class="pt-4 border-t border-gray-200 flex justify-between">
+                        {% if can_go_back_steps() %}
                         <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
                             <button type="submit" name="action" value="prev"
                                 class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors">
@@ -47,6 +48,9 @@
                                 {{ _('Previous') }}
                             </button>
                         </form>
+                        {% else %}
+                        <div></div>
+                        {% endif %}
                         <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
                             <button type="submit" name="action" value="start"
                                 class="inline-flex items-center px-6 py-3 text-base font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-colors shadow-lg hover:shadow-xl">
@@ -301,6 +305,7 @@
                     <!-- Navigation -->
                     <div class="pt-4 border-t border-gray-200 flex justify-between">
                         <div class="flex gap-2">
+                            {% if can_go_back_steps() %}
                             <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
                                 <button type="submit" name="action" value="back_to_setup"
                                     class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors">
@@ -308,6 +313,7 @@
                                     {{ _('Back to LLM Setup') }}
                                 </button>
                             </form>
+                            {% endif %}
                             {% if labeled_entry_ids %}
                             <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
                                 <button type="submit" name="action" value="create_queue"
@@ -358,6 +364,7 @@
 
                     <!-- Navigation -->
                     <div class="pt-4 border-t border-gray-200 flex justify-between">
+                        {% if can_go_back_steps() %}
                         <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
                             <button type="submit" name="action" value="back_to_setup"
                                 class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors">
@@ -365,6 +372,9 @@
                                 {{ _('Back to LLM Setup') }}
                             </button>
                         </form>
+                        {% else %}
+                        <div></div>
+                        {% endif %}
                         <form hx-post="" hx-target="#task-content" hx-swap="innerHTML">
                             <button type="submit" name="action" value="retry"
                                 class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 transition-colors">

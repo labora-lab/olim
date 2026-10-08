@@ -41,7 +41,7 @@
         <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
             <form hx-post="" hx-target="#task-content" hx-swap="innerHTML" class="flex justify-between items-center">
                 <div>
-                    {% if show_prev %}
+                    {% if show_prev and can_go_back_steps() %}
                     <button type="submit" name="action" value="prev"
                         class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-4 focus:outline-none focus:ring-gray-200 transition-colors">
                         <i class="bi bi-chevron-left mr-2"></i>

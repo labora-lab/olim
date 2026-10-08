@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2026-10-08 14:40-0300\n"
+"POT-Creation-Date: 2026-10-08 16:12-0300\n"
 "PO-Revision-Date: 2025-05-16 01:02+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: pt_BR\n"
@@ -872,7 +872,7 @@ msgstr "Configuração '{key}' redefinida para o valor padrão"
 msgid "Error resetting setting: {error}"
 msgstr "Erro ao redefinir configuração: {error}"
 
-#: olim/learning_tasks/__init__.py:368 olim/settings_routes.py:232
+#: olim/learning_tasks/__init__.py:378 olim/settings_routes.py:232
 msgid "Please upload a configuration file"
 msgstr "Por favor, envie um arquivo de configuração"
 
@@ -884,7 +884,7 @@ msgstr "Configuração salva nos predefinidos"
 msgid "Failed to save configuration"
 msgstr "Falha ao salvar configuração"
 
-#: olim/learning_tasks/__init__.py:365 olim/settings_routes.py:254
+#: olim/learning_tasks/__init__.py:375 olim/settings_routes.py:254
 msgid "Invalid JSON file"
 msgstr "Arquivo JSON inválido"
 
@@ -979,127 +979,131 @@ msgstr "Texto {text_id} removido da lista de ocultos"
 msgid "Invalid date \"{date}\"."
 msgstr "Data inválida \"{date}\"."
 
-#: olim/learning_tasks/__init__.py:146
+#: olim/learning_tasks/__init__.py:156
 #, python-brace-format
 msgid "'{field}' must be a list of label IDs"
 msgstr "'{field}' deve ser uma lista de IDs de rótulos"
 
-#: olim/learning_tasks/__init__.py:169
+#: olim/learning_tasks/__init__.py:179
 msgid "'data' must be an object"
 msgstr "'data' deve ser um objeto"
 
-#: olim/learning_tasks/__init__.py:179
+#: olim/learning_tasks/__init__.py:189
 #, python-brace-format
 msgid "Unknown fields in 'data': {fields}"
 msgstr "Campos desconhecidos em 'data': {fields}"
 
-#: olim/learning_tasks/__init__.py:184
+#: olim/learning_tasks/__init__.py:194
 msgid "'entries' must be a non-empty list of entry IDs"
 msgstr "'entries' deve ser uma lista não vazia de IDs de entradas"
 
-#: olim/learning_tasks/__init__.py:187
+#: olim/learning_tasks/__init__.py:197
 msgid "'entries' contains an empty ID"
 msgstr "'entries' contém um ID vazio"
 
-#: olim/learning_tasks/__init__.py:191
+#: olim/learning_tasks/__init__.py:201
 #, python-brace-format
 msgid "'entries' repeats these IDs: {ids}"
 msgstr "'entries' repete estes IDs: {ids}"
 
-#: olim/learning_tasks/__init__.py:202
+#: olim/learning_tasks/__init__.py:212
 #, python-brace-format
 msgid "These labels don't exist in this project: {ids}"
 msgstr "Estes rótulos não existem neste projeto: {ids}"
 
-#: olim/learning_tasks/__init__.py:205
+#: olim/learning_tasks/__init__.py:215
 msgid "The task needs at least one label"
 msgstr "A tarefa precisa de pelo menos um rótulo"
 
-#: olim/learning_tasks/__init__.py:210
+#: olim/learning_tasks/__init__.py:220
 #, python-brace-format
 msgid "Required labels must also be in 'labels': {ids}"
 msgstr "Rótulos obrigatórios também devem estar em 'labels': {ids}"
 
-#: olim/learning_tasks/__init__.py:215
+#: olim/learning_tasks/__init__.py:225
 msgid "'completion_mode' must be \"any\" or \"all\""
 msgstr "'completion_mode' deve ser \"any\" ou \"all\""
 
-#: olim/learning_tasks/__init__.py:258
+#: olim/learning_tasks/__init__.py:268
 msgid "Configuration must be a JSON object"
 msgstr "A configuração deve ser um objeto JSON"
 
-#: olim/learning_tasks/__init__.py:261
+#: olim/learning_tasks/__init__.py:271
 msgid "Configuration must have a 'sequence' field"
 msgstr "A configuração deve ter um campo 'sequence'"
 
-#: olim/learning_tasks/__init__.py:265
+#: olim/learning_tasks/__init__.py:275
 msgid "Sequence must be a non-empty list"
 msgstr "A sequência deve ser uma lista não vazia"
 
-#: olim/learning_tasks/__init__.py:269
+#: olim/learning_tasks/__init__.py:279
 #, python-brace-format
 msgid "Step {i} must be an object"
 msgstr "O passo {i} deve ser um objeto"
 
-#: olim/learning_tasks/__init__.py:271
+#: olim/learning_tasks/__init__.py:281
 #, python-brace-format
 msgid "Step {i} must have a 'state' field"
 msgstr "O passo {i} deve ter um campo 'state'"
 
-#: olim/learning_tasks/__init__.py:273
+#: olim/learning_tasks/__init__.py:283
 #, python-brace-format
 msgid "Step {i} has unknown state: {state}"
 msgstr "O passo {i} tem um estado desconhecido: {state}"
 
-#: olim/learning_tasks/__init__.py:324
+#: olim/learning_tasks/__init__.py:334
 msgid "Task name is required"
 msgstr "Nome da tarefa é obrigatório"
 
-#: olim/learning_tasks/__init__.py:346
+#: olim/learning_tasks/__init__.py:356
 msgid "Configuration not found"
 msgstr "Configuração não encontrada"
 
-#: olim/learning_tasks/__init__.py:349
+#: olim/learning_tasks/__init__.py:359
 msgid "Please select a configuration"
 msgstr "Por favor, selecione uma configuração"
 
-#: olim/learning_tasks/__init__.py:372
+#: olim/learning_tasks/__init__.py:382
 msgid "Invalid configuration"
 msgstr "Configuração inválida"
 
-#: olim/learning_tasks/__init__.py:397
+#: olim/learning_tasks/__init__.py:407
 msgid "Learning task created successfully"
 msgstr "Tarefa de aprendizado criada com sucesso"
 
-#: olim/learning_tasks/__init__.py:409
+#: olim/learning_tasks/__init__.py:419
 msgid "Learning task deleted successfully"
 msgstr "Tarefa de aprendizado excluída com sucesso"
 
-#: olim/learning_tasks/__init__.py:411 olim/learning_tasks/__init__.py:459
+#: olim/learning_tasks/__init__.py:421 olim/learning_tasks/__init__.py:469
 msgid "Learning task not found"
 msgstr "Tarefa de aprendizado não encontrada"
 
-#: olim/learning_tasks/__init__.py:431
+#: olim/learning_tasks/__init__.py:441
 msgid "Task assigned successfully"
 msgstr "Tarefa atribuída com sucesso"
 
-#: olim/learning_tasks/__init__.py:433
+#: olim/learning_tasks/__init__.py:443
 msgid "Task not found"
 msgstr "Tarefa não encontrada"
 
-#: olim/learning_tasks/__init__.py:457
+#: olim/learning_tasks/__init__.py:467
 msgid "Learning task reset successfully"
 msgstr "Tarefa de aprendizado reiniciada com sucesso"
 
-#: olim/learning_tasks/__init__.py:545 olim/learning_tasks/__init__.py:586
+#: olim/learning_tasks/__init__.py:555 olim/learning_tasks/__init__.py:604
 msgid "Task completed!"
 msgstr "Tarefa concluída!"
 
-#: olim/learning_tasks/__init__.py:559
+#: olim/learning_tasks/__init__.py:570
 msgid "An error occurred while processing your request. Please try again."
 msgstr "Ocorreu um erro ao processar sua solicitação. Tente novamente."
 
-#: olim/learning_tasks/__init__.py:631
+#: olim/learning_tasks/__init__.py:591
+msgid "You can't go back to a previous step of this task."
+msgstr "Você não pode voltar para uma etapa anterior desta tarefa."
+
+#: olim/learning_tasks/__init__.py:649
 msgid "An error occurred while loading the content. Please refresh the page."
 msgstr "Ocorreu um erro ao carregar o conteúdo. Atualize a página."
 
@@ -1122,7 +1126,7 @@ msgid "Input"
 msgstr "Entrada"
 
 #: olim/learning_tasks/states.py:200
-#: olim/templates/learning_tasks/al_label_select.html:37
+#: olim/templates/learning_tasks/al_label_select.html:39
 #: olim/templates/learning_tasks/maintenance_scan.html:221
 #: olim/templates/learning_tasks/queue_complete.html:30
 #: olim/templates/learning_tasks/queue_list.html:20
@@ -1255,7 +1259,7 @@ msgid "Auto-Labeling Error"
 msgstr "Erro na Rotulagem Automática"
 
 #: olim/learning_tasks/states.py:1339
-#: olim/templates/learning_tasks/ollama_auto_label.html:142
+#: olim/templates/learning_tasks/ollama_auto_label.html:146
 msgid "Auto-Labeling Stopped Early"
 msgstr "Rotulagem Automática Interrompida"
 
@@ -1264,7 +1268,7 @@ msgid "Auto-Labeling Complete"
 msgstr "Rotulagem Automática Concluída"
 
 #: olim/learning_tasks/states.py:1363
-#: olim/templates/learning_tasks/ollama_auto_label.html:66
+#: olim/templates/learning_tasks/ollama_auto_label.html:70
 msgid "Auto-Labeling in Progress"
 msgstr "Rotulagem Automática em Andamento"
 
@@ -2105,10 +2109,10 @@ msgstr "Entrada "
 
 #: olim/templates/datasets/edit.html:374 olim/templates/entry.html:22
 #: olim/templates/learning_tasks/active_learning_loop.html:105
-#: olim/templates/learning_tasks/al_label_select.html:31
+#: olim/templates/learning_tasks/al_label_select.html:32
 #: olim/templates/learning_tasks/cold_start_search_setup.html:55
 #: olim/templates/learning_tasks/label_entry.html:24
-#: olim/templates/learning_tasks/ollama_auto_label.html:47
+#: olim/templates/learning_tasks/ollama_auto_label.html:48
 #: olim/templates/learning_tasks/ollama_model_config.html:137
 #: olim/templates/learning_tasks/ollama_queue_setup.html:86
 #: olim/templates/learning_tasks/queue_setup.html:128
@@ -2119,7 +2123,7 @@ msgstr "Anterior"
 
 #: olim/templates/datasets/edit.html:376 olim/templates/entry.html:34
 #: olim/templates/learning_tasks/label_entry.html:50
-#: olim/templates/learning_tasks/ollama_auto_label.html:328
+#: olim/templates/learning_tasks/ollama_auto_label.html:334
 #: olim/templates/learning_tasks/ollama_queue_setup.html:93
 msgid "Next"
 msgstr "Próximo"
@@ -2505,7 +2509,7 @@ msgstr "Gerar Previsões"
 
 #: olim/templates/components/search-results.html:23
 #: olim/templates/label-settings.html:105
-#: olim/templates/learning_tasks/ollama_auto_label.html:208
+#: olim/templates/learning_tasks/ollama_auto_label.html:212
 msgid "Open Queue"
 msgstr "Abrir Fila"
 
@@ -2601,7 +2605,7 @@ msgstr "Criar rótulos e enviar"
 #: olim/templates/learning_tasks/_al_settings.html:69
 #: olim/templates/learning_tasks/al_label_select.html:16
 #: olim/templates/learning_tasks/maintenance_scan.html:187
-#: olim/templates/learning_tasks/ollama_auto_label.html:249
+#: olim/templates/learning_tasks/ollama_auto_label.html:253
 #: olim/templates/learning_tasks/ollama_queue_setup.html:22
 #: olim/templates/learning_tasks/queue_setup.html:25
 msgid "Label"
@@ -4112,7 +4116,7 @@ msgid "Training failed"
 msgstr "Treinamento falhou"
 
 #: olim/templates/learning_tasks/active_learning_loop.html:45
-#: olim/templates/learning_tasks/ollama_auto_label.html:372
+#: olim/templates/learning_tasks/ollama_auto_label.html:382
 msgid "Retry"
 msgstr "Tentar novamente"
 
@@ -4285,7 +4289,7 @@ msgstr "Ajustar configurações"
 #: olim/templates/learning_tasks/active_learning_loop.html:393
 #: olim/templates/learning_tasks/label_entry.html:41
 #: olim/templates/learning_tasks/queue_complete.html:24
-#: olim/templates/learning_tasks/queue_list.html:149
+#: olim/templates/learning_tasks/queue_list.html:153
 #: olim/templates/learning_tasks/read_data.html:93
 #: olim/templates/learning_tasks/show_data.html:57
 #: olim/templates/learning_tasks/static_content.html:30
@@ -4294,7 +4298,7 @@ msgstr "Concluir Tarefa"
 
 #: olim/templates/learning_tasks/active_learning_loop.html:393
 #: olim/templates/learning_tasks/maintenance_review.html:110
-#: olim/templates/learning_tasks/ollama_auto_label.html:326
+#: olim/templates/learning_tasks/ollama_auto_label.html:332
 msgid "Finish"
 msgstr "Concluir"
 
@@ -4635,33 +4639,33 @@ msgstr "Resumo da Configuração"
 msgid "Entries to label"
 msgstr "Entradas para rotular"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:54
+#: olim/templates/learning_tasks/ollama_auto_label.html:58
 #: olim/templates/learning_tasks/ollama_model_config.html:144
 msgid "Start Auto-Labeling"
 msgstr "Iniciar Rotulagem Automática"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:73
+#: olim/templates/learning_tasks/ollama_auto_label.html:77
 msgid "complete"
 msgstr "concluído"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:77
+#: olim/templates/learning_tasks/ollama_auto_label.html:81
 msgid "This page will refresh automatically"
 msgstr "Esta página será atualizada automaticamente"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:84
+#: olim/templates/learning_tasks/ollama_auto_label.html:88
 msgid "Cancel the running task?"
 msgstr "Cancelar a tarefa em execução?"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:86
+#: olim/templates/learning_tasks/ollama_auto_label.html:90
 msgid "Cancel Task"
 msgstr "Cancelar Tarefa"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:96
-#: olim/templates/learning_tasks/ollama_auto_label.html:266
+#: olim/templates/learning_tasks/ollama_auto_label.html:100
+#: olim/templates/learning_tasks/ollama_auto_label.html:270
 msgid "Debug: LLM Conversations"
 msgstr "Debug: Conversas LLM"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:143
+#: olim/templates/learning_tasks/ollama_auto_label.html:147
 msgid ""
 "Processing was halted after repeated failures. Check your model and "
 "connection settings."
@@ -4669,81 +4673,81 @@ msgstr ""
 "O processamento foi interrompido após falhas repetidas. Verifique as "
 "configurações do modelo e de conexão."
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:148
+#: olim/templates/learning_tasks/ollama_auto_label.html:152
 msgid "Last Error"
 msgstr "Último Erro"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:154
+#: olim/templates/learning_tasks/ollama_auto_label.html:158
 msgid "Auto-Labeling Complete!"
 msgstr "Rotulagem Automática Concluída!"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:155
+#: olim/templates/learning_tasks/ollama_auto_label.html:159
 msgid "Your entries have been labeled"
 msgstr "Suas entradas foram rotuladas"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:162
+#: olim/templates/learning_tasks/ollama_auto_label.html:166
 msgid "Total Entries"
 msgstr "Total de Entradas"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:166
+#: olim/templates/learning_tasks/ollama_auto_label.html:170
 msgid "Labeled"
 msgstr "Rotuladas"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:170
+#: olim/templates/learning_tasks/ollama_auto_label.html:174
 msgid "Errors"
 msgstr "Erros"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:177
+#: olim/templates/learning_tasks/ollama_auto_label.html:181
 msgid "Label Distribution"
 msgstr "Distribuição de Rótulos"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:203
+#: olim/templates/learning_tasks/ollama_auto_label.html:207
 msgid "Queue Created!"
 msgstr "Fila Criada!"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:204
+#: olim/templates/learning_tasks/ollama_auto_label.html:208
 msgid "A new queue has been created with the labeled entries."
 msgstr "Uma nova fila foi criada com as entradas rotuladas."
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:219
+#: olim/templates/learning_tasks/ollama_auto_label.html:223
 msgid "Labeled Entries"
 msgstr "Entradas Rotuladas"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:222
+#: olim/templates/learning_tasks/ollama_auto_label.html:226
 msgid "Entry IDs"
 msgstr "IDs de Entrada"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:225
+#: olim/templates/learning_tasks/ollama_auto_label.html:229
 #: olim/templates/learning_tasks/queue_list.html:41
 msgid "Copy IDs"
 msgstr "Copiar IDs"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:241
+#: olim/templates/learning_tasks/ollama_auto_label.html:245
 msgid "View Errors"
 msgstr "Ver Erros"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:247
+#: olim/templates/learning_tasks/ollama_auto_label.html:251
 msgid "Entry"
 msgstr "Entrada"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:308
-#: olim/templates/learning_tasks/ollama_auto_label.html:365
+#: olim/templates/learning_tasks/ollama_auto_label.html:313
+#: olim/templates/learning_tasks/ollama_auto_label.html:372
 msgid "Back to LLM Setup"
 msgstr "Voltar à Configuração do LLM"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:316
+#: olim/templates/learning_tasks/ollama_auto_label.html:322
 msgid "Create Queue"
 msgstr "Criar Fila"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:345
+#: olim/templates/learning_tasks/ollama_auto_label.html:351
 msgid "Auto-Labeling Failed"
 msgstr "Rotulagem Automática Falhou"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:346
+#: olim/templates/learning_tasks/ollama_auto_label.html:352
 msgid "An error occurred during processing"
 msgstr "Ocorreu um erro durante o processamento"
 
-#: olim/templates/learning_tasks/ollama_auto_label.html:353
+#: olim/templates/learning_tasks/ollama_auto_label.html:359
 msgid "Error Details"
 msgstr "Detalhes do Erro"
 
@@ -4871,7 +4875,7 @@ msgstr "Atual"
 msgid "Done"
 msgstr "Concluído"
 
-#: olim/templates/learning_tasks/queue_list.html:138
+#: olim/templates/learning_tasks/queue_list.html:139
 msgid ""
 "Going back to setup will reset this task's entry queue and its labeling "
 "progress. Are you sure you want to continue?"
@@ -4879,16 +4883,16 @@ msgstr ""
 "Voltar para a configuração vai reiniciar a fila de entradas desta tarefa "
 "e seu progresso de rotulagem. Tem certeza de que deseja continuar?"
 
-#: olim/templates/learning_tasks/queue_list.html:142
+#: olim/templates/learning_tasks/queue_list.html:143
 msgid "Back to Setup"
 msgstr "Voltar à Configuração"
 
-#: olim/templates/learning_tasks/queue_list.html:163
-#: olim/templates/learning_tasks/queue_list.html:172
+#: olim/templates/learning_tasks/queue_list.html:167
+#: olim/templates/learning_tasks/queue_list.html:176
 msgid "Entry IDs copied to clipboard!"
 msgstr "IDs de entrada copiados para a área de transferência!"
 
-#: olim/templates/learning_tasks/queue_list.html:195
+#: olim/templates/learning_tasks/queue_list.html:199
 msgid "Queue exported successfully!"
 msgstr "Fila exportada com sucesso!"
 
