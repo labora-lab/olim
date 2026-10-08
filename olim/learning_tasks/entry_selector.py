@@ -141,6 +141,11 @@ def resolve_sources(
     return found, problems
 
 
+def resolve_entry_ids(entry_ids: list[str], datasets: list) -> tuple[list[QueueItem], list[str]]:
+    """Resolve a list of IDs (bare or dataset_id:entry_id) like the manual source does."""
+    return _resolve_manual("\n".join(entry_ids), datasets)
+
+
 def _resolve_manual(ids_text: str, datasets: list) -> tuple[list[QueueItem], list[str]]:
     """Pin each typed ID to the dataset that holds it.
 

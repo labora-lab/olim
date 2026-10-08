@@ -104,6 +104,7 @@
     const checkLabels = {{ (required_label_ids or labels | map(attribute='id') | list) | tojson }};
     const labelNames = { {% for label in labels %}{{ label.id }}: {{ label.name | tojson }}{% if not loop.last %}, {% endif %}{% endfor %} };
     const mode = '{{ completion_mode }}';
+    const enforce = {{ (enforce_required or false) | tojson }};
 
     form.addEventListener('submit', function(e) {
         const missing = checkLabels.filter(function(labelId) {
@@ -125,7 +126,10 @@
         } else {
             message = '{{ _("No labels have been filled for this entry.") }}';
         }
-        if (!confirm(message + '\n\n{{ _("Continue anyway?") }}')) {
+        if (enforce) {
+            alert(message);
+            e.preventDefault();
+        } else if (!confirm(message + '\n\n{{ _("Continue anyway?") }}')) {
             e.preventDefault();
         }
     });

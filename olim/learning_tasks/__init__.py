@@ -20,6 +20,7 @@ from ..database import (
     assign_learning_task,
     delete_learning_task,
     get_datasets,
+    get_labels,
     get_learning_task,
     get_learning_tasks,
     get_users,
@@ -28,6 +29,7 @@ from ..database import (
 )
 from ..project import update_session_project
 from .base import BaseState
+from .entry_selector import resolve_entry_ids
 
 # Registry of state classes by name
 STATE_REGISTRY: dict[str, type[BaseState]] = {}
@@ -137,6 +139,95 @@ def build_initial_setup(config: dict) -> dict:
     }
 
 
+def _label_ids(value: object, field: str) -> list[int]:
+    if not isinstance(value, list) or not all(
+        isinstance(v, int) or (isinstance(v, str) and v.isdigit()) for v in value
+    ):
+        raise ValueError(_("'{field}' must be a list of label IDs").format(field=field))
+    return [int(v) for v in value]
+
+
+def build_initial_data(config: dict, project_id: int) -> dict:
+    """Task data preset by a configuration's optional "data" block.
+
+    Lets a task start straight at LabelEntry with a fixed queue:
+        "data": {
+            "entries": ["PAT-1", "3:PAT-2"],   # entry IDs, dataset_id:entry_id if ambiguous
+            "labels": [12, 15],                # label IDs of the project (default: all)
+            "required_labels": [12],           # subset of labels (default: none)
+            "completion_mode": "all",          # "any" (default) or "all"
+            "enforce_required": true           # block moving on until complete
+        }
+
+    Raises:
+        ValueError: with a user-facing message when the block is invalid
+    """
+    raw = config.get("data")
+    if raw is None:
+        return {}
+    if not isinstance(raw, dict):
+        raise ValueError(_("'data' must be an object"))
+    unknown = set(raw) - {
+        "entries",
+        "labels",
+        "required_labels",
+        "completion_mode",
+        "enforce_required",
+    }
+    if unknown:
+        raise ValueError(
+            _("Unknown fields in 'data': {fields}").format(fields=", ".join(sorted(unknown)))
+        )
+
+    entries = raw.get("entries")
+    if not isinstance(entries, list) or not entries:
+        raise ValueError(_("'entries' must be a non-empty list of entry IDs"))
+    entry_ids = [str(e).strip() for e in entries]
+    if "" in entry_ids:
+        raise ValueError(_("'entries' contains an empty ID"))
+    repeated = sorted({e for e in entry_ids if entry_ids.count(e) > 1})
+    if repeated:
+        raise ValueError(
+            _("'entries' repeats these IDs: {ids}").format(ids=", ".join(repeated[:20]))
+        )
+    items, problems = resolve_entry_ids(entry_ids, list(get_datasets(project_id)))
+    if problems:
+        raise ValueError(" ".join(problems))
+
+    project_labels = {label.id: label for label in get_labels(project_id)}
+    label_ids = _label_ids(raw["labels"], "labels") if "labels" in raw else list(project_labels)
+    missing = [str(i) for i in label_ids if i not in project_labels]
+    if missing:
+        raise ValueError(
+            _("These labels don't exist in this project: {ids}").format(ids=", ".join(missing))
+        )
+    if not label_ids:
+        raise ValueError(_("The task needs at least one label"))
+    required_ids = _label_ids(raw.get("required_labels", []), "required_labels")
+    outside = [str(i) for i in required_ids if i not in label_ids]
+    if outside:
+        raise ValueError(
+            _("Required labels must also be in 'labels': {ids}").format(ids=", ".join(outside))
+        )
+
+    completion_mode = raw.get("completion_mode", "any")
+    if completion_mode not in ("any", "all"):
+        raise ValueError(_('\'completion_mode\' must be "any" or "all"'))
+
+    def label_refs(ids: list[int]) -> list[dict]:
+        return [{"id": i, "name": project_labels[i].name} for i in ids]
+
+    return {
+        "queue_ids": [entry_id for entry_id, _dataset_id in items],
+        "queue_dataset_ids": [dataset_id for _entry_id, dataset_id in items],
+        "queue_labels": label_refs(label_ids),
+        "queue_required_labels": label_refs(required_ids),
+        "queue_completion_mode": completion_mode,
+        "queue_enforce_required": bool(raw.get("enforce_required", False)),
+        "queue_position": 0,
+    }
+
+
 def load_configuration(filename: str) -> dict | None:
     """Load a configuration by filename."""
     file_path = CONFIGURATIONS_PATH / f"{filename}.json"
@@ -235,6 +326,7 @@ def create_learning_task(project_id: int) -> ...:
 
     source = request.form.get("source", "preset")
     initial_setup = None
+    initial_config: dict = {}
 
     if source == "preset":
         # Load from preconfigured file
@@ -249,6 +341,7 @@ def create_learning_task(project_id: int) -> ...:
                     flash(error_msg, "error")
                     return redirect(url_for("learning_tasks_list", project_id=project_id))
                 initial_setup = build_initial_setup(config)
+                initial_config = config
             else:
                 flash(_("Configuration not found"), "error")
                 return redirect(url_for("learning_tasks_list", project_id=project_id))
@@ -267,6 +360,7 @@ def create_learning_task(project_id: int) -> ...:
                     flash(error_msg, "error")
                     return redirect(url_for("learning_tasks_list", project_id=project_id))
                 initial_setup = build_initial_setup(config)
+                initial_config = config
             except json.JSONDecodeError:
                 flash(_("Invalid JSON file"), "error")
                 return redirect(url_for("learning_tasks_list", project_id=project_id))
@@ -276,6 +370,12 @@ def create_learning_task(project_id: int) -> ...:
 
     if not initial_setup or not initial_setup.get("sequence"):
         flash(_("Invalid configuration"), "error")
+        return redirect(url_for("learning_tasks_list", project_id=project_id))
+
+    try:
+        initial_data = build_initial_data(initial_config, project_id)
+    except ValueError as e:
+        flash(str(e), "error")
         return redirect(url_for("learning_tasks_list", project_id=project_id))
 
     # Get initial state from first step
@@ -290,7 +390,7 @@ def create_learning_task(project_id: int) -> ...:
         initial_setup=initial_setup,
         user_id=session["user_id"],
         project_id=project_id,
-        data={},
+        data=initial_data,
         assigned_to=assigned_to,
     )
 

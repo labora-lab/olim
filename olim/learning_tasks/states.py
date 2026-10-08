@@ -576,6 +576,7 @@ class LabelEntry(BaseState):
         queue_labels: List of available labels
         queue_required_labels: List of required labels
         queue_completion_mode: "any" or "all" (default: "any")
+        queue_enforce_required: Block moving on until the entry is complete (default: False)
         queue_position: Current position in queue
         queue_view_mode: "label" or "list" (default: "label")
     """
@@ -616,6 +617,15 @@ class LabelEntry(BaseState):
         completion_mode = self.data.get("queue_completion_mode", "any")
 
         return labels, label_ids, required_label_ids, completion_mode
+
+    def _is_complete(self, position: int) -> bool:
+        """Whether the queue entry at a position meets the completion criteria."""
+        _labels, label_ids, required_ids, mode = self._get_labels_context()
+        items = _queue_items(self.data, self.params.get("_datasets", []))
+        # Positions are counted within the one-item slice
+        return 0 in self._compute_completed_positions(
+            items[position : position + 1], label_ids, required_ids, mode
+        )
 
     def _compute_completed_positions(
         self,
@@ -735,6 +745,7 @@ class LabelEntry(BaseState):
             required_label_ids=required_label_ids,
             missing_labels=missing_labels,
             completion_mode=completion_mode,
+            enforce_required=self.data.get("queue_enforce_required", False),
             hidden_labels=hidden_labels,
             show_hidden=False,
             # Queue navigation
@@ -779,12 +790,32 @@ class LabelEntry(BaseState):
                 self.data["queue_position"] = queue_position - 1
             return 0
 
+        enforce = self.data.get("queue_enforce_required", False)
+
         if action == "skip":
+            if enforce and queue_position < total and not self._is_complete(queue_position):
+                flash(_("Fill in the required labels before moving on."), category="error")
+                return 0
             new_position = queue_position + 1
             self.data["queue_position"] = new_position
             return 0
 
         if action in ("finish_queue", "finish"):
+            if enforce:
+                _labels, label_ids, required_ids, mode = self._get_labels_context()
+                datasets = self.params.get("_datasets", [])
+                queue_items = _queue_items(self.data, datasets)
+                completed = self._compute_completed_positions(
+                    queue_items, label_ids, required_ids, mode
+                )
+                pending = [i for i in range(total) if i not in completed]
+                if pending:
+                    flash(
+                        _("{count} entries still miss required labels.").format(count=len(pending)),
+                        category="error",
+                    )
+                    self.data["queue_position"] = pending[0]
+                    return 0
             return 1
 
         if action == "prev":

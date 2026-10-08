@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2026-10-08 10:39-0300\n"
+"POT-Creation-Date: 2026-10-08 13:57-0300\n"
 "PO-Revision-Date: 2025-05-16 01:02+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: pt_BR\n"
@@ -481,7 +481,7 @@ msgstr "Ocorreu um erro inesperado."
 msgid "Error rendering entry {entry_id}!"
 msgstr "Erro ao renderizar entrada {entry_id}!"
 
-#: olim/functions.py:150 olim/learning_tasks/states.py:702
+#: olim/functions.py:150 olim/learning_tasks/states.py:712
 #, python-brace-format
 msgid "Entry {entry_id} not found"
 msgstr "Entrada {entry_id} não encontrada"
@@ -775,7 +775,7 @@ msgstr ""
 msgid "No valid entries found"
 msgstr "Nenhuma entrada válida encontrada"
 
-#: olim/learning_tasks/states.py:1422 olim/project.py:588
+#: olim/learning_tasks/states.py:1453 olim/project.py:588
 #, python-brace-format
 msgid "Queue created successfully with {count} entries"
 msgstr "Fila criada com sucesso com {count} entradas"
@@ -862,7 +862,7 @@ msgstr "Configuração '{key}' redefinida para o valor padrão"
 msgid "Error resetting setting: {error}"
 msgstr "Erro ao redefinir configuração: {error}"
 
-#: olim/learning_tasks/__init__.py:274 olim/settings_routes.py:232
+#: olim/learning_tasks/__init__.py:368 olim/settings_routes.py:232
 msgid "Please upload a configuration file"
 msgstr "Por favor, envie um arquivo de configuração"
 
@@ -874,7 +874,7 @@ msgstr "Configuração salva nos predefinidos"
 msgid "Failed to save configuration"
 msgstr "Falha ao salvar configuração"
 
-#: olim/learning_tasks/__init__.py:271 olim/settings_routes.py:254
+#: olim/learning_tasks/__init__.py:365 olim/settings_routes.py:254
 msgid "Invalid JSON file"
 msgstr "Arquivo JSON inválido"
 
@@ -969,86 +969,131 @@ msgstr "Texto {text_id} removido da lista de ocultos"
 msgid "Invalid date \"{date}\"."
 msgstr "Data inválida \"{date}\"."
 
-#: olim/learning_tasks/__init__.py:167
+#: olim/learning_tasks/__init__.py:146
+#, python-brace-format
+msgid "'{field}' must be a list of label IDs"
+msgstr "'{field}' deve ser uma lista de IDs de rótulos"
+
+#: olim/learning_tasks/__init__.py:169
+msgid "'data' must be an object"
+msgstr "'data' deve ser um objeto"
+
+#: olim/learning_tasks/__init__.py:179
+#, python-brace-format
+msgid "Unknown fields in 'data': {fields}"
+msgstr "Campos desconhecidos em 'data': {fields}"
+
+#: olim/learning_tasks/__init__.py:184
+msgid "'entries' must be a non-empty list of entry IDs"
+msgstr "'entries' deve ser uma lista não vazia de IDs de entradas"
+
+#: olim/learning_tasks/__init__.py:187
+msgid "'entries' contains an empty ID"
+msgstr "'entries' contém um ID vazio"
+
+#: olim/learning_tasks/__init__.py:191
+#, python-brace-format
+msgid "'entries' repeats these IDs: {ids}"
+msgstr "'entries' repete estes IDs: {ids}"
+
+#: olim/learning_tasks/__init__.py:202
+#, python-brace-format
+msgid "These labels don't exist in this project: {ids}"
+msgstr "Estes rótulos não existem neste projeto: {ids}"
+
+#: olim/learning_tasks/__init__.py:205
+msgid "The task needs at least one label"
+msgstr "A tarefa precisa de pelo menos um rótulo"
+
+#: olim/learning_tasks/__init__.py:210
+#, python-brace-format
+msgid "Required labels must also be in 'labels': {ids}"
+msgstr "Rótulos obrigatórios também devem estar em 'labels': {ids}"
+
+#: olim/learning_tasks/__init__.py:215
+msgid "'completion_mode' must be \"any\" or \"all\""
+msgstr "'completion_mode' deve ser \"any\" ou \"all\""
+
+#: olim/learning_tasks/__init__.py:258
 msgid "Configuration must be a JSON object"
 msgstr "A configuração deve ser um objeto JSON"
 
-#: olim/learning_tasks/__init__.py:170
+#: olim/learning_tasks/__init__.py:261
 msgid "Configuration must have a 'sequence' field"
 msgstr "A configuração deve ter um campo 'sequence'"
 
-#: olim/learning_tasks/__init__.py:174
+#: olim/learning_tasks/__init__.py:265
 msgid "Sequence must be a non-empty list"
 msgstr "A sequência deve ser uma lista não vazia"
 
-#: olim/learning_tasks/__init__.py:178
+#: olim/learning_tasks/__init__.py:269
 #, python-brace-format
 msgid "Step {i} must be an object"
 msgstr "O passo {i} deve ser um objeto"
 
-#: olim/learning_tasks/__init__.py:180
+#: olim/learning_tasks/__init__.py:271
 #, python-brace-format
 msgid "Step {i} must have a 'state' field"
 msgstr "O passo {i} deve ter um campo 'state'"
 
-#: olim/learning_tasks/__init__.py:182
+#: olim/learning_tasks/__init__.py:273
 #, python-brace-format
 msgid "Step {i} has unknown state: {state}"
 msgstr "O passo {i} tem um estado desconhecido: {state}"
 
-#: olim/learning_tasks/__init__.py:233
+#: olim/learning_tasks/__init__.py:324
 msgid "Task name is required"
 msgstr "Nome da tarefa é obrigatório"
 
-#: olim/learning_tasks/__init__.py:253
+#: olim/learning_tasks/__init__.py:346
 msgid "Configuration not found"
 msgstr "Configuração não encontrada"
 
-#: olim/learning_tasks/__init__.py:256
+#: olim/learning_tasks/__init__.py:349
 msgid "Please select a configuration"
 msgstr "Por favor, selecione uma configuração"
 
-#: olim/learning_tasks/__init__.py:278
+#: olim/learning_tasks/__init__.py:372
 msgid "Invalid configuration"
 msgstr "Configuração inválida"
 
-#: olim/learning_tasks/__init__.py:297
+#: olim/learning_tasks/__init__.py:397
 msgid "Learning task created successfully"
 msgstr "Tarefa de aprendizado criada com sucesso"
 
-#: olim/learning_tasks/__init__.py:309
+#: olim/learning_tasks/__init__.py:409
 msgid "Learning task deleted successfully"
 msgstr "Tarefa de aprendizado excluída com sucesso"
 
-#: olim/learning_tasks/__init__.py:311 olim/learning_tasks/__init__.py:359
+#: olim/learning_tasks/__init__.py:411 olim/learning_tasks/__init__.py:459
 msgid "Learning task not found"
 msgstr "Tarefa de aprendizado não encontrada"
 
-#: olim/learning_tasks/__init__.py:331
+#: olim/learning_tasks/__init__.py:431
 msgid "Task assigned successfully"
 msgstr "Tarefa atribuída com sucesso"
 
-#: olim/learning_tasks/__init__.py:333
+#: olim/learning_tasks/__init__.py:433
 msgid "Task not found"
 msgstr "Tarefa não encontrada"
 
-#: olim/learning_tasks/__init__.py:357
+#: olim/learning_tasks/__init__.py:457
 msgid "Learning task reset successfully"
 msgstr "Tarefa de aprendizado reiniciada com sucesso"
 
-#: olim/learning_tasks/__init__.py:445 olim/learning_tasks/__init__.py:486
+#: olim/learning_tasks/__init__.py:545 olim/learning_tasks/__init__.py:586
 msgid "Task completed!"
 msgstr "Tarefa concluída!"
 
-#: olim/learning_tasks/__init__.py:459
+#: olim/learning_tasks/__init__.py:559
 msgid "An error occurred while processing your request. Please try again."
 msgstr "Ocorreu um erro ao processar sua solicitação. Tente novamente."
 
-#: olim/learning_tasks/__init__.py:531
+#: olim/learning_tasks/__init__.py:631
 msgid "An error occurred while loading the content. Please refresh the page."
 msgstr "Ocorreu um erro ao carregar o conteúdo. Atualize a página."
 
-#: olim/learning_tasks/entry_selector.py:183
+#: olim/learning_tasks/entry_selector.py:188
 #, python-brace-format
 msgid ""
 "Entry {entry_id} exists in more than one dataset: {datasets}. Write it as"
@@ -1057,7 +1102,7 @@ msgstr ""
 "A entrada {entry_id} existe em mais de um conjunto de dados: {datasets}. "
 "Escreva {example} para escolher um."
 
-#: olim/learning_tasks/entry_selector.py:194
+#: olim/learning_tasks/entry_selector.py:199
 #, python-brace-format
 msgid "Entries not found in this project's datasets: {ids}"
 msgstr "Entradas não encontradas nos conjuntos de dados deste projeto: {ids}"
@@ -1122,15 +1167,15 @@ msgstr "Dados de Depuração"
 msgid "Queue Setup"
 msgstr "Configuração da Fila"
 
-#: olim/learning_tasks/states.py:475 olim/learning_tasks/states.py:946
+#: olim/learning_tasks/states.py:475 olim/learning_tasks/states.py:977
 msgid "Please add at least one entry source"
 msgstr "Por favor, adicione pelo menos uma fonte de entradas"
 
-#: olim/learning_tasks/states.py:507 olim/learning_tasks/states.py:975
+#: olim/learning_tasks/states.py:507 olim/learning_tasks/states.py:1006
 msgid "No entries found from the configured sources"
 msgstr "Nenhuma entrada encontrada nas fontes configuradas"
 
-#: olim/learning_tasks/states.py:526 olim/learning_tasks/states.py:999
+#: olim/learning_tasks/states.py:526 olim/learning_tasks/states.py:1030
 msgid "Please select at least one label"
 msgstr "Por favor, selecione pelo menos um rótulo"
 
@@ -1139,80 +1184,89 @@ msgstr "Por favor, selecione pelo menos um rótulo"
 msgid "No labels available"
 msgstr "Nenhum rótulo disponível"
 
-#: olim/learning_tasks/states.py:677
+#: olim/learning_tasks/states.py:687
 msgid "Queue Overview"
 msgstr "Visão Geral da Fila"
 
-#: olim/learning_tasks/states.py:692
+#: olim/learning_tasks/states.py:702
 msgid "Queue Complete"
 msgstr "Fila Concluída"
 
-#: olim/learning_tasks/states.py:914
+#: olim/learning_tasks/states.py:797
+msgid "Fill in the required labels before moving on."
+msgstr "Preencha os rótulos obrigatórios antes de continuar."
+
+#: olim/learning_tasks/states.py:814
+#, python-brace-format
+msgid "{count} entries still miss required labels."
+msgstr "{count} entradas ainda estão sem os rótulos obrigatórios."
+
+#: olim/learning_tasks/states.py:945
 msgid "Setup Auto-Labeling Queue"
 msgstr "Configurar Fila de Rotulagem Automática"
 
-#: olim/learning_tasks/states.py:1007
+#: olim/learning_tasks/states.py:1038
 msgid "Ollama URL is required"
 msgstr "URL do Ollama é obrigatória"
 
-#: olim/learning_tasks/states.py:1010
+#: olim/learning_tasks/states.py:1041
 msgid "URL must start with http:// or https://"
 msgstr "A URL deve começar com http:// ou https://"
 
-#: olim/learning_tasks/states.py:1025
+#: olim/learning_tasks/states.py:1056
 #, python-format
 msgid "Description is required for: %(names)s"
 msgstr "Descrição é obrigatória para: %(names)s"
 
-#: olim/learning_tasks/states.py:1143
+#: olim/learning_tasks/states.py:1174
 msgid "Configure LLM"
 msgstr "Configurar LLM"
 
-#: olim/learning_tasks/states.py:1171
+#: olim/learning_tasks/states.py:1202
 msgid "Please select a model"
 msgstr "Por favor, selecione um modelo"
 
-#: olim/learning_tasks/states.py:1184
+#: olim/learning_tasks/states.py:1215
 msgid "Prompt template is required"
 msgstr "Template de prompt é obrigatório"
 
-#: olim/learning_tasks/states.py:1190
+#: olim/learning_tasks/states.py:1221
 #, python-brace-format
 msgid "Prompt template must contain {text} placeholder"
 msgstr "O template de prompt deve conter o marcador {text}"
 
-#: olim/learning_tasks/states.py:1273
+#: olim/learning_tasks/states.py:1304
 #: olim/templates/learning_tasks/ollama_auto_label.html:19
 msgid "Ready to Start Auto-Labeling"
 msgstr "Pronto para Iniciar a Rotulagem Automática"
 
-#: olim/learning_tasks/states.py:1285 olim/learning_tasks/states.py:1323
+#: olim/learning_tasks/states.py:1316 olim/learning_tasks/states.py:1354
 msgid "Auto-Labeling Error"
 msgstr "Erro na Rotulagem Automática"
 
-#: olim/learning_tasks/states.py:1308
+#: olim/learning_tasks/states.py:1339
 #: olim/templates/learning_tasks/ollama_auto_label.html:142
 msgid "Auto-Labeling Stopped Early"
 msgstr "Rotulagem Automática Interrompida"
 
-#: olim/learning_tasks/states.py:1308
+#: olim/learning_tasks/states.py:1339
 msgid "Auto-Labeling Complete"
 msgstr "Rotulagem Automática Concluída"
 
-#: olim/learning_tasks/states.py:1332
+#: olim/learning_tasks/states.py:1363
 #: olim/templates/learning_tasks/ollama_auto_label.html:66
 msgid "Auto-Labeling in Progress"
 msgstr "Rotulagem Automática em Andamento"
 
-#: olim/learning_tasks/states.py:1457 olim/templates/models/detail.html:351
+#: olim/learning_tasks/states.py:1488 olim/templates/models/detail.html:351
 msgid "Select Label"
 msgstr "Selecionar Rótulo"
 
-#: olim/learning_tasks/states.py:1536
+#: olim/learning_tasks/states.py:1567
 msgid "Search per Class"
 msgstr "Buscar por Classe"
 
-#: olim/learning_tasks/states.py:1841
+#: olim/learning_tasks/states.py:1872
 #, python-format
 msgid ""
 "The last training never reported back after %(mins)s minute(s) and was "
@@ -1221,96 +1275,96 @@ msgstr ""
 "O último treinamento não deu retorno após %(mins)s minuto(s) e foi "
 "abandonado. Um novo será iniciado."
 
-#: olim/learning_tasks/states.py:1986
+#: olim/learning_tasks/states.py:2017
 #, python-format
 msgid "%(n)s more round(s) needed before the goal can be evaluated"
 msgstr "faltam %(n)s rodada(s) para a meta poder ser avaliada"
 
-#: olim/learning_tasks/states.py:1991
+#: olim/learning_tasks/states.py:2022
 #, python-format
 msgid "%(m)s was not reported this round"
 msgstr "%(m)s não foi reportada nesta rodada"
 
-#: olim/learning_tasks/states.py:1995
+#: olim/learning_tasks/states.py:2026
 #, python-format
 msgid "needs %(need)s validation examples, smallest recent round had %(have)s"
 msgstr ""
 "precisa de %(need)s exemplos de validação; a menor rodada recente teve "
 "%(have)s"
 
-#: olim/learning_tasks/states.py:2072 olim/learning_tasks/states.py:2103
-#: olim/learning_tasks/states.py:2512
+#: olim/learning_tasks/states.py:2103 olim/learning_tasks/states.py:2134
+#: olim/learning_tasks/states.py:2543
 msgid "Enter a number."
 msgstr "Digite um número."
 
-#: olim/learning_tasks/states.py:2081
+#: olim/learning_tasks/states.py:2112
 #, python-format
 msgid "Must be between %(lo)s and %(hi)s (or %(extra)s)."
 msgstr "Deve estar entre %(lo)s e %(hi)s (ou %(extra)s)."
 
-#: olim/learning_tasks/states.py:2087 olim/learning_tasks/states.py:2516
+#: olim/learning_tasks/states.py:2118 olim/learning_tasks/states.py:2547
 #, python-format
 msgid "Must be between %(lo)s and %(hi)s."
 msgstr "Deve estar entre %(lo)s e %(hi)s."
 
-#: olim/learning_tasks/states.py:2098
+#: olim/learning_tasks/states.py:2129
 msgid "Unknown metric."
 msgstr "Métrica desconhecida."
 
-#: olim/learning_tasks/states.py:2106
+#: olim/learning_tasks/states.py:2137
 msgid "Must be between 0 and 1."
 msgstr "Deve estar entre 0 e 1."
 
-#: olim/learning_tasks/states.py:2114
+#: olim/learning_tasks/states.py:2145
 msgid "Set a threshold, or clear the metric to run without a goal."
 msgstr "Defina um limiar ou limpe a métrica para rodar sem meta."
 
-#: olim/learning_tasks/states.py:2160
+#: olim/learning_tasks/states.py:2191
 msgid "Active Learning"
 msgstr "Aprendizado Ativo"
 
-#: olim/learning_tasks/states.py:2192 olim/learning_tasks/states.py:2305
-#: olim/learning_tasks/states.py:2374 olim/learning_tasks/states.py:2671
+#: olim/learning_tasks/states.py:2223 olim/learning_tasks/states.py:2336
+#: olim/learning_tasks/states.py:2405 olim/learning_tasks/states.py:2702
 msgid "Unknown error"
 msgstr "Erro desconhecido"
 
-#: olim/learning_tasks/states.py:2204
+#: olim/learning_tasks/states.py:2235
 msgid "Processing..."
 msgstr "Processando..."
 
-#: olim/learning_tasks/states.py:2216
+#: olim/learning_tasks/states.py:2247
 msgid "Starting training..."
 msgstr "Iniciando treinamento..."
 
-#: olim/learning_tasks/states.py:2524
+#: olim/learning_tasks/states.py:2555
 msgid "Unknown signal."
 msgstr "Sinal desconhecido."
 
-#: olim/learning_tasks/states.py:2537
+#: olim/learning_tasks/states.py:2568
 msgid "Scan pending…"
 msgstr "Verificação pendente…"
 
-#: olim/learning_tasks/states.py:2543 olim/learning_tasks/states.py:2643
+#: olim/learning_tasks/states.py:2574 olim/learning_tasks/states.py:2674
 msgid "Scanning…"
 msgstr "Verificando…"
 
-#: olim/learning_tasks/states.py:2558
+#: olim/learning_tasks/states.py:2589
 msgid "Model health check"
 msgstr "Verificação de saúde dos modelos"
 
-#: olim/learning_tasks/states.py:2603
+#: olim/learning_tasks/states.py:2634
 msgid "Model Health Check"
 msgstr "Verificação de Saúde dos Modelos"
 
-#: olim/learning_tasks/states.py:2627
+#: olim/learning_tasks/states.py:2658
 msgid "Starting scan…"
 msgstr "Iniciando verificação…"
 
-#: olim/learning_tasks/states.py:2735
+#: olim/learning_tasks/states.py:2766
 msgid "No trained model was selected."
 msgstr "Nenhum modelo treinado foi selecionado."
 
-#: olim/learning_tasks/states.py:2775
+#: olim/learning_tasks/states.py:2806
 msgid "Health Check Results"
 msgstr "Resultados da Verificação"
 
@@ -4109,12 +4163,12 @@ msgid "high uncertainty"
 msgstr "alta incerteza"
 
 #: olim/templates/learning_tasks/active_learning_loop.html:242
-#: olim/templates/learning_tasks/label_entry.html:140
+#: olim/templates/learning_tasks/label_entry.html:144
 msgid "Entry not found"
 msgstr "Entrada não encontrada"
 
 #: olim/templates/learning_tasks/active_learning_loop.html:243
-#: olim/templates/learning_tasks/label_entry.html:141
+#: olim/templates/learning_tasks/label_entry.html:145
 msgid "Could not load entry. It may have been deleted or the ID is invalid."
 msgstr ""
 "Não foi possível carregar a entrada. Ela pode ter sido excluída ou o ID é"
@@ -4281,15 +4335,15 @@ msgstr "Concluir Fila"
 msgid "Required"
 msgstr "Obrigatório"
 
-#: olim/templates/learning_tasks/label_entry.html:124
+#: olim/templates/learning_tasks/label_entry.html:125
 msgid "The following labels are not filled:"
 msgstr "Os seguintes rótulos não foram preenchidos:"
 
-#: olim/templates/learning_tasks/label_entry.html:126
+#: olim/templates/learning_tasks/label_entry.html:127
 msgid "No labels have been filled for this entry."
 msgstr "Nenhum rótulo foi preenchido para esta entrada."
 
-#: olim/templates/learning_tasks/label_entry.html:128
+#: olim/templates/learning_tasks/label_entry.html:132
 msgid "Continue anyway?"
 msgstr "Continuar mesmo assim?"
 
