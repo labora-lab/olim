@@ -23,7 +23,7 @@ from ..database import (
     register_entries,
     update_dataset,
 )
-from ..entry_types.base import EntryIdError
+from ..entry_types.base import EntryIdError, prepare_id_column, strip_entry_id
 from ..settings import ES_INDEX, ES_SERVER, UPLOAD_BATCH_SIZE, UPLOAD_PATH, WORK_PATH
 from ..utils.es import create_index, get_es_conn
 
@@ -481,6 +481,13 @@ def entry_id_error_message(error: EntryIdError, append: bool) -> str:
             "Row %(row)s has no ID. Every row needs a unique ID; fix the file and upload it again",
             row=error.row,
         )
+    if error.kind == "unknown":
+        return _(
+            "The ID '%(id)s' at row %(row)s is not in the dataset. Columns can only be added "
+            "to existing entries; fix the file and upload it again",
+            id=error.entry_id,
+            row=error.row,
+        )
     if error.kind == "exists" and append:
         return _(
             "The ID '%(id)s' at row %(row)s already exists in the dataset or appears earlier in "
@@ -568,6 +575,192 @@ def check_append_columns(columns: list[str], expected_columns: list[str]) -> dic
         "columns": columns,
         "expected_columns": expected_columns,
     }
+
+
+def check_new_columns(columns: list[str], id_column: str, existing_columns: list[str]) -> dict:
+    """Compare the header of a file of new columns with the dataset's columns.
+
+    Every column but the ID column is added, so none of them may exist yet.
+
+    Returns:
+        {"ok", "id_column", "new_columns", "existing_columns"}
+    """
+    others = [c for c in columns if c != id_column]
+    clashing = [c for c in others if c in existing_columns]
+    new_columns = [c for c in others if c not in existing_columns]
+    return {
+        "ok": bool(new_columns) and not clashing,
+        "id_column": id_column,
+        "new_columns": new_columns,
+        "existing_columns": clashing,
+    }
+
+
+def column_field(column: str) -> str:
+    """Search engine field of a metadata column (upload renames "text" to keep the main text)."""
+    return "metadata_text" if column == "text" else column
+
+
+def _read_column_chunks(
+    filename: str, sep: str, encoding: str, usecols: list[str]
+) -> Generator[pd.DataFrame]:
+    read_kwargs: dict = {
+        "chunksize": UPLOAD_BATCH_SIZE,
+        "sep": sep,
+        "encoding": encoding,
+        "usecols": usecols,
+    }
+    if len(sep) > 1:
+        read_kwargs["engine"] = "python"
+    yield from pd.read_csv(filename, **read_kwargs)
+
+
+def _check_column_file_ids(
+    filename: str, sep: str, encoding: str, id_column: str, dataset_id: int
+) -> int:
+    """Stream the file's IDs: each must be present once and belong to the dataset.
+
+    Returns:
+        Number of rows
+
+    Raises:
+        EntryIdError: for the first empty, repeated or unknown ID
+    """
+    seen: set[str] = set()
+    for chunk in _read_column_chunks(filename, sep, encoding, [id_column]):
+        rows = prepare_id_column(chunk, id_column)
+        ids = [str(i) for i in chunk[id_column]]
+        for row, entry_id in zip(rows, ids, strict=True):
+            if entry_id in seen:
+                raise EntryIdError("duplicate", row, entry_id)
+            seen.add(entry_id)
+        with flask_app.app_context():
+            missing = set(check_entries_exist(ids, dataset_id)[1])
+        if missing:
+            row, entry_id = next((r, i) for r, i in zip(rows, ids, strict=True) if i in missing)
+            raise EntryIdError("unknown", row, entry_id)
+    return len(seen)
+
+
+def remove_fields(index_name: str, fields: list[str]) -> None:
+    """Remove fields from every document of an index."""
+    es = get_es_conn(hosts=ES_SERVER, request_timeout=600)
+    es.update_by_query(
+        index=index_name,
+        query={
+            "bool": {
+                "should": [{"exists": {"field": f}} for f in fields],
+                "minimum_should_match": 1,
+            }
+        },
+        script={
+            "source": "for (f in params.fields) { ctx._source.remove(f) }",
+            "params": {"fields": fields},
+        },
+        refresh=True,
+        conflicts="proceed",
+    )
+
+
+@app.task(bind=True, name="upload.add_dataset_columns")
+def add_dataset_columns(
+    self,
+    dataset_id: int,
+    filename: str,
+    id_column: str,
+    new_columns: list[str],
+    sep: str,
+    encoding: str,
+    **kwargs,
+) -> dict:
+    """Add the columns of a file to the existing entries of a dataset.
+
+    All IDs are checked before anything is written. Rows set the new fields of the
+    entry with their ID; entries missing from the file and empty cells get no value.
+    If writing fails, the new fields are removed from every entry again.
+    """
+    index_name = ES_INDEX.format(dataset_id=dataset_id)
+    fields = {c: column_field(c) for c in new_columns}
+    written = False
+    try:
+        self.update_state(state="PROGRESS", meta={"status": _("Checking IDs...")})
+        total_rows = _check_column_file_ids(filename, sep, encoding, id_column, dataset_id)
+
+        es = get_es_conn(hosts=ES_SERVER, request_timeout=120)
+        updated = 0
+        chunks = _read_column_chunks(filename, sep, encoding, [id_column, *new_columns])
+        for batch, chunk in enumerate(chunks, start=1):
+            self.update_state(
+                state="PROGRESS",
+                meta={"current": batch, "total": "unknown", "status": f"Processing batch {batch}"},
+            )
+            chunk[id_column] = chunk[id_column].map(strip_entry_id)
+            actions = []
+            for record in chunk.to_dict("records"):
+                doc = {
+                    fields[c]: value
+                    for c, value in record.items()
+                    if c in fields and not (pd.isna(value) or value == "")
+                }
+                if doc:
+                    actions.append(
+                        {
+                            "_op_type": "update",
+                            "_index": index_name,
+                            "_id": str(record[id_column]),
+                            "doc": doc,
+                        }
+                    )
+            if not actions:
+                continue
+            written = True
+            _ok, errors = helpers.bulk(es, actions, raise_on_error=False)
+            if errors:
+                first = errors[0] if isinstance(errors, list) else {}
+                reason = first.get("update", {}).get("error", first)
+                if isinstance(reason, dict):
+                    reason = reason.get("reason", str(reason))
+                raise Exception(
+                    _(
+                        "Failed to save data to search engine. Error details: %(errors)s",
+                        errors=reason,
+                    )
+                )
+            updated += len(actions)
+        es.indices.refresh(index=index_name)
+
+        with flask_app.app_context():
+            dataset = get_dataset(dataset_id)
+            # Legacy datasets don't know their layout; their columns come from the index
+            if dataset and dataset.columns:
+                update_dataset(dataset_id, columns=[*dataset.columns, *new_columns])
+        _remove_file(filename)
+        return {"success": True, "total_records": total_rows, "updated": updated}
+
+    except Exception as e:
+        if isinstance(e, EntryIdError):
+            e = Exception(entry_id_error_message(e, append=False))
+        _remove_file(filename)
+        if not written:
+            raise Exception(_("%(error)s. No columns were added.", error=_user_message(e))) from e
+        self.update_state(
+            state="PROGRESS", meta={"status": _("Upload failed. Removing added columns...")}
+        )
+        try:
+            remove_fields(index_name, list(fields.values()))
+        except Exception:
+            raise Exception(
+                _(
+                    "%(error)s. Warning: some entries may still have values in the new columns.",
+                    error=_user_message(e),
+                )
+            ) from e
+        raise Exception(
+            _(
+                "%(error)s. No columns were added; the existing data was kept.",
+                error=_user_message(e),
+            )
+        ) from e
 
 
 def update_entries(dataset_id: int, changes: dict[str, dict[str, Any]]) -> list[dict[str, str]]:

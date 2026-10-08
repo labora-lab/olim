@@ -25,7 +25,8 @@ class EntryIdError(ValueError):
     """A row of an uploaded file has a missing or repeated entry ID.
 
     Attributes:
-        kind: "empty" (row without ID) or "duplicate" (ID seen before)
+        kind: "empty" (row without ID), "duplicate" (ID seen before), "exists" (already
+            in the dataset) or "unknown" (not in the dataset, when adding columns)
         row: Line number in the file (the header is line 1)
         entry_id: The offending ID ("" for empty)
     """

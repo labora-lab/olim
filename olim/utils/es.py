@@ -29,6 +29,24 @@ def es_list_fields(**kwargs) -> list[str]:
     return list(client.indices.get_mapping(**kwargs)[index]["mappings"]["properties"].keys())
 
 
+def es_fields_with_values(index: str) -> list[str]:
+    """Mapped fields of an index that hold a value in at least one document.
+
+    A field stays in the mapping after its values are removed (e.g. when adding
+    columns fails and is undone), so the mapping alone can list empty fields.
+    """
+    fields = es_list_fields(index=index)
+    if not fields:
+        return []
+    response = get_es_conn().search(
+        index=index,
+        size=0,
+        aggs={"fields": {"filters": {"filters": {f: {"exists": {"field": f}} for f in fields}}}},
+    )
+    buckets = response["aggregations"]["fields"]["buckets"]
+    return [f for f in fields if buckets.get(f, {}).get("doc_count", 0) > 0]
+
+
 def es_search(**kwargs) -> dict:
     _, kwargs = get_index(kwargs)
     client = get_es_conn()

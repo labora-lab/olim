@@ -9,6 +9,7 @@ from flask import render_template, session
 
 from olim import app
 from olim.datasets import PAGE_SIZES, build_grid_rows, cell_text, display_fields
+from olim.entry_types.flexible_text import DEFAULT_COLUMN_CONFIG
 
 
 @pytest.fixture(autouse=True)
@@ -99,6 +100,8 @@ class TestEdit:
             "CHUNK_SIZE": 1024,
             "page_sizes": PAGE_SIZES,
             "grid_fields": display_fields(make_dataset(), []),
+            "column_config": DEFAULT_COLUMN_CONFIG,
+            "column_config_fields": [{"field": "source", "label": "source"}],
         }
         values.update(overrides)
         return render_template("datasets/edit.html", **values)
@@ -124,6 +127,28 @@ class TestEdit:
         assert sorted(v for v, checked in checkboxes if checked) == ["2"]
         assert len(checkboxes) == 2
 
+    def test_tabs_and_upload_modes(self):
+        html = self.render()
+        assert re.findall(r'data-tab="(\w+)"', html) == [
+            "data",
+            "columns",
+            "add",
+            "details",
+        ]
+        assert re.findall(r'name="append-mode" value="(\w+)"', html) == ["rows", "columns"]
+        assert '"/datasets/3/columns"' in html
+
+    def test_flexible_text_gets_the_column_editor(self):
+        html = self.render(entry_type="flexible_text")
+        assert 'id="dataset-column-config"' in html
+        assert 'data-option="show_remaining_as_metadata"' in html
+        assert 'fields: [{"field": "source", "label": "source"}]' in html
+
+    def test_single_text_has_no_column_editor(self):
+        html = self.render()
+        assert 'id="dataset-column-config"' not in html
+        assert "available for datasets uploaded as Flexible Text" in html
+
     def test_legacy_shows_column_pickers(self):
         html = self.render(is_legacy=True, dataset=make_dataset(columns=None))
         assert 'id="append-id-column"' in html
@@ -131,3 +156,10 @@ class TestEdit:
     def test_unsupported_format_hides_append(self):
         html = self.render(can_append=False, entry_type="pdf")
         assert 'id="append-file-input"' not in html
+
+
+def test_upload_form_uses_the_shared_column_editor():
+    html = render_template("datasets/new.html", CHUNK_SIZE=1024, projects=[])
+    assert 'id="upload-column-config"' in html
+    assert 'name="column_config"' in html
+    assert "createColumnConfigEditor" in html

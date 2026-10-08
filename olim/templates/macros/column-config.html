@@ -1,0 +1,70 @@
+{# How a flexible text dataset displays its columns. Shared by the dataset upload form
+   and the dataset edit page; scripts.js createColumnConfigEditor() drives it. #}
+{% macro column_config_editor(id) %}
+<div id="{{ id }}" class="space-y-4">
+    <div class="space-y-2">
+        <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <input type="checkbox" data-option="text_is_html" class="w-4 h-4 text-blue-600 rounded">
+            {{ _('Main text is raw HTML') }}
+        </label>
+        <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <input type="checkbox" data-option="text_hidden" class="w-4 h-4 text-blue-600 rounded">
+            {{ _('Hide main text column') }}
+        </label>
+        <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <input type="checkbox" data-option="show_remaining_as_metadata" class="w-4 h-4 text-blue-600 rounded">
+            {{ _('Show remaining columns as metadata') }}
+        </label>
+    </div>
+
+    <div>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <span class="text-sm font-medium text-gray-700">{{ _('Extra Columns') }}</span>
+            <select data-role="add" aria-label="{{ _('Add extra column') }}"
+                class="text-sm border border-blue-300 text-blue-700 bg-blue-50 rounded-lg p-1.5 disabled:opacity-50">
+                <option value="">+ {{ _('Add extra column') }}</option>
+            </select>
+        </div>
+        <p data-role="empty" class="text-xs text-gray-500">
+            {{ _('No extra columns: only the main text and, if enabled, the remaining columns as metadata are shown.') }}
+        </p>
+        <div data-role="list" class="space-y-2"></div>
+    </div>
+
+    <template data-role="row">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-2 p-2 bg-white border border-gray-200 rounded-lg text-sm">
+            <span data-role="name" class="font-medium text-gray-800 flex-1 min-w-[8rem] break-all"></span>
+            <select data-field="render_as" aria-label="{{ _('Render as') }}"
+                class="text-sm border border-gray-300 rounded-lg p-1.5 bg-gray-50">
+                <option value="text">{{ _('Plain text') }}</option>
+                <option value="html">{{ _('Raw HTML') }}</option>
+                <option value="pdf">{{ _('PDF (iframe)') }}</option>
+                <option value="image">{{ _('Image') }}</option>
+                <option value="json">{{ _('JSON / Metadata') }}</option>
+            </select>
+            <label class="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+                <input type="checkbox" data-field="show_title" class="w-3.5 h-3.5">
+                {{ _('Show title') }}
+            </label>
+            <label class="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+                <input type="checkbox" data-field="as_tab" class="w-3.5 h-3.5">
+                {{ _('Show as tab') }}
+            </label>
+            <div class="flex items-center gap-1 ml-auto">
+                <button type="button" data-action="up" title="{{ _('Move up') }}" aria-label="{{ _('Move up') }}"
+                    class="px-1.5 text-gray-500 hover:text-gray-800 disabled:opacity-30">
+                    <i class="bi bi-arrow-up"></i>
+                </button>
+                <button type="button" data-action="down" title="{{ _('Move down') }}" aria-label="{{ _('Move down') }}"
+                    class="px-1.5 text-gray-500 hover:text-gray-800 disabled:opacity-30">
+                    <i class="bi bi-arrow-down"></i>
+                </button>
+                <button type="button" data-action="remove" title="{{ _('Remove') }}" aria-label="{{ _('Remove') }}"
+                    class="px-1.5 text-red-400 hover:text-red-600">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+    </template>
+</div>
+{% endmacro %}

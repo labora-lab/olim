@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block title %}{{ dataset.name }} - {{ _('Datasets') }}{% endblock %}
 
+{% import "macros/column-config.html" as column_config_macros %}
+{% set column_config_editor = column_config_macros.column_config_editor %}
+
 {% block content %}
 <a href="{{ url_for('datasets') }}" class="inline-flex items-center mb-4 text-sm text-gray-600 hover:text-gray-900">
     <i class="bi bi-arrow-left mr-1"></i>
@@ -30,51 +33,120 @@
     </button>
 </div>
 
-<div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
-    <!-- Details -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-                <i class="bi bi-info-circle-fill text-purple-600 mr-2"></i>
-                {{ _('Details') }}
-            </h3>
-        </div>
-        <form method="post" action="{{ url_for('dataset_edit', dataset_id=dataset.id) }}" class="p-6 space-y-4">
-            <div>
-                <label for="name" class="block mb-2 text-sm font-medium text-gray-900">{{ _('Dataset name') }}</label>
-                <input type="text" id="name" name="name" required value="{{ dataset.name }}"
-                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 block w-full p-2.5">
-            </div>
-            <div>
-                <span class="block mb-2 text-sm font-medium text-gray-900">{{ _('Link to Projects') }}</span>
-                <div class="space-y-2 max-h-40 overflow-y-auto">
-                    {% for project in projects %}
-                    <label class="flex items-center p-2 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <input type="checkbox" name="projects" value="{{ project.id }}"
-                            class="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500"
-                            {% if project.id in linked_project_ids %}checked{% endif %}>
-                        <span class="ml-2 text-sm font-medium text-gray-900">{{ project.name }}</span>
-                    </label>
-                    {% endfor %}
-                </div>
-            </div>
-            {% if dataset.columns %}
-            <div class="text-xs text-gray-500">
-                <span class="font-medium">{{ _('ID column') }}:</span> {{ dataset.id_column }}
-                <span class="mx-1">&middot;</span>
-                <span class="font-medium">{{ _('Text column') }}:</span> {{ dataset.text_column }}
-            </div>
-            {% endif %}
-            <button type="submit"
-                class="w-full text-white bg-purple-600 hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
-                <i class="bi bi-check2-circle mr-2"></i>
-                {{ _('Save details') }}
-            </button>
-        </form>
+{% set tab_class = 'inline-flex items-center px-4 py-2.5 -mb-px text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors' %}
+<div id="dataset-tabs">
+    <div class="flex flex-wrap border-b border-gray-200 mb-6" role="tablist">
+        <button type="button" role="tab" data-tab="data" class="{{ tab_class }}">
+            <i class="bi bi-table mr-2"></i>{{ _('Data') }}
+        </button>
+        <button type="button" role="tab" data-tab="columns" class="{{ tab_class }}">
+            <i class="bi bi-layout-three-columns mr-2"></i>{{ _('Columns') }}
+        </button>
+        <button type="button" role="tab" data-tab="add" class="{{ tab_class }}">
+            <i class="bi bi-cloud-plus mr-2"></i>{{ _('Upload data') }}
+        </button>
+        <button type="button" role="tab" data-tab="details" class="{{ tab_class }}">
+            <i class="bi bi-info-circle mr-2"></i>{{ _('Details') }}
+        </button>
     </div>
 
-    <!-- Add data -->
-    <div class="xl:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200">
+    <!-- Data -->
+    <div data-tab-panel="data" role="tabpanel" class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-table text-purple-600 mr-2"></i>
+                {{ _('Data') }}
+            </h3>
+            <div class="flex flex-wrap items-center gap-2">
+                <span id="dirty-counter" class="hidden text-sm font-medium text-amber-700"></span>
+                <button type="button" id="undo-btn" title="{{ _('Undo') }} (Ctrl+Z)" aria-label="{{ _('Undo') }}"
+                    class="inline-flex items-center px-2.5 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="bi bi-arrow-90deg-left"></i>
+                </button>
+                <button type="button" id="redo-btn" title="{{ _('Redo') }} (Ctrl+Y)" aria-label="{{ _('Redo') }}"
+                    class="inline-flex items-center px-2.5 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    <i class="bi bi-arrow-90deg-right"></i>
+                </button>
+                <button type="button" id="discard-changes-btn" disabled
+                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <i class="bi bi-arrow-counterclockwise mr-1"></i>
+                    {{ _('Discard') }}
+                </button>
+                <button type="button" id="save-changes-btn" disabled
+                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <i class="bi bi-save mr-1"></i>
+                    {{ _('Save changes') }}
+                </button>
+            </div>
+        </div>
+        <p class="px-6 pt-3 text-xs text-gray-500">
+            {{ _('Click a cell to edit it. Edits are kept while you change pages and are only stored when you click "Save changes". Existing model predictions are not recalculated automatically.') }}
+        </p>
+        <div class="p-4">
+            <div id="entries-grid"></div>
+        </div>
+    </div>
+
+    <!-- Columns -->
+    <div data-tab-panel="columns" role="tabpanel" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 max-w-4xl">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-layout-three-columns text-purple-600 mr-2"></i>
+                {{ _('Columns') }}
+            </h3>
+        </div>
+        <div class="p-6 space-y-6">
+            <div class="space-y-2 text-sm">
+                <div>
+                    <span class="font-medium text-gray-700">{{ _('ID column') }}:</span>
+                    <code class="px-1.5 py-0.5 rounded bg-gray-100 text-xs">{{ dataset.id_column or _('not recorded') }}</code>
+                    <span class="mx-1 text-gray-400">&middot;</span>
+                    <span class="font-medium text-gray-700">{{ _('Text column') }}:</span>
+                    <code class="px-1.5 py-0.5 rounded bg-gray-100 text-xs">{{ grid_fields[0].label }}</code>
+                </div>
+                {% if grid_fields|length > 1 %}
+                <div class="flex flex-wrap items-center gap-1">
+                    <span class="font-medium text-gray-700 mr-1">{{ _('Other columns') }}:</span>
+                    {% for field in grid_fields[1:] %}
+                    <code class="px-1.5 py-0.5 rounded bg-gray-100 text-xs">{{ field.label }}</code>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <p class="text-xs text-gray-500">
+                    {{ _('The ID and text columns are chosen when the dataset is created. Columns can be added in the "Upload data" tab.') }}
+                </p>
+            </div>
+
+            {% if entry_type == 'flexible_text' %}
+            <div class="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                <h4 class="text-sm font-semibold text-gray-800 mb-3">
+                    <i class="bi bi-sliders mr-1"></i>
+                    {{ _('How entries are displayed') }}
+                </h4>
+                {{ column_config_editor('dataset-column-config') }}
+            </div>
+            <div class="flex flex-wrap justify-end gap-2">
+                <button type="button" id="column-config-reset-btn" disabled
+                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <i class="bi bi-arrow-counterclockwise mr-1"></i>
+                    {{ _('Discard') }}
+                </button>
+                <button type="button" id="column-config-save-btn" disabled
+                    class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                    <i class="bi bi-save mr-1"></i>
+                    {{ _('Save column settings') }}
+                </button>
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-600">
+                {{ _('Display options (HTML, PDF, images, tabs) are available for datasets uploaded as Flexible Text.') }}
+            </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Upload data -->
+    <div data-tab-panel="add" role="tabpanel" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 max-w-4xl">
         <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900 flex items-center">
                 <i class="bi bi-cloud-plus-fill text-blue-600 mr-2"></i>
@@ -85,7 +157,24 @@
             {% if not can_append %}
             <p class="text-sm text-gray-600">{{ _('Adding data is not supported for this data format.') }}</p>
             {% else %}
-            <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" role="radiogroup">
+                <label class="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                    <input type="radio" name="append-mode" value="rows" checked class="mt-1 w-4 h-4 text-blue-600">
+                    <span>
+                        <span class="block text-sm font-medium text-gray-900"><i class="bi bi-list-ol mr-1"></i>{{ _('New rows') }}</span>
+                        <span class="block text-xs text-gray-500">{{ _('Add entries with the same columns as the dataset.') }}</span>
+                    </span>
+                </label>
+                <label class="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                    <input type="radio" name="append-mode" value="columns" class="mt-1 w-4 h-4 text-blue-600">
+                    <span>
+                        <span class="block text-sm font-medium text-gray-900"><i class="bi bi-layout-three-columns mr-1"></i>{{ _('New columns') }}</span>
+                        <span class="block text-xs text-gray-500">{{ _('Add columns to the existing entries, matched by ID.') }}</span>
+                    </span>
+                </label>
+            </div>
+
+            <div data-append-mode="rows" class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900">
                 <p class="mb-1">
                     {{ _('The file must have exactly these columns, and none of its IDs may already exist in the dataset:') }}
                 </p>
@@ -99,6 +188,11 @@
                     {{ _('This dataset was created before column names were recorded. After choosing the file, select its ID and text columns; the remaining columns are compared with the fields found in the dataset. Columns that were empty in every row of the original file are not known and will be reported as unexpected.') }}
                 </p>
                 {% endif %}
+            </div>
+            <div data-append-mode="columns" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-900">
+                <p>
+                    {{ _('The file must have an ID column plus the columns to add. Every ID must already exist in the dataset and appear only once; entries missing from the file are left empty. Columns the dataset already has can\'t be replaced: edit their values in the "Data" tab.') }}
+                </p>
             </div>
 
             <div>
@@ -133,20 +227,18 @@
                 </div>
             </div>
 
-            {% if is_legacy %}
-            <div id="append-legacy-columns" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div id="append-column-pickers" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                     <label for="append-id-column" class="block mb-1 text-sm font-medium text-gray-700">{{ _('ID column') }}</label>
                     <select id="append-id-column"
                         class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"></select>
                 </div>
-                <div>
+                <div id="append-text-picker">
                     <label for="append-text-column" class="block mb-1 text-sm font-medium text-gray-700">{{ _('Text column') }}</label>
                     <select id="append-text-column"
                         class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"></select>
                 </div>
             </div>
-            {% endif %}
 
             <!-- Validation result -->
             <div id="append-errors" class="hidden p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800" role="alert">
@@ -156,6 +248,7 @@
             <div id="append-ok" class="hidden p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
                 <i class="bi bi-check-circle-fill mr-1"></i>
                 <span id="append-ok-msg"></span>
+                <div id="append-ok-columns"></div>
             </div>
 
             <div class="flex flex-wrap gap-2">
@@ -167,48 +260,46 @@
                 <button type="button" id="append-import-btn" disabled
                     class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                     <i class="bi bi-cloud-arrow-up mr-2"></i>
-                    {{ _('Add to dataset') }}
+                    <span data-label>{{ _('Add rows') }}</span>
                 </button>
             </div>
             {% endif %}
         </div>
     </div>
-</div>
 
-<!-- Data -->
-<div class="bg-white rounded-lg shadow-sm border border-gray-200">
-    <div class="px-6 py-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3">
-        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
-            <i class="bi bi-table text-purple-600 mr-2"></i>
-            {{ _('Data') }}
-        </h3>
-        <div class="flex flex-wrap items-center gap-2">
-            <span id="dirty-counter" class="hidden text-sm font-medium text-amber-700"></span>
-            <button type="button" id="undo-btn" title="{{ _('Undo') }} (Ctrl+Z)" aria-label="{{ _('Undo') }}"
-                class="inline-flex items-center px-2.5 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                <i class="bi bi-arrow-90deg-left"></i>
-            </button>
-            <button type="button" id="redo-btn" title="{{ _('Redo') }} (Ctrl+Y)" aria-label="{{ _('Redo') }}"
-                class="inline-flex items-center px-2.5 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                <i class="bi bi-arrow-90deg-right"></i>
-            </button>
-            <button type="button" id="discard-changes-btn" disabled
-                class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                <i class="bi bi-arrow-counterclockwise mr-1"></i>
-                {{ _('Discard') }}
-            </button>
-            <button type="button" id="save-changes-btn" disabled
-                class="inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                <i class="bi bi-save mr-1"></i>
-                {{ _('Save changes') }}
-            </button>
+    <!-- Details -->
+    <div data-tab-panel="details" role="tabpanel" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 max-w-2xl">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="bi bi-info-circle-fill text-purple-600 mr-2"></i>
+                {{ _('Details') }}
+            </h3>
         </div>
-    </div>
-    <p class="px-6 pt-3 text-xs text-gray-500">
-        {{ _('Click a cell to edit it. Edits are kept while you change pages and are only stored when you click "Save changes". Existing model predictions are not recalculated automatically.') }}
-    </p>
-    <div class="p-4">
-        <div id="entries-grid"></div>
+        <form method="post" action="{{ url_for('dataset_edit', dataset_id=dataset.id) }}#details" class="p-6 space-y-4">
+            <div>
+                <label for="name" class="block mb-2 text-sm font-medium text-gray-900">{{ _('Dataset name') }}</label>
+                <input type="text" id="name" name="name" required value="{{ dataset.name }}"
+                    class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 block w-full p-2.5">
+            </div>
+            <div>
+                <span class="block mb-2 text-sm font-medium text-gray-900">{{ _('Link to Projects') }}</span>
+                <div class="space-y-2 max-h-40 overflow-y-auto">
+                    {% for project in projects %}
+                    <label class="flex items-center p-2 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="checkbox" name="projects" value="{{ project.id }}"
+                            class="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500"
+                            {% if project.id in linked_project_ids %}checked{% endif %}>
+                        <span class="ml-2 text-sm font-medium text-gray-900">{{ project.name }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            <button type="submit"
+                class="w-full text-white bg-purple-600 hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors">
+                <i class="bi bi-check2-circle mr-2"></i>
+                {{ _('Save details') }}
+            </button>
+        </form>
     </div>
 </div>
 
@@ -234,12 +325,19 @@
                 pageSizes: {{ page_sizes|list|tojson }}
             },
             isLegacy: {{ is_legacy|tojson }},
+            idColumn: {{ dataset.id_column|tojson }},
+            textColumn: {{ dataset.text_column|tojson }},
+            columnConfig: {
+                config: {{ column_config|tojson }},
+                fields: {{ column_config_fields|tojson }}
+            },
             urls: {
                 chunk: {{ url_for('handle_large_upload')|tojson }},
                 finalize: {{ url_for('finalize_upload', file_id='__FILE_ID__')|tojson }},
                 validate: {{ url_for('dataset_append_validate', dataset_id=dataset.id)|tojson }},
                 append: {{ url_for('dataset_append', dataset_id=dataset.id)|tojson }},
                 save: {{ url_for('dataset_entries_save', dataset_id=dataset.id)|tojson }},
+                columns: {{ url_for('dataset_columns_save', dataset_id=dataset.id)|tojson }},
                 entries: {{ url_for('dataset_entries', dataset_id=dataset.id)|tojson }}
             },
             t: {
@@ -253,6 +351,12 @@
                 missingColumns: {{ _("Missing columns (present in the dataset, absent from the file):")|tojson }},
                 unexpectedColumns: {{ _("Unexpected columns (present in the file, absent from the dataset):")|tojson }},
                 readyToAdd: {{ _("The columns match. IDs are checked while the data is added: if an ID is missing or repeated, the import stops, everything added so far is removed and the task shows which row to fix.")|tojson }},
+                readyToAddColumns: {{ _("The file can be added. All IDs are checked before anything is written. These columns will be added:")|tojson }},
+                existingColumns: {{ _("These columns already exist in the dataset:")|tojson }},
+                noNewColumns: {{ _("The file has no columns besides the ID column.")|tojson }},
+                addRows: {{ _("Add rows")|tojson }},
+                addColumns: {{ _("Add columns")|tojson }},
+                columnsSaved: {{ _("Column settings saved.")|tojson }},
                 adding: {{ _("Starting import...")|tojson }},
                 unsaved: {{ _("%(count)s unsaved changes", count="{count}")|tojson }},
                 confirmLeave: {{ _("You have unsaved changes. Leave this page and discard them?")|tojson }},

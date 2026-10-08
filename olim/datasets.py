@@ -1,4 +1,4 @@
-"""Dataset management: list, edit, delete, append data and edit entries."""
+"""Dataset management: list, edit, delete, add rows or columns, configure columns, edit entries."""
 
 import re
 from pathlib import Path
@@ -23,14 +23,22 @@ from .database import (
     soft_delete_dataset,
     update_dataset,
 )
+from .entry_types.flexible_text import current_column_config, normalize_column_config
 from .settings import CHUNK_SIZE, ES_INDEX, UPLOAD_PATH
-from .tasks.upload_data import check_append_columns, update_entries, upload_dataset
+from .tasks.upload_data import (
+    add_dataset_columns,
+    check_append_columns,
+    check_new_columns,
+    update_entries,
+    upload_dataset,
+)
 from .upload_data import _validate_csv_options, read_csv_header
-from .utils.es import es_list_fields, es_search
+from .utils.es import es_fields_with_values, es_search
 from .utils.export import cell_text
 
 PAGE_SIZES = (10, 25, 50, 100)
 APPENDABLE_TYPES = ("single_text", "flexible_text")
+APPEND_MODES = ("rows", "columns")
 MAX_SAVE_ENTRIES = 1000
 
 
@@ -42,9 +50,9 @@ def _get_dataset_or_404(dataset_id: int) -> Dataset:
 
 
 def _es_fields(dataset_id: int) -> list[str]:
-    """Field names in the dataset's index, or an empty list if it can't be read."""
+    """Fields with values in the dataset's index, or an empty list if it can't be read."""
     try:
-        return es_list_fields(index=ES_INDEX.format(dataset_id=dataset_id))
+        return es_fields_with_values(ES_INDEX.format(dataset_id=dataset_id))
     except Exception:
         return []
 
@@ -77,6 +85,29 @@ def display_fields(dataset: Dataset, es_fields: list[str] | None = None) -> list
         es_fields = _es_fields(dataset.id)
     for field in sorted(f for f in es_fields if f != "text"):
         fields.append({"field": field, "label": "text" if field == "metadata_text" else field})
+    return fields
+
+
+def existing_columns(dataset: Dataset, es_fields: list[str] | None = None) -> list[str]:
+    """Column names already used by the dataset, ID column included when known."""
+    labels = [f["label"] for f in display_fields(dataset, es_fields)]
+    return [dataset.id_column, *labels] if dataset.id_column else labels
+
+
+def config_fields(
+    dataset: Dataset, column_config: dict, es_fields: list[str] | None = None
+) -> list[dict[str, str]]:
+    """Columns the column configuration editor offers as extra columns.
+
+    Columns named by the current config are kept even when the dataset doesn't
+    list them (e.g. legacy PDF datasets), so saving doesn't drop them.
+    """
+    fields = display_fields(dataset, es_fields)[1:]
+    known = {f["field"] for f in fields}
+    for item in column_config.get("extra_columns", []):
+        if item.get("column") not in known:
+            known.add(item["column"])
+            fields.append({"field": item["column"], "label": item["column"]})
     return fields
 
 
@@ -130,15 +161,33 @@ def _uploaded_file(payload: dict) -> tuple[str, str, str]:
 
 
 def _run_append_validation(dataset: Dataset, payload: dict) -> tuple[dict, dict]:
-    """Check a file's columns against a dataset.
+    """Check a file's columns against a dataset, for new rows or new columns.
 
     Returns:
         (report, context) where context holds what the append task needs
     """
+    mode = payload.get("mode", "rows")
+    if mode not in APPEND_MODES:
+        raise ValueError(_("Invalid upload mode."))
     path, sep, encoding = _uploaded_file(payload)
     columns = read_csv_header(path, sep, encoding)
     if not columns:
         raise ValueError(_("Could not read the file's columns. Check the separator and encoding."))
+
+    if mode == "columns":
+        id_column = payload.get("id_column")
+        if not id_column or id_column not in columns:
+            raise ValueError(_("Select the ID column of the file."))
+        # IDs are checked by the task before anything is written
+        report = check_new_columns(columns, id_column, existing_columns(dataset))
+        context = {
+            "path": path,
+            "sep": sep,
+            "encoding": encoding,
+            "id_column": id_column,
+            "new_columns": report["new_columns"],
+        }
+        return {"mode": mode, **report}, context
 
     id_column, text_column, expected = resolve_layout(
         dataset, payload.get("id_column"), payload.get("text_column")
@@ -152,7 +201,7 @@ def _run_append_validation(dataset: Dataset, payload: dict) -> tuple[dict, dict]
 
     # Only the header is checked here; IDs are checked batch by batch while the data
     # is added, and the upload is undone on the first conflict
-    report = check_append_columns(columns, expected)
+    report = {"mode": mode, **check_append_columns(columns, expected)}
 
     context = {
         "path": path,
@@ -209,6 +258,7 @@ def dataset_edit(dataset_id: int) -> ...:
 
     es_fields = _es_fields(dataset_id)
     entry_type = dataset_entry_type(dataset)
+    column_config = current_column_config(dataset.column_config, es_fields)
     return render_template(
         "datasets/edit.html",
         dataset=dataset,
@@ -226,6 +276,8 @@ def dataset_edit(dataset_id: int) -> ...:
         CHUNK_SIZE=CHUNK_SIZE,
         page_sizes=PAGE_SIZES,
         grid_fields=display_fields(dataset, es_fields),
+        column_config=column_config,
+        column_config_fields=config_fields(dataset, column_config, es_fields),
     )
 
 
@@ -350,9 +402,28 @@ def dataset_entries_save(dataset_id: int) -> ...:
     ), (200 if not failed else 207)
 
 
+@app.route("/datasets/<int:dataset_id>/columns", methods=["POST"])
+def dataset_columns_save(dataset_id: int) -> ...:
+    """Save how a flexible text dataset displays its columns. Body: {"column_config": {...}}."""
+    dataset = _get_dataset_or_404(dataset_id)
+    if dataset_entry_type(dataset) != "flexible_text":
+        return jsonify(error=_("Column display options are only available for Flexible Text.")), 400
+
+    es_fields = _es_fields(dataset_id)
+    current = current_column_config(dataset.column_config, es_fields)
+    allowed = [f["field"] for f in config_fields(dataset, current, es_fields)]
+    payload = request.get_json(silent=True) or {}
+    try:
+        column_config = normalize_column_config(payload.get("column_config"), allowed)
+        update_dataset(dataset_id, column_config=column_config)
+    except ValueError as e:
+        return jsonify(error=str(e)), 400
+    return jsonify(success=True, column_config=column_config)
+
+
 @app.route("/datasets/<int:dataset_id>/append/validate", methods=["POST"])
 def dataset_append_validate(dataset_id: int) -> ...:
-    """Check an uploaded file for column and ID conflicts with the dataset."""
+    """Check an uploaded file of new rows or new columns against the dataset."""
     dataset = _get_dataset_or_404(dataset_id)
     try:
         report, _context = _run_append_validation(dataset, request.get_json(silent=True) or {})
@@ -365,7 +436,7 @@ def dataset_append_validate(dataset_id: int) -> ...:
 
 @app.route("/datasets/<int:dataset_id>/append", methods=["POST"])
 def dataset_append(dataset_id: int) -> ...:
-    """Validate the uploaded file again and start appending it to the dataset."""
+    """Validate the uploaded file again and start adding its rows or columns to the dataset."""
     dataset = _get_dataset_or_404(dataset_id)
     entry_type = dataset_entry_type(dataset)
     if entry_type not in APPENDABLE_TYPES:
@@ -380,6 +451,25 @@ def dataset_append(dataset_id: int) -> ...:
 
     if not report["ok"]:
         return jsonify(report), 409
+
+    if report["mode"] == "columns":
+        try:
+            launch_task_with_tracking(
+                add_dataset_columns,
+                description=_("Adding columns to dataset {name}").format(name=dataset.name),
+                dataset_id=dataset_id,
+                filename=context["path"],
+                id_column=context["id_column"],
+                new_columns=context["new_columns"],
+                sep=context["sep"],
+                encoding=context["encoding"],
+                user_id=session["user_id"],
+                track_progress=True,
+            )
+        except Exception as e:
+            return jsonify(error=_("Error starting upload: {error}").format(error=str(e))), 500
+        flash(_("Adding columns started. They will appear when processing finishes."), "success")
+        return jsonify(report)
 
     try:
         launch_task_with_tracking(

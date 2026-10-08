@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version:  0.1.1\n"
 "Report-Msgid-Bugs-To: me@nngn.net\n"
-"POT-Creation-Date: 2026-10-06 19:48-0300\n"
+"POT-Creation-Date: 2026-10-08 10:39-0300\n"
 "PO-Revision-Date: 2025-03-20 20:21+0000\n"
 "Last-Translator: Nano Gennari <me@nngn.net>\n"
 "Language: en_US\n"
@@ -79,99 +79,99 @@ msgstr ""
 msgid "Your login has expired"
 msgstr ""
 
-#: olim/auth.py:284
+#: olim/auth.py:291
 msgid "Initial configuration already done!"
 msgstr ""
 
-#: olim/auth.py:292 olim/auth.py:365
+#: olim/auth.py:299 olim/auth.py:372
 #: olim/templates/macros/new-user-form.html:289
 msgid "Passwords do not match"
 msgstr ""
 
-#: olim/auth.py:295
+#: olim/auth.py:302
 msgid "Name can't be empty."
 msgstr ""
 
-#: olim/auth.py:298
+#: olim/auth.py:305
 msgid "Username can't be empty."
 msgstr ""
 
-#: olim/auth.py:301
+#: olim/auth.py:308
 msgid "Minimum password lenght is 8."
 msgstr ""
 
-#: olim/auth.py:305
+#: olim/auth.py:312
 msgid "Database initialized!"
 msgstr ""
 
-#: olim/auth.py:309 olim/auth.py:375
+#: olim/auth.py:316 olim/auth.py:382
 #, python-brace-format
 msgid "User {username} sucessfully registered!"
 msgstr ""
 
-#: olim/auth.py:321
+#: olim/auth.py:328
 msgid "Project name can't be empty."
 msgstr ""
 
-#: olim/auth.py:326
+#: olim/auth.py:333
 #, python-brace-format
 msgid "Project {project_name} successfully created!"
 msgstr ""
 
-#: olim/auth.py:330
+#: olim/auth.py:337
 msgid "Falied creating project."
 msgstr ""
 
-#: olim/auth.py:335
+#: olim/auth.py:342
 #, python-brace-format
 msgid "Label {label_name} successfully created!"
 msgstr ""
 
-#: olim/auth.py:380
+#: olim/auth.py:387
 #, python-brace-format
 msgid "User {username} already exists!"
 msgstr ""
 
-#: olim/auth.py:396
+#: olim/auth.py:403
 msgid "Please enter a new password!"
 msgstr ""
 
-#: olim/auth.py:400
+#: olim/auth.py:407
 msgid "Please enter a new on both fields!"
 msgstr ""
 
-#: olim/auth.py:404
+#: olim/auth.py:411
 msgid "Passwords do not match!"
 msgstr ""
 
-#: olim/auth.py:409
+#: olim/auth.py:416
 msgid "Please enter your old password!"
 msgstr ""
 
-#: olim/auth.py:414
+#: olim/auth.py:421
 msgid "Incorrect old password!"
 msgstr ""
 
-#: olim/auth.py:420
+#: olim/auth.py:427
 msgid "Password sucessfully updated!"
-msgstr ""
-
-#: olim/auth.py:491
-#, python-brace-format
-msgid "Changed language for {user_name} to {language}!"
 msgstr ""
 
 #: olim/auth.py:498
 #, python-brace-format
+msgid "Changed language for {user_name} to {language}!"
+msgstr ""
+
+#: olim/auth.py:505
+#, python-brace-format
 msgid "Changed language for {user_name} to Automatic!"
 msgstr ""
 
-#: olim/auth.py:520
+#: olim/auth.py:527
 #, python-brace-format
 msgid "Session data cleared for {user_name}!"
 msgstr ""
 
-#: olim/auth.py:538
+#: olim/auth.py:545
 #, python-brace-format
 msgid "API key regenerated for {user_name}!"
 msgstr ""
@@ -239,97 +239,118 @@ msgstr ""
 msgid "Command {command} not found"
 msgstr ""
 
-#: olim/datasets.py:104
+#: olim/datasets.py:135
 msgid "Select the ID and text columns of the file."
 msgstr ""
 
-#: olim/datasets.py:106
+#: olim/datasets.py:137
 msgid "The ID and text columns must be different."
 msgstr ""
 
-#: olim/datasets.py:124 olim/upload_data.py:269
+#: olim/datasets.py:155 olim/upload_data.py:267
 msgid "File upload incomplete"
 msgstr ""
 
-#: olim/datasets.py:128 olim/tasks/upload_data.py:765
+#: olim/datasets.py:159 olim/tasks/upload_data.py:958
 msgid "Uploaded file not found. Please try uploading again."
 msgstr ""
 
-#: olim/datasets.py:141
+#: olim/datasets.py:171
+msgid "Invalid upload mode."
+msgstr ""
+
+#: olim/datasets.py:175
 msgid "Could not read the file's columns. Check the separator and encoding."
 msgstr ""
 
-#: olim/datasets.py:198 olim/upload_data.py:189
+#: olim/datasets.py:180
+msgid "Select the ID column of the file."
+msgstr ""
+
+#: olim/datasets.py:247 olim/upload_data.py:190
 msgid "Dataset name is required"
 msgstr ""
 
-#: olim/datasets.py:205
+#: olim/datasets.py:254
 #, python-brace-format
 msgid "Error updating dataset: {error}"
 msgstr ""
 
-#: olim/datasets.py:207
+#: olim/datasets.py:256
 msgid "Dataset updated successfully"
 msgstr ""
 
-#: olim/datasets.py:237
+#: olim/datasets.py:289
 #, python-brace-format
 msgid "Dataset '{name}' deleted"
 msgstr ""
 
-#: olim/datasets.py:288
+#: olim/datasets.py:340
 #, python-brace-format
 msgid "Could not load entries from the search engine: {error}"
 msgstr ""
 
-#: olim/datasets.py:307
+#: olim/datasets.py:359
 msgid "No changes to save."
 msgstr ""
 
-#: olim/datasets.py:310
+#: olim/datasets.py:362
 #, python-brace-format
 msgid "Too many entries changed at once (maximum {max})."
 msgstr ""
 
-#: olim/datasets.py:319
+#: olim/datasets.py:371
 msgid "Invalid change format."
 msgstr ""
 
-#: olim/datasets.py:323
+#: olim/datasets.py:375
 #, python-brace-format
 msgid "These fields can't be edited: {fields}"
 msgstr ""
 
-#: olim/datasets.py:336
+#: olim/datasets.py:388
 #, python-brace-format
 msgid "These entries don't belong to this dataset: {ids}"
 msgstr ""
 
-#: olim/datasets.py:344
+#: olim/datasets.py:396
 #, python-brace-format
 msgid "Could not save changes: {error}"
 msgstr ""
 
-#: olim/datasets.py:362 olim/datasets.py:379
+#: olim/datasets.py:410
+msgid "Column display options are only available for Flexible Text."
+msgstr ""
+
+#: olim/datasets.py:433 olim/datasets.py:450
 #, python-brace-format
 msgid "Validation failed: {error}"
 msgstr ""
 
-#: olim/datasets.py:372 olim/templates/datasets/edit.html:86
+#: olim/datasets.py:443 olim/templates/datasets/edit.html:158
 msgid "Adding data is not supported for this data format."
 msgstr ""
 
-#: olim/datasets.py:387
+#: olim/datasets.py:459
 #, python-brace-format
-msgid "Adding data to dataset {name}"
+msgid "Adding columns to dataset {name}"
 msgstr ""
 
-#: olim/datasets.py:403 olim/upload_data.py:300
+#: olim/datasets.py:470 olim/datasets.py:493 olim/upload_data.py:298
 #, python-brace-format
 msgid "Error starting upload: {error}"
 msgstr ""
 
-#: olim/datasets.py:406
+#: olim/datasets.py:471
+msgid "Adding columns started. They will appear when processing finishes."
+msgstr ""
+
+#: olim/datasets.py:477
+#, python-brace-format
+msgid "Adding data to dataset {name}"
+msgstr ""
+
+#: olim/datasets.py:496
 msgid "Adding data started. The new entries will appear when processing finishes."
 msgstr ""
 
@@ -457,116 +478,116 @@ msgstr ""
 msgid "Ticket sent. Thank you very much."
 msgstr ""
 
-#: olim/labels.py:117 olim/labels.py:203
+#: olim/labels.py:132 olim/labels.py:218
 #, python-brace-format
 msgid "Label {label_name} successfully created"
 msgstr ""
 
-#: olim/labels.py:143 olim/labels.py:595 olim/labels.py:598
+#: olim/labels.py:158 olim/labels.py:610 olim/labels.py:613
 msgid "Invalid dataset selection"
 msgstr ""
 
-#: olim/labels.py:147 olim/labels.py:576
+#: olim/labels.py:162 olim/labels.py:591
 msgid "No datasets available for this project"
 msgstr ""
 
-#: olim/labels.py:192
+#: olim/labels.py:207
 msgid "Enter a name for the new label."
 msgstr ""
 
-#: olim/labels.py:240 olim/labels.py:263 olim/labels.py:319 olim/labels.py:349
-#: olim/labels.py:379
+#: olim/labels.py:255 olim/labels.py:278 olim/labels.py:334 olim/labels.py:364
+#: olim/labels.py:394
 #, python-brace-format
 msgid "Label id: {label_id} not found!"
 msgstr ""
 
-#: olim/labels.py:252
+#: olim/labels.py:267
 #, python-brace-format
 msgid "Label {label_name} sucessfully deleted"
 msgstr ""
 
-#: olim/labels.py:274 olim/labels.py:330 olim/labels.py:360 olim/labels.py:392
-#: olim/labels.py:407 olim/labels.py:485 olim/labels.py:549
+#: olim/labels.py:289 olim/labels.py:345 olim/labels.py:375 olim/labels.py:407
+#: olim/labels.py:422 olim/labels.py:500 olim/labels.py:564
 msgid "Label not found"
 msgstr ""
 
-#: olim/labels.py:368
+#: olim/labels.py:383
 #, python-brace-format
 msgid "Label: {label_name}"
 msgstr ""
 
-#: olim/labels.py:402 olim/labels.py:480 olim/labels.py:544
+#: olim/labels.py:417 olim/labels.py:495 olim/labels.py:559
 msgid "Admin access required"
 msgstr ""
 
-#: olim/labels.py:459
+#: olim/labels.py:474
 msgid "Learner parameters updated successfully"
 msgstr ""
 
-#: olim/labels.py:463
+#: olim/labels.py:478
 #, python-brace-format
 msgid "Error converting parameter values: {error}"
 msgstr ""
 
-#: olim/labels.py:468
+#: olim/labels.py:483
 #, python-brace-format
 msgid "Error updating parameters: {error}"
 msgstr ""
 
-#: olim/labels.py:489 olim/labels.py:494
+#: olim/labels.py:504 olim/labels.py:509
 msgid "No file selected"
 msgstr ""
 
-#: olim/labels.py:506
+#: olim/labels.py:521
 #, python-brace-format
 msgid "Missing required columns: {columns}"
 msgstr ""
 
-#: olim/labels.py:530
+#: olim/labels.py:545
 #, python-brace-format
 msgid "Successfully uploaded {count} auto-labels"
 msgstr ""
 
-#: olim/labels.py:535
+#: olim/labels.py:550
 #, python-brace-format
 msgid "Error processing file: {error}"
 msgstr ""
 
-#: olim/labels.py:557
+#: olim/labels.py:572
 msgid "Label settings updated successfully"
 msgstr ""
 
-#: olim/labels.py:559
+#: olim/labels.py:574
 msgid "Invalid settings format"
 msgstr ""
 
-#: olim/labels.py:561
+#: olim/labels.py:576
 msgid "No settings provided"
 msgstr ""
 
-#: olim/labels.py:587
+#: olim/labels.py:602
 msgid "Dataset selection required"
 msgstr ""
 
-#: olim/labels.py:605
+#: olim/labels.py:620
 #, python-brace-format
 msgid "Could not read the labelling file: {error}"
 msgstr ""
 
-#: olim/labels.py:686
+#: olim/labels.py:701
 msgid "This label upload has expired. Please upload the file again."
 msgstr ""
 
-#: olim/labels.py:702
+#: olim/labels.py:717
 msgid "Label upload cancelled"
 msgstr ""
 
-#: olim/labels.py:721
+#: olim/labels.py:736
 #, python-brace-format
 msgid "Add at least one option to the label {name}."
 msgstr ""
 
-#: olim/labels.py:738
+#: olim/labels.py:753
 #, python-brace-format
 msgid "Rows of these labels were not uploaded: {names}"
 msgstr ""
@@ -823,42 +844,56 @@ msgstr ""
 msgid "Invalid JSON file"
 msgstr ""
 
-#: olim/upload_data.py:31
+#: olim/upload_data.py:32
 msgid "Invalid encoding. Use utf-8, latin-1, or cp1252."
 msgstr ""
 
-#: olim/upload_data.py:36
+#: olim/upload_data.py:37
 msgid "Separator cannot be empty."
 msgstr ""
 
-#: olim/upload_data.py:41
+#: olim/upload_data.py:42
 msgid "Separator too long."
 msgstr ""
 
-#: olim/upload_data.py:94
+#: olim/upload_data.py:95
 msgid "filename and total_chunks are required"
 msgstr ""
 
-#: olim/upload_data.py:182
+#: olim/upload_data.py:183
 msgid "Upload type is required"
 msgstr ""
 
-#: olim/upload_data.py:244
+#: olim/entry_types/flexible_text.py:47 olim/upload_data.py:218
+msgid "Invalid column configuration."
+msgstr ""
+
+#: olim/upload_data.py:242
 #, python-brace-format
 msgid "Error creating dataset: {error}"
 msgstr ""
 
-#: olim/upload_data.py:278
+#: olim/upload_data.py:276
 msgid "ID and Text columns are required"
 msgstr ""
 
-#: olim/upload_data.py:286
+#: olim/upload_data.py:284
 #, python-brace-format
 msgid "Uploading and processing file {filename}"
 msgstr ""
 
-#: olim/upload_data.py:294
+#: olim/upload_data.py:292
 msgid "Document processing started successfully"
+msgstr ""
+
+#: olim/entry_types/flexible_text.py:54
+#, python-format
+msgid "Unknown column: %(column)s"
+msgstr ""
+
+#: olim/entry_types/flexible_text.py:59
+#, python-format
+msgid "Unknown display mode: %(mode)s"
 msgstr ""
 
 #: olim/entry_types/patient/commands.py:54
@@ -1278,7 +1313,7 @@ msgstr ""
 msgid "Processing failed: %(error)s"
 msgstr ""
 
-#: olim/tasks/upload_data.py:195
+#: olim/tasks/upload_data.py:195 olim/tasks/upload_data.py:725
 #, python-format
 msgid "Failed to save data to search engine. Error details: %(errors)s"
 msgstr ""
@@ -1391,44 +1426,74 @@ msgstr ""
 #: olim/tasks/upload_data.py:486
 #, python-format
 msgid ""
+"The ID '%(id)s' at row %(row)s is not in the dataset. Columns can only be"
+" added to existing entries; fix the file and upload it again"
+msgstr ""
+
+#: olim/tasks/upload_data.py:493
+#, python-format
+msgid ""
 "The ID '%(id)s' at row %(row)s already exists in the dataset or appears "
 "earlier in the file. IDs must be unique; fix the file and upload it again"
 msgstr ""
 
-#: olim/tasks/upload_data.py:492
+#: olim/tasks/upload_data.py:499
 #, python-format
 msgid ""
 "The ID '%(id)s' at row %(row)s appears earlier in the file. IDs must be "
 "unique; fix the file and upload it again"
 msgstr ""
 
-#: olim/tasks/upload_data.py:520
+#: olim/tasks/upload_data.py:527
 msgid "Upload processing failed"
 msgstr ""
 
-#: olim/tasks/upload_data.py:701
+#: olim/tasks/upload_data.py:686
+msgid "Checking IDs..."
+msgstr ""
+
+#: olim/tasks/upload_data.py:745
+#, python-format
+msgid "%(error)s. No columns were added."
+msgstr ""
+
+#: olim/tasks/upload_data.py:747
+msgid "Upload failed. Removing added columns..."
+msgstr ""
+
+#: olim/tasks/upload_data.py:754
+#, python-format
+msgid "%(error)s. Warning: some entries may still have values in the new columns."
+msgstr ""
+
+#: olim/tasks/upload_data.py:760
+#, python-format
+msgid "%(error)s. No columns were added; the existing data was kept."
+msgstr ""
+
+#: olim/tasks/upload_data.py:894
 #, python-format
 msgid ""
 "File upload incomplete. Only %(received)d of %(total)d parts received. "
 "Please try uploading again."
 msgstr ""
 
-#: olim/tasks/upload_data.py:734
+#: olim/tasks/upload_data.py:927
 msgid "CSV file appears to be empty or has no columns."
 msgstr ""
 
-#: olim/tasks/upload_data.py:744
+#: olim/tasks/upload_data.py:937
 msgid "CSV file is empty. Please upload a file with data."
 msgstr ""
 
-#: olim/tasks/upload_data.py:749
+#: olim/tasks/upload_data.py:942
 #, python-format
 msgid ""
 "Could not read the CSV with separator '%(sep)s'. Try a different "
 "separator."
 msgstr ""
 
-#: olim/tasks/upload_data.py:758
+#: olim/tasks/upload_data.py:951
 #, python-format
 msgid ""
 "Encoding error reading the file with '%(encoding)s'. Try a different "
@@ -1572,7 +1637,7 @@ msgid "Default Value"
 msgstr ""
 
 #: olim/templates/admin-settings.html:74 olim/templates/datasets/list.html:28
-#: olim/templates/label-settings.html:80 olim/templates/labels.html:54
+#: olim/templates/label-settings.html:80 olim/templates/labels.html:49
 #: olim/templates/learning-tasks.html:23 olim/templates/learning-tasks.html:87
 #: olim/templates/models/detail.html:166 olim/templates/models/list.html:61
 #: olim/templates/projects.html:41 olim/templates/users.html:46
@@ -1827,7 +1892,7 @@ msgstr ""
 msgid "Avg per Day"
 msgstr ""
 
-#: olim/templates/analytics.html:172 olim/templates/labels.html:40
+#: olim/templates/analytics.html:172 olim/templates/labels.html:35
 msgid "Total"
 msgstr ""
 
@@ -1881,7 +1946,7 @@ msgstr ""
 msgid "Entry "
 msgstr ""
 
-#: olim/templates/datasets/edit.html:270 olim/templates/entry.html:22
+#: olim/templates/datasets/edit.html:374 olim/templates/entry.html:22
 #: olim/templates/learning_tasks/active_learning_loop.html:105
 #: olim/templates/learning_tasks/al_label_select.html:31
 #: olim/templates/learning_tasks/cold_start_search_setup.html:55
@@ -1895,7 +1960,7 @@ msgstr ""
 msgid "Previous"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:272 olim/templates/entry.html:34
+#: olim/templates/datasets/edit.html:376 olim/templates/entry.html:34
 #: olim/templates/learning_tasks/label_entry.html:50
 #: olim/templates/learning_tasks/ollama_auto_label.html:328
 #: olim/templates/learning_tasks/ollama_queue_setup.html:93
@@ -2110,7 +2175,8 @@ msgstr ""
 msgid "Are you sure you want to remove this entry from hidden entries?"
 msgstr ""
 
-#: olim/templates/hidden.html:176 olim/templates/macros/entry_sources.html:48
+#: olim/templates/hidden.html:176 olim/templates/macros/column-config.html:62
+#: olim/templates/macros/entry_sources.html:48
 msgid "Remove"
 msgstr ""
 
@@ -2120,9 +2186,8 @@ msgstr ""
 #: olim/templates/label-upload-configure.html:71
 #: olim/templates/label_types/free_text.html:36
 #: olim/templates/label_types/long_text.html:33
-#: olim/templates/learning-tasks.html:341
-#: olim/templates/macros/upload-form.html:281
-#: olim/templates/models/create.html:76 olim/templates/projects.html:176
+#: olim/templates/learning-tasks.html:341 olim/templates/models/create.html:76
+#: olim/templates/projects.html:176
 msgid "Cancel"
 msgstr ""
 
@@ -2213,7 +2278,7 @@ msgstr ""
 msgid "Project Labels"
 msgstr ""
 
-#: olim/templates/init-config.html:183 olim/templates/labels.html:186
+#: olim/templates/init-config.html:183 olim/templates/labels.html:172
 #: olim/templates/macros/label_selector.html:57
 msgid "Enter label name"
 msgstr ""
@@ -2240,7 +2305,7 @@ msgid "Label Information"
 msgstr ""
 
 #: olim/templates/datasets/list.html:26 olim/templates/label-settings.html:48
-#: olim/templates/labels.html:46 olim/templates/learning-tasks.html:86
+#: olim/templates/labels.html:41 olim/templates/learning-tasks.html:86
 #: olim/templates/projects.html:35
 msgid "Creator"
 msgstr ""
@@ -2345,7 +2410,7 @@ msgstr ""
 msgid "%(rows)s rows, %(values)s distinct values"
 msgstr ""
 
-#: olim/templates/label-upload-configure.html:36 olim/templates/labels.html:192
+#: olim/templates/label-upload-configure.html:36 olim/templates/labels.html:178
 msgid "Label Type"
 msgstr ""
 
@@ -2371,95 +2436,103 @@ msgstr ""
 msgid "Label"
 msgstr ""
 
-#: olim/templates/labels.html:118
+#: olim/templates/labels.html:29
+msgid "Values"
+msgstr ""
+
+#: olim/templates/labels.html:78
+msgid "Free text"
+msgstr ""
+
+#: olim/templates/labels.html:104
 msgid "Hide this label in entry forms"
 msgstr ""
 
-#: olim/templates/labels.html:125
+#: olim/templates/labels.html:111
 msgid "Show this label in entry forms"
 msgstr ""
 
-#: olim/templates/labels.html:132
+#: olim/templates/labels.html:118
 #: olim/templates/learning_tasks/maintenance_scan.html:14
 msgid "Settings"
 msgstr ""
 
-#: olim/templates/labels.html:139
+#: olim/templates/labels.html:125
 msgid "Open active learning queue"
 msgstr ""
 
-#: olim/templates/labels.html:140
+#: olim/templates/labels.html:126
 msgid "Learn"
 msgstr ""
 
-#: olim/templates/labels.html:156
+#: olim/templates/labels.html:142
 msgid "No labels found"
 msgstr ""
 
-#: olim/templates/labels.html:157
+#: olim/templates/labels.html:143
 msgid "Create your first label to get started."
 msgstr ""
 
-#: olim/templates/labels.html:173 olim/templates/labels.html:222
+#: olim/templates/labels.html:159 olim/templates/labels.html:208
 #: olim/templates/models/detail.html:373
 msgid "Create Label"
 msgstr ""
 
-#: olim/templates/labels.html:182
+#: olim/templates/labels.html:168
 msgid "Label Name"
 msgstr ""
 
-#: olim/templates/labels.html:196
+#: olim/templates/labels.html:182
 msgid "Choose label type"
 msgstr ""
 
-#: olim/templates/labels.html:202
+#: olim/templates/labels.html:188
 msgid "Preset type — options are fixed"
 msgstr ""
 
-#: olim/templates/labels.html:273 olim/templates/models/detail.html:56
+#: olim/templates/labels.html:259 olim/templates/models/detail.html:56
 msgid "Export All"
 msgstr ""
 
-#: olim/templates/labels.html:278
+#: olim/templates/labels.html:264
 msgid ""
 "Every entry with the columns of the original file plus one column per "
 "label. Multi-select values use the same format as the label upload."
 msgstr ""
 
-#: olim/templates/labels.html:283 olim/templates/macros/entry-load-form.html:28
+#: olim/templates/labels.html:269 olim/templates/macros/entry-load-form.html:28
 msgid "Dataset"
 msgstr ""
 
-#: olim/templates/labels.html:288
+#: olim/templates/labels.html:274
 msgid "All datasets"
 msgstr ""
 
-#: olim/templates/labels.html:297
+#: olim/templates/labels.html:283
 msgid "Download CSV"
 msgstr ""
 
-#: olim/templates/labels.html:309
+#: olim/templates/labels.html:295
 msgid "Upload Labels"
 msgstr ""
 
-#: olim/templates/labels.html:320
+#: olim/templates/labels.html:306
 msgid "Labelling File"
 msgstr ""
 
-#: olim/templates/labels.html:325
+#: olim/templates/labels.html:311
 msgid "Select a labelling file to upload"
 msgstr ""
 
-#: olim/templates/labels.html:333 olim/templates/labels.html:348
+#: olim/templates/labels.html:319 olim/templates/labels.html:334
 msgid "Target Dataset"
 msgstr ""
 
-#: olim/templates/labels.html:337
+#: olim/templates/labels.html:323
 msgid "Select Dataset"
 msgstr ""
 
-#: olim/templates/labels.html:357
+#: olim/templates/labels.html:343
 msgid "Upload File"
 msgstr ""
 
@@ -2891,7 +2964,7 @@ msgid "Search"
 msgstr ""
 
 #: olim/templates/datasets/_delete_modal.html:18
-#: olim/templates/datasets/edit.html:29 olim/templates/datasets/list.html:88
+#: olim/templates/datasets/edit.html:32 olim/templates/datasets/list.html:88
 msgid "Delete Dataset"
 msgstr ""
 
@@ -2900,53 +2973,118 @@ msgstr ""
 msgid "Datasets"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:7 olim/templates/datasets/new.html:10
+#: olim/templates/datasets/edit.html:10 olim/templates/datasets/new.html:10
 msgid "Back to datasets"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:19
+#: olim/templates/datasets/edit.html:22
 #: olim/templates/learning_tasks/queue_list.html:13
 msgid "entries"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:39
+#: olim/templates/datasets/edit.html:40 olim/templates/datasets/edit.html:58
+msgid "Data"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:43 olim/templates/datasets/edit.html:95
+msgid "Columns"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:46
+msgid "Upload data"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:49 olim/templates/datasets/edit.html:275
 msgid "Details"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:44 olim/templates/datasets/list.html:22
-#: olim/templates/macros/upload-form.html:17
-msgid "Dataset name"
+#: olim/templates/datasets/edit.html:62
+msgid "Undo"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:49
-#: olim/templates/macros/upload-form.html:28
-msgid "Link to Projects"
+#: olim/templates/datasets/edit.html:66
+msgid "Redo"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:63 olim/templates/datasets/edit.html:139
+#: olim/templates/datasets/edit.html:73 olim/templates/datasets/edit.html:132
+msgid "Discard"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:78
+msgid "Save changes"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:83
+msgid ""
+"Click a cell to edit it. Edits are kept while you change pages and are "
+"only stored when you click \"Save changes\". Existing model predictions "
+"are not recalculated automatically."
+msgstr ""
+
+#: olim/templates/datasets/edit.html:101 olim/templates/datasets/edit.html:232
 msgid "ID column"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:65 olim/templates/datasets/edit.html:144
-#: olim/templates/macros/upload-form.html:602
+#: olim/templates/datasets/edit.html:102
+msgid "not recorded"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:104 olim/templates/datasets/edit.html:237
+#: olim/templates/macros/upload-form.html:479
 msgid "Text column"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:71
-msgid "Save details"
+#: olim/templates/datasets/edit.html:109
+msgid "Other columns"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:81
+#: olim/templates/datasets/edit.html:116
+msgid ""
+"The ID and text columns are chosen when the dataset is created. Columns "
+"can be added in the \"Upload data\" tab."
+msgstr ""
+
+#: olim/templates/datasets/edit.html:124
+msgid "How entries are displayed"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:137
+msgid "Save column settings"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:142
+msgid ""
+"Display options (HTML, PDF, images, tabs) are available for datasets "
+"uploaded as Flexible Text."
+msgstr ""
+
+#: olim/templates/datasets/edit.html:153
 msgid "Upload more data"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:90
+#: olim/templates/datasets/edit.html:164
+msgid "New rows"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:165
+msgid "Add entries with the same columns as the dataset."
+msgstr ""
+
+#: olim/templates/datasets/edit.html:171
+msgid "New columns"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:172
+msgid "Add columns to the existing entries, matched by ID."
+msgstr ""
+
+#: olim/templates/datasets/edit.html:179
 msgid ""
 "The file must have exactly these columns, and none of its IDs may already"
 " exist in the dataset:"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:99
+#: olim/templates/datasets/edit.html:188
 msgid ""
 "This dataset was created before column names were recorded. After "
 "choosing the file, select its ID and text columns; the remaining columns "
@@ -2955,216 +3093,233 @@ msgid ""
 "reported as unexpected."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:108
-#: olim/templates/macros/upload-form.html:133
+#: olim/templates/datasets/edit.html:194
+msgid ""
+"The file must have an ID column plus the columns to add. Every ID must "
+"already exist in the dataset and appear only once; entries missing from "
+"the file are left empty. Columns the dataset already has can't be "
+"replaced: edit their values in the \"Data\" tab."
+msgstr ""
+
+#: olim/templates/datasets/edit.html:202
+#: olim/templates/macros/upload-form.html:135
 msgid "Click to upload or drag your file"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:121
-#: olim/templates/macros/upload-form.html:164
+#: olim/templates/datasets/edit.html:215
+#: olim/templates/macros/upload-form.html:166
 msgid "Column separator"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:126
-#: olim/templates/macros/upload-form.html:173
+#: olim/templates/datasets/edit.html:220
+#: olim/templates/macros/upload-form.html:175
 msgid "File encoding"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:153
+#: olim/templates/datasets/edit.html:245
 msgid "The file can't be added:"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:165
+#: olim/templates/datasets/edit.html:258
 msgid "Check file"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:170
-msgid "Add to dataset"
+#: olim/templates/datasets/edit.html:263 olim/templates/datasets/edit.html:357
+msgid "Add rows"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:183
-msgid "Data"
+#: olim/templates/datasets/edit.html:280 olim/templates/datasets/list.html:22
+#: olim/templates/macros/upload-form.html:19
+msgid "Dataset name"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:187
-msgid "Undo"
+#: olim/templates/datasets/edit.html:285
+#: olim/templates/macros/upload-form.html:30
+msgid "Link to Projects"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:191
-msgid "Redo"
+#: olim/templates/datasets/edit.html:300
+msgid "Save details"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:198
-msgid "Discard"
-msgstr ""
-
-#: olim/templates/datasets/edit.html:203
-msgid "Save changes"
-msgstr ""
-
-#: olim/templates/datasets/edit.html:208
-msgid ""
-"Click a cell to edit it. Edits are kept while you change pages and are "
-"only stored when you click \"Save changes\". Existing model predictions "
-"are not recalculated automatically."
-msgstr ""
-
-#: olim/templates/datasets/edit.html:223 olim/templates/datasets/list.html:115
+#: olim/templates/datasets/edit.html:314 olim/templates/datasets/list.html:115
 msgid "Are you sure you want to delete dataset"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:224 olim/templates/datasets/list.html:116
+#: olim/templates/datasets/edit.html:315 olim/templates/datasets/list.html:116
 msgid ""
 "It will be hidden from all projects. Its data is kept and can be restored"
 " by an administrator."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:232
+#: olim/templates/datasets/edit.html:323
 msgid "ID"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:246
-#: olim/templates/macros/upload-form.html:728
+#: olim/templates/datasets/edit.html:344
+#: olim/templates/macros/upload-form.html:610
 msgid "Preparing upload..."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:247
-#: olim/templates/macros/upload-form.html:741
+#: olim/templates/datasets/edit.html:345
+#: olim/templates/macros/upload-form.html:623
 msgid "Uploading..."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:248
-#: olim/templates/macros/upload-form.html:648
+#: olim/templates/datasets/edit.html:346
+#: olim/templates/macros/upload-form.html:530
 msgid "Processing file..."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:249
-#: olim/templates/macros/upload-form.html:712
-#: olim/templates/macros/upload-form.html:770
+#: olim/templates/datasets/edit.html:347
+#: olim/templates/macros/upload-form.html:594
+#: olim/templates/macros/upload-form.html:652
 msgid "Upload failed:"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:250
+#: olim/templates/datasets/edit.html:348
 msgid "File ready. Click \"Check file\" to validate it."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:251
+#: olim/templates/datasets/edit.html:349
 msgid "Checking file..."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:252
+#: olim/templates/datasets/edit.html:350
 msgid "Select a column"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:253
+#: olim/templates/datasets/edit.html:351
 msgid "Missing columns (present in the dataset, absent from the file):"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:254
+#: olim/templates/datasets/edit.html:352
 msgid "Unexpected columns (present in the file, absent from the dataset):"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:255
+#: olim/templates/datasets/edit.html:353
 msgid ""
 "The columns match. IDs are checked while the data is added: if an ID is "
 "missing or repeated, the import stops, everything added so far is removed"
 " and the task shows which row to fix."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:256
+#: olim/templates/datasets/edit.html:354
+msgid ""
+"The file can be added. All IDs are checked before anything is written. "
+"These columns will be added:"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:355
+msgid "These columns already exist in the dataset:"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:356
+msgid "The file has no columns besides the ID column."
+msgstr ""
+
+#: olim/templates/datasets/edit.html:358
+msgid "Add columns"
+msgstr ""
+
+#: olim/templates/datasets/edit.html:359
+msgid "Column settings saved."
+msgstr ""
+
+#: olim/templates/datasets/edit.html:360
 msgid "Starting import..."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:257
+#: olim/templates/datasets/edit.html:361
 #, python-format
 msgid "%(count)s unsaved changes"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:258
+#: olim/templates/datasets/edit.html:362
 msgid "You have unsaved changes. Leave this page and discard them?"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:259
+#: olim/templates/datasets/edit.html:363
 msgid "Discard all unsaved changes?"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:260
+#: olim/templates/datasets/edit.html:364
 msgid "This dataset has no entries yet."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:261
+#: olim/templates/datasets/edit.html:365
 msgid "Could not load entries:"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:262
+#: olim/templates/datasets/edit.html:366
 msgid "Not found in the search engine"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:264
+#: olim/templates/datasets/edit.html:368
 msgid "Rows per page"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:265
+#: olim/templates/datasets/edit.html:369
 msgid "Show page"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:266
+#: olim/templates/datasets/edit.html:370
 msgid "First"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:267
+#: olim/templates/datasets/edit.html:371
 msgid "First page"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:268
+#: olim/templates/datasets/edit.html:372
 msgid "Last"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:269
+#: olim/templates/datasets/edit.html:373
 msgid "Last page"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:271
+#: olim/templates/datasets/edit.html:375
 msgid "Previous page"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:273
+#: olim/templates/datasets/edit.html:377
 msgid "Next page"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:274
+#: olim/templates/datasets/edit.html:378
 msgid "All"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:276
+#: olim/templates/datasets/edit.html:380
 msgid "Showing"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:277
+#: olim/templates/datasets/edit.html:381
 msgid "of"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:278
+#: olim/templates/datasets/edit.html:382
 msgid "rows"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:279
+#: olim/templates/datasets/edit.html:383
 msgid "pages"
 msgstr ""
 
-#: olim/templates/datasets/edit.html:282
+#: olim/templates/datasets/edit.html:386
 msgid "Saving..."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:283
+#: olim/templates/datasets/edit.html:387
 msgid "Changes saved."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:284
+#: olim/templates/datasets/edit.html:388
 msgid "Some changes could not be saved. Check the highlighted rows."
 msgstr ""
 
-#: olim/templates/datasets/edit.html:285
+#: olim/templates/datasets/edit.html:389
 msgid "Could not save changes:"
 msgstr ""
 
@@ -3173,7 +3328,7 @@ msgid "New Dataset"
 msgstr ""
 
 #: olim/templates/datasets/list.html:23
-#: olim/templates/macros/upload-form.html:59
+#: olim/templates/macros/upload-form.html:61
 msgid "Data Format"
 msgstr ""
 
@@ -4500,6 +4655,73 @@ msgstr ""
 msgid "No data collected yet"
 msgstr ""
 
+#: olim/templates/macros/column-config.html:8
+msgid "Main text is raw HTML"
+msgstr ""
+
+#: olim/templates/macros/column-config.html:12
+msgid "Hide main text column"
+msgstr ""
+
+#: olim/templates/macros/column-config.html:16
+msgid "Show remaining columns as metadata"
+msgstr ""
+
+#: olim/templates/macros/column-config.html:22
+msgid "Extra Columns"
+msgstr ""
+
+#: olim/templates/macros/column-config.html:23
+#: olim/templates/macros/column-config.html:25
+msgid "Add extra column"
+msgstr ""
+
+#: olim/templates/macros/column-config.html:29
+msgid ""
+"No extra columns: only the main text and, if enabled, the remaining "
+"columns as metadata are shown."
+msgstr ""
+
+#: olim/templates/macros/column-config.html:37
+msgid "Render as"
+msgstr ""
+
+#: olim/templates/macros/column-config.html:39
+msgid "Plain text"
+msgstr ""
+
+#: olim/templates/macros/column-config.html:40
+msgid "Raw HTML"
+msgstr ""
+
+#: olim/templates/macros/column-config.html:41
+msgid "PDF (iframe)"
+msgstr ""
+
+#: olim/templates/macros/column-config.html:42
+msgid "Image"
+msgstr ""
+
+#: olim/templates/macros/column-config.html:43
+msgid "JSON / Metadata"
+msgstr ""
+
+#: olim/templates/macros/column-config.html:47
+msgid "Show title"
+msgstr ""
+
+#: olim/templates/macros/column-config.html:51
+msgid "Show as tab"
+msgstr ""
+
+#: olim/templates/macros/column-config.html:54
+msgid "Move up"
+msgstr ""
+
+#: olim/templates/macros/column-config.html:58
+msgid "Move down"
+msgstr ""
+
 #: olim/templates/macros/entry-content-card.html:8
 msgid "Entry Content"
 msgstr ""
@@ -4709,28 +4931,28 @@ msgstr ""
 msgid "Passwords match"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:7
-#: olim/templates/macros/upload-form.html:307
+#: olim/templates/macros/upload-form.html:9
+#: olim/templates/macros/upload-form.html:234
 msgid "Upload Dataset"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:21
+#: olim/templates/macros/upload-form.html:23
 msgid "Enter dataset name"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:48
+#: olim/templates/macros/upload-form.html:50
 msgid "Note:"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:49
+#: olim/templates/macros/upload-form.html:51
 msgid "Linked projects can be changed later in Manage Datasets."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:71
+#: olim/templates/macros/upload-form.html:73
 msgid "Text Format"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:74
+#: olim/templates/macros/upload-form.html:76
 msgid ""
 "Use this option if your CSV is composed of independent texts. You need to"
 "\n"
@@ -4738,182 +4960,117 @@ msgid ""
 "to"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:76
+#: olim/templates/macros/upload-form.html:78
 msgid "and"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:91
+#: olim/templates/macros/upload-form.html:93
 msgid "Flexible Text"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:94
+#: olim/templates/macros/upload-form.html:96
 msgid ""
 "Configurable columns — render extra columns as text, HTML, PDF, image, or"
 " JSON metadata. Supports tabs."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:109
+#: olim/templates/macros/upload-form.html:111
 msgid "Sample Data"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:112
+#: olim/templates/macros/upload-form.html:114
 msgid "Upload built-in sample data in Text format."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:125
-#: olim/templates/macros/upload-form.html:453
+#: olim/templates/macros/upload-form.html:127
+#: olim/templates/macros/upload-form.html:380
 msgid "Select File"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:159
-#: olim/templates/macros/upload-form.html:670
-#: olim/templates/macros/upload-form.html:806
-#: olim/templates/macros/upload-form.html:830
-#: olim/templates/macros/upload-form.html:831
+#: olim/templates/macros/upload-form.html:161
+#: olim/templates/macros/upload-form.html:552
+#: olim/templates/macros/upload-form.html:687
+#: olim/templates/macros/upload-form.html:711
+#: olim/templates/macros/upload-form.html:712
 msgid "Advanced options"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:169
+#: olim/templates/macros/upload-form.html:171
 msgid "Default: comma (,). Use \\t for tab-separated files."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:177
+#: olim/templates/macros/upload-form.html:179
 msgid "(default)"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:191
+#: olim/templates/macros/upload-form.html:193
 msgid "Retry with new settings"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:211
+#: olim/templates/macros/upload-form.html:213
 msgid "Flexible Text Options"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:217
-msgid "Main text is raw HTML"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:222
-msgid "Hide main text column"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:227
-msgid "Show remaining columns as metadata"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:234
-msgid "Extra Columns"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:238
-msgid "Add extra column"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:246
-msgid "Column"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:249
-#: olim/templates/macros/upload-form.html:511
-msgid "Select column"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:253
-msgid "Render as"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:256
-msgid "Plain text"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:257
-msgid "Raw HTML"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:258
-msgid "PDF (iframe)"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:259
-msgid "Image"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:260
-msgid "JSON / Metadata"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:267
-msgid "Show title"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:271
-msgid "Show as tab"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:277
-msgid "Add"
-msgstr ""
-
-#: olim/templates/macros/upload-form.html:297
+#: olim/templates/macros/upload-form.html:224
 msgid ""
 "After upload, keep an eye on the tasks in the sidebar for dataset "
 "processing status."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:376
+#: olim/templates/macros/upload-form.html:303
 msgid "Please select a CSV file only."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:461
+#: olim/templates/macros/upload-form.html:388
 msgid "Click to upload"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:461
+#: olim/templates/macros/upload-form.html:388
 msgid "or drag and drop"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:463
+#: olim/templates/macros/upload-form.html:390
 msgid "CSV files only"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:491
+#: olim/templates/macros/upload-form.html:418
 msgid "File uploaded successfully"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:496
+#: olim/templates/macros/upload-form.html:423
 msgid "Change File"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:587
+#: olim/templates/macros/upload-form.html:464
 msgid "Text ID column"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:593
+#: olim/templates/macros/upload-form.html:470
 msgid "Select Text ID column"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:609
+#: olim/templates/macros/upload-form.html:486
 msgid "Select Text column"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:662
+#: olim/templates/macros/upload-form.html:544
 msgid "Could not parse the file."
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:673
+#: olim/templates/macros/upload-form.html:555
 msgid "Error:"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:673
-#: olim/templates/macros/upload-form.html:681
+#: olim/templates/macros/upload-form.html:555
+#: olim/templates/macros/upload-form.html:563
 msgid "Finalization failed"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:756
+#: olim/templates/macros/upload-form.html:638
 msgid "Upload failed"
 msgstr ""
 
-#: olim/templates/macros/upload-form.html:760
+#: olim/templates/macros/upload-form.html:642
 msgid "Upload complete! Processing file..."
 msgstr ""
 
@@ -5330,14 +5487,6 @@ msgstr ""
 #: olim/utils/queues.py:228
 #, python-brace-format
 msgid "Highlight: {highlight}"
-msgstr ""
-
-#: olim/templates/labels.html:29
-msgid "Values"
-msgstr ""
-
-#: olim/templates/labels.html:79
-msgid "Free text"
 msgstr ""
 
 #~ msgid "This is permanent! Are you sure that you want to delete label"
@@ -5833,5 +5982,17 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "You have unsaved changes on this page. Discard them and continue?"
+#~ msgstr ""
+
+#~ msgid "Add to dataset"
+#~ msgstr ""
+
+#~ msgid "Column"
+#~ msgstr ""
+
+#~ msgid "Select column"
+#~ msgstr ""
+
+#~ msgid "Add"
 #~ msgstr ""
 

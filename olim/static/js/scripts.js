@@ -996,6 +996,139 @@ function fillPlaceholders(text, values) {
     return text.replace(/\{(\w+)\}/g, (match, key) => (key in values ? values[key] : match));
 }
 
+// Tabs: buttons with data-tab="name" show the panel with data-tab-panel="name".
+// The active tab is kept in the URL hash so reloads return to it.
+function initTabs(root, defaultTab) {
+    const buttons = root.querySelectorAll('[data-tab]');
+    const panels = root.querySelectorAll('[data-tab-panel]');
+
+    function show(name, updateHash) {
+        if (![...buttons].some(b => b.dataset.tab === name)) name = defaultTab;
+        buttons.forEach(button => {
+            const active = button.dataset.tab === name;
+            button.setAttribute('aria-selected', active);
+            button.classList.toggle('border-purple-600', active);
+            button.classList.toggle('text-purple-700', active);
+            button.classList.toggle('border-transparent', !active);
+            button.classList.toggle('text-gray-500', !active);
+        });
+        panels.forEach(panel => panel.classList.toggle('hidden', panel.dataset.tabPanel !== name));
+        if (updateHash) history.replaceState(null, '', `#${name}`);
+        root.dispatchEvent(new CustomEvent('olim:tab-shown', { detail: { tab: name } }));
+    }
+
+    buttons.forEach(button => button.addEventListener('click', () => show(button.dataset.tab, true)));
+    show(window.location.hash.slice(1) || defaultTab, false);
+}
+
+// Editor for how a flexible text dataset displays its columns (macros/column-config.html).
+// fields: [{field, label}] that can be shown as extra columns. Returns {getConfig, setConfig, setFields}.
+function createColumnConfigEditor(root, { fields = [], config = null, onChange } = {}) {
+    const list = root.querySelector('[data-role="list"]');
+    const addSelect = root.querySelector('[data-role="add"]');
+    const emptyNote = root.querySelector('[data-role="empty"]');
+    const rowTemplate = root.querySelector('template[data-role="row"]');
+    const options = {};
+    root.querySelectorAll('[data-option]').forEach(input => {
+        options[input.dataset.option] = input;
+        input.addEventListener('change', changed);
+    });
+
+    let available = [];
+    let extra = [];
+
+    function changed() {
+        onChange?.(getConfig());
+    }
+
+    function labelOf(field) {
+        return available.find(f => f.field === field)?.label ?? field;
+    }
+
+    function render() {
+        list.innerHTML = '';
+        extra.forEach((column, index) => {
+            const row = rowTemplate.content.firstElementChild.cloneNode(true);
+            row.querySelector('[data-role="name"]').textContent = labelOf(column.column);
+            const renderAs = row.querySelector('[data-field="render_as"]');
+            renderAs.value = column.render_as;
+            renderAs.addEventListener('change', () => { column.render_as = renderAs.value; changed(); });
+            ['show_title', 'as_tab'].forEach(name => {
+                const input = row.querySelector(`[data-field="${name}"]`);
+                input.checked = !!column[name];
+                input.addEventListener('change', () => { column[name] = input.checked; changed(); });
+            });
+            const move = offset => {
+                extra.splice(index + offset, 0, extra.splice(index, 1)[0]);
+                render();
+                changed();
+            };
+            const up = row.querySelector('[data-action="up"]');
+            const down = row.querySelector('[data-action="down"]');
+            up.disabled = index === 0;
+            down.disabled = index === extra.length - 1;
+            up.addEventListener('click', () => move(-1));
+            down.addEventListener('click', () => move(1));
+            row.querySelector('[data-action="remove"]').addEventListener('click', () => {
+                extra.splice(index, 1);
+                render();
+                changed();
+            });
+            list.appendChild(row);
+        });
+        emptyNote.classList.toggle('hidden', extra.length > 0);
+
+        const used = new Set(extra.map(c => c.column));
+        const unused = available.filter(f => !used.has(f.field));
+        addSelect.querySelectorAll('option:not(:first-child)').forEach(option => option.remove());
+        unused.forEach(f => addSelect.appendChild(new Option(f.label, f.field)));
+        addSelect.disabled = unused.length === 0;
+    }
+
+    addSelect.addEventListener('change', () => {
+        if (!addSelect.value) return;
+        extra.push({ column: addSelect.value, render_as: 'text', show_title: false, as_tab: false });
+        render();
+        changed();
+    });
+
+    function getConfig() {
+        return {
+            text_is_html: options.text_is_html.checked,
+            text_hidden: options.text_hidden.checked,
+            show_remaining_as_metadata: options.show_remaining_as_metadata.checked,
+            extra_columns: extra.map(c => ({ ...c })),
+        };
+    }
+
+    function setConfig(value) {
+        const cfg = value || {};
+        options.text_is_html.checked = !!cfg.text_is_html;
+        options.text_hidden.checked = !!cfg.text_hidden;
+        options.show_remaining_as_metadata.checked = cfg.show_remaining_as_metadata ?? true;
+        extra = (cfg.extra_columns || []).map(c => ({
+            column: c.column,
+            render_as: c.render_as === 'pdf_url' ? 'pdf' : (c.render_as || 'text'),
+            show_title: !!c.show_title,
+            as_tab: !!c.as_tab,
+        }));
+        render();
+    }
+
+    // Extra columns that are no longer available (e.g. picked as the ID column) are dropped
+    function setFields(value) {
+        available = value;
+        const known = new Set(available.map(f => f.field));
+        extra = extra.filter(c => known.has(c.column));
+        render();
+        changed();
+    }
+
+    available = fields;
+    setConfig(config);
+    return { getConfig, setConfig, setFields };
+}
+
 // Upload a file through the chunked upload endpoints and return the finalize result
 async function uploadFileInChunks(file, { chunkSize, chunkUrl, finalizeUrl, sep, encoding, onProgress }) {
     const totalChunks = Math.max(Math.ceil(file.size / chunkSize), 1);
@@ -1029,10 +1162,74 @@ async function uploadFileInChunks(file, { chunkSize, chunkUrl, finalizeUrl, sep,
 
 function initDatasetEditPage(config) {
     const t = config.t;
+    const tabs = document.getElementById('dataset-tabs');
     initDatasetAppend(config, t);
-    initDatasetTableEditing(config, t);
+    initDatasetColumnConfig(config, t);
+    const table = initDatasetTableEditing(config, t);
+    // The grid can't measure itself while its tab is hidden
+    tabs.addEventListener('olim:tab-shown', e => { if (e.detail.tab === 'data') table?.redraw(true); });
+    initTabs(tabs, 'data');
 }
 
+// Columns tab: edit and save the display settings of a flexible text dataset
+function initDatasetColumnConfig(config, t) {
+    const root = document.getElementById('dataset-column-config');
+    if (!root) return;
+    const saveBtn = document.getElementById('column-config-save-btn');
+    const resetBtn = document.getElementById('column-config-reset-btn');
+
+    let saved = JSON.stringify(config.columnConfig.config);
+    const editor = createColumnConfigEditor(root, {
+        fields: config.columnConfig.fields,
+        config: config.columnConfig.config,
+        onChange: value => {
+            const dirty = JSON.stringify(value) !== saved;
+            saveBtn.disabled = !dirty;
+            resetBtn.disabled = !dirty;
+        },
+    });
+    // Compare against the editor's own serialization so key order doesn't count as a change
+    saved = JSON.stringify(editor.getConfig());
+
+    resetBtn.addEventListener('click', () => {
+        editor.setConfig(JSON.parse(saved));
+        saveBtn.disabled = true;
+        resetBtn.disabled = true;
+    });
+
+    saveBtn.addEventListener('click', async () => {
+        saveBtn.disabled = true;
+        try {
+            const response = await fetch(config.urls.columns, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ column_config: editor.getConfig() }),
+            });
+            const body = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                showToast(`${t.saveFailed} ${body.error || response.statusText}`, 'error', 10000);
+                saveBtn.disabled = false;
+                return;
+            }
+            editor.setConfig(body.column_config);
+            saved = JSON.stringify(editor.getConfig());
+            resetBtn.disabled = true;
+            showToast(t.columnsSaved, 'success');
+        } catch (error) {
+            showToast(`${t.saveFailed} ${error.message}`, 'error', 10000);
+            saveBtn.disabled = false;
+        }
+    });
+
+    window.addEventListener('beforeunload', e => {
+        if (!saveBtn.disabled) {
+            e.preventDefault();
+            e.returnValue = t.confirmLeave;
+        }
+    });
+}
+
+// Add data tab: upload a file of new rows or of new columns for existing rows
 function initDatasetAppend(config, t) {
     const fileInput = document.getElementById('append-file-input');
     if (!fileInput) return;
@@ -1044,23 +1241,56 @@ function initDatasetAppend(config, t) {
     const status = document.getElementById('append-status');
     const sepInput = document.getElementById('append-sep');
     const encodingInput = document.getElementById('append-encoding');
-    const legacyColumns = document.getElementById('append-legacy-columns');
+    const modeInputs = document.querySelectorAll('input[name="append-mode"]');
+    const pickers = document.getElementById('append-column-pickers');
     const idSelect = document.getElementById('append-id-column');
+    const textPicker = document.getElementById('append-text-picker');
     const textSelect = document.getElementById('append-text-column');
     const errorsBox = document.getElementById('append-errors');
     const errorList = document.getElementById('append-error-list');
     const okBox = document.getElementById('append-ok');
     const okMsg = document.getElementById('append-ok-msg');
+    const okColumns = document.getElementById('append-ok-columns');
     const validateBtn = document.getElementById('append-validate-btn');
     const importBtn = document.getElementById('append-import-btn');
 
     let uploaded = null;
 
+    function mode() {
+        return document.querySelector('input[name="append-mode"]:checked')?.value || 'rows';
+    }
+
+    // Rows need the ID and text columns picked only for legacy datasets; columns always need the ID
+    function updateMode() {
+        const current = mode();
+        document.querySelectorAll('[data-append-mode]').forEach(el => {
+            el.classList.toggle('hidden', el.dataset.appendMode !== current);
+        });
+        const needsId = current === 'columns' || config.isLegacy;
+        pickers.classList.toggle('hidden', !uploaded || !needsId);
+        textPicker.classList.toggle('hidden', current === 'columns');
+        importBtn.querySelector('[data-label]').textContent = current === 'columns' ? t.addColumns : t.addRows;
+        resetResult();
+    }
+
     function resetResult() {
         errorsBox.classList.add('hidden');
         okBox.classList.add('hidden');
         errorList.innerHTML = '';
+        okColumns.innerHTML = '';
         importBtn.disabled = true;
+    }
+
+    function codeList(items, borderClass) {
+        const wrap = document.createElement('div');
+        wrap.className = 'mt-1 flex flex-wrap gap-1';
+        items.forEach(item => {
+            const code = document.createElement('code');
+            code.className = `px-1.5 py-0.5 rounded bg-white border ${borderClass} text-xs`;
+            code.textContent = item;
+            wrap.appendChild(code);
+        });
+        return wrap;
     }
 
     function addError(title, items) {
@@ -1069,17 +1299,7 @@ function initDatasetAppend(config, t) {
         strong.className = 'font-medium';
         strong.textContent = title;
         li.appendChild(strong);
-        if (items && items.length) {
-            const wrap = document.createElement('div');
-            wrap.className = 'mt-1 flex flex-wrap gap-1';
-            items.forEach(item => {
-                const code = document.createElement('code');
-                code.className = 'px-1.5 py-0.5 rounded bg-white border border-red-200 text-xs';
-                code.textContent = item;
-                wrap.appendChild(code);
-            });
-            li.appendChild(wrap);
-        }
+        if (items && items.length) li.appendChild(codeList(items, 'border-red-200'));
         errorList.appendChild(li);
     }
 
@@ -1092,31 +1312,44 @@ function initDatasetAppend(config, t) {
     function showReport(report) {
         resetResult();
         if (report.ok) {
-            okMsg.textContent = t.readyToAdd;
+            if (report.mode === 'columns') {
+                okMsg.textContent = t.readyToAddColumns;
+                okColumns.appendChild(codeList(report.new_columns, 'border-green-200'));
+            } else {
+                okMsg.textContent = t.readyToAdd;
+            }
             okBox.classList.remove('hidden');
             importBtn.disabled = false;
             return;
         }
-        if (report.missing_columns?.length) addError(t.missingColumns, report.missing_columns);
-        if (report.unexpected_columns?.length) addError(t.unexpectedColumns, report.unexpected_columns);
+        if (report.mode === 'columns') {
+            if (report.existing_columns?.length) addError(t.existingColumns, report.existing_columns);
+            else if (!report.new_columns?.length) addError(t.noNewColumns);
+        } else {
+            if (report.missing_columns?.length) addError(t.missingColumns, report.missing_columns);
+            if (report.unexpected_columns?.length) addError(t.unexpectedColumns, report.unexpected_columns);
+        }
         errorsBox.classList.remove('hidden');
     }
 
-    function fillSelect(select, columns) {
+    function fillSelect(select, columns, preferred) {
         select.innerHTML = '';
-        const placeholder = new Option(t.selectColumn, '');
-        select.appendChild(placeholder);
+        select.appendChild(new Option(t.selectColumn, ''));
         columns.forEach(col => select.appendChild(new Option(col, col)));
+        if (preferred && columns.includes(preferred)) select.value = preferred;
     }
 
     function payload() {
+        const current = mode();
+        const pick = current === 'columns' || config.isLegacy;
         return {
+            mode: current,
             file_id: uploaded.fileId,
             filename: uploaded.filename,
             sep: sepInput.value,
             encoding: encodingInput.value,
-            id_column: idSelect?.value || null,
-            text_column: textSelect?.value || null,
+            id_column: pick ? idSelect.value || null : null,
+            text_column: pick && current === 'rows' ? textSelect.value || null : null,
         };
     }
 
@@ -1134,6 +1367,7 @@ function initDatasetAppend(config, t) {
         if (!file) return;
         uploaded = null;
         resetResult();
+        updateMode();
         validateBtn.disabled = true;
         fileLabel.textContent = file.name;
         progress.classList.remove('hidden');
@@ -1154,11 +1388,9 @@ function initDatasetAppend(config, t) {
             });
             if (uploaded.sep !== undefined) sepInput.value = uploaded.sep === '\t' ? '\\t' : uploaded.sep;
             if (uploaded.encoding !== undefined) encodingInput.value = uploaded.encoding;
-            if (config.isLegacy && legacyColumns) {
-                fillSelect(idSelect, uploaded.columns);
-                fillSelect(textSelect, uploaded.columns);
-                legacyColumns.classList.remove('hidden');
-            }
+            fillSelect(idSelect, uploaded.columns, config.idColumn);
+            fillSelect(textSelect, uploaded.columns, config.textColumn);
+            updateMode();
             status.textContent = t.fileReady;
             validateBtn.disabled = false;
         } catch (error) {
@@ -1179,8 +1411,10 @@ function initDatasetAppend(config, t) {
     }));
     dropArea.addEventListener('drop', e => handleFile(e.dataTransfer.files[0]));
 
-    // Changing the CSV options or columns invalidates a previous check
-    [sepInput, encodingInput, idSelect, textSelect].forEach(el => el?.addEventListener('change', resetResult));
+    // Changing the mode, CSV options or columns invalidates a previous check
+    modeInputs.forEach(input => input.addEventListener('change', updateMode));
+    [sepInput, encodingInput, idSelect, textSelect].forEach(el => el.addEventListener('change', resetResult));
+    updateMode();
 
     validateBtn.addEventListener('click', async () => {
         if (!uploaded) return;
@@ -1224,7 +1458,7 @@ function initDatasetAppend(config, t) {
 // changes pages, re-applied to each loaded page, and only stored on "Save changes".
 function initDatasetTableEditing(config, t) {
     const element = document.getElementById('entries-grid');
-    if (!element || typeof Tabulator === 'undefined') return;
+    if (!element || typeof Tabulator === 'undefined') return null;
 
     const saveBtn = document.getElementById('save-changes-btn');
     const discardBtn = document.getElementById('discard-changes-btn');
@@ -1402,6 +1636,8 @@ function initDatasetTableEditing(config, t) {
             e.returnValue = t.confirmLeave;
         }
     });
+
+    return table;
 }
 
 // =============================================================================

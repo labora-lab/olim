@@ -14,7 +14,7 @@ from ..database import (
     iter_dataset_entries,
 )
 from ..settings import ES_INDEX
-from .es import es_list_fields, es_search
+from .es import es_fields_with_values, es_search
 
 BATCH_SIZE = 1000
 
@@ -52,7 +52,7 @@ def export_columns(dataset: Dataset, es_fields: list[str] | None = None) -> list
     # Datasets created before the layout was recorded: rebuild it from the index
     if es_fields is None:
         try:
-            es_fields = es_list_fields(index=ES_INDEX.format(dataset_id=dataset.id))
+            es_fields = es_fields_with_values(ES_INDEX.format(dataset_id=dataset.id))
         except Exception:
             es_fields = []
     columns = [("id", "_id"), ("text", "text")]

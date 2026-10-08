@@ -1,9 +1,10 @@
 import re
-from collections.abc import Generator
+from collections.abc import Generator, Iterable
 from typing import Any
 
 import pandas as pd
 from flask import render_template
+from flask_babel import gettext as _
 from tqdm import tqdm
 
 from olim.settings import ES_INDEX
@@ -22,6 +23,62 @@ _LEGACY_PDF_CONFIG = {
     ],
     "show_remaining_as_metadata": True,
 }
+
+DEFAULT_COLUMN_CONFIG = {
+    "text_is_html": False,
+    "text_hidden": False,
+    "extra_columns": [],
+    "show_remaining_as_metadata": True,
+}
+RENDER_AS = ("text", "html", "pdf", "image", "json")
+
+
+def normalize_column_config(raw: object, fields: Iterable[str]) -> dict[str, Any]:
+    """Validate display settings sent by the column configuration editor.
+
+    Args:
+        raw: Config dict (see DEFAULT_COLUMN_CONFIG)
+        fields: Document fields an extra column may show
+
+    Raises:
+        ValueError: with a user-facing message for unknown columns or render modes
+    """
+    if not isinstance(raw, dict):
+        raise ValueError(_("Invalid column configuration."))
+    allowed = set(fields)
+    extra_columns = []
+    seen = set()
+    for item in raw.get("extra_columns") or []:
+        column = item.get("column") if isinstance(item, dict) else None
+        if column not in allowed:
+            raise ValueError(_("Unknown column: %(column)s", column=column))
+        if column in seen:
+            continue
+        render_as = "pdf" if item.get("render_as") == "pdf_url" else item.get("render_as", "text")
+        if render_as not in RENDER_AS:
+            raise ValueError(_("Unknown display mode: %(mode)s", mode=render_as))
+        seen.add(column)
+        extra_columns.append(
+            {
+                "column": column,
+                "render_as": render_as,
+                "show_title": bool(item.get("show_title")),
+                "as_tab": bool(item.get("as_tab")),
+            }
+        )
+    return {
+        "text_is_html": bool(raw.get("text_is_html")),
+        "text_hidden": bool(raw.get("text_hidden")),
+        "extra_columns": extra_columns,
+        "show_remaining_as_metadata": bool(raw.get("show_remaining_as_metadata", True)),
+    }
+
+
+def current_column_config(column_config: dict | None, fields: Iterable[str]) -> dict[str, Any]:
+    """The config entries of a dataset are rendered with (see FlexibleTextEntry.render)."""
+    if column_config is not None:
+        return column_config
+    return _LEGACY_PDF_CONFIG if "pdf_url" in fields else DEFAULT_COLUMN_CONFIG
 
 
 @register_entry_type
@@ -49,12 +106,7 @@ class FlexibleTextEntry(EntryTypeBase):
             column_config = _LEGACY_PDF_CONFIG
 
         if column_config is None:
-            column_config = {
-                "text_is_html": False,
-                "text_hidden": False,
-                "extra_columns": [],
-                "show_remaining_as_metadata": True,
-            }
+            column_config = DEFAULT_COLUMN_CONFIG
 
         tabbed_cols = [c for c in column_config.get("extra_columns", []) if c.get("as_tab")]
         content_html = render_template(

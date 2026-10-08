@@ -11,10 +11,11 @@ from .database import (
     link_dataset_to_project,
     new_dataset,
 )
+from .entry_types.flexible_text import normalize_column_config
 from .functions import check_is_setup, ensure_dir
 from .project import update_session_project
 from .settings import ALLOWED_EXTENSIONS, CHUNK_SIZE, MAX_FILE_SIZE, UPLOAD_PATH
-from .tasks.upload_data import finalize_chunks_upload, upload_dataset
+from .tasks.upload_data import column_field, finalize_chunks_upload, upload_dataset
 
 ALLOWED_ENCODINGS = {"utf-8", "latin-1", "cp1252"}
 SAMPLE_DATA_PATH = "./data/sample_data.csv"
@@ -192,23 +193,6 @@ def upload_data(project_id: int | None = None) -> ...:
             else:
                 return redirect(request.url)
 
-        # Parse column_config for flexible_text
-        column_config = None
-        if upload_type == "flexible_text":
-            text_is_html = request.form.get("text_is_html") == "on"
-            text_hidden = request.form.get("text_hidden") == "on"
-            show_remaining = request.form.get("show_remaining_as_metadata", "on") == "on"
-            try:
-                extra_columns = json.loads(request.form.get("extra_columns_config", "[]"))
-            except (ValueError, TypeError):
-                extra_columns = []
-            column_config = {
-                "text_is_html": text_is_html,
-                "text_hidden": text_hidden,
-                "extra_columns": extra_columns,
-                "show_remaining_as_metadata": show_remaining,
-            }
-
         # Remember the CSV layout so later appends can be checked against it
         if upload_type == "sample_data":
             id_column, text_column = "text_id", "text"
@@ -222,6 +206,20 @@ def upload_data(project_id: int | None = None) -> ...:
                 columns = None
             if not isinstance(columns, list):
                 columns = None
+
+        # Display settings from the column configuration editor (flexible_text)
+        column_config = None
+        if upload_type == "flexible_text":
+            fields = [column_field(c) for c in columns or [] if c not in (id_column, text_column)]
+            try:
+                raw_config = json.loads(request.form.get("column_config") or "{}")
+                column_config = normalize_column_config(raw_config, fields)
+            except json.JSONDecodeError:
+                flash(_("Invalid column configuration."), "error")
+                return redirect(request.url)
+            except ValueError as e:
+                flash(str(e), "error")
+                return redirect(request.url)
 
         # Create new dataset
         try:

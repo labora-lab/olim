@@ -880,17 +880,17 @@ def get_dataset_stats() -> dict[int, dict]:
     return stats
 
 
-def update_dataset(dataset_id: int, **fields: str | list[str] | None) -> Dataset | None:
+def update_dataset(dataset_id: int, **fields: str | list[str] | dict | None) -> Dataset | None:
     """Update editable attributes of a dataset.
 
     Args:
         dataset_id: ID of dataset to update
-        **fields: Attributes to set (name, id_column, text_column, columns)
+        **fields: Attributes to set (name, id_column, text_column, columns, column_config)
 
     Returns:
         Updated Dataset or None if not found
     """
-    allowed = {"name", "id_column", "text_column", "columns"}
+    allowed = {"name", "id_column", "text_column", "columns", "column_config"}
     dataset = get_dataset(dataset_id)
     if dataset is None:
         return None

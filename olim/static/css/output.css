@@ -1253,6 +1253,9 @@
       color: var(--color-heading) !important;
     }
   }
+  .-mb-px {
+    margin-bottom: -1px;
+  }
   .mb-0 {
     margin-bottom: calc(var(--spacing) * 0);
   }
@@ -1316,6 +1319,9 @@
   }
   .ml-1 {
     margin-left: calc(var(--spacing) * 1);
+  }
+  .ml-1\.5 {
+    margin-left: calc(var(--spacing) * 1.5);
   }
   .ml-2 {
     margin-left: calc(var(--spacing) * 2);
@@ -1719,6 +1725,9 @@
   .min-w-48 {
     min-width: calc(var(--spacing) * 48);
   }
+  .min-w-\[8rem\] {
+    min-width: 8rem;
+  }
   .min-w-\[10rem\] {
     min-width: 10rem;
   }
@@ -1915,6 +1924,9 @@
       margin-block-end: calc(calc(var(--spacing) * 8) * calc(1 - var(--tw-space-y-reverse)));
     }
   }
+  .gap-x-3 {
+    column-gap: calc(var(--spacing) * 3);
+  }
   .space-x-1 {
     :where(& > :not(:last-child)) {
       --tw-space-x-reverse: 0;
@@ -1942,6 +1954,9 @@
       margin-inline-start: calc(calc(var(--spacing) * 4) * var(--tw-space-x-reverse));
       margin-inline-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-x-reverse)));
     }
+  }
+  .gap-y-2 {
+    row-gap: calc(var(--spacing) * 2);
   }
   .divide-y {
     :where(& > :not(:last-child)) {
@@ -2224,6 +2239,9 @@
   }
   .border-purple-400 {
     border-color: var(--color-purple-400);
+  }
+  .border-purple-600 {
+    border-color: var(--color-purple-600);
   }
   .border-red-100 {
     border-color: var(--color-red-100);
@@ -3830,6 +3848,13 @@
       }
     }
   }
+  .hover\:text-gray-800 {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-gray-800);
+      }
+    }
+  }
   .hover\:text-gray-900 {
     &:hover {
       @media (hover: hover) {
@@ -4199,9 +4224,24 @@
       background-color: var(--color-gray-400);
     }
   }
+  .disabled\:opacity-30 {
+    &:disabled {
+      opacity: 30%;
+    }
+  }
   .disabled\:opacity-50 {
     &:disabled {
       opacity: 50%;
+    }
+  }
+  .has-\[\:checked\]\:border-blue-500 {
+    &:has(*:is(:checked)) {
+      border-color: var(--color-blue-500);
+    }
+  }
+  .has-\[\:checked\]\:bg-blue-50 {
+    &:has(*:is(:checked)) {
+      background-color: var(--color-blue-50);
     }
   }
   .sm\:mx-0 {
@@ -4454,16 +4494,6 @@
   .lg\:px-8 {
     @media (width >= 64rem) {
       padding-inline: calc(var(--spacing) * 8);
-    }
-  }
-  .xl\:col-span-2 {
-    @media (width >= 80rem) {
-      grid-column: span 2 / span 2;
-    }
-  }
-  .xl\:grid-cols-3 {
-    @media (width >= 80rem) {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
   .xl\:grid-cols-5 {
